@@ -1,0 +1,11 @@
+{
+    "exclude": [
+    ],
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+      "declarationDir": "./types",
+      "emitDeclarationOnly": true,
+      "moduleResolution": "node"
+    }
+  }
+  
