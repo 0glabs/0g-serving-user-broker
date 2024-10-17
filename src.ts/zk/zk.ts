@@ -1,4 +1,5 @@
-// import { signData, getSignKeyPair } from '0g-zksettlement/server/client'
+import { genKeyPair, signData } from 'zk-settlement-base/src/client'
+import { Metadata } from '../storage'
 
 export interface ZKRequest {
     fee: number
@@ -7,22 +8,26 @@ export interface ZKRequest {
     userAddress: string
 }
 
-export async function createKey(): Promise<bigint[]> {
-    const privateKey = Math.floor(Math.random() * 10000)
-    return new Promise((resolve, reject) => {
-        return resolve([BigInt(privateKey)])
-    })
-    // const keyPair = await getSignKeyPair()
-    // return keyPair.privkey as bigint[]
+export async function createZKSigningKey(
+    providerAddress: string
+): Promise<{ privateKey: [bigint, bigint]; publicKey: [bigint, bigint] }> {
+    const keyPair = await genKeyPair()
+    const privateKey: [bigint, bigint] = [
+        keyPair.packPrivkey0,
+        keyPair.packPrivkey1,
+    ]
+    const publicKey: [bigint, bigint] = [
+        keyPair.packedPubkey0,
+        keyPair.packedPubkey1,
+    ]
+    Metadata.storePrivateKey(providerAddress, privateKey)
+    return { privateKey, publicKey }
 }
 
 export async function sign(
     requests: any,
     privateKey: bigint[]
 ): Promise<string> {
-    return new Promise((resolve, reject) => {
-        return resolve(privateKey.toString())
-    })
-    // const signatures = await signData(requests, privateKey)
-    // return signatures.toString()
+    const signatures = await signData(requests, privateKey)
+    return signatures.toString()
 }
