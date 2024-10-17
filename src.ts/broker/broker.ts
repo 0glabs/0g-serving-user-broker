@@ -1,0 +1,52 @@
+import { ServingContract } from '../contract'
+import { JsonRpcSigner } from 'ethers'
+import { RequestProcessor } from './request'
+import { ResponseProcessor } from './response'
+import { Verifier } from './verifier'
+
+export class ZGServingUserBroker {
+    public requestProcessor!: RequestProcessor
+    public responseProcessor!: ResponseProcessor
+    public verifier!: Verifier
+
+    private signer: JsonRpcSigner
+    private contractAddress: string
+
+    constructor(signer: JsonRpcSigner, contractAddress: string) {
+        this.signer = signer
+        this.contractAddress = contractAddress
+    }
+
+    async initialize() {
+        let userAddress: string
+        try {
+            userAddress = await this.signer.getAddress()
+        } catch (error) {
+            throw error
+        }
+        const contract = new ServingContract(
+            this.signer,
+            this.contractAddress,
+            userAddress
+        )
+        this.requestProcessor = new RequestProcessor(contract)
+        this.responseProcessor = new ResponseProcessor(contract)
+        this.verifier = new Verifier(contract)
+    }
+}
+
+/**
+ * createZGServingUserBroker 用来初始化 ZGServingUserBroker
+ *
+ * @param signer - ethers.js 的 Signer。
+ * @param contractAddress - 0G Serving 合约地址。
+ * @returns headers。记录着请求的费用、用户签名等信息。
+ */
+export async function createZGServingUserBroker(
+    signer: JsonRpcSigner,
+    contractAddress: string
+): Promise<ZGServingUserBroker> {
+    const broker = new ZGServingUserBroker(signer, contractAddress)
+    await broker.initialize()
+    return broker
+}
