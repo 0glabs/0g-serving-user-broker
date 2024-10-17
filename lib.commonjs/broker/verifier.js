@@ -4,6 +4,7 @@ exports.Verifier = void 0;
 const storage_1 = require("../storage");
 const base_1 = require("./base");
 const ethers_1 = require("ethers");
+const { js_verify } = require('@phala/dcap-qvl-node');
 /**
  * Verifier 中包含服务可靠性验证的方法。
  */
@@ -24,7 +25,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         const svc = await extractor.getSvcInfo();
         const signerRA = await Verifier.fetSignerRA(svc.url, svc.name);
         storage_1.Metadata.storeSigningKey(providerAddress + svcName, signerRA.signing_address);
-        const valid = await this.verifyRA(signerRA.nvidia_payload);
+        const valid = await this.verifyRA(signerRA.dcap_payload);
         return {
             valid,
             signingAddress: signerRA.signing_address,
@@ -93,7 +94,13 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         }
         return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`;
     }
-    async verifyRA(payload) {
+    async verifyRA(dcapPayload) {
+        const rawQuote = new Uint8Array(Buffer.from(dcapPayload.quote, 'base64'));
+        const quoteCollateral = new Uint8Array(Buffer.from(dcapPayload.collaterals, 'base64'));
+        const now = BigInt(Math.floor(Date.now() / 1000));
+        // Call the js_verify function
+        const result = js_verify(rawQuote, quoteCollateral, now);
+        console.log(result);
         return Promise.resolve(true);
     }
     static async fetSignerRA(providerBrokerURL, svcName) {

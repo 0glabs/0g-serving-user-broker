@@ -2,6 +2,7 @@ import { ServiceStructOutput } from '../contract'
 import { Metadata } from '../storage'
 import { ZGServingUserBrokerBase } from './base'
 import { ethers } from 'ethers'
+const { js_verify } = require('@phala/dcap-qvl-node')
 
 export interface ResponseSignature {
     text: string
@@ -11,6 +12,7 @@ export interface ResponseSignature {
 export interface SignerRA {
     signing_address: string
     nvidia_payload: string
+    dcap_payload: string
 }
 
 export interface SingerRAVerificationResult {
@@ -56,7 +58,7 @@ export class Verifier extends ZGServingUserBrokerBase {
             signerRA.signing_address
         )
 
-        const valid = await this.verifyRA(signerRA.nvidia_payload)
+        const valid = await this.verifyRA(signerRA.dcap_payload)
         return {
             valid,
             signingAddress: signerRA.signing_address,
@@ -143,7 +145,20 @@ export class Verifier extends ZGServingUserBrokerBase {
         return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`
     }
 
-    private async verifyRA(payload: string): Promise<boolean> {
+    private async verifyRA(dcapPayload: any): Promise<boolean> {
+        const rawQuote = new Uint8Array(
+            Buffer.from(dcapPayload.quote, 'base64')
+        )
+        const quoteCollateral = new Uint8Array(
+            Buffer.from(dcapPayload.collaterals, 'base64')
+        )
+
+        const now = BigInt(Math.floor(Date.now() / 1000))
+
+        // Call the js_verify function
+        const result = js_verify(rawQuote, quoteCollateral, now)
+        console.log('TTTTTT', result)
+
         return Promise.resolve(true)
     }
 

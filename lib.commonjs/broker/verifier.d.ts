@@ -6,6 +6,7 @@ export interface ResponseSignature {
 export interface SignerRA {
     signing_address: string;
     nvidia_payload: string;
+    dcap_payload: string;
 }
 export interface SingerRAVerificationResult {
     /**
