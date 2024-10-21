@@ -53,10 +53,8 @@ export class Verifier extends ZGServingUserBrokerBase {
         const svc = await extractor.getSvcInfo()
         const signerRA = await Verifier.fetSignerRA(svc.url, svc.name)
 
-        Metadata.storeSigningKey(
-            providerAddress + svcName,
-            signerRA.signing_address
-        )
+        const key = this.contract.getUserAddress() + providerAddress + svcName
+        Metadata.storeSigningKey(key, signerRA.signing_address)
 
         const dcapPayload = JSON.parse(signerRA.dcap_payload)
         const valid = await this.verifyRA(dcapPayload)
@@ -77,7 +75,8 @@ export class Verifier extends ZGServingUserBrokerBase {
         providerAddress: string,
         svcName: string
     ): Promise<string> {
-        let signingKey = Metadata.getSigningKey(providerAddress + svcName)
+        const key = this.contract.getUserAddress() + providerAddress + svcName
+        let signingKey = Metadata.getSigningKey(key)
         if (signingKey) {
             return signingKey
         }

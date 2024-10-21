@@ -8,12 +8,13 @@ export class ZGServingUserBrokerBase {
         this.config = config;
     }
     async getProviderData(providerAddress) {
-        const [nonce, outputFee, privateKey] = await Promise.all([
-            Metadata.getNonce(providerAddress),
-            Metadata.getOutputFee(providerAddress),
-            Metadata.getPrivateKey(providerAddress),
+        const key = this.contract.getUserAddress() + providerAddress;
+        const [nonce, outputFee, zkPrivateKey] = await Promise.all([
+            Metadata.getNonce(key),
+            Metadata.getOutputFee(key),
+            Metadata.getZKPrivateKey(key),
         ]);
-        return { nonce, outputFee, privateKey };
+        return { nonce, outputFee, zkPrivateKey };
     }
     async getService(providerAddress, svcName, useCache = true) {
         const key = providerAddress + svcName;

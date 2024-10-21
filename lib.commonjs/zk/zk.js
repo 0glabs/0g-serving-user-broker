@@ -1,21 +1,31 @@
 "use strict";
-// import { signData, getSignKeyPair } from '0g-zksettlement/server/client'
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createKey = createKey;
 exports.sign = sign;
+const _0g_zk_settlement_client_1 = require("0g-zk-settlement-client");
 async function createKey() {
-    const privateKey = Math.floor(Math.random() * 10000);
-    return new Promise((resolve, reject) => {
-        return resolve([BigInt(privateKey)]);
-    });
-    // const keyPair = await getSignKeyPair()
-    // return keyPair.privkey as bigint[]
+    let keyPair;
+    try {
+        keyPair = await (0, _0g_zk_settlement_client_1.genKeyPair)();
+        return [
+            [keyPair.packPrivkey0, keyPair.packPrivkey1],
+            [keyPair.packedPubkey0, keyPair.packedPubkey1],
+        ];
+    }
+    catch (error) {
+        console.error('Create ZK key error', error);
+        throw error;
+    }
 }
 async function sign(requests, privateKey) {
-    return new Promise((resolve, reject) => {
-        return resolve(privateKey.toString());
-    });
-    // const signatures = await signData(requests, privateKey)
-    // return signatures.toString()
+    let signatures;
+    try {
+        signatures = await (0, _0g_zk_settlement_client_1.signData)(requests, privateKey);
+        const jsonString = JSON.stringify(Array.from(signatures[0]));
+        return jsonString;
+    }
+    catch (error) {
+        throw error;
+    }
 }
 //# sourceMappingURL=zk.js.map

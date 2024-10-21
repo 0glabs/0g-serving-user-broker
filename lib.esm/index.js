@@ -1,2 +1,2 @@
-export { createZGServingUserBroker, ZGServingUserBroker, RequestProcessor, ResponseProcessor, Verifier, } from './broker';
+export { AccountProcessor, createZGServingUserBroker, RequestProcessor, ResponseProcessor, Verifier, ZGServingUserBroker, } from './broker';
 //# sourceMappingURL=index.js.map

@@ -1,3 +1,3 @@
 export { AccountStructOutput, ServiceStructOutput } from './contract';
-export { createZGServingUserBroker, ZGServingUserBroker, ZGServingUserBrokerConfig, RequestProcessor, ResponseProcessor, ServingRequestHeaders, Verifier, SingerRAVerificationResult, } from './broker';
+export { AccountProcessor, createZGServingUserBroker, RequestProcessor, ResponseProcessor, ServingRequestHeaders, SingerRAVerificationResult, Verifier, ZGServingUserBroker, ZGServingUserBrokerConfig, } from './broker';
 //# sourceMappingURL=index.d.ts.map

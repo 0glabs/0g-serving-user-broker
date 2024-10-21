@@ -50,7 +50,6 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
      * @returns headers。记录着请求的费用、用户签名等信息。
      */
     processRequest(providerAddress: string, svcName: string, content: string): Promise<ServingRequestHeaders>;
-    private createAndStoreKey;
     private calculateFees;
 }
 //# sourceMappingURL=request.d.ts.map
