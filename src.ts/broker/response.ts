@@ -29,9 +29,14 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
     ): Promise<boolean> {
         const extractor = await this.getExtractor(providerAddress, svcName)
         const outputFee = await this.calculateOutputFees(extractor, content)
-        Metadata.storeOutputFee(providerAddress, outputFee)
+        Metadata.storeOutputFee(
+            this.contract.getUserAddress() + providerAddress,
+            outputFee
+        )
 
-        const signingAddress = Metadata.getSigningKey(providerAddress + svcName)
+        const signingAddress = Metadata.getSigningKey(
+            this.contract.getUserAddress() + providerAddress + svcName
+        )
         if (!signingAddress) {
             const error = new Error(
                 'signing key does not exist, make sure the signer of the service has been verified'

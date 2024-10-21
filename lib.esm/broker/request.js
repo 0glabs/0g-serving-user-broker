@@ -1,6 +1,7 @@
 import { Metadata } from '../storage';
-import { createKey, sign } from '../zk';
+import { sign } from '../zk';
 import { ZGServingUserBrokerBase } from './base';
+import { Request } from '0g-zk-settlement-client';
 import { REQUEST_LENGTH } from './const';
 /**
  * RequestProcessor 为 ZGServingUserBroker 的子类
@@ -22,18 +23,18 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
      */
     async processRequest(providerAddress, svcName, content) {
         const extractor = await this.getExtractor(providerAddress, svcName);
-        const { nonce, outputFee, privateKey } = await this.getProviderData(providerAddress);
+        const { nonce, outputFee, zkPrivateKey } = await this.getProviderData(providerAddress);
+        if (!zkPrivateKey) {
+            const error = new Error('Miss private key for signing request');
+            console.error(error);
+            throw error;
+        }
         const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH;
-        Metadata.storeNonce(providerAddress, updatedNonce);
-        const svcPrivateKey = privateKey ?? (await this.createAndStoreKey(providerAddress));
+        const key = this.contract.getUserAddress() + providerAddress;
+        Metadata.storeNonce(key, updatedNonce);
         const { fee, inputFee } = await this.calculateFees(extractor, content, outputFee);
-        const zkInput = {
-            fee,
-            nonce: updatedNonce,
-            providerAddress,
-            userAddress: this.contract.getUserAddress(),
-        };
-        const sig = await sign(zkInput, svcPrivateKey);
+        const zkInput = new Request(fee.toString(), updatedNonce.toString(), this.contract.getUserAddress(), providerAddress);
+        const sig = await sign([zkInput], zkPrivateKey);
         return {
             Address: this.contract.getUserAddress(),
             Fee: zkInput.fee.toString(),
@@ -43,11 +44,6 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             'Service-Name': svcName,
             Signature: sig,
         };
-    }
-    async createAndStoreKey(providerAddress) {
-        const privateKey = await createKey();
-        Metadata.storePrivateKey(providerAddress, privateKey);
-        return privateKey;
     }
     async calculateFees(extractor, content, outputFee) {
         const svc = await extractor.getSvcInfo();

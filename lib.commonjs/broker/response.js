@@ -24,8 +24,8 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
     async processResponse(providerAddress, svcName, content, chatID) {
         const extractor = await this.getExtractor(providerAddress, svcName);
         const outputFee = await this.calculateOutputFees(extractor, content);
-        storage_1.Metadata.storeOutputFee(providerAddress, outputFee);
-        const signingAddress = storage_1.Metadata.getSigningKey(providerAddress + svcName);
+        storage_1.Metadata.storeOutputFee(this.contract.getUserAddress() + providerAddress, outputFee);
+        const signingAddress = storage_1.Metadata.getSigningKey(this.contract.getUserAddress() + providerAddress + svcName);
         if (!signingAddress) {
             const error = new Error('signing key does not exist, make sure the signer of the service has been verified');
             console.error(error.message);

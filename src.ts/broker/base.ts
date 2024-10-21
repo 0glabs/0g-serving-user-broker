@@ -25,12 +25,13 @@ export abstract class ZGServingUserBrokerBase {
     }
 
     protected async getProviderData(providerAddress: string) {
-        const [nonce, outputFee, privateKey] = await Promise.all([
-            Metadata.getNonce(providerAddress),
-            Metadata.getOutputFee(providerAddress),
-            Metadata.getPrivateKey(providerAddress),
+        const key = this.contract.getUserAddress() + providerAddress
+        const [nonce, outputFee, zkPrivateKey] = await Promise.all([
+            Metadata.getNonce(key),
+            Metadata.getOutputFee(key),
+            Metadata.getZKPrivateKey(key),
         ])
-        return { nonce, outputFee, privateKey }
+        return { nonce, outputFee, zkPrivateKey }
     }
 
     protected async getService(

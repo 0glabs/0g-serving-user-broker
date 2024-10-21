@@ -20,7 +20,7 @@
         "format": "prettier --write src.ts/**/*.ts src.ts/*.ts example/**/*.ts",
         "clean": "rm -rf dist lib.esm lib.commonjs types",
         "build": "npm run clean && tsc -b tsconfig.esm.json tsconfig.commonjs.json tsconfig.types.json",
-        "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/serving '../../api/libs/0g-serving-contract/artifacts/contracts/Serving.sol/Serving.json'",
+        "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/serving '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/Serving.sol/Serving.json'",
         "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json"
     },
     "keywords": [],
@@ -39,6 +39,7 @@
         "uglify-js": "^3.17.4"
     },
     "dependencies": {
+        "0g-zk-settlement-client": "https://github.com/0glabs/0g-zk-settlement-client.git",
         "@ethersproject/bytes": "^5.7.0",
         "@ethersproject/keccak256": "^5.7.0",
         "@phala/dcap-qvl-web": "0.1.0-beta.2",

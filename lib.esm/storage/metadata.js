@@ -5,7 +5,7 @@ export class Metadata {
     static storeOutputFee(key, value) {
         localStorage.setItem(`${key}_outputFee`, value.toString());
     }
-    static storePrivateKey(key, value) {
+    static storeZKPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
         localStorage.setItem(`${key}_privateKey`, bigIntJsonString);
@@ -21,7 +21,7 @@ export class Metadata {
         const value = localStorage.getItem(`${key}_outputFee`);
         return value ? parseInt(value, 10) : null;
     }
-    static getPrivateKey(key) {
+    static getZKPrivateKey(key) {
         const value = localStorage.getItem(`${key}_privateKey`);
         if (!value) {
             return null;
@@ -33,11 +33,5 @@ export class Metadata {
         const value = localStorage.getItem(`${key}_signingKey`);
         return value ?? null;
     }
-}
-export function getMetaData(key) {
-    const nonce = Metadata.getNonce(key);
-    const outputFee = Metadata.getOutputFee(key);
-    const privateKey = Metadata.getPrivateKey(key);
-    return { nonce, outputFee, privateKey };
 }
 //# sourceMappingURL=metadata.js.map

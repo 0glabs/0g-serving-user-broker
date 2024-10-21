@@ -7,7 +7,7 @@ export class Metadata {
         localStorage.setItem(`${key}_outputFee`, value.toString())
     }
 
-    static storePrivateKey(key: string, value: bigint[]) {
+    static storeZKPrivateKey(key: string, value: bigint[]) {
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
         localStorage.setItem(`${key}_privateKey`, bigIntJsonString)
@@ -27,7 +27,7 @@ export class Metadata {
         return value ? parseInt(value, 10) : null
     }
 
-    static getPrivateKey(key: string): bigint[] | null {
+    static getZKPrivateKey(key: string): bigint[] | null {
         const value: string | null = localStorage.getItem(`${key}_privateKey`)
         if (!value) {
             return null
@@ -40,11 +40,4 @@ export class Metadata {
         const value = localStorage.getItem(`${key}_signingKey`)
         return value ?? null
     }
-}
-
-export function getMetaData(key: string) {
-    const nonce = Metadata.getNonce(key)
-    const outputFee = Metadata.getOutputFee(key)
-    const privateKey = Metadata.getPrivateKey(key)
-    return { nonce, outputFee, privateKey }
 }

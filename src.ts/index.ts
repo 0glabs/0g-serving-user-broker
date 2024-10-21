@@ -1,11 +1,12 @@
 export { AccountStructOutput, ServiceStructOutput } from './contract'
 export {
+    AccountProcessor,
     createZGServingUserBroker,
-    ZGServingUserBroker,
-    ZGServingUserBrokerConfig,
     RequestProcessor,
     ResponseProcessor,
     ServingRequestHeaders,
-    Verifier,
     SingerRAVerificationResult,
+    Verifier,
+    ZGServingUserBroker,
+    ZGServingUserBrokerConfig,
 } from './broker'

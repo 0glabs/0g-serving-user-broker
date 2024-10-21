@@ -1,7 +1,8 @@
 import { Extractor } from '../extractor'
 import { Metadata } from '../storage'
-import { createKey, sign, ZKRequest } from '../zk'
+import { sign } from '../zk'
 import { ZGServingUserBrokerBase } from './base'
+import { Request } from '0g-zk-settlement-client'
 import { REQUEST_LENGTH } from './const'
 
 /**
@@ -62,15 +63,19 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
     ): Promise<ServingRequestHeaders> {
         const extractor = await this.getExtractor(providerAddress, svcName)
 
-        const { nonce, outputFee, privateKey } = await this.getProviderData(
+        const { nonce, outputFee, zkPrivateKey } = await this.getProviderData(
             providerAddress
         )
 
-        const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
-        Metadata.storeNonce(providerAddress, updatedNonce)
+        if (!zkPrivateKey) {
+            const error = new Error('Miss private key for signing request')
+            console.error(error)
+            throw error
+        }
 
-        const svcPrivateKey =
-            privateKey ?? (await this.createAndStoreKey(providerAddress))
+        const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
+        const key = this.contract.getUserAddress() + providerAddress
+        Metadata.storeNonce(key, updatedNonce)
 
         const { fee, inputFee } = await this.calculateFees(
             extractor,
@@ -78,13 +83,13 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             outputFee
         )
 
-        const zkInput: ZKRequest = {
-            fee,
-            nonce: updatedNonce,
-            providerAddress,
-            userAddress: this.contract.getUserAddress(),
-        }
-        const sig = await sign(zkInput, svcPrivateKey)
+        const zkInput = new Request(
+            fee.toString(),
+            updatedNonce.toString(),
+            this.contract.getUserAddress(),
+            providerAddress
+        )
+        const sig = await sign([zkInput], zkPrivateKey)
 
         return {
             Address: this.contract.getUserAddress(),
@@ -95,14 +100,6 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             'Service-Name': svcName,
             Signature: sig,
         }
-    }
-
-    private async createAndStoreKey(
-        providerAddress: string
-    ): Promise<bigint[]> {
-        const privateKey = await createKey()
-        Metadata.storePrivateKey(providerAddress, privateKey)
-        return privateKey
     }
 
     private async calculateFees(

@@ -11,12 +11,13 @@ class ZGServingUserBrokerBase {
         this.config = config;
     }
     async getProviderData(providerAddress) {
-        const [nonce, outputFee, privateKey] = await Promise.all([
-            storage_1.Metadata.getNonce(providerAddress),
-            storage_1.Metadata.getOutputFee(providerAddress),
-            storage_1.Metadata.getPrivateKey(providerAddress),
+        const key = this.contract.getUserAddress() + providerAddress;
+        const [nonce, outputFee, zkPrivateKey] = await Promise.all([
+            storage_1.Metadata.getNonce(key),
+            storage_1.Metadata.getOutputFee(key),
+            storage_1.Metadata.getZKPrivateKey(key),
         ]);
-        return { nonce, outputFee, privateKey };
+        return { nonce, outputFee, zkPrivateKey };
     }
     async getService(providerAddress, svcName, useCache = true) {
         const key = providerAddress + svcName;

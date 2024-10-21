@@ -24,7 +24,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         const extractor = await this.getExtractor(providerAddress, svcName, false);
         const svc = await extractor.getSvcInfo();
         const signerRA = await Verifier.fetSignerRA(svc.url, svc.name);
-        storage_1.Metadata.storeSigningKey(providerAddress + svcName, signerRA.signing_address);
+        const key = this.contract.getUserAddress() + providerAddress + svcName;
+        storage_1.Metadata.storeSigningKey(key, signerRA.signing_address);
         const dcapPayload = JSON.parse(signerRA.dcap_payload);
         const valid = await this.verifyRA(dcapPayload);
         return {
@@ -40,7 +41,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
      * @returns 第一返回为布尔值。True 代表返回 signer RA 合法，反之不合法。第二个返回为 signer 的 address。
      */
     async getSigningAddress(providerAddress, svcName) {
-        let signingKey = storage_1.Metadata.getSigningKey(providerAddress + svcName);
+        const key = this.contract.getUserAddress() + providerAddress + svcName;
+        let signingKey = storage_1.Metadata.getSigningKey(key);
         if (signingKey) {
             return signingKey;
         }

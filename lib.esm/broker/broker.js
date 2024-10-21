@@ -2,10 +2,12 @@ import { ServingContract } from '../contract';
 import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
+import { AccountProcessor } from './account';
 export class ZGServingUserBroker {
     requestProcessor;
     responseProcessor;
     verifier;
+    accountProcessor;
     signer;
     contractAddress;
     config;
@@ -25,6 +27,7 @@ export class ZGServingUserBroker {
         const contract = new ServingContract(this.signer, this.contractAddress, userAddress);
         this.requestProcessor = new RequestProcessor(contract, this.config);
         this.responseProcessor = new ResponseProcessor(contract, this.config);
+        this.accountProcessor = new AccountProcessor(contract, this.config);
         this.verifier = new Verifier(contract, this.config);
     }
 }
@@ -34,7 +37,7 @@ export class ZGServingUserBroker {
  * @param signer - ethers.js 的 Signer。
  * @param contractAddress - 0G Serving 合约地址。
  * @param config - 0G Serving 的配置文件。
- * @returns headers。记录着请求的费用、用户签名等信息。
+ * @returns broker 实例。
  */
 export async function createZGServingUserBroker(signer, contractAddress, config) {
     const broker = new ZGServingUserBroker(signer, contractAddress, config);

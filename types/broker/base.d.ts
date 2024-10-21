@@ -19,7 +19,7 @@ export declare abstract class ZGServingUserBrokerBase {
     protected getProviderData(providerAddress: string): Promise<{
         nonce: number | null;
         outputFee: number | null;
-        privateKey: bigint[] | null;
+        zkPrivateKey: bigint[] | null;
     }>;
     protected getService(providerAddress: string, svcName: string, useCache?: boolean): Promise<ServiceStructOutput>;
     protected getExtractor(providerAddress: string, svcName: string, useCache?: boolean): Promise<Extractor>;
