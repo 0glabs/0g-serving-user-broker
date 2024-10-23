@@ -73,6 +73,7 @@ export type ServiceStruct = {
   inputPrice: BigNumberish;
   outputPrice: BigNumberish;
   updatedAt: BigNumberish;
+  model: string;
 };
 
 export type ServiceStructOutput = [
@@ -82,7 +83,8 @@ export type ServiceStructOutput = [
   url: string,
   inputPrice: bigint,
   outputPrice: bigint,
-  updatedAt: bigint
+  updatedAt: bigint,
+  model: string
 ] & {
   provider: string;
   name: string;
@@ -91,6 +93,7 @@ export type ServiceStructOutput = [
   inputPrice: bigint;
   outputPrice: bigint;
   updatedAt: bigint;
+  model: string;
 };
 
 export type VerifierInputStruct = {
@@ -152,7 +155,7 @@ export interface ServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "addOrUpdateService",
-    values: [string, string, string, BigNumberish, BigNumberish]
+    values: [string, string, string, string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "batchVerifierAddress",
@@ -366,7 +369,8 @@ export namespace ServiceUpdatedEvent {
     url: string,
     inputPrice: BigNumberish,
     outputPrice: BigNumberish,
-    updatedAt: BigNumberish
+    updatedAt: BigNumberish,
+    model: string
   ];
   export type OutputTuple = [
     service: string,
@@ -375,7 +379,8 @@ export namespace ServiceUpdatedEvent {
     url: string,
     inputPrice: bigint,
     outputPrice: bigint,
-    updatedAt: bigint
+    updatedAt: bigint,
+    model: string
   ];
   export interface OutputObject {
     service: string;
@@ -385,6 +390,7 @@ export namespace ServiceUpdatedEvent {
     inputPrice: bigint;
     outputPrice: bigint;
     updatedAt: bigint;
+    model: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -446,6 +452,7 @@ export interface Serving extends BaseContract {
       name: string,
       serviceType: string,
       url: string,
+      model: string,
       inputPrice: BigNumberish,
       outputPrice: BigNumberish
     ],
@@ -547,6 +554,7 @@ export interface Serving extends BaseContract {
       name: string,
       serviceType: string,
       url: string,
+      model: string,
       inputPrice: BigNumberish,
       outputPrice: BigNumberish
     ],
@@ -721,7 +729,7 @@ export interface Serving extends BaseContract {
       ServiceRemovedEvent.OutputObject
     >;
 
-    "ServiceUpdated(address,string,string,string,uint256,uint256,uint256)": TypedContractEvent<
+    "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string)": TypedContractEvent<
       ServiceUpdatedEvent.InputTuple,
       ServiceUpdatedEvent.OutputTuple,
       ServiceUpdatedEvent.OutputObject

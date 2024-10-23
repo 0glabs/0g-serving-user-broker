@@ -54,6 +54,7 @@ export class ServingContract {
         name: string,
         serviceType: string,
         url: string,
+        model: string,
         inputPrice: BigNumberish,
         outputPrice: BigNumberish
     ) {
@@ -62,6 +63,7 @@ export class ServingContract {
                 name,
                 serviceType,
                 url,
+                model,
                 inputPrice,
                 outputPrice
             )

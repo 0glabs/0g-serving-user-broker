@@ -53,6 +53,7 @@ export class Cache {
             inputPrice: fields[4],
             outputPrice: fields[5],
             updatedAt: fields[6],
+            model: fields[7],
         };
         return Object.assign(tuple, object);
     }

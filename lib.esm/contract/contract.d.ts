@@ -9,7 +9,7 @@ export declare class ServingContract {
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<import(".").AccountStructOutput[]>;
     getAccount(user: AddressLike, provider: AddressLike): Promise<import(".").AccountStructOutput>;
-    addOrUpdateService(name: string, serviceType: string, url: string, inputPrice: BigNumberish, outputPrice: BigNumberish): Promise<void>;
+    addOrUpdateService(name: string, serviceType: string, url: string, model: string, inputPrice: BigNumberish, outputPrice: BigNumberish): Promise<void>;
     addAccount(providerAddress: AddressLike, signer: [BigNumberish, BigNumberish], balance: string): Promise<void>;
     depositFund(providerAddress: AddressLike, balance: string): Promise<void>;
     getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;

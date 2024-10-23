@@ -9,6 +9,6 @@ export declare class Cache {
     static removeItem(key: string): void;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
-    static createServiceStructOutput(fields: [string, string, string, string, bigint, bigint, bigint]): ServiceStructOutput;
+    static createServiceStructOutput(fields: [string, string, string, string, bigint, bigint, bigint, string]): ServiceStructOutput;
 }
 //# sourceMappingURL=cache.d.ts.map
