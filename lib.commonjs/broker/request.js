@@ -32,11 +32,12 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             console.error(error);
             throw error;
         }
+        console.log('nonce', nonce);
         const updatedNonce = !nonce ? 1 : nonce + const_1.REQUEST_LENGTH;
         const key = this.contract.getUserAddress() + providerAddress;
         storage_1.Metadata.storeNonce(key, updatedNonce);
         const { fee, inputFee } = await this.calculateFees(extractor, content, outputFee);
-        const zkInput = new _0g_zk_settlement_client_1.Request(fee.toString(), updatedNonce.toString(), this.contract.getUserAddress(), providerAddress);
+        const zkInput = new _0g_zk_settlement_client_1.Request(updatedNonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
         const sig = await (0, zk_1.sign)([zkInput], zkPrivateKey);
         return {
             Address: this.contract.getUserAddress(),

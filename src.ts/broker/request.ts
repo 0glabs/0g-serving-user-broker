@@ -84,11 +84,12 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         )
 
         const zkInput = new Request(
-            fee.toString(),
             updatedNonce.toString(),
+            fee.toString(),
             this.contract.getUserAddress(),
             providerAddress
         )
+
         const sig = await sign([zkInput], zkPrivateKey)
 
         return {
