@@ -7,11 +7,13 @@ const request_1 = require("./request");
 const response_1 = require("./response");
 const verifier_1 = require("./verifier");
 const account_1 = require("./account");
+const model_1 = require("./model");
 class ZGServingUserBroker {
     requestProcessor;
     responseProcessor;
     verifier;
     accountProcessor;
+    modelProcessor;
     signer;
     contractAddress;
     config;
@@ -32,6 +34,7 @@ class ZGServingUserBroker {
         this.requestProcessor = new request_1.RequestProcessor(contract, this.config);
         this.responseProcessor = new response_1.ResponseProcessor(contract, this.config);
         this.accountProcessor = new account_1.AccountProcessor(contract, this.config);
+        this.modelProcessor = new model_1.ModelProcessor(contract, this.config);
         this.verifier = new verifier_1.Verifier(contract, this.config);
     }
 }

@@ -5,16 +5,6 @@ import { createKey } from '../zk';
  * AccountProcessor 包含对 0G Serving Account 的创建，充值和获取的方法。
  */
 export class AccountProcessor extends ZGServingUserBrokerBase {
-    async listService() {
-        try {
-            const services = await this.contract.listService();
-            return services;
-        }
-        catch (error) {
-            console.error('List Service Error:', error);
-            throw error;
-        }
-    }
     async getAccount(user, provider) {
         try {
             const accounts = await this.contract.getAccount(user, provider);

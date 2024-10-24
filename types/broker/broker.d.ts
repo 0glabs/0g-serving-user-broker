@@ -4,11 +4,13 @@ import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
 import { ZGServingUserBrokerConfig } from './base';
 import { AccountProcessor } from './account';
+import { ModelProcessor } from './model';
 export declare class ZGServingUserBroker {
     requestProcessor: RequestProcessor;
     responseProcessor: ResponseProcessor;
     verifier: Verifier;
     accountProcessor: AccountProcessor;
+    modelProcessor: ModelProcessor;
     private signer;
     private contractAddress;
     private config;

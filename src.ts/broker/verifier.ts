@@ -51,6 +51,7 @@ export class Verifier extends ZGServingUserBrokerBase {
             false
         )
         const svc = await extractor.getSvcInfo()
+
         const signerRA = await Verifier.fetSignerRA(svc.url, svc.name)
 
         const key = this.contract.getUserAddress() + providerAddress + svcName

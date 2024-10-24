@@ -4,7 +4,6 @@ import { AddressLike } from 'ethers';
  * AccountProcessor 包含对 0G Serving Account 的创建，充值和获取的方法。
  */
 export declare class AccountProcessor extends ZGServingUserBrokerBase {
-    listService(): Promise<import("..").ServiceStructOutput[]>;
     getAccount(user: AddressLike, provider: AddressLike): Promise<import("..").AccountStructOutput>;
     listAccount(): Promise<import("..").AccountStructOutput[]>;
     /**
