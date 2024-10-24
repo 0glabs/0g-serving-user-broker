@@ -47,6 +47,9 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
+        console.log('providerAddress', providerAddress);
+        console.log('zkSignerPublicKey', zkSignerPublicKey);
+        console.log('balance', balance);
         try {
             await this.contract.addAccount(providerAddress, zkSignerPublicKey, balance);
         }
