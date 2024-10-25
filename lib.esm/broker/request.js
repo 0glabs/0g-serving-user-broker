@@ -29,7 +29,6 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             console.error(error);
             throw error;
         }
-        console.log('nonce', nonce);
         const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH;
         const key = this.contract.getUserAddress() + providerAddress;
         Metadata.storeNonce(key, updatedNonce);

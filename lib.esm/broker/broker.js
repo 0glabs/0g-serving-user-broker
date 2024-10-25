@@ -3,11 +3,13 @@ import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
 import { AccountProcessor } from './account';
+import { ModelProcessor } from './model';
 export class ZGServingUserBroker {
     requestProcessor;
     responseProcessor;
     verifier;
     accountProcessor;
+    modelProcessor;
     signer;
     contractAddress;
     config;
@@ -28,6 +30,7 @@ export class ZGServingUserBroker {
         this.requestProcessor = new RequestProcessor(contract, this.config);
         this.responseProcessor = new ResponseProcessor(contract, this.config);
         this.accountProcessor = new AccountProcessor(contract, this.config);
+        this.modelProcessor = new ModelProcessor(contract, this.config);
         this.verifier = new Verifier(contract, this.config);
     }
 }

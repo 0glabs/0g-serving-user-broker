@@ -5,12 +5,14 @@ import { ResponseProcessor } from './response'
 import { Verifier } from './verifier'
 import { ZGServingUserBrokerConfig } from './base'
 import { AccountProcessor } from './account'
+import { ModelProcessor } from './model'
 
 export class ZGServingUserBroker {
     public requestProcessor!: RequestProcessor
     public responseProcessor!: ResponseProcessor
     public verifier!: Verifier
     public accountProcessor!: AccountProcessor
+    public modelProcessor!: ModelProcessor
 
     private signer: JsonRpcSigner
     private contractAddress: string
@@ -41,6 +43,7 @@ export class ZGServingUserBroker {
         this.requestProcessor = new RequestProcessor(contract, this.config)
         this.responseProcessor = new ResponseProcessor(contract, this.config)
         this.accountProcessor = new AccountProcessor(contract, this.config)
+        this.modelProcessor = new ModelProcessor(contract, this.config)
         this.verifier = new Verifier(contract, this.config)
     }
 }
