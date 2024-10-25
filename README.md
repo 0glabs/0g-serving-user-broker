@@ -65,7 +65,22 @@ To integrate the 0G Serving Broker into your project, follow these steps
     broker.createAccount(providerAddress)
 
     /**
-     * UseCase 3. Generate billing-related headers for requests
+     * UseCase 3. List Models.
+     *
+     * @returns A list Models.
+     */
+    const result = broker.modelProcessor.listModels()
+
+    /**
+     * UseCase 4. Get model by name.
+     *
+     * @param name - The name of the model.
+     * @returns Model detail and provider list.
+     */
+    const result = broker.modelProcessor.getModel(name)
+
+    /**
+     * UseCase 5. Generate billing-related headers for requests
      * when a user utilizes the provider service.
      *
      * In the 0G Serving system, a request with valid billing headers
@@ -86,7 +101,7 @@ To integrate the 0G Serving Broker into your project, follow these steps
     )
 
     /**
-     * UseCase 4. Used after a user successfully receives a response from the provider service.
+     * UseCase 6. Used after a user successfully receives a response from the provider service.
      * It verifies the legitimacy of the response content by checking the provider service's response
      * and the corresponding signature.
      *
@@ -107,7 +122,7 @@ To integrate the 0G Serving Broker into your project, follow these steps
     )
 
     /**
-     * UseCase 5. Checks whether the RA corresponding to the signer's signing address is legitimate.
+     * UseCase 7. Checks whether the RA corresponding to the signer's signing address is legitimate.
      *
      * It also stores the signing address of the RA in localStorage and returns it.
      *
@@ -128,3 +143,7 @@ To integrate the 0G Serving Broker into your project, follow these steps
 Access the more details of interfaces via opening [index.html](./docs/index.html) in browser.
 
 By following the above steps, you will set up the 0G Serving Broker in your project correctly. Refer to the [example](https://github.com/Ravenyjh/serving-demo) and [video](https://raven.neetorecord.com/watch/3a4f134d-2c52-4cb7-b4ce-e02a8cefc2f1) for detailed usage instructions and additional information.
+
+## Demo For Dev Hub Day
+
+Only functions in Step 1, Step 2, UseCase 3-6 are needed
