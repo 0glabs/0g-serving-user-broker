@@ -38,7 +38,18 @@ export interface ZGServingModel {
  */
 export declare class ModelProcessor extends ZGServingUserBrokerBase {
     listService(): Promise<ServiceStructOutput[]>;
+    /**
+     * listModels 列出 models
+     *
+     * @returns models
+     */
     listModels(): Promise<ZGServingModel[]>;
+    /**
+     * getModel 得到 model 的详细信息，以及下属 provider 列表
+     *
+     * @param name - model 名称。
+     * @returns headers。记录着请求的费用、用户签名等信息。
+     */
     getModel(name: string): Promise<ZGServingModel>;
     static groupByModel(items: ServiceStructOutput[]): ZGServingModel[];
     static parseService(service: ServiceStructOutput): ZGService;

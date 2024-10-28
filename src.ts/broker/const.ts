@@ -21,7 +21,7 @@ export interface ModelLib {
 
 export const MODEL_LIB: ModelLib = {
     'llama-3.1-8B-Instruct': {
-        Name: 'llama-3.1-8b',
+        Name: 'llama-3.1-8B-Instruct',
         Type: ModelTypeEnum.Chat,
         Author: 'meta',
         Description:

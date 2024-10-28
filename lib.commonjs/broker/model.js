@@ -23,6 +23,11 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
+    /**
+     * listModels 列出 models
+     *
+     * @returns models
+     */
     async listModels() {
         try {
             const services = await this.listService();
@@ -32,6 +37,12 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
+    /**
+     * getModel 得到 model 的详细信息，以及下属 provider 列表
+     *
+     * @param name - model 名称。
+     * @returns headers。记录着请求的费用、用户签名等信息。
+     */
     async getModel(name) {
         try {
             const model = (await this.listModels())?.find((model) => model.Name === name);

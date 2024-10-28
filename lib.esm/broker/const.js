@@ -6,7 +6,7 @@ export var ModelTypeEnum;
 })(ModelTypeEnum || (ModelTypeEnum = {}));
 export const MODEL_LIB = {
     'llama-3.1-8B-Instruct': {
-        Name: 'llama-3.1-8b',
+        Name: 'llama-3.1-8B-Instruct',
         Type: ModelTypeEnum.Chat,
         Author: 'meta',
         Description: 'The Meta Llama 3.1 collection includes the Llama-3.1-8B-Instruct, a multilingual large language model optimized for dialogue use cases. This 8 billion parameter model is pretrained and instruction tuned to excel in text-based interaction across multiple languages. It outperforms many available open source and closed chat models on common industry benchmarks.',
