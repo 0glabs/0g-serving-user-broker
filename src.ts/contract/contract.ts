@@ -1,4 +1,4 @@
-import { JsonRpcSigner, BigNumberish, parseEther, AddressLike } from 'ethers'
+import { JsonRpcSigner, BigNumberish, AddressLike } from 'ethers'
 import { Serving, Serving__factory } from './serving'
 import { ServiceStructOutput } from './serving/Serving'
 
@@ -111,7 +111,7 @@ export class ServingContract {
     async depositFund(providerAddress: AddressLike, balance: string) {
         try {
             const tx = await this.serving.depositFund(providerAddress, {
-                value: parseEther(balance),
+                value: balance,
             })
 
             const receipt = await tx.wait()

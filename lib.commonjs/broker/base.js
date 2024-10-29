@@ -27,7 +27,7 @@ class ZGServingUserBrokerBase {
         }
         try {
             const svc = await this.contract.getService(providerAddress, svcName);
-            storage_1.Cache.setItem(key, svc, 5 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
+            storage_1.Cache.setItem(key, svc, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
             return svc;
         }
         catch (error) {

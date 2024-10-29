@@ -1,4 +1,3 @@
-import { parseEther } from 'ethers';
 import { Serving__factory } from './serving';
 export class ServingContract {
     serving;
@@ -81,7 +80,7 @@ export class ServingContract {
     async depositFund(providerAddress, balance) {
         try {
             const tx = await this.serving.depositFund(providerAddress, {
-                value: parseEther(balance),
+                value: balance,
             });
             const receipt = await tx.wait();
             if (receipt?.status === 1) {

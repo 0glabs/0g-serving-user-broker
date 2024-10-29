@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServingContract = void 0;
-const ethers_1 = require("ethers");
 const serving_1 = require("./serving");
 class ServingContract {
     serving;
@@ -84,7 +83,7 @@ class ServingContract {
     async depositFund(providerAddress, balance) {
         try {
             const tx = await this.serving.depositFund(providerAddress, {
-                value: (0, ethers_1.parseEther)(balance),
+                value: balance,
             });
             const receipt = await tx.wait();
             if (receipt?.status === 1) {

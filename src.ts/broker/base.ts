@@ -47,7 +47,7 @@ export abstract class ZGServingUserBrokerBase {
 
         try {
             const svc = await this.contract.getService(providerAddress, svcName)
-            Cache.setItem(key, svc, 5 * 60 * 1000, CacheValueTypeEnum.Service)
+            Cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service)
             return svc
         } catch (error) {
             throw error
