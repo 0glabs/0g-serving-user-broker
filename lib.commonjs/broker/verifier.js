@@ -4,6 +4,7 @@ exports.Verifier = void 0;
 const storage_1 = require("../storage");
 const base_1 = require("./base");
 const ethers_1 = require("ethers");
+const dcap_qvl_web_1 = require("@phala/dcap-qvl-web");
 /**
  * Verifier 中包含服务可靠性验证的方法。
  */
@@ -25,16 +26,12 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         const signerRA = await Verifier.fetSignerRA(svc.url, svc.name);
         const key = this.contract.getUserAddress() + providerAddress + svcName;
         storage_1.Metadata.storeSigningKey(key, signerRA.signing_address);
-        // const dcapPayload = JSON.parse(signerRA.dcap_payload)
+        const dcapPayload = JSON.parse(signerRA.dcap_payload);
+        const valid = await this.verifyRA(dcapPayload);
         return {
-            valid: true,
+            valid,
             signingAddress: signerRA.signing_address,
         };
-        // const valid = await this.verifyRA(dcapPayload)
-        // return {
-        //     valid,
-        //     signingAddress: signerRA.signing_address,
-        // }
     }
     /**
      * getSigningAddress 返回 signing address。
@@ -100,32 +97,29 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         }
         return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`;
     }
-    // private async verifyRA(dcapPayload: any): Promise<boolean> {
-    //     if (!this.config?.dcapWasmPath) {
-    //         const error = new Error('Missing dcapWasmPath in config')
-    //         console.error(error.message)
-    //         throw error
-    //     }
-    //     const rawQuote = new Uint8Array(
-    //         Buffer.from(dcapPayload.quote, 'base64')
-    //     )
-    //     const quoteCollateral = new Uint8Array(
-    //         Buffer.from(dcapPayload.collaterals, 'base64')
-    //     )
-    //     const now = BigInt(Math.floor(Date.now() / 1000))
-    //     const response = await fetch(this.config.dcapWasmPath)
-    //     const wasmArrayBuffer = await response.arrayBuffer()
-    //     await initSync(wasmArrayBuffer)
-    //     try {
-    //         js_verify(rawQuote, quoteCollateral, now)
-    //         return true
-    //     } catch (error) {
-    //         if (error instanceof Error) {
-    //             console.error(error.message)
-    //         }
-    //         return false
-    //     }
-    // }
+    async verifyRA(dcapPayload) {
+        if (!this.config?.dcapWasmPath) {
+            const error = new Error('Missing dcapWasmPath in config');
+            console.error(error.message);
+            throw error;
+        }
+        const rawQuote = new Uint8Array(Buffer.from(dcapPayload.quote, 'base64'));
+        const quoteCollateral = new Uint8Array(Buffer.from(dcapPayload.collaterals, 'base64'));
+        const now = BigInt(Math.floor(Date.now() / 1000));
+        const response = await fetch(this.config.dcapWasmPath);
+        const wasmArrayBuffer = await response.arrayBuffer();
+        await (0, dcap_qvl_web_1.initSync)(wasmArrayBuffer);
+        try {
+            (0, dcap_qvl_web_1.js_verify)(rawQuote, quoteCollateral, now);
+            return true;
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                console.error(error.message);
+            }
+            return false;
+        }
+    }
     static async fetSignerRA(providerBrokerURL, svcName) {
         return fetch(`${providerBrokerURL}/v1/proxy/${svcName}/attestation/report`, {
             method: 'GET',
