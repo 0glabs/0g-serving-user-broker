@@ -63,7 +63,6 @@ export declare class Verifier extends ZGServingUserBrokerBase {
      * @returns 下载链接。
      */
     getChatSignatureDownloadLink(providerAddress: string, svcName: string, chatID: string): Promise<string>;
-    private verifyRA;
     static fetSignerRA(providerBrokerURL: string, svcName: string): Promise<SignerRA>;
     static fetSignatureByChatID(providerBrokerURL: string, svcName: string, chatID: string): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
