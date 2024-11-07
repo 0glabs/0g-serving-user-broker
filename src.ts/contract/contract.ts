@@ -55,6 +55,7 @@ export class ServingContract {
         serviceType: string,
         url: string,
         model: string,
+        verifiability: string,
         inputPrice: BigNumberish,
         outputPrice: BigNumberish
     ) {
@@ -64,6 +65,7 @@ export class ServingContract {
                 serviceType,
                 url,
                 model,
+                verifiability,
                 inputPrice,
                 outputPrice
             )

@@ -42,9 +42,9 @@ class ServingContract {
             throw error;
         }
     }
-    async addOrUpdateService(name, serviceType, url, model, inputPrice, outputPrice) {
+    async addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice) {
         try {
-            const tx = await this.serving.addOrUpdateService(name, serviceType, url, model, inputPrice, outputPrice);
+            const tx = await this.serving.addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice);
             const receipt = await tx.wait();
             if (receipt?.status === 1) {
                 console.log('Transaction was successful!');

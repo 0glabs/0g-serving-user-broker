@@ -52,6 +52,7 @@ export type ServiceStruct = {
     outputPrice: BigNumberish;
     updatedAt: BigNumberish;
     model: string;
+    verifiability: string;
 };
 export type ServiceStructOutput = [
     provider: string,
@@ -61,7 +62,8 @@ export type ServiceStructOutput = [
     inputPrice: bigint,
     outputPrice: bigint,
     updatedAt: bigint,
-    model: string
+    model: string,
+    verifiability: string
 ] & {
     provider: string;
     name: string;
@@ -71,6 +73,7 @@ export type ServiceStructOutput = [
     outputPrice: bigint;
     updatedAt: bigint;
     model: string;
+    verifiability: string;
 };
 export type VerifierInputStruct = {
     inProof: BigNumberish[];
@@ -93,7 +96,7 @@ export interface ServingInterface extends Interface {
     getFunction(nameOrSignature: "addAccount" | "addOrUpdateService" | "batchVerifierAddress" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getService" | "initialize" | "initialized" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefund" | "settleFees" | "transferOwnership" | "updateBatchVerifierAddress" | "updateLockTime"): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, [BigNumberish, BigNumberish]]): string;
-    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, string, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "batchVerifierAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
@@ -214,7 +217,8 @@ export declare namespace ServiceUpdatedEvent {
         inputPrice: BigNumberish,
         outputPrice: BigNumberish,
         updatedAt: BigNumberish,
-        model: string
+        model: string,
+        verifiability: string
     ];
     type OutputTuple = [
         service: string,
@@ -224,7 +228,8 @@ export declare namespace ServiceUpdatedEvent {
         inputPrice: bigint,
         outputPrice: bigint,
         updatedAt: bigint,
-        model: string
+        model: string,
+        verifiability: string
     ];
     interface OutputObject {
         service: string;
@@ -235,6 +240,7 @@ export declare namespace ServiceUpdatedEvent {
         outputPrice: bigint;
         updatedAt: bigint;
         model: string;
+        verifiability: string;
     }
     type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
     type Filter = TypedDeferredTopicFilter<Event>;
@@ -265,6 +271,7 @@ export interface Serving extends BaseContract {
         serviceType: string,
         url: string,
         model: string,
+        verifiability: string,
         inputPrice: BigNumberish,
         outputPrice: BigNumberish
     ], [
@@ -342,6 +349,7 @@ export interface Serving extends BaseContract {
         serviceType: string,
         url: string,
         model: string,
+        verifiability: string,
         inputPrice: BigNumberish,
         outputPrice: BigNumberish
     ], [
@@ -413,7 +421,7 @@ export interface Serving extends BaseContract {
         RefundRequested: TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
         "ServiceRemoved(address,string)": TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
         ServiceRemoved: TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
         ServiceUpdated: TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
     };
 }

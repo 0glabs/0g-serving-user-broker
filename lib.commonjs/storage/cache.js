@@ -57,6 +57,7 @@ class Cache {
             outputPrice: fields[5],
             updatedAt: fields[6],
             model: fields[7],
+            verifiability: fields[8],
         };
         return Object.assign(tuple, object);
     }

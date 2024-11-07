@@ -63,7 +63,17 @@ export class Cache {
     }
 
     static createServiceStructOutput(
-        fields: [string, string, string, string, bigint, bigint, bigint, string]
+        fields: [
+            string,
+            string,
+            string,
+            string,
+            bigint,
+            bigint,
+            bigint,
+            string,
+            string
+        ]
     ): ServiceStructOutput {
         const tuple: [
             string,
@@ -73,6 +83,7 @@ export class Cache {
             bigint,
             bigint,
             bigint,
+            string,
             string
         ] = fields
 
@@ -85,6 +96,7 @@ export class Cache {
             outputPrice: fields[5],
             updatedAt: fields[6],
             model: fields[7],
+            verifiability: fields[8],
         }
 
         return Object.assign(tuple, object)
