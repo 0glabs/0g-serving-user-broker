@@ -59,15 +59,15 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
     }
     static groupByModel(items) {
         const sortedServices = [...items].sort((a, b) => {
-            const nameA = a[1].toLowerCase(); // 提取 `name` 并转换为小写
-            const nameB = b[1].toLowerCase(); // 提取 `name` 并转换为小写
+            const nameA = a[1].toLowerCase();
+            const nameB = b[1].toLowerCase();
             if (nameA < nameB) {
-                return -1; // nameA 比 nameB 排在前面
+                return -1;
             }
             if (nameA > nameB) {
-                return 1; // nameA 比 nameB 排在后面
+                return 1;
             }
-            return 0; // nameA 和 nameB 相等
+            return 0;
         });
         const grouped = sortedServices.reduce((acc, item) => {
             const model = item.model;
