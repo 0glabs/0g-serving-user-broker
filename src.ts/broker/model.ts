@@ -1,6 +1,6 @@
 import { ServiceStructOutput } from '../contract'
 import { ZGServingUserBrokerBase } from './base'
-import { MODEL_LIB } from './const'
+import { MODEL_LIB, MOCK_DATA, MOCK_AREA } from './const'
 
 export enum VerifiabilityEnum {
     Basic = 'Basic',
@@ -93,7 +93,20 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
     }
 
     static groupByModel(items: ServiceStructOutput[]): ZGServingModel[] {
-        const grouped = items.reduce((acc, item) => {
+        const sortedServices = [...items].sort((a, b) => {
+            const nameA = a[1].toLowerCase() // 提取 `name` 并转换为小写
+            const nameB = b[1].toLowerCase() // 提取 `name` 并转换为小写
+
+            if (nameA < nameB) {
+                return -1 // nameA 比 nameB 排在前面
+            }
+            if (nameA > nameB) {
+                return 1 // nameA 比 nameB 排在后面
+            }
+            return 0 // nameA 和 nameB 相等
+        })
+
+        const grouped = sortedServices.reduce((acc, item) => {
             const model = item.model
             if (!MODEL_LIB[model]) {
                 return acc
@@ -131,7 +144,7 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
             ret[i].Price = `$${minPrice}~$${maxPrice}`
         }
 
-        return ret
+        return ret.concat(MOCK_DATA)
     }
 
     static parseService(service: ServiceStructOutput): ZGService {
@@ -153,7 +166,7 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
             URL: service.url,
             // TODO: remove Mock data
             Device: 'H100',
-            Geolocation: 'North America',
+            Geolocation: MOCK_AREA[Math.floor(Math.random() * 5)],
             Uptime: `${(100 - Math.floor(Math.random() * 5)).toString()}%`,
             Verifiability:
                 priorityRandom[

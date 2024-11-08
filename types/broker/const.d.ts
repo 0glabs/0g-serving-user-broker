@@ -1,3 +1,4 @@
+import { ZGServingModel } from './model';
 export declare const REQUEST_LENGTH = 40;
 export declare enum ModelTypeEnum {
     Chat = "chat",
@@ -16,4 +17,6 @@ export interface ModelLib {
     };
 }
 export declare const MODEL_LIB: ModelLib;
+export declare const MOCK_AREA: string[];
+export declare const MOCK_DATA: ZGServingModel[];
 //# sourceMappingURL=const.d.ts.map

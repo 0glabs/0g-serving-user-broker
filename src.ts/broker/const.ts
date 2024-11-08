@@ -1,3 +1,5 @@
+import { VerifiabilityEnum, ZGServingModel } from './model'
+
 export const REQUEST_LENGTH = 40
 
 export enum ModelTypeEnum {
@@ -31,6 +33,35 @@ export const MODEL_LIB: ModelLib = {
         ZGAlignmentScore: '2.3',
         UserInteractedNumber: 100,
     },
+    'llama-3.2-1B': {
+        Name: 'llama-3.2-1B',
+        Type: ModelTypeEnum.Chat,
+        Author: 'meta',
+        Description: '',
+        HuggingFaceURL: 'https://huggingface.co/meta-llama/Llama-3.2-1B',
+        ZGAlignmentScore: '2.3',
+        UserInteractedNumber: 100,
+    },
+    'stable-diffusion-3.5-medium': {
+        Name: 'stable-diffusion-3.5-medium',
+        Type: ModelTypeEnum.Image,
+        Author: 'stabilityai',
+        Description: '',
+        HuggingFaceURL:
+            'https://huggingface.co/stabilityai/stable-diffusion-3.5-medium',
+        ZGAlignmentScore: '2.5',
+        UserInteractedNumber: 100,
+    },
+    'stable-diffusion-xl-base-1.0': {
+        Name: 'stable-diffusion-xl-base-1.0',
+        Type: ModelTypeEnum.Image,
+        Author: 'stabilityai',
+        Description: '',
+        HuggingFaceURL:
+            'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',
+        ZGAlignmentScore: '2.3',
+        UserInteractedNumber: 100,
+    },
     'phi-3-mini-4k-instruct': {
         Name: 'phi-3-mini-4k-instruct',
         Type: ModelTypeEnum.Chat,
@@ -42,4 +73,78 @@ export const MODEL_LIB: ModelLib = {
         ZGAlignmentScore: '2.4',
         UserInteractedNumber: 100,
     },
+    'phi-3.5-mini-instruct': {
+        Name: 'phi-3.5-mini-instruct',
+        Type: ModelTypeEnum.Chat,
+        Author: 'microsoft',
+        Description: '',
+        HuggingFaceURL:
+            '"https://huggingface.co/microsoft/Phi-3.5-mini-instruct"',
+        ZGAlignmentScore: '2.4',
+        UserInteractedNumber: 100,
+    },
 }
+
+// TODO: remove mock data
+export const MOCK_AREA = [
+    'North America',
+    'South America',
+    'Europe',
+    'Africa',
+    'East Asia',
+]
+
+// TODO: remove mock data
+export const MOCK_DATA: ZGServingModel[] = [
+    {
+        Name: 'llama-3.2-1B',
+        Type: 'chat',
+        Author: 'meta',
+        Description: '',
+        HuggingFaceURL: 'https://huggingface.co/meta-llama/Llama-3.2-1B',
+        ZGAlignmentScore: '2.3',
+        UserInteractedNumber: 100,
+        Price: '$0.1~$0.2',
+        Verifiability: VerifiabilityEnum.Secure,
+        Providers: [],
+    },
+    {
+        Name: 'stable-diffusion-3.5-medium',
+        Type: 'image',
+        Author: 'stabilityai',
+        Description: '',
+        HuggingFaceURL:
+            'https://huggingface.co/stabilityai/stable-diffusion-3.5-medium',
+        ZGAlignmentScore: '2.5',
+        UserInteractedNumber: 100,
+        Price: '$0.1~$0.2',
+        Verifiability: VerifiabilityEnum.Secure,
+        Providers: [],
+    },
+    {
+        Name: 'stable-diffusion-xl-base-1.0',
+        Type: 'image',
+        Author: 'stabilityai',
+        Description: '',
+        HuggingFaceURL:
+            'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',
+        ZGAlignmentScore: '2.3',
+        UserInteractedNumber: 100,
+        Price: '$0.1~$0.2',
+        Verifiability: VerifiabilityEnum.Basic,
+        Providers: [],
+    },
+    {
+        Name: 'phi-3.5-mini-instruct',
+        Type: 'chat',
+        Author: 'microsoft',
+        Description: '',
+        HuggingFaceURL:
+            '"https://huggingface.co/microsoft/Phi-3.5-mini-instruct"',
+        ZGAlignmentScore: '2.4',
+        UserInteractedNumber: 100,
+        Price: '$0.1~$0.3',
+        Verifiability: VerifiabilityEnum.Basic,
+        Providers: [],
+    },
+]
