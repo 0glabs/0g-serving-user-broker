@@ -83,7 +83,7 @@ exports.MOCK_DATA = [
         ZGAlignmentScore: '2.3',
         UserInteractedNumber: 100,
         Price: '$0.1~$0.2',
-        Verifiability: model_1.VerifiabilityEnum.Secure,
+        Verifiability: model_1.VerifiabilityEnum.TeeML,
         Providers: [],
     },
     {
@@ -95,7 +95,7 @@ exports.MOCK_DATA = [
         ZGAlignmentScore: '2.5',
         UserInteractedNumber: 100,
         Price: '$0.1~$0.2',
-        Verifiability: model_1.VerifiabilityEnum.Secure,
+        Verifiability: model_1.VerifiabilityEnum.TeeML,
         Providers: [],
     },
     {
@@ -107,7 +107,7 @@ exports.MOCK_DATA = [
         ZGAlignmentScore: '2.3',
         UserInteractedNumber: 100,
         Price: '$0.1~$0.2',
-        Verifiability: model_1.VerifiabilityEnum.Basic,
+        Verifiability: model_1.VerifiabilityEnum.OpML,
         Providers: [],
     },
     {
@@ -119,7 +119,7 @@ exports.MOCK_DATA = [
         ZGAlignmentScore: '2.4',
         UserInteractedNumber: 100,
         Price: '$0.1~$0.3',
-        Verifiability: model_1.VerifiabilityEnum.Basic,
+        Verifiability: model_1.VerifiabilityEnum.OpML,
         Providers: [],
     },
 ];

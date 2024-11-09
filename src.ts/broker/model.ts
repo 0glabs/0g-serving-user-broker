@@ -3,15 +3,15 @@ import { ZGServingUserBrokerBase } from './base'
 import { MODEL_LIB, MOCK_DATA, MOCK_AREA } from './const'
 
 export enum VerifiabilityEnum {
-    Basic = 'Basic',
-    Secure = 'Secure',
-    UltraSecure = 'Ultra-Secure',
+    OpML = 'OpML',
+    TeeML = 'TeeML',
+    ZKML = 'ZKML',
 }
 
 export type Verifiability =
-    | VerifiabilityEnum.Basic
-    | VerifiabilityEnum.Secure
-    | VerifiabilityEnum.UltraSecure
+    | VerifiabilityEnum.OpML
+    | VerifiabilityEnum.TeeML
+    | VerifiabilityEnum.ZKML
 
 export interface ZGService {
     Device?: string
@@ -121,7 +121,7 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
                     ZGAlignmentScore: MODEL_LIB[model].ZGAlignmentScore,
                     UserInteractedNumber: MODEL_LIB[model].UserInteractedNumber,
                     Price: '',
-                    Verifiability: VerifiabilityEnum.Basic,
+                    Verifiability: VerifiabilityEnum.OpML,
                     Providers: [],
                 }
             }
@@ -149,9 +149,9 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
 
     static parseService(service: ServiceStructOutput): ZGService {
         const priorityRandom = [
-            VerifiabilityEnum.Basic,
-            VerifiabilityEnum.Secure,
-            VerifiabilityEnum.UltraSecure,
+            VerifiabilityEnum.OpML,
+            VerifiabilityEnum.TeeML,
+            VerifiabilityEnum.ZKML,
         ]
 
         return {
@@ -181,9 +181,9 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
 
     static getModelVerifiability(services: ZGService[]): Verifiability {
         const priority = [
-            VerifiabilityEnum.UltraSecure,
-            VerifiabilityEnum.Secure,
-            VerifiabilityEnum.Basic,
+            VerifiabilityEnum.ZKML,
+            VerifiabilityEnum.TeeML,
+            VerifiabilityEnum.OpML,
         ]
 
         for (const p of priority) {
@@ -192,6 +192,6 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
             }
         }
 
-        return VerifiabilityEnum.Basic
+        return VerifiabilityEnum.OpML
     }
 }

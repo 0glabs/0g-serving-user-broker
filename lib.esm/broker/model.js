@@ -2,9 +2,9 @@ import { ZGServingUserBrokerBase } from './base';
 import { MODEL_LIB, MOCK_DATA, MOCK_AREA } from './const';
 export var VerifiabilityEnum;
 (function (VerifiabilityEnum) {
-    VerifiabilityEnum["Basic"] = "Basic";
-    VerifiabilityEnum["Secure"] = "Secure";
-    VerifiabilityEnum["UltraSecure"] = "Ultra-Secure";
+    VerifiabilityEnum["OpML"] = "OpML";
+    VerifiabilityEnum["TeeML"] = "TeeML";
+    VerifiabilityEnum["ZKML"] = "ZKML";
 })(VerifiabilityEnum || (VerifiabilityEnum = {}));
 /**
  * serviceProcessor 包含对 0G Serving Contract 上的 Service/Models 的 list 操作，
@@ -81,7 +81,7 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
                     ZGAlignmentScore: MODEL_LIB[model].ZGAlignmentScore,
                     UserInteractedNumber: MODEL_LIB[model].UserInteractedNumber,
                     Price: '',
-                    Verifiability: VerifiabilityEnum.Basic,
+                    Verifiability: VerifiabilityEnum.OpML,
                     Providers: [],
                 };
             }
@@ -101,9 +101,9 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
     }
     static parseService(service) {
         const priorityRandom = [
-            VerifiabilityEnum.Basic,
-            VerifiabilityEnum.Secure,
-            VerifiabilityEnum.UltraSecure,
+            VerifiabilityEnum.OpML,
+            VerifiabilityEnum.TeeML,
+            VerifiabilityEnum.ZKML,
         ];
         return {
             AttestationDownLoadEndpoint: `${service.url}/v1/proxy/${service.name}/attestation/report`,
@@ -128,16 +128,16 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
     }
     static getModelVerifiability(services) {
         const priority = [
-            VerifiabilityEnum.UltraSecure,
-            VerifiabilityEnum.Secure,
-            VerifiabilityEnum.Basic,
+            VerifiabilityEnum.ZKML,
+            VerifiabilityEnum.TeeML,
+            VerifiabilityEnum.OpML,
         ];
         for (const p of priority) {
             if (services.find((item) => item.Verifiability === p)) {
                 return p;
             }
         }
-        return VerifiabilityEnum.Basic;
+        return VerifiabilityEnum.OpML;
     }
 }
 //# sourceMappingURL=model.js.map

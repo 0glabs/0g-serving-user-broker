@@ -5,9 +5,9 @@ const base_1 = require("./base");
 const const_1 = require("./const");
 var VerifiabilityEnum;
 (function (VerifiabilityEnum) {
-    VerifiabilityEnum["Basic"] = "Basic";
-    VerifiabilityEnum["Secure"] = "Secure";
-    VerifiabilityEnum["UltraSecure"] = "Ultra-Secure";
+    VerifiabilityEnum["OpML"] = "OpML";
+    VerifiabilityEnum["TeeML"] = "TeeML";
+    VerifiabilityEnum["ZKML"] = "ZKML";
 })(VerifiabilityEnum || (exports.VerifiabilityEnum = VerifiabilityEnum = {}));
 /**
  * serviceProcessor 包含对 0G Serving Contract 上的 Service/Models 的 list 操作，
@@ -84,7 +84,7 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
                     ZGAlignmentScore: const_1.MODEL_LIB[model].ZGAlignmentScore,
                     UserInteractedNumber: const_1.MODEL_LIB[model].UserInteractedNumber,
                     Price: '',
-                    Verifiability: VerifiabilityEnum.Basic,
+                    Verifiability: VerifiabilityEnum.OpML,
                     Providers: [],
                 };
             }
@@ -104,9 +104,9 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
     }
     static parseService(service) {
         const priorityRandom = [
-            VerifiabilityEnum.Basic,
-            VerifiabilityEnum.Secure,
-            VerifiabilityEnum.UltraSecure,
+            VerifiabilityEnum.OpML,
+            VerifiabilityEnum.TeeML,
+            VerifiabilityEnum.ZKML,
         ];
         return {
             AttestationDownLoadEndpoint: `${service.url}/v1/proxy/${service.name}/attestation/report`,
@@ -131,16 +131,16 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
     }
     static getModelVerifiability(services) {
         const priority = [
-            VerifiabilityEnum.UltraSecure,
-            VerifiabilityEnum.Secure,
-            VerifiabilityEnum.Basic,
+            VerifiabilityEnum.ZKML,
+            VerifiabilityEnum.TeeML,
+            VerifiabilityEnum.OpML,
         ];
         for (const p of priority) {
             if (services.find((item) => item.Verifiability === p)) {
                 return p;
             }
         }
-        return VerifiabilityEnum.Basic;
+        return VerifiabilityEnum.OpML;
     }
 }
 exports.ModelProcessor = ModelProcessor;

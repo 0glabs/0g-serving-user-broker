@@ -1,11 +1,11 @@
 import { ServiceStructOutput } from '../contract';
 import { ZGServingUserBrokerBase } from './base';
 export declare enum VerifiabilityEnum {
-    Basic = "Basic",
-    Secure = "Secure",
-    UltraSecure = "Ultra-Secure"
+    OpML = "OpML",
+    TeeML = "TeeML",
+    ZKML = "ZKML"
 }
-export type Verifiability = VerifiabilityEnum.Basic | VerifiabilityEnum.Secure | VerifiabilityEnum.UltraSecure;
+export type Verifiability = VerifiabilityEnum.OpML | VerifiabilityEnum.TeeML | VerifiabilityEnum.ZKML;
 export interface ZGService {
     Device?: string;
     Geolocation?: string;
