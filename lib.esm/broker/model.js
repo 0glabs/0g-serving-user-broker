@@ -105,12 +105,16 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
             VerifiabilityEnum.TeeML,
             VerifiabilityEnum.ZKML,
         ];
+        // TODO: remove mock data
+        const min = 0.11;
+        const max = 0.15;
         return {
             AttestationDownLoadEndpoint: `${service.url}/v1/proxy/${service.name}/attestation/report`,
             Model: service.model,
             Name: service.name,
-            InputPrice: Number(service.inputPrice),
-            OutputPrice: Number(service.outputPrice),
+            // TODO: remove mock data
+            InputPrice: Math.round((min + Math.random() * (max - min)) * 100) / 100,
+            OutputPrice: Math.round((min + Math.random() * (max - min)) * 100) / 100,
             ProviderAddress: service.provider,
             ServiceType: service.serviceType,
             UpdatedAt: service.updatedAt.toString(),

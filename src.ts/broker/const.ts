@@ -31,7 +31,7 @@ export const MODEL_LIB: ModelLib = {
         HuggingFaceURL:
             'https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct',
         ZGAlignmentScore: '2.3',
-        UserInteractedNumber: 100,
+        UserInteractedNumber: 100000,
     },
     'llama-3.2-1B': {
         Name: 'llama-3.2-1B',
@@ -40,7 +40,7 @@ export const MODEL_LIB: ModelLib = {
         Description: '',
         HuggingFaceURL: 'https://huggingface.co/meta-llama/Llama-3.2-1B',
         ZGAlignmentScore: '2.3',
-        UserInteractedNumber: 100,
+        UserInteractedNumber: 100000,
     },
     'stable-diffusion-3.5-medium': {
         Name: 'stable-diffusion-3.5-medium',
@@ -50,7 +50,7 @@ export const MODEL_LIB: ModelLib = {
         HuggingFaceURL:
             'https://huggingface.co/stabilityai/stable-diffusion-3.5-medium',
         ZGAlignmentScore: '2.5',
-        UserInteractedNumber: 100,
+        UserInteractedNumber: 100000,
     },
     'stable-diffusion-xl-base-1.0': {
         Name: 'stable-diffusion-xl-base-1.0',
@@ -60,7 +60,7 @@ export const MODEL_LIB: ModelLib = {
         HuggingFaceURL:
             'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',
         ZGAlignmentScore: '2.3',
-        UserInteractedNumber: 100,
+        UserInteractedNumber: 100000,
     },
     'phi-3-mini-4k-instruct': {
         Name: 'phi-3-mini-4k-instruct',
@@ -71,7 +71,7 @@ export const MODEL_LIB: ModelLib = {
         HuggingFaceURL:
             '"https://huggingface.co/microsoft/Phi-3-mini-4k-instruct"',
         ZGAlignmentScore: '2.4',
-        UserInteractedNumber: 100,
+        UserInteractedNumber: 100000,
     },
     'phi-3.5-mini-instruct': {
         Name: 'phi-3.5-mini-instruct',
@@ -81,7 +81,7 @@ export const MODEL_LIB: ModelLib = {
         HuggingFaceURL:
             '"https://huggingface.co/microsoft/Phi-3.5-mini-instruct"',
         ZGAlignmentScore: '2.4',
-        UserInteractedNumber: 100,
+        UserInteractedNumber: 100000,
     },
 }
 
@@ -103,8 +103,8 @@ export const MOCK_DATA: ZGServingModel[] = [
         Description: '',
         HuggingFaceURL: 'https://huggingface.co/meta-llama/Llama-3.2-1B',
         ZGAlignmentScore: '2.3',
-        UserInteractedNumber: 100,
-        Price: '$0.1~$0.2',
+        UserInteractedNumber: 100000,
+        Price: '$0.10~$0.13',
         Verifiability: VerifiabilityEnum.TeeML,
         Providers: [],
     },
@@ -116,8 +116,8 @@ export const MOCK_DATA: ZGServingModel[] = [
         HuggingFaceURL:
             'https://huggingface.co/stabilityai/stable-diffusion-3.5-medium',
         ZGAlignmentScore: '2.5',
-        UserInteractedNumber: 100,
-        Price: '$0.1~$0.2',
+        UserInteractedNumber: 100000,
+        Price: '$0.12~$0.15',
         Verifiability: VerifiabilityEnum.TeeML,
         Providers: [],
     },
@@ -129,8 +129,8 @@ export const MOCK_DATA: ZGServingModel[] = [
         HuggingFaceURL:
             'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',
         ZGAlignmentScore: '2.3',
-        UserInteractedNumber: 100,
-        Price: '$0.1~$0.2',
+        UserInteractedNumber: 100000,
+        Price: '$0.10~$0.14',
         Verifiability: VerifiabilityEnum.OpML,
         Providers: [],
     },
@@ -142,8 +142,8 @@ export const MOCK_DATA: ZGServingModel[] = [
         HuggingFaceURL:
             '"https://huggingface.co/microsoft/Phi-3.5-mini-instruct"',
         ZGAlignmentScore: '2.4',
-        UserInteractedNumber: 100,
-        Price: '$0.1~$0.3',
+        UserInteractedNumber: 100000,
+        Price: '$0.10~$0.13',
         Verifiability: VerifiabilityEnum.OpML,
         Providers: [],
     },
