@@ -8,135 +8,112 @@ This document provides an overview of the 0G Serving Broker, including setup and
 
 To integrate the 0G Serving Broker into your project, follow these steps
 
-1. Add the dependency to your `package.json` file by including the following line in the `dependencies` section
+### Step 1: Install the dependency
 
-    ```json
-    "@0glabs/0g-serving-broker": "https://github.com/0glabs/0g-serving-user-broker.git"
-    ```
+To get started, you need to install the `@0glabs/0g-serving-broker` package:
 
-2. Ensure that the required WebAssembly module is correctly referenced within your project by putting it in a path of accessible static resources. The module can be found at:
+```bash
+pnpm install @0glabs/0g-serving-broker
+```
 
-    ```bash
-    node_modules/@0glabs/0g-serving-broker/wasm/dcap-qvl-web_bg.wasm
-    ```
+### Step 2: Initialize a Broker Instance
 
-3. Usage
+The broker instance is initialized with a `signer`. This signer is an instance that implements the ethers.js Signer interface and is used to sign transactions for a specific Ethereum account. Developers can create this instance using their private key via the ethers.js library or use a wallet framework tool like [wagmi](https://wagmi.sh/react/guides/ethers) to initialize the signer.
 
-    ```typescript
-    import {
-        createZGServingUserBroker,
-        AccountStructOutput,
-        ZGServingUserBroker,
-        ZGServingUserBrokerConfig,
-    } from '@0glabs/0g-serving-broker'
+```typescript
+import { createZGServingUserBroker } from '@0glabs/0g-serving-broker'
 
-    /**
-     * Step 1. Add the path of accessible static WebAssembly
-     * module mentioned above to configuration
-     */
-    const zGServingBrokerConfig: ZGServingUserBrokerConfig = {
-        dcapWasmPath: '/dcap-qvl-web_bg.wasm',
-    }
+/**
+ * @param signer - An instance that implements the ethers.js Signer interface.
+ * @returns The broker instance.
+ */
+const broker = await createZGServingUserBroker(signer)
+```
 
-    /**
-     * Step 2. Initialize the broker
-     *
-     * @param signer - An instance implementing the ethers.js Signer interface
-     *                 used to sign transactions for a specific Ethereum account.
-     * @param contractAddress - The 0G Sering contract address.
-     * @param config - The 0G Sering broker configuration.
-     * @returns broker.
-     */
-    const broker = await createZGServingUserBroker(
-        signer,
-        seringContractAddress,
-        zGServingBrokerConfig
-    )
+### Step 3: List Available Services
 
-    /**
-     * UseCase 1. Get and verify the signing address corresponding to a
-     * service identified by a provider address and a service name.
-     */
-    broker.verifier.getAndVerifySigningAddress(providerAddress, serviceName)
+You can retrieve a list of services offered:
 
-    /**
-     * UseCase 2. Create an 0G Serving Account for certain provider (Not ready yet)
-     */
-    broker.createAccount(providerAddress)
+```typescript
+/**
+ * @returns A list of services as an array of ServiceStructOutput.
+ *
+ * type ServiceStructOutput = {
+ *   provider: string;  // Address of the provider
+ *   name: string;      // Name of the service
+ *   serviceType: string;
+ *   url: string;
+ *   inputPrice: bigint;
+ *   outputPrice: bigint;
+ *   updatedAt: bigint;
+ *   model: string;
+ * };
+ */
+const services = await broker.modelProcessor.listService()
+```
 
-    /**
-     * UseCase 3. List Models.
-     *
-     * @returns A list Models.
-     */
-    const result = broker.modelProcessor.listModels()
+### Step 4: Manage Accounts
 
-    /**
-     * UseCase 4. Get model by name.
-     *
-     * @param name - The name of the model.
-     * @returns Model detail and provider list.
-     */
-    const result = broker.modelProcessor.getModel(name)
+Before using the provider's services, you need to create an account specifically for the chosen provider. The provider checks the account balance before responding to requests. If the balance is insufficient, the request will be denied.
 
-    /**
-     * UseCase 5. Generate billing-related headers for requests
-     * when a user utilizes the provider service.
-     *
-     * In the 0G Serving system, a request with valid billing headers
-     * is considered a settlement document, which the provider uses for
-     * settlement on the contract.
-     *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param content - The content to be billed. For example, in a chatbot
-     *                  type of service, it refers to the user's input text.
-     * @returns headers. They contain information such as the cost of the request
-     *                   and user signature.
-     */
-    const headers = broker.requestProcessor.processRequest(
-        providerAddress,
-        serviceName,
-        content
-    )
+#### 4.1 Create an Account
 
-    /**
-     * UseCase 6. Used after a user successfully receives a response from the provider service.
-     * It verifies the legitimacy of the response content by checking the provider service's response
-     * and the corresponding signature.
-     *
-     * Additionally, processResponse extracts some necessary information from the response and stores
-     * it in localStorage for the generation of billing headers in subsequent requests.
-     *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param content - The main content of the service response. For example, in a chatbot
-     *                  type of service, this is the response text from the service.
-     * @returns A boolean value. True if the response content is legitimate, false otherwise.
-     */
-    const valid = broker.responseProcessor.processResponse(
-        providerAddress,
-        serviceName,
-        chatCompletion.choices[0].message.content,
-        chatCompletion.id
-    )
+```typescript
+/**
+ * @param providerAddress - The address of the provider.
+ */
+await broker.accountProcessor.addAccount(providerAddress)
+```
 
-    /**
-     * UseCase 7. Checks whether the RA corresponding to the signer's signing address is legitimate.
-     *
-     * It also stores the signing address of the RA in localStorage and returns it.
-     *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @returns The first return value is a boolean. True if the signer RA is legitimate, false otherwise.
-     *
-     * The second return value is the signing address of the signer.
-     */
-    const result = broker.verifier.getAndVerifySigningAddress(
-        providerAddress,
-        serviceName
-    )
-    ```
+#### 4.2 Deposit Funds into the Account
+
+```typescript
+/**
+ * @param providerAddress - The address of the provider.
+ * @param amount - The amount to deposit into the account.
+ */
+await broker.accountProcessor.depositFund(providerAddress, amount)
+```
+
+### Step 5: Use the Provider's Services
+
+#### 5.1 Process Requests
+
+Requests to 0G Serving must include specific headers with signature and fee information. Only valid requests will be processed by the provider. The `processRequest` function generates these headers.
+
+```typescript
+/**
+ * @param providerAddress - The address of the provider.
+ * @param svcName - The name of the service.
+ * @param content - The content to be processed, like user input text in a chatbot.
+ * @returns Headers containing request cost and user signature information.
+ */
+const headers = broker.requestProcessor.processRequest(
+    providerAddress,
+    serviceName,
+    content
+)
+```
+
+#### 5.2 Process Responses
+
+After receiving a response from a provider's service, use this function to verify the response's legitimacy by checking its content and corresponding signature. It also stores necessary information in localStorage for future billing header generation.
+
+```typescript
+/**
+ * @param providerAddress - The address of the provider.
+ * @param serviceName - The name of the service.
+ * @param content - The main content of the provider's response, such as chatbot response text.
+ * @param chatID - The chat ID for each conversation, which can be obtained from the provider's response.
+ * @returns A boolean, true if the response is valid, false otherwise.
+ */
+const valid = broker.responseProcessor.processResponse(
+    providerAddress,
+    serviceName,
+    content,
+    chatID
+)
+```
 
 ## Interface
 
