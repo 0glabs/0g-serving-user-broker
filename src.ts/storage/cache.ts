@@ -6,6 +6,7 @@ export enum CacheValueTypeEnum {
 
 export type CacheValueType = CacheValueTypeEnum.Service
 
+// TODO: Catch error
 export class Cache {
     static setItem(key: string, value: any, ttl: number, type: CacheValueType) {
         const now = new Date()

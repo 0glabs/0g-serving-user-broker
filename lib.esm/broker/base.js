@@ -2,10 +2,8 @@ import { Cache, CacheValueTypeEnum, Metadata } from '../storage';
 import { ChatBot } from '../extractor';
 export class ZGServingUserBrokerBase {
     contract;
-    config;
-    constructor(contract, config) {
+    constructor(contract) {
         this.contract = contract;
-        this.config = config;
     }
     async getProviderData(providerAddress) {
         const key = this.contract.getUserAddress() + providerAddress;
@@ -34,7 +32,8 @@ export class ZGServingUserBrokerBase {
     async getExtractor(providerAddress, svcName, useCache = true) {
         try {
             const svc = await this.getService(providerAddress, svcName, useCache);
-            return this.createExtractor(svc);
+            const extractor = this.createExtractor(svc);
+            return extractor;
         }
         catch (error) {
             throw error;

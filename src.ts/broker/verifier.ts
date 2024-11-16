@@ -1,4 +1,3 @@
-import { ServiceStructOutput } from '../contract'
 import { Metadata } from '../storage'
 import { ZGServingUserBrokerBase } from './base'
 import { ethers } from 'ethers'
@@ -11,169 +10,152 @@ export interface ResponseSignature {
 export interface SignerRA {
     signing_address: string
     nvidia_payload: string
-    // TODO: change to intel_quote
-    // dcap_payload: string
+    intel_quote: string
 }
 
 export interface SingerRAVerificationResult {
     /**
-     * signer RA 是否合法
+     * Whether the signer RA is valid
+     * null means the RA has not been verified
      */
-    valid: boolean
+    valid: boolean | null
     /**
-     * singer 的 signing 地址。
+     * The signing address of the signer
      */
     signingAddress: string
 }
 
 /**
- * Verifier 中包含服务可靠性验证的方法。
+ * The Verifier class contains methods for verifying service reliability.
  */
 export class Verifier extends ZGServingUserBrokerBase {
-    /**
-     * getAndVerifySigningAddress 验证 signer 的 signing address 对应的 RA 是否合法。
-     *
-     * 同时将 RA 的 signing address 保存在 localStorage 并返回。
-     *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @returns 第一个返回为布尔值。True 代表返回 signer RA 合法，反之不合法。
-     *
-     * 第二个返回为 signer 的 signer 的 signing address。
-     */
-    async getAndVerifySigningAddress(
+    async verifyService(
         providerAddress: string,
         svcName: string
-    ): Promise<SingerRAVerificationResult> {
-        const extractor = await this.getExtractor(
-            providerAddress,
-            svcName,
-            false
-        )
-        const svc = await extractor.getSvcInfo()
-
-        const signerRA = await Verifier.fetSignerRA(svc.url, svc.name)
-
-        const key = this.contract.getUserAddress() + providerAddress + svcName
-        Metadata.storeSigningKey(key, signerRA.signing_address)
-
-        // TODO: Use intel_quote to vberify
-        // const dcapPayload = JSON.parse(signerRA.dcap_payload)
-        // const valid = await this.verifyRA(dcapPayload)
-        return {
-            valid: true,
-            signingAddress: signerRA.signing_address,
+    ): Promise<boolean | null> {
+        try {
+            const { valid } = await this.getSigningAddress(
+                providerAddress,
+                svcName,
+                true
+            )
+            return valid
+        } catch (error) {
+            throw error
         }
     }
 
     /**
-     * getSigningAddress 返回 signing address。
+     * getSigningAddress verifies whether the signing address
+     * of the signer corresponds to a valid RA.
      *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @returns 第一返回为布尔值。True 代表返回 signer RA 合法，反之不合法。第二个返回为 signer 的 address。
+     * It also stores the signing address of the RA in
+     * localStorage and returns it.
+     *
+     * @param providerAddress - provider address.
+     * @param svcName - service name.
+     * @param verifyRA - whether to verify the RA， default is false.
+     * @returns The first return value indicates whether the RA is valid,
+     * and the second return value indicates the signing address of the RA.
      */
     async getSigningAddress(
         providerAddress: string,
-        svcName: string
-    ): Promise<string> {
+        svcName: string,
+        verifyRA = false
+    ): Promise<SingerRAVerificationResult> {
         const key = this.contract.getUserAddress() + providerAddress + svcName
         let signingKey = Metadata.getSigningKey(key)
-        if (signingKey) {
-            return signingKey
+        if (!verifyRA && signingKey) {
+            return {
+                valid: null,
+                signingAddress: signingKey,
+            }
         }
 
-        const result = await this.getAndVerifySigningAddress(
-            providerAddress,
-            svcName
-        )
-        if (!result.valid || !result.signingAddress) {
-            return ''
+        try {
+            const extractor = await this.getExtractor(
+                providerAddress,
+                svcName,
+                false
+            )
+            const svc = await extractor.getSvcInfo()
+
+            const signerRA = await Verifier.fetSignerRA(svc.url, svc.name)
+            if (!signerRA?.signing_address) {
+                throw new Error('signing address does not exist')
+            }
+
+            signingKey =
+                this.contract.getUserAddress() + providerAddress + svcName
+            Metadata.storeSigningKey(signingKey, signerRA.signing_address)
+
+            // TODO: use intel_quote to verify signing address
+            const valid = await Verifier.verifyRA(signerRA.nvidia_payload)
+
+            return {
+                valid,
+                signingAddress: signerRA.signing_address,
+            }
+        } catch (error) {
+            throw error
         }
-        return result.signingAddress
     }
 
-    /**
-     * getSignerRaDownloadLink 回 Signer RA 的下载链接。
-     *
-     * 可提供给希望手动验证 Signer RA 的 User。
-     *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @returns 下载链接。
-     */
     async getSignerRaDownloadLink(
         providerAddress: string,
         svcName: string
     ): Promise<string> {
-        let svc: ServiceStructOutput
         try {
-            svc = await this.getService(providerAddress, svcName)
+            const svc = await this.getService(providerAddress, svcName)
+            return `${svc.url}/v1/proxy/${svcName}/attestation/report`
         } catch (error) {
             if (error instanceof Error) {
                 console.error(error?.message)
             }
             throw error
         }
-
-        return `${svc.url}/v1/proxy/${svcName}/attestation/report`
     }
 
-    /**
-     * getChatSignatureDownloadLink 返回单次对话的签名下载链接。
-     *
-     * 可提供给希望手动验证单次对话内容的 User。
-     *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @param chatID - 对话的 ID。
-     * @returns 下载链接。
-     */
     async getChatSignatureDownloadLink(
         providerAddress: string,
         svcName: string,
         chatID: string
     ): Promise<string> {
-        let svc: ServiceStructOutput
         try {
-            svc = await this.getService(providerAddress, svcName)
+            const svc = await this.getService(providerAddress, svcName)
+            return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`
         } catch (error) {
-            if (error instanceof Error) {
-                console.error(error?.message)
-            }
             throw error
         }
-
-        return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`
     }
 
-    // private async verifyRA(dcapPayload: any): Promise<boolean> {
-    //     if (!this.config?.dcapWasmPath) {
-    //         const error = new Error('Missing dcapWasmPath in config')
-    //         console.error(error.message)
-    //         throw error
-    //     }
-    //     const rawQuote = new Uint8Array(
-    //         Buffer.from(dcapPayload.quote, 'base64')
-    //     )
-    //     const quoteCollateral = new Uint8Array(
-    //         Buffer.from(dcapPayload.collaterals, 'base64')
-    //     )
-
-    //     const now = BigInt(Math.floor(Date.now() / 1000))
-    //     const response = await fetch(this.config.dcapWasmPath)
-    //     const wasmArrayBuffer = await response.arrayBuffer()
-    //     await initSync(wasmArrayBuffer)
-    //     try {
-    //         js_verify(rawQuote, quoteCollateral, now)
-    //         return true
-    //     } catch (error) {
-    //         if (error instanceof Error) {
-    //             console.error(error.message)
-    //         }
-    //         return false
-    //     }
-    // }
+    // TODO: add test
+    static async verifyRA(nvidia_payload: any): Promise<boolean> {
+        return fetch('https://nras.attestation.nvidia.com/v3/attest/gpu', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify(nvidia_payload),
+        })
+            .then((response) => {
+                if (response.status === 200) {
+                    return true
+                }
+                if (response.status === 404) {
+                    throw new Error('verify RA error: 404')
+                } else {
+                    return false
+                }
+            })
+            .catch((error) => {
+                if (error instanceof Error) {
+                    console.error(error.message)
+                }
+                return false
+            })
+    }
 
     static async fetSignerRA(
         providerBrokerURL: string,
@@ -202,6 +184,17 @@ export class Verifier extends ZGServingUserBrokerBase {
                         throw error
                     }
                 }
+                if (data.intel_quote) {
+                    try {
+                        const intel_quota = JSON.parse(data.intel_quote)
+                        data.intel_quote =
+                            '0x' +
+                            Buffer.from(intel_quota, 'base64').toString('hex')
+                    } catch (error) {
+                        throw error
+                    }
+                }
+
                 return data as SignerRA
             })
             .catch((error) => {

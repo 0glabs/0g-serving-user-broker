@@ -5,7 +5,7 @@ const storage_1 = require("../storage");
 const base_1 = require("./base");
 const zk_1 = require("../zk");
 /**
- * AccountProcessor 包含对 0G Serving Account 的创建，充值和获取的方法。
+ * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
 class AccountProcessor extends base_1.ZGServingUserBrokerBase {
     async getAccount(user, provider) {
@@ -27,10 +27,17 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
         }
     }
     /**
-     * addAccount 创建 0G Serving 账户。
+     * Adds a new account to the contract.
      *
-     * @param providerAddress - provider 地址。
-     * @param balance - 账户预存金额。
+     * This function performs the following steps:
+     * 1. Creates and stores a key pair for the given provider address.
+     * 2. Adds the account to the contract using the provider address, the generated public pair, and the specified balance.
+     *
+     * @param providerAddress - The address of the provider for whom the account is being created.
+     * @param balance - The initial balance to be assigned to the new account.
+     *
+     * @remarks
+     * When creating an account, a key pair is also created to sign the request.
      */
     async addAccount(providerAddress, balance) {
         let zkSignerPublicKey;
@@ -48,10 +55,10 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
         }
     }
     /**
-     * depositFund 给 0G Serving 账户充值。
+     * depositFund deposits funds into a 0G Serving account.
      *
-     * @param providerAddress - provider 地址。
-     * @param balance - 充值金额。
+     * @param providerAddress - provider address.
+     * @param balance - deposit amount.
      */
     async depositFund(providerAddress, balance) {
         try {

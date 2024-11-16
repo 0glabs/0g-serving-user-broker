@@ -5,6 +5,7 @@ var CacheValueTypeEnum;
 (function (CacheValueTypeEnum) {
     CacheValueTypeEnum["Service"] = "service";
 })(CacheValueTypeEnum || (exports.CacheValueTypeEnum = CacheValueTypeEnum = {}));
+// TODO: Catch error
 class Cache {
     static setItem(key, value, ttl, type) {
         const now = new Date();

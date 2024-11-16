@@ -3,25 +3,11 @@ import { Cache, CacheValueTypeEnum, Metadata } from '../storage'
 import { ChatBot, Extractor } from '../extractor'
 import { ServiceStructOutput } from '../contract/serving/Serving'
 
-export interface ZGServingUserBrokerConfig {
-    /**
-     * WebAssembly 二进制文件路径。
-     *
-     * 该文件用于验证 signing address 的 Remote attestation 报告。
-     *
-     * 0G Serving Broker SDK 的使用者需要将该二进制文件放到服务器的
-     * 静态资源目录，并在此填写路径。
-     */
-    dcapWasmPath: string
-}
-
 export abstract class ZGServingUserBrokerBase {
     protected contract: ServingContract
-    protected config: ZGServingUserBrokerConfig
 
-    constructor(contract: ServingContract, config: ZGServingUserBrokerConfig) {
+    constructor(contract: ServingContract) {
         this.contract = contract
-        this.config = config
     }
 
     protected async getProviderData(providerAddress: string) {
@@ -65,7 +51,8 @@ export abstract class ZGServingUserBrokerBase {
                 svcName,
                 useCache
             )
-            return this.createExtractor(svc)
+            const extractor = this.createExtractor(svc)
+            return extractor
         } catch (error) {
             throw error
         }

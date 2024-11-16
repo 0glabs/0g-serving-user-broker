@@ -5,10 +5,8 @@ const storage_1 = require("../storage");
 const extractor_1 = require("../extractor");
 class ZGServingUserBrokerBase {
     contract;
-    config;
-    constructor(contract, config) {
+    constructor(contract) {
         this.contract = contract;
-        this.config = config;
     }
     async getProviderData(providerAddress) {
         const key = this.contract.getUserAddress() + providerAddress;
@@ -37,7 +35,8 @@ class ZGServingUserBrokerBase {
     async getExtractor(providerAddress, svcName, useCache = true) {
         try {
             const svc = await this.getService(providerAddress, svcName, useCache);
-            return this.createExtractor(svc);
+            const extractor = this.createExtractor(svc);
+            return extractor;
         }
         catch (error) {
             throw error;

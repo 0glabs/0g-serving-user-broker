@@ -18,7 +18,6 @@ class ServingContract {
             return services;
         }
         catch (error) {
-            console.error('Error list services:', error);
             throw error;
         }
     }
@@ -28,7 +27,6 @@ class ServingContract {
             return accounts;
         }
         catch (error) {
-            console.error('Error list accounts:', error);
             throw error;
         }
     }
@@ -38,7 +36,6 @@ class ServingContract {
             return account;
         }
         catch (error) {
-            console.error('Error get account:', error);
             throw error;
         }
     }
@@ -46,17 +43,12 @@ class ServingContract {
         try {
             const tx = await this.serving.addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice);
             const receipt = await tx.wait();
-            if (receipt?.status === 1) {
-                console.log('Transaction was successful!');
-            }
-            else {
+            if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
-                console.error(error.message);
                 throw error;
             }
         }
         catch (error) {
-            console.error('Error sending transaction:', error);
             throw error;
         }
     }
@@ -66,17 +58,12 @@ class ServingContract {
                 value: BigInt(balance),
             });
             const receipt = await tx.wait();
-            if (receipt?.status === 1) {
-                console.log('Transaction was successful!');
-            }
-            else {
+            if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
-                console.error(error.message);
                 throw error;
             }
         }
         catch (error) {
-            console.error('Error sending transaction:', error);
             throw error;
         }
     }
@@ -86,17 +73,12 @@ class ServingContract {
                 value: balance,
             });
             const receipt = await tx.wait();
-            if (receipt?.status === 1) {
-                console.log('Transaction was successful!');
-            }
-            else {
+            if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
-                console.error(error.message);
                 throw error;
             }
         }
         catch (error) {
-            console.error('Error sending transaction:', error);
             throw error;
         }
     }

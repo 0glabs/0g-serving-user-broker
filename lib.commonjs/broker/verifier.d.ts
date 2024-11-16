@@ -6,62 +6,41 @@ export interface ResponseSignature {
 export interface SignerRA {
     signing_address: string;
     nvidia_payload: string;
+    intel_quote: string;
 }
 export interface SingerRAVerificationResult {
     /**
-     * signer RA 是否合法
+     * Whether the signer RA is valid
+     * null means the RA has not been verified
      */
-    valid: boolean;
+    valid: boolean | null;
     /**
-     * singer 的 signing 地址。
+     * The signing address of the signer
      */
     signingAddress: string;
 }
 /**
- * Verifier 中包含服务可靠性验证的方法。
+ * The Verifier class contains methods for verifying service reliability.
  */
 export declare class Verifier extends ZGServingUserBrokerBase {
+    verifyService(providerAddress: string, svcName: string): Promise<boolean | null>;
     /**
-     * getAndVerifySigningAddress 验证 signer 的 signing address 对应的 RA 是否合法。
+     * getSigningAddress verifies whether the signing address
+     * of the signer corresponds to a valid RA.
      *
-     * 同时将 RA 的 signing address 保存在 localStorage 并返回。
+     * It also stores the signing address of the RA in
+     * localStorage and returns it.
      *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @returns 第一个返回为布尔值。True 代表返回 signer RA 合法，反之不合法。
-     *
-     * 第二个返回为 signer 的 signer 的 signing address。
+     * @param providerAddress - provider address.
+     * @param svcName - service name.
+     * @param verifyRA - whether to verify the RA， default is false.
+     * @returns The first return value indicates whether the RA is valid,
+     * and the second return value indicates the signing address of the RA.
      */
-    getAndVerifySigningAddress(providerAddress: string, svcName: string): Promise<SingerRAVerificationResult>;
-    /**
-     * getSigningAddress 返回 signing address。
-     *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @returns 第一返回为布尔值。True 代表返回 signer RA 合法，反之不合法。第二个返回为 signer 的 address。
-     */
-    getSigningAddress(providerAddress: string, svcName: string): Promise<string>;
-    /**
-     * getSignerRaDownloadLink 回 Signer RA 的下载链接。
-     *
-     * 可提供给希望手动验证 Signer RA 的 User。
-     *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @returns 下载链接。
-     */
+    getSigningAddress(providerAddress: string, svcName: string, verifyRA?: boolean): Promise<SingerRAVerificationResult>;
     getSignerRaDownloadLink(providerAddress: string, svcName: string): Promise<string>;
-    /**
-     * getChatSignatureDownloadLink 返回单次对话的签名下载链接。
-     *
-     * 可提供给希望手动验证单次对话内容的 User。
-     *
-     * @param providerAddress - provider 地址。
-     * @param svcName - service 名称。
-     * @param chatID - 对话的 ID。
-     * @returns 下载链接。
-     */
     getChatSignatureDownloadLink(providerAddress: string, svcName: string, chatID: string): Promise<string>;
+    static verifyRA(nvidia_payload: any): Promise<boolean>;
     static fetSignerRA(providerBrokerURL: string, svcName: string): Promise<SignerRA>;
     static fetSignatureByChatID(providerBrokerURL: string, svcName: string, chatID: string): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
