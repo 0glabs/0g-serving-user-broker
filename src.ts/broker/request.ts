@@ -1,7 +1,7 @@
 import { Extractor } from '../extractor'
 import { Metadata } from '../storage'
 import { sign } from '../zk'
-import { Request } from '0g-zk-settlement-client'
+// import { Request } from '0g-zk-settlement-client'
 import { REQUEST_LENGTH } from './const'
 import { ZGServingUserBrokerBase } from './base'
 
@@ -80,12 +80,19 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 outputFee
             )
 
-            const zkInput = new Request(
-                updatedNonce.toString(),
-                fee.toString(),
-                this.contract.getUserAddress(),
-                providerAddress
-            )
+            // const zkInput = new Request(
+            //     updatedNonce.toString(),
+            //     fee.toString(),
+            //     this.contract.getUserAddress(),
+            //     providerAddress
+            // )
+
+            const zkInput = {
+                nonce: updatedNonce,
+                fee: fee,
+                userAddress: this.contract.getUserAddress(),
+                providerAddress: providerAddress,
+            }
 
             sig = await sign([zkInput], zkPrivateKey)
 

@@ -1,10 +1,10 @@
-import { JsonRpcSigner, BigNumberish, AddressLike } from 'ethers';
+import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers';
 import { Serving } from './serving';
 import { ServiceStructOutput } from './serving/Serving';
 export declare class ServingContract {
     serving: Serving;
     private _userAddress;
-    constructor(signer: JsonRpcSigner, contractAddress: string, userAddress: string);
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string);
     lockTime(): Promise<bigint>;
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<import("./serving/Serving").AccountStructOutput[]>;

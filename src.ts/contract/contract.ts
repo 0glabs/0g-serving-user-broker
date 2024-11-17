@@ -1,4 +1,4 @@
-import { JsonRpcSigner, BigNumberish, AddressLike } from 'ethers'
+import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers'
 import { Serving, Serving__factory } from './serving'
 import { ServiceStructOutput } from './serving/Serving'
 
@@ -8,7 +8,7 @@ export class ServingContract {
     private _userAddress: string
 
     constructor(
-        signer: JsonRpcSigner,
+        signer: JsonRpcSigner | Wallet,
         contractAddress: string,
         userAddress: string
     ) {
@@ -19,7 +19,7 @@ export class ServingContract {
     lockTime(): Promise<bigint> {
         return this.serving.lockTime()
     }
-
+    
     async listService(): Promise<ServiceStructOutput[]> {
         try {
             const services = await this.serving.getAllServices()

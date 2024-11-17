@@ -1,4 +1,4 @@
-import { JsonRpcSigner } from 'ethers';
+import { JsonRpcSigner, Wallet } from 'ethers';
 import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
@@ -12,7 +12,7 @@ export declare class ZGServingNetworkBroker {
     modelProcessor: ModelProcessor;
     private signer;
     private contractAddress;
-    constructor(signer: JsonRpcSigner, contractAddress: string);
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string);
     initialize(): Promise<void>;
     /**
      * Retrieves a list of services from the contract.
@@ -129,5 +129,5 @@ export declare class ZGServingNetworkBroker {
  * @returns broker instance.
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createZGServingNetworkBroker(signer: JsonRpcSigner, contractAddress?: string): Promise<ZGServingNetworkBroker>;
+export declare function createZGServingNetworkBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<ZGServingNetworkBroker>;
 //# sourceMappingURL=broker.d.ts.map

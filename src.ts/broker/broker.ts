@@ -1,5 +1,5 @@
 import { ServingContract } from '../contract'
-import { JsonRpcSigner } from 'ethers'
+import { JsonRpcSigner, Wallet } from 'ethers'
 import { RequestProcessor } from './request'
 import { ResponseProcessor } from './response'
 import { Verifier } from './verifier'
@@ -13,10 +13,10 @@ export class ZGServingNetworkBroker {
     public accountProcessor!: AccountProcessor
     public modelProcessor!: ModelProcessor
 
-    private signer: JsonRpcSigner
+    private signer: JsonRpcSigner | Wallet
     private contractAddress: string
 
-    constructor(signer: JsonRpcSigner, contractAddress: string) {
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string) {
         this.signer = signer
         this.contractAddress = contractAddress
     }
@@ -247,7 +247,7 @@ export class ZGServingNetworkBroker {
  * @throws An error if the broker cannot be initialized.
  */
 export async function createZGServingNetworkBroker(
-    signer: JsonRpcSigner,
+    signer: JsonRpcSigner | Wallet,
     contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F'
 ): Promise<ZGServingNetworkBroker> {
     const broker = new ZGServingNetworkBroker(signer, contractAddress)
