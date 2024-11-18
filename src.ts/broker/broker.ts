@@ -5,6 +5,8 @@ import { ResponseProcessor } from './response'
 import { Verifier } from './verifier'
 import { AccountProcessor } from './account'
 import { ModelProcessor } from './model'
+import { Metadata } from '../storage'
+import { Cache } from '../storage'
 
 export class ZGServingNetworkBroker {
     public requestProcessor!: RequestProcessor
@@ -14,10 +16,16 @@ export class ZGServingNetworkBroker {
     public modelProcessor!: ModelProcessor
 
     private signer: JsonRpcSigner | Wallet
+    private customPath: string
     private contractAddress: string
 
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string) {
+    constructor(
+        signer: JsonRpcSigner | Wallet,
+        customPath: string,
+        contractAddress: string
+    ) {
         this.signer = signer
+        this.customPath = customPath
         this.contractAddress = contractAddress
     }
 
@@ -33,11 +41,17 @@ export class ZGServingNetworkBroker {
             this.contractAddress,
             userAddress
         )
-        this.requestProcessor = new RequestProcessor(contract)
-        this.responseProcessor = new ResponseProcessor(contract)
-        this.accountProcessor = new AccountProcessor(contract)
-        this.modelProcessor = new ModelProcessor(contract)
-        this.verifier = new Verifier(contract)
+        const metadata = new Metadata(this.customPath)
+        const cache = new Cache(this.customPath)
+        this.requestProcessor = new RequestProcessor(contract, metadata, cache)
+        this.responseProcessor = new ResponseProcessor(
+            contract,
+            metadata,
+            cache
+        )
+        this.accountProcessor = new AccountProcessor(contract, metadata, cache)
+        this.modelProcessor = new ModelProcessor(contract, metadata, cache)
+        this.verifier = new Verifier(contract, metadata, cache)
     }
 
     /**
@@ -109,13 +123,15 @@ export class ZGServingNetworkBroker {
     public processRequest = async (
         providerAddress: string,
         svcName: string,
-        content: string
+        content: string,
+        settlementKey?: string
     ) => {
         try {
             return await this.requestProcessor.processRequest(
                 providerAddress,
                 svcName,
-                content
+                content,
+                settlementKey
             )
         } catch (error) {
             throw error
@@ -248,9 +264,14 @@ export class ZGServingNetworkBroker {
  */
 export async function createZGServingNetworkBroker(
     signer: JsonRpcSigner | Wallet,
+    customPath: string,
     contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F'
 ): Promise<ZGServingNetworkBroker> {
-    const broker = new ZGServingNetworkBroker(signer, contractAddress)
+    const broker = new ZGServingNetworkBroker(
+        signer,
+        customPath,
+        contractAddress
+    )
     try {
         await broker.initialize()
         return broker

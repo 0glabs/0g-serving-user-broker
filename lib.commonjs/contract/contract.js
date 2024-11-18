@@ -72,7 +72,9 @@ class ServingContract {
             const tx = await this.serving.depositFund(providerAddress, {
                 value: balance,
             });
+            console.log('tx', tx);
             const receipt = await tx.wait();
+            console.log('receipt', receipt);
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
                 throw error;

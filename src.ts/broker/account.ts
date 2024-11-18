@@ -1,4 +1,3 @@
-import { Metadata } from '../storage'
 import { ZGServingUserBrokerBase } from './base'
 import { createKey } from '../zk'
 import { AddressLike } from 'ethers'
@@ -81,9 +80,9 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         } catch (error) {
             throw error
         }
-        const key = this.contract.getUserAddress() + providerAddress
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`
         // private key will be used for signing request
-        Metadata.storeZKPrivateKey(key, keyPair[0])
+        this.metadata.storeZKPrivateKey(key, keyPair[0])
         // public key will be used to create serving account
         return keyPair[1]
     }

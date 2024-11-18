@@ -1,4 +1,3 @@
-import { Metadata } from '../storage'
 import { ZGServingUserBrokerBase } from './base'
 import { ethers } from 'ethers'
 
@@ -63,8 +62,8 @@ export class Verifier extends ZGServingUserBrokerBase {
         svcName: string,
         verifyRA = false
     ): Promise<SingerRAVerificationResult> {
-        const key = this.contract.getUserAddress() + providerAddress + svcName
-        let signingKey = Metadata.getSigningKey(key)
+        const key = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`
+        let signingKey = await this.metadata.getSigningKey(key)
         if (!verifyRA && signingKey) {
             return {
                 valid: null,
@@ -85,9 +84,11 @@ export class Verifier extends ZGServingUserBrokerBase {
                 throw new Error('signing address does not exist')
             }
 
-            signingKey =
-                this.contract.getUserAddress() + providerAddress + svcName
-            Metadata.storeSigningKey(signingKey, signerRA.signing_address)
+            signingKey = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`
+            await this.metadata.storeSigningKey(
+                signingKey,
+                signerRA.signing_address
+            )
 
             // TODO: use intel_quote to verify signing address
             const valid = await Verifier.verifyRA(signerRA.nvidia_payload)

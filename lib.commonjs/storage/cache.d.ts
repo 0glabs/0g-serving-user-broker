@@ -4,9 +4,17 @@ export declare enum CacheValueTypeEnum {
 }
 export type CacheValueType = CacheValueTypeEnum.Service;
 export declare class Cache {
-    static setItem(key: string, value: any, ttl: number, type: CacheValueType): void;
-    static getItem(key: string): any;
-    static removeItem(key: string): void;
+    private isBrowser;
+    private nodeStorageFilePath;
+    private nodeStorage;
+    private initialized;
+    private customPath;
+    constructor(customPath: string);
+    setItem(key: string, value: any, ttl: number, type: CacheValueType): Promise<void>;
+    getItem(key: string): Promise<any | null>;
+    private initialize;
+    private loadNodeStorage;
+    private saveNodeStorage;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
     static createServiceStructOutput(fields: [

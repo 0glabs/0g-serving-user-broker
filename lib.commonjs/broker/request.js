@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestProcessor = void 0;
-const storage_1 = require("../storage");
 const zk_1 = require("../zk");
 // import { Request } from '0g-zk-settlement-client'
 const const_1 = require("./const");
@@ -12,18 +11,21 @@ const base_1 = require("./base");
  * before use.
  */
 class RequestProcessor extends base_1.ZGServingUserBrokerBase {
-    async processRequest(providerAddress, svcName, content) {
+    async processRequest(providerAddress, svcName, content, settlementKey) {
         let extractor;
         let sig;
         try {
             extractor = await this.getExtractor(providerAddress, svcName);
-            const { nonce, outputFee, zkPrivateKey } = await this.getProviderData(providerAddress);
+            let { nonce, outputFee, zkPrivateKey } = await this.getProviderData(providerAddress);
+            if (settlementKey) {
+                zkPrivateKey = JSON.parse(settlementKey).map((num) => BigInt(num));
+            }
             if (!zkPrivateKey) {
                 throw new Error('Miss private key for signing request');
             }
             const updatedNonce = !nonce ? 1 : nonce + const_1.REQUEST_LENGTH;
             const key = this.contract.getUserAddress() + providerAddress;
-            storage_1.Metadata.storeNonce(key, updatedNonce);
+            this.metadata.storeNonce(key, updatedNonce);
             const { fee, inputFee } = await this.calculateFees(extractor, content, outputFee);
             // const zkInput = new Request(
             //     updatedNonce.toString(),

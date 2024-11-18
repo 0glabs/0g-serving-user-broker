@@ -1,4 +1,5 @@
 import { ServingContract } from '../contract';
+import { Cache, Metadata } from '../storage';
 import { ZGServingUserBrokerBase } from './base';
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
@@ -7,7 +8,7 @@ import { ZGServingUserBrokerBase } from './base';
  */
 export declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
-    constructor(contract: ServingContract);
+    constructor(contract: ServingContract, metadata: Metadata, cache: Cache);
     processResponse(providerAddress: string, svcName: string, content: string, chatID?: string): Promise<boolean | null>;
     private calculateOutputFees;
 }

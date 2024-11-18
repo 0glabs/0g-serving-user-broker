@@ -1,5 +1,4 @@
 import { Extractor } from '../extractor'
-import { Metadata } from '../storage'
 import { sign } from '../zk'
 // import { Request } from '0g-zk-settlement-client'
 import { REQUEST_LENGTH } from './const'
@@ -55,7 +54,8 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
     async processRequest(
         providerAddress: string,
         svcName: string,
-        content: string
+        content: string,
+        settlementKey?: string
     ): Promise<ServingRequestHeaders> {
         let extractor: Extractor
         let sig: string
@@ -63,8 +63,15 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         try {
             extractor = await this.getExtractor(providerAddress, svcName)
 
-            const { nonce, outputFee, zkPrivateKey } =
-                await this.getProviderData(providerAddress)
+            let { nonce, outputFee, zkPrivateKey } = await this.getProviderData(
+                providerAddress
+            )
+
+            if (settlementKey) {
+                zkPrivateKey = JSON.parse(settlementKey).map((num: string) =>
+                    BigInt(num)
+                )
+            }
 
             if (!zkPrivateKey) {
                 throw new Error('Miss private key for signing request')
@@ -72,7 +79,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
 
             const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
             const key = this.contract.getUserAddress() + providerAddress
-            Metadata.storeNonce(key, updatedNonce)
+            this.metadata.storeNonce(key, updatedNonce)
 
             const { fee, inputFee } = await this.calculateFees(
                 extractor,

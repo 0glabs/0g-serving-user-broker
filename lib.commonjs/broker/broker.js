@@ -8,6 +8,8 @@ const response_1 = require("./response");
 const verifier_1 = require("./verifier");
 const account_1 = require("./account");
 const model_1 = require("./model");
+const storage_1 = require("../storage");
+const storage_2 = require("../storage");
 class ZGServingNetworkBroker {
     requestProcessor;
     responseProcessor;
@@ -15,9 +17,11 @@ class ZGServingNetworkBroker {
     accountProcessor;
     modelProcessor;
     signer;
+    customPath;
     contractAddress;
-    constructor(signer, contractAddress) {
+    constructor(signer, customPath, contractAddress) {
         this.signer = signer;
+        this.customPath = customPath;
         this.contractAddress = contractAddress;
     }
     async initialize() {
@@ -29,11 +33,13 @@ class ZGServingNetworkBroker {
             throw error;
         }
         const contract = new contract_1.ServingContract(this.signer, this.contractAddress, userAddress);
-        this.requestProcessor = new request_1.RequestProcessor(contract);
-        this.responseProcessor = new response_1.ResponseProcessor(contract);
-        this.accountProcessor = new account_1.AccountProcessor(contract);
-        this.modelProcessor = new model_1.ModelProcessor(contract);
-        this.verifier = new verifier_1.Verifier(contract);
+        const metadata = new storage_1.Metadata(this.customPath);
+        const cache = new storage_2.Cache(this.customPath);
+        this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache);
+        this.responseProcessor = new response_1.ResponseProcessor(contract, metadata, cache);
+        this.accountProcessor = new account_1.AccountProcessor(contract, metadata, cache);
+        this.modelProcessor = new model_1.ModelProcessor(contract, metadata, cache);
+        this.verifier = new verifier_1.Verifier(contract, metadata, cache);
     }
     /**
      * Retrieves a list of services from the contract.
@@ -101,9 +107,9 @@ class ZGServingNetworkBroker {
      * @returns headers. Records information such as the request fee and user signature.
      * @throws An error if errors occur during the processing of the request.
      */
-    processRequest = async (providerAddress, svcName, content) => {
+    processRequest = async (providerAddress, svcName, content, settlementKey) => {
         try {
-            return await this.requestProcessor.processRequest(providerAddress, svcName, content);
+            return await this.requestProcessor.processRequest(providerAddress, svcName, content, settlementKey);
         }
         catch (error) {
             throw error;
@@ -207,8 +213,8 @@ exports.ZGServingNetworkBroker = ZGServingNetworkBroker;
  * @returns broker instance.
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGServingNetworkBroker(signer, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
-    const broker = new ZGServingNetworkBroker(signer, contractAddress);
+async function createZGServingNetworkBroker(signer, customPath, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
+    const broker = new ZGServingNetworkBroker(signer, customPath, contractAddress);
     try {
         await broker.initialize();
         return broker;

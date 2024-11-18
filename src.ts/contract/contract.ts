@@ -19,7 +19,7 @@ export class ServingContract {
     lockTime(): Promise<bigint> {
         return this.serving.lockTime()
     }
-    
+
     async listService(): Promise<ServiceStructOutput[]> {
         try {
             const services = await this.serving.getAllServices()
@@ -105,7 +105,11 @@ export class ServingContract {
                 value: balance,
             })
 
+            console.log('tx', tx)
+
             const receipt = await tx.wait()
+
+            console.log('receipt', receipt)
 
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed')

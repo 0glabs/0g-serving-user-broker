@@ -75,110 +75,217 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 };
 
 var Metadata = /** @class */ (function () {
-    function Metadata() {
+    function Metadata(customPath) {
+        this.isBrowser = typeof window !== 'undefined' &&
+            typeof window.localStorage !== 'undefined';
+        this.nodeStorageFilePath = '';
+        this.nodeStorage = {};
+        this.initialized = false;
+        this.customPath = customPath;
     }
-    Metadata.initialize = function () {
+    Metadata.prototype.initialize = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var path, fs;
+            var fs;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (this.initialized) {
                             return [2 /*return*/];
                         }
-                        console.log('TTTTTTTTTTTTTTTTTTxaaaaaaaaaaaaaaa', this.nodeStorage);
-                        if (!!this.isBrowser) return [3 /*break*/, 3];
-                        return [4 /*yield*/, import('path')];
+                        if (!!this.isBrowser) return [3 /*break*/, 2];
+                        return [4 /*yield*/, import('fs')
+                            // this.nodeStorageFilePath = path.join(this.customPath, 'nodeStorage.json')
+                        ];
                     case 1:
-                        path = _a.sent();
-                        return [4 /*yield*/, import('fs')];
-                    case 2:
                         fs = _a.sent();
-                        this.nodeStorageFilePath = path.join(__dirname, 'nodeStorage.json');
-                        this.nodeStorage = this.loadNodeStorage(fs.default);
-                        console.log('TTTTTTTTTTTTTTTTTTbbbbbbbbbbbb', this.nodeStorage);
-                        return [3 /*break*/, 4];
-                    case 3:
+                        // this.nodeStorageFilePath = path.join(this.customPath, 'nodeStorage.json')
+                        this.nodeStorageFilePath = this.customPath;
+                        this.nodeStorage = this.loadNodeStorage(fs);
+                        return [3 /*break*/, 3];
+                    case 2:
                         this.nodeStorage = {};
-                        _a.label = 4;
-                    case 4:
+                        _a.label = 3;
+                    case 3:
                         this.initialized = true;
                         return [2 /*return*/];
                 }
             });
         });
     };
-    Metadata.loadNodeStorage = function (fs) {
+    Metadata.prototype.loadNodeStorage = function (fs) {
         if (fs.existsSync(this.nodeStorageFilePath)) {
             var data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8');
+            if (!data) {
+                return {};
+            }
             return JSON.parse(data);
         }
         return {};
     };
-    Metadata.saveNodeStorage = function () {
-        if (!this.isBrowser) {
-            console.log('!isBrowser');
-            var fs = require('fs');
-            fs.writeFileSync(this.nodeStorageFilePath, JSON.stringify(this.nodeStorage, null, 2), 'utf-8');
-        }
+    Metadata.prototype.saveNodeStorage = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var fs;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!this.isBrowser) return [3 /*break*/, 2];
+                        return [4 /*yield*/, import('fs')];
+                    case 1:
+                        fs = _a.sent();
+                        fs.writeFileSync(this.nodeStorageFilePath, JSON.stringify(this.nodeStorage, null, 2), 'utf-8');
+                        _a.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
     };
-    Metadata.setItem = function (key, value) {
-        this.initialize();
-        if (this.isBrowser) {
-            localStorage.setItem(key, value);
-        }
-        else {
-            this.nodeStorage[key] = value;
-            this.saveNodeStorage();
-        }
+    Metadata.prototype.setItem = function (key, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.initialize()];
+                    case 1:
+                        _a.sent();
+                        if (!this.isBrowser) return [3 /*break*/, 2];
+                        localStorage.setItem(key, value);
+                        return [3 /*break*/, 4];
+                    case 2:
+                        this.nodeStorage[key] = value;
+                        return [4 /*yield*/, this.saveNodeStorage()];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
     };
-    Metadata.getItem = function (key) {
-        var _a;
-        this.initialize();
-        if (this.isBrowser) {
-            return localStorage.getItem(key);
-        }
-        else {
-            return (_a = this.nodeStorage[key]) !== null && _a !== void 0 ? _a : null;
-        }
+    Metadata.prototype.getItem = function (key) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, this.initialize()];
+                    case 1:
+                        _b.sent();
+                        if (this.isBrowser) {
+                            return [2 /*return*/, localStorage.getItem(key)];
+                        }
+                        else {
+                            return [2 /*return*/, (_a = this.nodeStorage[key]) !== null && _a !== void 0 ? _a : null];
+                        }
+                }
+            });
+        });
     };
-    Metadata.storeNonce = function (key, value) {
-        this.setItem("".concat(key, "_nonce"), value.toString());
+    Metadata.prototype.storeNonce = function (key, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.setItem("".concat(key, "_nonce"), value.toString())];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
-    Metadata.storeOutputFee = function (key, value) {
-        this.setItem("".concat(key, "_outputFee"), value.toString());
+    Metadata.prototype.storeOutputFee = function (key, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.setItem("".concat(key, "_outputFee"), value.toString())];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
-    Metadata.storeZKPrivateKey = function (key, value) {
-        var bigIntStringArray = value.map(function (bi) { return bi.toString(); });
-        var bigIntJsonString = JSON.stringify(bigIntStringArray);
-        this.setItem("".concat(key, "_privateKey"), bigIntJsonString);
+    Metadata.prototype.storeZKPrivateKey = function (key, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            var bigIntStringArray, bigIntJsonString;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        bigIntStringArray = value.map(function (bi) { return bi.toString(); });
+                        bigIntJsonString = JSON.stringify(bigIntStringArray);
+                        return [4 /*yield*/, this.setItem("".concat(key, "_zkPrivateKey"), bigIntJsonString)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
-    Metadata.storeSigningKey = function (key, value) {
-        this.setItem("".concat(key, "_signingKey"), value);
+    Metadata.prototype.storeSigningKey = function (key, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.setItem("".concat(key, "_signingKey"), value)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
-    Metadata.getNonce = function (key) {
-        var value = this.getItem("".concat(key, "_nonce"));
-        return value ? parseInt(value, 10) : null;
+    Metadata.prototype.getNonce = function (key) {
+        return __awaiter(this, void 0, void 0, function () {
+            var value;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.getItem("".concat(key, "_nonce"))];
+                    case 1:
+                        value = _a.sent();
+                        return [2 /*return*/, value ? parseInt(value, 10) : null];
+                }
+            });
+        });
     };
-    Metadata.getOutputFee = function (key) {
-        var value = this.getItem("".concat(key, "_outputFee"));
-        return value ? parseInt(value, 10) : null;
+    Metadata.prototype.getOutputFee = function (key) {
+        return __awaiter(this, void 0, void 0, function () {
+            var value;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.getItem("".concat(key, "_outputFee"))];
+                    case 1:
+                        value = _a.sent();
+                        return [2 /*return*/, value ? parseInt(value, 10) : null];
+                }
+            });
+        });
     };
-    Metadata.getZKPrivateKey = function (key) {
-        var value = this.getItem("".concat(key, "_privateKey"));
-        if (!value) {
-            return null;
-        }
-        var bigIntStringArray = JSON.parse(value);
-        return bigIntStringArray.map(function (str) { return BigInt(str); });
+    Metadata.prototype.getZKPrivateKey = function (key) {
+        return __awaiter(this, void 0, void 0, function () {
+            var value, bigIntStringArray;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.getItem("".concat(key, "_zkPrivateKey"))];
+                    case 1:
+                        value = _a.sent();
+                        if (!value) {
+                            return [2 /*return*/, null];
+                        }
+                        bigIntStringArray = JSON.parse(value);
+                        return [2 /*return*/, bigIntStringArray.map(function (str) { return BigInt(str); })];
+                }
+            });
+        });
     };
-    Metadata.getSigningKey = function (key) {
-        var value = this.getItem("".concat(key, "_signingKey"));
-        return value !== null && value !== void 0 ? value : null;
+    Metadata.prototype.getSigningKey = function (key) {
+        return __awaiter(this, void 0, void 0, function () {
+            var value;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.getItem("".concat(key, "_signingKey"))];
+                    case 1:
+                        value = _a.sent();
+                        return [2 /*return*/, value !== null && value !== void 0 ? value : null];
+                }
+            });
+        });
     };
-    Metadata.isBrowser = typeof window !== 'undefined' &&
-        typeof window.localStorage !== 'undefined';
-    Metadata.initialized = false;
     return Metadata;
 }());
 
@@ -186,34 +293,132 @@ var CacheValueTypeEnum;
 (function (CacheValueTypeEnum) {
     CacheValueTypeEnum["Service"] = "service";
 })(CacheValueTypeEnum || (CacheValueTypeEnum = {}));
-// TODO: Catch error
 var Cache = /** @class */ (function () {
-    function Cache() {
+    function Cache(customPath) {
+        this.isBrowser = typeof window !== 'undefined' &&
+            typeof window.localStorage !== 'undefined';
+        this.nodeStorageFilePath = '';
+        this.nodeStorage = {};
+        this.initialized = false;
+        this.customPath = customPath;
     }
-    Cache.setItem = function (key, value, ttl, type) {
-        var now = new Date();
-        var item = {
-            type: type,
-            value: Cache.encodeValue(value),
-            expiry: now.getTime() + ttl,
-        };
-        localStorage.setItem(key, JSON.stringify(item));
+    Cache.prototype.setItem = function (key, value, ttl, type) {
+        return __awaiter(this, void 0, void 0, function () {
+            var now, item;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.initialize()];
+                    case 1:
+                        _a.sent();
+                        now = new Date();
+                        item = {
+                            type: type,
+                            value: Cache.encodeValue(value),
+                            expiry: now.getTime() + ttl,
+                        };
+                        if (!this.isBrowser) return [3 /*break*/, 2];
+                        localStorage.setItem(key, JSON.stringify(item));
+                        return [3 /*break*/, 4];
+                    case 2:
+                        this.nodeStorage[key] = JSON.stringify(item);
+                        return [4 /*yield*/, this.saveNodeStorage()];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
     };
-    Cache.getItem = function (key) {
-        var itemStr = localStorage.getItem(key);
-        if (!itemStr) {
-            return null;
-        }
-        var item = JSON.parse(itemStr);
-        var now = new Date();
-        if (now.getTime() > item.expiry) {
-            localStorage.removeItem(key);
-            return null;
-        }
-        return Cache.decodeValue(item.value, item.type);
+    Cache.prototype.getItem = function (key) {
+        return __awaiter(this, void 0, void 0, function () {
+            var itemStr, item, now;
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, this.initialize()];
+                    case 1:
+                        _b.sent();
+                        if (this.isBrowser) {
+                            itemStr = localStorage.getItem(key);
+                        }
+                        else {
+                            itemStr = (_a = this.nodeStorage[key]) !== null && _a !== void 0 ? _a : null;
+                        }
+                        if (!itemStr) {
+                            return [2 /*return*/, null];
+                        }
+                        item = JSON.parse(itemStr);
+                        now = new Date();
+                        if (!(now.getTime() > item.expiry)) return [3 /*break*/, 5];
+                        if (!this.isBrowser) return [3 /*break*/, 2];
+                        localStorage.removeItem(key);
+                        return [3 /*break*/, 4];
+                    case 2:
+                        delete this.nodeStorage[key];
+                        return [4 /*yield*/, this.saveNodeStorage()];
+                    case 3:
+                        _b.sent();
+                        _b.label = 4;
+                    case 4: return [2 /*return*/, null];
+                    case 5: return [2 /*return*/, Cache.decodeValue(item.value, item.type)];
+                }
+            });
+        });
     };
-    Cache.removeItem = function (key) {
-        localStorage.removeItem(key);
+    Cache.prototype.initialize = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var fs;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        console.log('this.initialized:', this.initialized);
+                        if (this.initialized) {
+                            return [2 /*return*/];
+                        }
+                        if (!!this.isBrowser) return [3 /*break*/, 2];
+                        return [4 /*yield*/, import('fs')];
+                    case 1:
+                        fs = _a.sent();
+                        this.nodeStorageFilePath = this.customPath;
+                        this.nodeStorage = this.loadNodeStorage(fs);
+                        return [3 /*break*/, 3];
+                    case 2:
+                        this.nodeStorage = {};
+                        _a.label = 3;
+                    case 3:
+                        this.initialized = true;
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Cache.prototype.loadNodeStorage = function (fs) {
+        if (fs.existsSync(this.nodeStorageFilePath)) {
+            var data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8');
+            if (!data) {
+                return {};
+            }
+            return JSON.parse(data);
+        }
+        return {};
+    };
+    Cache.prototype.saveNodeStorage = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var fs;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!this.isBrowser) return [3 /*break*/, 2];
+                        return [4 /*yield*/, import('fs')];
+                    case 1:
+                        fs = _a.sent();
+                        fs.writeFileSync(this.nodeStorageFilePath, JSON.stringify(this.nodeStorage, null, 2), 'utf-8');
+                        _a.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
     };
     Cache.encodeValue = function (value) {
         return JSON.stringify(value, function (_, val) {
@@ -284,8 +489,10 @@ var ChatBot = /** @class */ (function (_super) {
 }(Extractor));
 
 var ZGServingUserBrokerBase = /** @class */ (function () {
-    function ZGServingUserBrokerBase(contract) {
+    function ZGServingUserBrokerBase(contract, metadata, cache) {
         this.contract = contract;
+        this.metadata = metadata;
+        this.cache = cache;
     }
     ZGServingUserBrokerBase.prototype.getProviderData = function (providerAddress) {
         return __awaiter(this, void 0, void 0, function () {
@@ -293,11 +500,11 @@ var ZGServingUserBrokerBase = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        key = this.contract.getUserAddress() + providerAddress;
+                        key = "".concat(this.contract.getUserAddress(), "_").concat(providerAddress);
                         return [4 /*yield*/, Promise.all([
-                                Metadata.getNonce(key),
-                                Metadata.getOutputFee(key),
-                                Metadata.getZKPrivateKey(key),
+                                this.metadata.getNonce(key),
+                                this.metadata.getOutputFee(key),
+                                this.metadata.getZKPrivateKey(key),
                             ])];
                     case 1:
                         _a = _b.sent(), nonce = _a[0], outputFee = _a[1], zkPrivateKey = _a[2];
@@ -314,22 +521,26 @@ var ZGServingUserBrokerBase = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         key = providerAddress + svcName;
-                        cachedSvc = Cache.getItem(key);
+                        return [4 /*yield*/, this.cache.getItem(key)];
+                    case 1:
+                        cachedSvc = _a.sent();
                         if (cachedSvc && useCache) {
                             return [2 /*return*/, cachedSvc];
                         }
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, this.contract.getService(providerAddress, svcName)];
+                        _a.label = 2;
                     case 2:
-                        svc = _a.sent();
-                        Cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service);
-                        return [2 /*return*/, svc];
+                        _a.trys.push([2, 5, , 6]);
+                        return [4 /*yield*/, this.contract.getService(providerAddress, svcName)];
                     case 3:
+                        svc = _a.sent();
+                        return [4 /*yield*/, this.cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service)];
+                    case 4:
+                        _a.sent();
+                        return [2 /*return*/, svc];
+                    case 5:
                         error_1 = _a.sent();
                         throw error_1;
-                    case 4: return [2 /*return*/];
+                    case 6: return [2 /*return*/];
                 }
             });
         });
@@ -536,9 +747,9 @@ var AccountProcessor = /** @class */ (function (_super) {
                         error_6 = _a.sent();
                         throw error_6;
                     case 3:
-                        key = this.contract.getUserAddress() + providerAddress;
+                        key = "".concat(this.contract.getUserAddress(), "_").concat(providerAddress);
                         // private key will be used for signing request
-                        Metadata.storeZKPrivateKey(key, keyPair[0]);
+                        this.metadata.storeZKPrivateKey(key, keyPair[0]);
                         // public key will be used to create serving account
                         return [2 /*return*/, keyPair[1]];
                 }
@@ -1583,9 +1794,11 @@ var ServingContract = /** @class */ (function () {
                             })];
                     case 1:
                         tx = _a.sent();
+                        console.log('tx', tx);
                         return [4 /*yield*/, tx.wait()];
                     case 2:
                         receipt = _a.sent();
+                        console.log('receipt', receipt);
                         if (!receipt || receipt.status !== 1) {
                             error = new Error('Transaction failed');
                             throw error;
@@ -1630,7 +1843,7 @@ var RequestProcessor = /** @class */ (function (_super) {
     function RequestProcessor() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    RequestProcessor.prototype.processRequest = function (providerAddress, svcName, content) {
+    RequestProcessor.prototype.processRequest = function (providerAddress, svcName, content, settlementKey) {
         return __awaiter(this, void 0, void 0, function () {
             var extractor, sig, _a, nonce, outputFee, zkPrivateKey, updatedNonce, key, _b, fee, inputFee, zkInput, error_1;
             return __generator(this, function (_c) {
@@ -1643,12 +1856,17 @@ var RequestProcessor = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.getProviderData(providerAddress)];
                     case 2:
                         _a = _c.sent(), nonce = _a.nonce, outputFee = _a.outputFee, zkPrivateKey = _a.zkPrivateKey;
+                        if (settlementKey) {
+                            zkPrivateKey = JSON.parse(settlementKey).map(function (num) {
+                                return BigInt(num);
+                            });
+                        }
                         if (!zkPrivateKey) {
                             throw new Error('Miss private key for signing request');
                         }
                         updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH;
                         key = this.contract.getUserAddress() + providerAddress;
-                        Metadata.storeNonce(key, updatedNonce);
+                        this.metadata.storeNonce(key, updatedNonce);
                         return [4 /*yield*/, this.calculateFees(extractor, content, outputFee)
                             // const zkInput = new Request(
                             //     updatedNonce.toString(),
@@ -1790,43 +2008,48 @@ var Verifier = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        key = this.contract.getUserAddress() + providerAddress + svcName;
-                        signingKey = Metadata.getSigningKey(key);
+                        key = "".concat(this.contract.getUserAddress(), "_").concat(providerAddress, "_").concat(svcName);
+                        return [4 /*yield*/, this.metadata.getSigningKey(key)];
+                    case 1:
+                        signingKey = _a.sent();
                         if (!verifyRA && signingKey) {
                             return [2 /*return*/, {
                                     valid: null,
                                     signingAddress: signingKey,
                                 }];
                         }
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 6, , 7]);
-                        return [4 /*yield*/, this.getExtractor(providerAddress, svcName, false)];
+                        _a.label = 2;
                     case 2:
+                        _a.trys.push([2, 8, , 9]);
+                        return [4 /*yield*/, this.getExtractor(providerAddress, svcName, false)];
+                    case 3:
                         extractor = _a.sent();
                         return [4 /*yield*/, extractor.getSvcInfo()];
-                    case 3:
+                    case 4:
                         svc = _a.sent();
                         return [4 /*yield*/, Verifier.fetSignerRA(svc.url, svc.name)];
-                    case 4:
+                    case 5:
                         signerRA = _a.sent();
                         if (!(signerRA === null || signerRA === void 0 ? void 0 : signerRA.signing_address)) {
                             throw new Error('signing address does not exist');
                         }
-                        signingKey =
-                            this.contract.getUserAddress() + providerAddress + svcName;
-                        Metadata.storeSigningKey(signingKey, signerRA.signing_address);
+                        signingKey = "".concat(this.contract.getUserAddress(), "_").concat(providerAddress, "_").concat(svcName);
+                        return [4 /*yield*/, this.metadata.storeSigningKey(signingKey, signerRA.signing_address)
+                            // TODO: use intel_quote to verify signing address
+                        ];
+                    case 6:
+                        _a.sent();
                         return [4 /*yield*/, Verifier.verifyRA(signerRA.nvidia_payload)];
-                    case 5:
+                    case 7:
                         valid = _a.sent();
                         return [2 /*return*/, {
                                 valid: valid,
                                 signingAddress: signerRA.signing_address,
                             }];
-                    case 6:
+                    case 8:
                         error_2 = _a.sent();
                         throw error_2;
-                    case 7: return [2 /*return*/];
+                    case 9: return [2 /*return*/];
                 }
             });
         });
@@ -1986,10 +2209,11 @@ var Verifier = /** @class */ (function (_super) {
  */
 var ResponseProcessor = /** @class */ (function (_super) {
     __extends(ResponseProcessor, _super);
-    function ResponseProcessor(contract) {
-        var _this = _super.call(this, contract) || this;
+    function ResponseProcessor(contract, metadata, cache) {
+        var _this = _super.call(this, contract, metadata, cache) || this;
         _this.contract = contract;
-        _this.verifier = new Verifier(contract);
+        _this.metadata = metadata;
+        _this.verifier = new Verifier(contract, metadata, cache);
         return _this;
     }
     ResponseProcessor.prototype.processResponse = function (providerAddress, svcName, content, chatID) {
@@ -2006,7 +2230,7 @@ var ResponseProcessor = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.calculateOutputFees(extractor, content)];
                     case 2:
                         outputFee = _a.sent();
-                        Metadata.storeOutputFee(this.contract.getUserAddress() + providerAddress, outputFee);
+                        this.metadata.storeOutputFee("".concat(this.contract.getUserAddress(), "_").concat(providerAddress), outputFee);
                         return [4 /*yield*/, extractor.getSvcInfo()
                             // TODO: Temporarily return true for non-TeeML verifiability.
                             // these cases will be handled in the future.
@@ -2067,7 +2291,7 @@ var ResponseProcessor = /** @class */ (function (_super) {
 }(ZGServingUserBrokerBase));
 
 var ZGServingNetworkBroker = /** @class */ (function () {
-    function ZGServingNetworkBroker(signer, contractAddress) {
+    function ZGServingNetworkBroker(signer, customPath, contractAddress) {
         var _this = this;
         /**
          * Retrieves a list of services from the contract.
@@ -2156,13 +2380,13 @@ var ZGServingNetworkBroker = /** @class */ (function () {
          * @returns headers. Records information such as the request fee and user signature.
          * @throws An error if errors occur during the processing of the request.
          */
-        this.processRequest = function (providerAddress, svcName, content) { return __awaiter(_this, void 0, void 0, function () {
+        this.processRequest = function (providerAddress, svcName, content, settlementKey) { return __awaiter(_this, void 0, void 0, function () {
             var error_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, this.requestProcessor.processRequest(providerAddress, svcName, content)];
+                        return [4 /*yield*/, this.requestProcessor.processRequest(providerAddress, svcName, content, settlementKey)];
                     case 1: return [2 /*return*/, _a.sent()];
                     case 2:
                         error_4 = _a.sent();
@@ -2288,11 +2512,12 @@ var ZGServingNetworkBroker = /** @class */ (function () {
             });
         }); };
         this.signer = signer;
+        this.customPath = customPath;
         this.contractAddress = contractAddress;
     }
     ZGServingNetworkBroker.prototype.initialize = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var userAddress, error_9, contract;
+            var userAddress, error_9, contract, metadata, cache;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -2306,11 +2531,13 @@ var ZGServingNetworkBroker = /** @class */ (function () {
                         throw error_9;
                     case 3:
                         contract = new ServingContract(this.signer, this.contractAddress, userAddress);
-                        this.requestProcessor = new RequestProcessor(contract);
-                        this.responseProcessor = new ResponseProcessor(contract);
-                        this.accountProcessor = new AccountProcessor(contract);
-                        this.modelProcessor = new ModelProcessor(contract);
-                        this.verifier = new Verifier(contract);
+                        metadata = new Metadata(this.customPath);
+                        cache = new Cache(this.customPath);
+                        this.requestProcessor = new RequestProcessor(contract, metadata, cache);
+                        this.responseProcessor = new ResponseProcessor(contract, metadata, cache);
+                        this.accountProcessor = new AccountProcessor(contract, metadata, cache);
+                        this.modelProcessor = new ModelProcessor(contract, metadata, cache);
+                        this.verifier = new Verifier(contract, metadata, cache);
                         return [2 /*return*/];
                 }
             });
@@ -2326,14 +2553,14 @@ var ZGServingNetworkBroker = /** @class */ (function () {
  * @returns broker instance.
  * @throws An error if the broker cannot be initialized.
  */
-function createZGServingNetworkBroker(signer_1) {
-    return __awaiter(this, arguments, void 0, function (signer, contractAddress) {
+function createZGServingNetworkBroker(signer_1, customPath_1) {
+    return __awaiter(this, arguments, void 0, function (signer, customPath, contractAddress) {
         var broker, error_10;
         if (contractAddress === void 0) { contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F'; }
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    broker = new ZGServingNetworkBroker(signer, contractAddress);
+                    broker = new ZGServingNetworkBroker(signer, customPath, contractAddress);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);

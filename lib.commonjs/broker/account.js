@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountProcessor = void 0;
-const storage_1 = require("../storage");
 const base_1 = require("./base");
 const zk_1 = require("../zk");
 /**
@@ -77,9 +76,9 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
-        const key = this.contract.getUserAddress() + providerAddress;
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
         // private key will be used for signing request
-        storage_1.Metadata.storeZKPrivateKey(key, keyPair[0]);
+        this.metadata.storeZKPrivateKey(key, keyPair[0]);
         // public key will be used to create serving account
         return keyPair[1];
     }

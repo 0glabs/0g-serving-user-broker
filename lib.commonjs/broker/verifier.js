@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Verifier = void 0;
-const storage_1 = require("../storage");
 const base_1 = require("./base");
 const ethers_1 = require("ethers");
 /**
@@ -31,8 +30,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
      * and the second return value indicates the signing address of the RA.
      */
     async getSigningAddress(providerAddress, svcName, verifyRA = false) {
-        const key = this.contract.getUserAddress() + providerAddress + svcName;
-        let signingKey = storage_1.Metadata.getSigningKey(key);
+        const key = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`;
+        let signingKey = await this.metadata.getSigningKey(key);
         if (!verifyRA && signingKey) {
             return {
                 valid: null,
@@ -46,9 +45,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             if (!signerRA?.signing_address) {
                 throw new Error('signing address does not exist');
             }
-            signingKey =
-                this.contract.getUserAddress() + providerAddress + svcName;
-            storage_1.Metadata.storeSigningKey(signingKey, signerRA.signing_address);
+            signingKey = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`;
+            await this.metadata.storeSigningKey(signingKey, signerRA.signing_address);
             // TODO: use intel_quote to verify signing address
             const valid = await Verifier.verifyRA(signerRA.nvidia_payload);
             return {

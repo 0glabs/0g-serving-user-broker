@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResponseProcessor = void 0;
-const storage_1 = require("../storage");
 const base_1 = require("./base");
 const model_1 = require("./model");
 const verifier_1 = require("./verifier");
@@ -12,17 +11,18 @@ const verifier_1 = require("./verifier");
  */
 class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
     verifier;
-    constructor(contract) {
-        super(contract);
+    constructor(contract, metadata, cache) {
+        super(contract, metadata, cache);
         this.contract = contract;
-        this.verifier = new verifier_1.Verifier(contract);
+        this.metadata = metadata;
+        this.verifier = new verifier_1.Verifier(contract, metadata, cache);
     }
     async processResponse(providerAddress, svcName, content, chatID) {
         try {
             let extractor;
             extractor = await this.getExtractor(providerAddress, svcName);
             const outputFee = await this.calculateOutputFees(extractor, content);
-            storage_1.Metadata.storeOutputFee(this.contract.getUserAddress() + providerAddress, outputFee);
+            this.metadata.storeOutputFee(`${this.contract.getUserAddress()}_${providerAddress}`, outputFee);
             const svc = await extractor.getSvcInfo();
             // TODO: Temporarily return true for non-TeeML verifiability.
             // these cases will be handled in the future.

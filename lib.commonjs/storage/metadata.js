@@ -25,54 +25,59 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Metadata = void 0;
 class Metadata {
-    static isBrowser = typeof window !== 'undefined' &&
+    isBrowser = typeof window !== 'undefined' &&
         typeof window.localStorage !== 'undefined';
-    static nodeStorageFilePath;
-    static nodeStorage;
-    static initialized = false;
-    static async initialize() {
+    nodeStorageFilePath = '';
+    nodeStorage = {};
+    initialized = false;
+    customPath;
+    constructor(customPath) {
+        this.customPath = customPath;
+    }
+    async initialize() {
         if (this.initialized) {
             return;
         }
-        console.log('TTTTTTTTTTTTTTTTTTxaaaaaaaaaaaaaaa', this.nodeStorage);
         if (!this.isBrowser) {
-            const path = await Promise.resolve().then(() => __importStar(require('path')));
+            // const path = await import('path')
             const fs = await Promise.resolve().then(() => __importStar(require('fs')));
-            this.nodeStorageFilePath = path.join(__dirname, 'nodeStorage.json');
-            this.nodeStorage = this.loadNodeStorage(fs.default);
-            console.log('TTTTTTTTTTTTTTTTTTbbbbbbbbbbbb', this.nodeStorage);
+            // this.nodeStorageFilePath = path.join(this.customPath, 'nodeStorage.json')
+            this.nodeStorageFilePath = this.customPath;
+            this.nodeStorage = this.loadNodeStorage(fs);
         }
         else {
             this.nodeStorage = {};
         }
         this.initialized = true;
     }
-    static loadNodeStorage(fs) {
+    loadNodeStorage(fs) {
         if (fs.existsSync(this.nodeStorageFilePath)) {
             const data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8');
+            if (!data) {
+                return {};
+            }
             return JSON.parse(data);
         }
         return {};
     }
-    static saveNodeStorage() {
+    async saveNodeStorage() {
         if (!this.isBrowser) {
-            console.log('!isBrowser');
-            const fs = require('fs');
+            const fs = await Promise.resolve().then(() => __importStar(require('fs')));
             fs.writeFileSync(this.nodeStorageFilePath, JSON.stringify(this.nodeStorage, null, 2), 'utf-8');
         }
     }
-    static setItem(key, value) {
-        this.initialize();
+    async setItem(key, value) {
+        await this.initialize();
         if (this.isBrowser) {
             localStorage.setItem(key, value);
         }
         else {
             this.nodeStorage[key] = value;
-            this.saveNodeStorage();
+            await this.saveNodeStorage();
         }
     }
-    static getItem(key) {
-        this.initialize();
+    async getItem(key) {
+        await this.initialize();
         if (this.isBrowser) {
             return localStorage.getItem(key);
         }
@@ -80,38 +85,38 @@ class Metadata {
             return this.nodeStorage[key] ?? null;
         }
     }
-    static storeNonce(key, value) {
-        this.setItem(`${key}_nonce`, value.toString());
+    async storeNonce(key, value) {
+        await this.setItem(`${key}_nonce`, value.toString());
     }
-    static storeOutputFee(key, value) {
-        this.setItem(`${key}_outputFee`, value.toString());
+    async storeOutputFee(key, value) {
+        await this.setItem(`${key}_outputFee`, value.toString());
     }
-    static storeZKPrivateKey(key, value) {
+    async storeZKPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
-        this.setItem(`${key}_privateKey`, bigIntJsonString);
+        await this.setItem(`${key}_zkPrivateKey`, bigIntJsonString);
     }
-    static storeSigningKey(key, value) {
-        this.setItem(`${key}_signingKey`, value);
+    async storeSigningKey(key, value) {
+        await this.setItem(`${key}_signingKey`, value);
     }
-    static getNonce(key) {
-        const value = this.getItem(`${key}_nonce`);
+    async getNonce(key) {
+        const value = await this.getItem(`${key}_nonce`);
         return value ? parseInt(value, 10) : null;
     }
-    static getOutputFee(key) {
-        const value = this.getItem(`${key}_outputFee`);
+    async getOutputFee(key) {
+        const value = await this.getItem(`${key}_outputFee`);
         return value ? parseInt(value, 10) : null;
     }
-    static getZKPrivateKey(key) {
-        const value = this.getItem(`${key}_privateKey`);
+    async getZKPrivateKey(key) {
+        const value = await this.getItem(`${key}_zkPrivateKey`);
         if (!value) {
             return null;
         }
         const bigIntStringArray = JSON.parse(value);
         return bigIntStringArray.map((str) => BigInt(str));
     }
-    static getSigningKey(key) {
-        const value = this.getItem(`${key}_signingKey`);
+    async getSigningKey(key) {
+        const value = await this.getItem(`${key}_signingKey`);
         return value ?? null;
     }
 }
