@@ -58,10 +58,6 @@ class ZGServingNetworkBroker {
     /**
      * Adds a new account to the contract.
      *
-     * This function performs the following steps:
-     * 1. Creates and stores a key pair for the given provider address.
-     * 2. Adds the account to the contract using the provider address, the generated public pair, and the specified balance.
-     *
      * @param providerAddress - The address of the provider for whom the account is being created.
      * @param balance - The initial balance to be assigned to the new account.
      *

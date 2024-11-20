@@ -66,7 +66,6 @@ export class Cache {
     }
 
     private async initialize() {
-        console.log('this.initialized:', this.initialized)
         if (this.initialized) {
             return
         }

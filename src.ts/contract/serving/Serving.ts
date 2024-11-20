@@ -45,6 +45,7 @@ export type AccountStruct = {
   pendingRefund: BigNumberish;
   signer: [BigNumberish, BigNumberish];
   refunds: RefundStruct[];
+  additionalInfo: string;
 };
 
 export type AccountStructOutput = [
@@ -54,7 +55,8 @@ export type AccountStructOutput = [
   balance: bigint,
   pendingRefund: bigint,
   signer: [bigint, bigint],
-  refunds: RefundStructOutput[]
+  refunds: RefundStructOutput[],
+  additionalInfo: string
 ] & {
   user: string;
   provider: string;
@@ -63,6 +65,7 @@ export type AccountStructOutput = [
   pendingRefund: bigint;
   signer: [bigint, bigint];
   refunds: RefundStructOutput[];
+  additionalInfo: string;
 };
 
 export type ServiceStruct = {
@@ -154,7 +157,7 @@ export interface ServingInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "addAccount",
-    values: [AddressLike, [BigNumberish, BigNumberish]]
+    values: [AddressLike, [BigNumberish, BigNumberish], string]
   ): string;
   encodeFunctionData(
     functionFragment: "addOrUpdateService",
@@ -448,7 +451,11 @@ export interface Serving extends BaseContract {
   ): Promise<this>;
 
   addAccount: TypedContractMethod<
-    [provider: AddressLike, signer: [BigNumberish, BigNumberish]],
+    [
+      provider: AddressLike,
+      signer: [BigNumberish, BigNumberish],
+      additionalInfo: string
+    ],
     [void],
     "payable"
   >;
@@ -550,7 +557,11 @@ export interface Serving extends BaseContract {
   getFunction(
     nameOrSignature: "addAccount"
   ): TypedContractMethod<
-    [provider: AddressLike, signer: [BigNumberish, BigNumberish]],
+    [
+      provider: AddressLike,
+      signer: [BigNumberish, BigNumberish],
+      additionalInfo: string
+    ],
     [void],
     "payable"
   >;

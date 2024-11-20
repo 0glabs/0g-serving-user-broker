@@ -68,19 +68,18 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
         }
     }
     async createAndStoreKey(providerAddress) {
-        // [pri, pub]
-        let keyPair;
         try {
-            keyPair = await (0, zk_1.createKey)();
+            // [pri, pub]
+            const keyPair = await (0, zk_1.genKeyPair)();
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            // private key will be used for signing request
+            this.metadata.storeZKPrivateKey(key, keyPair.packedPrivkey);
+            // public key will be used to create serving account
+            return keyPair.doublePackedPubkey;
         }
         catch (error) {
             throw error;
         }
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
-        // private key will be used for signing request
-        this.metadata.storeZKPrivateKey(key, keyPair[0]);
-        // public key will be used to create serving account
-        return keyPair[1];
     }
 }
 exports.AccountProcessor = AccountProcessor;

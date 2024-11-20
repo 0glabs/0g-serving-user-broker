@@ -1,22 +1,21 @@
+import { PublicKey, SignatureBuffer, PrivateKey, PointBuffer } from './crypto';
 import { Request } from './request';
-import { Point } from 'circomlibjs';
-type PublicKey = Point;
-type SignatureBuffer = Uint8Array;
+export declare const FIELD_SIZE = 32;
 type ProofInput = {
-    signer: Point;
+    signer: PublicKey;
     serializedRequest: Uint8Array[];
     r8: Uint8Array[];
     s: Uint8Array[];
 };
 export declare function generateProofInput(requests: Request[], l: number, pubkey: PublicKey, signBuff: SignatureBuffer[]): Promise<ProofInput>;
-type SignVerifyResult = {
-    packPubkey: Uint8Array;
-    r8: Uint8Array[];
-    s: Uint8Array[];
+type PackedSignerAndSignatures = {
+    packPubkey: PointBuffer;
+    r8: SignatureBuffer[];
+    s: SignatureBuffer[];
 };
-export declare function signAndVerifyRequests(requests: Request[], babyJubJubPrivateKey: Uint8Array, babyJubJubPublicKey: PublicKey): Promise<SignVerifyResult>;
-export declare function signRequests(requests: Request[], babyJubJubPrivateKey: Uint8Array): Promise<SignatureBuffer[]>;
-export declare function verifySig(requests: Request[], signatures: SignatureBuffer[], pubkey: PublicKey): Promise<boolean[]>;
-export declare function genPubkey(privkey: Uint8Array): Promise<PublicKey>;
+export declare function signAndVerifyRequests(requests: Request[], privateKey: PrivateKey, publicKey: PublicKey): Promise<PackedSignerAndSignatures>;
+export declare function signRequests(requests: Request[], privateKey: PrivateKey): Promise<SignatureBuffer[]>;
+export declare function verifySig(requests: Request[], packedSignatures: SignatureBuffer[], publicKey: PublicKey): Promise<boolean[]>;
+export declare function genPubkey(privkey: PrivateKey): Promise<PublicKey>;
 export {};
 //# sourceMappingURL=helper.d.ts.map
