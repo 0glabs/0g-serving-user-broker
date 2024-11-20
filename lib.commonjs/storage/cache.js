@@ -81,7 +81,6 @@ class Cache {
         return Cache.decodeValue(item.value, item.type);
     }
     async initialize() {
-        console.log('this.initialized:', this.initialized);
         if (this.initialized) {
             return;
         }

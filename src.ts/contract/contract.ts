@@ -84,9 +84,14 @@ export class ServingContract {
         balance: string
     ) {
         try {
-            const tx = await this.serving.addAccount(providerAddress, signer, {
-                value: BigInt(balance),
-            })
+            const tx = await this.serving.addAccount(
+                providerAddress,
+                signer,
+                'test',
+                {
+                    value: BigInt(balance),
+                }
+            )
 
             const receipt = await tx.wait()
 
@@ -105,11 +110,7 @@ export class ServingContract {
                 value: balance,
             })
 
-            console.log('tx', tx)
-
             const receipt = await tx.wait()
-
-            console.log('receipt', receipt)
 
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed')

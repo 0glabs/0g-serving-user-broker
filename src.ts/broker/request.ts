@@ -1,8 +1,8 @@
 import { Extractor } from '../extractor'
-import { sign } from '../zk'
-// import { Request } from '0g-zk-settlement-client'
+import { signData } from '../zk'
 import { REQUEST_LENGTH } from './const'
 import { ZGServingUserBrokerBase } from './base'
+import { Request, PackedPrivkey } from '../zk'
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -70,7 +70,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             if (settlementKey) {
                 zkPrivateKey = JSON.parse(settlementKey).map((num: string) =>
                     BigInt(num)
-                )
+                ) as PackedPrivkey
             }
 
             if (!zkPrivateKey) {
@@ -78,7 +78,8 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             }
 
             const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
-            const key = this.contract.getUserAddress() + providerAddress
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+
             this.metadata.storeNonce(key, updatedNonce)
 
             const { fee, inputFee } = await this.calculateFees(
@@ -87,28 +88,25 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 outputFee
             )
 
-            // const zkInput = new Request(
-            //     updatedNonce.toString(),
-            //     fee.toString(),
-            //     this.contract.getUserAddress(),
-            //     providerAddress
-            // )
+            const zkInput = new Request(
+                updatedNonce.toString(),
+                fee.toString(),
+                this.contract.getUserAddress(),
+                providerAddress
+            )
 
-            const zkInput = {
-                nonce: updatedNonce,
-                fee: fee,
-                userAddress: this.contract.getUserAddress(),
-                providerAddress: providerAddress,
-            }
-
-            sig = await sign([zkInput], zkPrivateKey)
+            const zkSig = await signData(
+                [zkInput],
+                zkPrivateKey as PackedPrivkey
+            )
+            sig = JSON.stringify(Array.from(zkSig[0]))
 
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: this.contract.getUserAddress(),
-                Fee: zkInput.fee.toString(),
+                Fee: fee.toString(),
                 'Input-Fee': inputFee.toString(),
-                Nonce: zkInput.nonce.toString(),
+                Nonce: updatedNonce.toString(),
                 'Previous-Output-Fee': (outputFee ?? 0).toString(),
                 'Service-Name': svcName,
                 Signature: sig,

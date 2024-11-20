@@ -54,7 +54,7 @@ class ServingContract {
     }
     async addAccount(providerAddress, signer, balance) {
         try {
-            const tx = await this.serving.addAccount(providerAddress, signer, {
+            const tx = await this.serving.addAccount(providerAddress, signer, 'test', {
                 value: BigInt(balance),
             });
             const receipt = await tx.wait();
@@ -72,9 +72,7 @@ class ServingContract {
             const tx = await this.serving.depositFund(providerAddress, {
                 value: balance,
             });
-            console.log('tx', tx);
             const receipt = await tx.wait();
-            console.log('receipt', receipt);
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
                 throw error;

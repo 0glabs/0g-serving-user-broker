@@ -1,5 +1,5 @@
 import { ZGServingUserBrokerBase } from './base'
-import { createKey } from '../zk'
+import { genKeyPair } from '../zk'
 import { AddressLike } from 'ethers'
 
 /**
@@ -73,17 +73,16 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
     private async createAndStoreKey(
         providerAddress: string
     ): Promise<[bigint, bigint]> {
-        // [pri, pub]
-        let keyPair: [[bigint, bigint], [bigint, bigint]]
         try {
-            keyPair = await createKey()
+            // [pri, pub]
+            const keyPair = await genKeyPair()
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+            // private key will be used for signing request
+            this.metadata.storeZKPrivateKey(key, keyPair.packedPrivkey)
+            // public key will be used to create serving account
+            return keyPair.doublePackedPubkey
         } catch (error) {
             throw error
         }
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`
-        // private key will be used for signing request
-        this.metadata.storeZKPrivateKey(key, keyPair[0])
-        // public key will be used to create serving account
-        return keyPair[1]
     }
 }
