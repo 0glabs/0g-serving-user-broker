@@ -21,7 +21,8 @@
         "clean": "rm -rf dist lib.esm lib.commonjs types",
         "build": "npm run clean && tsc -b tsconfig.commonjs.json tsconfig.types.json && npx rollup -c rollup.config.mjs",
         "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/serving '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/Serving.sol/Serving.json'",
-        "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json"
+        "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json",
+        "test": "mocha -r ts-node/register 'src.ts/**/*.test.ts'"
     },
     "keywords": [],
     "author": "0G Labs",
@@ -36,7 +37,11 @@
         "typechain": "^8.3.1",
         "typedoc": "^0.26.10",
         "typescript": "^5.6.2",
-        "uglify-js": "^3.17.4"
+        "uglify-js": "^3.17.4",
+        "chai": "^4.3.7",
+        "mocha": "^10.2.0",
+        "@types/mocha": "^10.0.1",
+        "@types/chai": "^4.3.7"
     },
     "dependencies": {
         "@ethersproject/bytes": "^5.7.0",
@@ -55,7 +60,9 @@
         "ethers": "6.13.1",
         "open-jsonrpc-provider": "^0.2.1",
         "rollup-plugin-polyfill-node": "^0.13.0",
-        "sinon": "^19.0.2"
+        "sinon": "^19.0.2",
+        "circomlibjs": "^0.1.6",
+        "@types/circomlibjs": "^0.1.6"
     },
     "types": "./lib.commonjs/index.d.ts",
     "directories": {
