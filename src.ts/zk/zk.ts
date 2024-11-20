@@ -1,49 +1,73 @@
-// import { signData, genKeyPair } from '0g-zk-settlement-client'
+import { babyJubJubGeneratePrivateKey, babyJubJubGeneratePublicKey, packPoint, unpackPoint, SignatureBuffer } from './crypto';
+import { bytesToBigint, bigintToBytes } from './utils';
+import { signRequests, verifySig, FIELD_SIZE } from './helper';
+import { Request } from './request'; 
 
-export interface ZKRequest {
-    fee: string
-    nonce: string
-    providerAddress: string
-    userAddress: string
+const BIGINT_SIZE = 16;
+type DoublePackedPubkey = [bigint, bigint];
+type PackedPrivkey = [bigint, bigint];
+type KeyPair = {
+    packedPrivkey: PackedPrivkey;
+    doublePackedPubkey: DoublePackedPubkey;
+};
+
+
+export async function genKeyPair(): Promise<KeyPair> {
+    // generate private key
+    const privkey = await babyJubJubGeneratePrivateKey();
+    // generate public key
+    const pubkey = await babyJubJubGeneratePublicKey(privkey);
+    // pack public key to FIELD_SIZE bytes
+    const packedPubkey = await packPoint(pubkey);
+    // unpack packed pubkey to bigint
+    const packedPubkey0 = bytesToBigint(packedPubkey.slice(0, BIGINT_SIZE));
+    const packedPubkey1 = bytesToBigint(packedPubkey.slice(BIGINT_SIZE));
+    // unpack private key to bigint
+    const packPrivkey0 = bytesToBigint(privkey.slice(0, BIGINT_SIZE));
+    const packPrivkey1 = bytesToBigint(privkey.slice(BIGINT_SIZE));
+
+    return { 
+        packedPrivkey: [packPrivkey0, packPrivkey1], 
+        doublePackedPubkey: [packedPubkey0, packedPubkey1]
+    };
 }
 
-export async function createKey(): Promise<
-    [[bigint, bigint], [bigint, bigint]]
-> {
-    let keyPair: {
-        packPrivkey0: bigint
-        packPrivkey1: bigint
-        packedPubkey0: bigint
-        packedPubkey1: bigint
-    }
-    try {
-        keyPair = {
-            packPrivkey0: BigInt('123123'),
-            packPrivkey1: BigInt('123123'),
-            packedPubkey0: BigInt('123123'),
-            packedPubkey1: BigInt('123123'),
-        }
-        // keyPair = await genKeyPair()
-        return [
-            [keyPair.packPrivkey0, keyPair.packPrivkey1],
-            [keyPair.packedPubkey0, keyPair.packedPubkey1],
-        ]
-    } catch (error) {
-        console.error('Create ZK key error', error)
-        throw error
-    }
+export async function signData(
+    data: Request[], 
+    packedPrivkey: PackedPrivkey
+): Promise<SignatureBuffer[]> {
+    // unpack private key to bytes
+    const packedPrivkey0 = bigintToBytes(packedPrivkey[0], BIGINT_SIZE);
+    const packedPrivkey1 = bigintToBytes(packedPrivkey[1], BIGINT_SIZE);
+    
+    // combine bytes to Uint8Array
+    const privateKey = new Uint8Array(FIELD_SIZE);
+    privateKey.set(packedPrivkey0, 0);
+    privateKey.set(packedPrivkey1, BIGINT_SIZE);
+    
+    // sign data
+    const signatures = await signRequests(data, privateKey);
+    return signatures;
 }
 
-export async function sign(
-    requests: any,
-    privateKey: bigint[]
-): Promise<string> {
-    try {
-        // signatures = await signData(requests, privateKey)
-        // const jsonString = JSON.stringify(Array.from(signatures[0]))
-        // return jsonString
-        return '123123'
-    } catch (error) {
-        throw error
-    }
+export async function verifySignature(
+    data: Request[], 
+    signatures: Uint8Array[], 
+    doublePackedPubkey: DoublePackedPubkey
+): Promise<boolean[]> {
+    // unpack packed pubkey to FIELD_SIZE bytes
+    const packedPubkey0 = bigintToBytes(doublePackedPubkey[0], BIGINT_SIZE);
+    const packedPubkey1 = bigintToBytes(doublePackedPubkey[1], BIGINT_SIZE);
+
+    // combine bytes to Uint8Array
+    const packedPubkey = new Uint8Array(FIELD_SIZE);
+    packedPubkey.set(packedPubkey0, 0);
+    packedPubkey.set(packedPubkey1, BIGINT_SIZE);
+
+    // unpack packed pubkey to point
+    const pubkey = await unpackPoint(packedPubkey);
+
+    // verify signature
+    const isValid = await verifySig(data, signatures, pubkey);
+    return isValid;
 }
