@@ -5,27 +5,31 @@ const storage_1 = require("../storage");
 const extractor_1 = require("../extractor");
 class ZGServingUserBrokerBase {
     contract;
-    constructor(contract) {
+    metadata;
+    cache;
+    constructor(contract, metadata, cache) {
         this.contract = contract;
+        this.metadata = metadata;
+        this.cache = cache;
     }
     async getProviderData(providerAddress) {
-        const key = this.contract.getUserAddress() + providerAddress;
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
         const [nonce, outputFee, zkPrivateKey] = await Promise.all([
-            storage_1.Metadata.getNonce(key),
-            storage_1.Metadata.getOutputFee(key),
-            storage_1.Metadata.getZKPrivateKey(key),
+            this.metadata.getNonce(key),
+            this.metadata.getOutputFee(key),
+            this.metadata.getZKPrivateKey(key),
         ]);
         return { nonce, outputFee, zkPrivateKey };
     }
     async getService(providerAddress, svcName, useCache = true) {
         const key = providerAddress + svcName;
-        const cachedSvc = storage_1.Cache.getItem(key);
+        const cachedSvc = await this.cache.getItem(key);
         if (cachedSvc && useCache) {
             return cachedSvc;
         }
         try {
             const svc = await this.contract.getService(providerAddress, svcName);
-            storage_1.Cache.setItem(key, svc, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
+            await this.cache.setItem(key, svc, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
             return svc;
         }
         catch (error) {

@@ -1,12 +1,18 @@
 "use strict";
+// import { signData, genKeyPair } from '0g-zk-settlement-client'
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createKey = createKey;
 exports.sign = sign;
-const _0g_zk_settlement_client_1 = require("0g-zk-settlement-client");
 async function createKey() {
     let keyPair;
     try {
-        keyPair = await (0, _0g_zk_settlement_client_1.genKeyPair)();
+        keyPair = {
+            packPrivkey0: BigInt('123123'),
+            packPrivkey1: BigInt('123123'),
+            packedPubkey0: BigInt('123123'),
+            packedPubkey1: BigInt('123123'),
+        };
+        // keyPair = await genKeyPair()
         return [
             [keyPair.packPrivkey0, keyPair.packPrivkey1],
             [keyPair.packedPubkey0, keyPair.packedPubkey1],
@@ -18,11 +24,11 @@ async function createKey() {
     }
 }
 async function sign(requests, privateKey) {
-    let signatures;
     try {
-        signatures = await (0, _0g_zk_settlement_client_1.signData)(requests, privateKey);
-        const jsonString = JSON.stringify(Array.from(signatures[0]));
-        return jsonString;
+        // signatures = await signData(requests, privateKey)
+        // const jsonString = JSON.stringify(Array.from(signatures[0]))
+        // return jsonString
+        return '123123';
     }
     catch (error) {
         throw error;

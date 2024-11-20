@@ -1,6 +1,6 @@
 import { ServingContract } from '../contract'
 import { Extractor } from '../extractor'
-import { Metadata } from '../storage'
+import { Cache, Metadata } from '../storage'
 import { ZGServingUserBrokerBase } from './base'
 import { isVerifiability, VerifiabilityEnum } from './model'
 import { Verifier } from './verifier'
@@ -13,10 +13,11 @@ import { Verifier } from './verifier'
 export class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier: Verifier
 
-    constructor(contract: ServingContract) {
-        super(contract)
+    constructor(contract: ServingContract, metadata: Metadata, cache: Cache) {
+        super(contract, metadata, cache)
         this.contract = contract
-        this.verifier = new Verifier(contract)
+        this.metadata = metadata
+        this.verifier = new Verifier(contract, metadata, cache)
     }
 
     async processResponse(
@@ -29,8 +30,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
             let extractor: Extractor
             extractor = await this.getExtractor(providerAddress, svcName)
             const outputFee = await this.calculateOutputFees(extractor, content)
-            Metadata.storeOutputFee(
-                this.contract.getUserAddress() + providerAddress,
+            this.metadata.storeOutputFee(
+                `${this.contract.getUserAddress()}_${providerAddress}`,
                 outputFee
             )
 

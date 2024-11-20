@@ -1,9 +1,12 @@
 import { ServingContract } from '../contract';
+import { Cache, Metadata } from '../storage';
 import { Extractor } from '../extractor';
 import { ServiceStructOutput } from '../contract/serving/Serving';
 export declare abstract class ZGServingUserBrokerBase {
     protected contract: ServingContract;
-    constructor(contract: ServingContract);
+    protected metadata: Metadata;
+    protected cache: Cache;
+    constructor(contract: ServingContract, metadata: Metadata, cache: Cache);
     protected getProviderData(providerAddress: string): Promise<{
         nonce: number | null;
         outputFee: number | null;

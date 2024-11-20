@@ -5,17 +5,21 @@ import { ServiceStructOutput } from '../contract/serving/Serving'
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: ServingContract
+    protected metadata: Metadata
+    protected cache: Cache
 
-    constructor(contract: ServingContract) {
+    constructor(contract: ServingContract, metadata: Metadata, cache: Cache) {
         this.contract = contract
+        this.metadata = metadata
+        this.cache = cache
     }
 
     protected async getProviderData(providerAddress: string) {
-        const key = this.contract.getUserAddress() + providerAddress
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`
         const [nonce, outputFee, zkPrivateKey] = await Promise.all([
-            Metadata.getNonce(key),
-            Metadata.getOutputFee(key),
-            Metadata.getZKPrivateKey(key),
+            this.metadata.getNonce(key),
+            this.metadata.getOutputFee(key),
+            this.metadata.getZKPrivateKey(key),
         ])
         return { nonce, outputFee, zkPrivateKey }
     }
@@ -26,14 +30,19 @@ export abstract class ZGServingUserBrokerBase {
         useCache = true
     ): Promise<ServiceStructOutput> {
         const key = providerAddress + svcName
-        const cachedSvc = Cache.getItem(key)
+        const cachedSvc = await this.cache.getItem(key)
         if (cachedSvc && useCache) {
             return cachedSvc
         }
 
         try {
             const svc = await this.contract.getService(providerAddress, svcName)
-            Cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service)
+            await this.cache.setItem(
+                key,
+                svc,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.Service
+            )
             return svc
         } catch (error) {
             throw error

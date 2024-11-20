@@ -1,4 +1,4 @@
-import { JsonRpcSigner } from 'ethers';
+import { JsonRpcSigner, Wallet } from 'ethers';
 import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
@@ -11,8 +11,9 @@ export declare class ZGServingNetworkBroker {
     accountProcessor: AccountProcessor;
     modelProcessor: ModelProcessor;
     private signer;
+    private customPath;
     private contractAddress;
-    constructor(signer: JsonRpcSigner, contractAddress: string);
+    constructor(signer: JsonRpcSigner | Wallet, customPath: string, contractAddress: string);
     initialize(): Promise<void>;
     /**
      * Retrieves a list of services from the contract.
@@ -59,7 +60,7 @@ export declare class ZGServingNetworkBroker {
      * @returns headers. Records information such as the request fee and user signature.
      * @throws An error if errors occur during the processing of the request.
      */
-    processRequest: (providerAddress: string, svcName: string, content: string) => Promise<import("./request").ServingRequestHeaders>;
+    processRequest: (providerAddress: string, svcName: string, content: string, settlementKey?: string) => Promise<import("./request").ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
@@ -129,5 +130,5 @@ export declare class ZGServingNetworkBroker {
  * @returns broker instance.
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createZGServingNetworkBroker(signer: JsonRpcSigner, contractAddress?: string): Promise<ZGServingNetworkBroker>;
+export declare function createZGServingNetworkBroker(signer: JsonRpcSigner | Wallet, customPath: string, contractAddress?: string): Promise<ZGServingNetworkBroker>;
 //# sourceMappingURL=broker.d.ts.map
