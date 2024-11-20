@@ -4,7 +4,7 @@ exports.Request = void 0;
 const utils_1 = require("./utils");
 const ADDR_LENGTH = 20;
 const NONCE_LENGTH = 4;
-const FEE_LENGTH = 8; // u64 的长度为 8 字节
+const FEE_LENGTH = 8;
 class Request {
     nonce;
     fee;
@@ -15,7 +15,6 @@ class Request {
     ) {
         this.nonce = parseInt(nonce.toString());
         this.fee = BigInt(parseInt(fee.toString()));
-        // userAddress 和 providerAddress 为 u160 以 hexstring 形式输入
         this.userAddress = BigInt(userAddress);
         this.providerAddress = BigInt(providerAddress);
     }
@@ -23,18 +22,18 @@ class Request {
         const buffer = new ArrayBuffer(NONCE_LENGTH + ADDR_LENGTH * 2 + FEE_LENGTH);
         const view = new DataView(buffer);
         let offset = 0;
-        // 写入 nonce (u32)
+        // write nonce (u32)
         view.setUint32(offset, this.nonce, true);
         offset += NONCE_LENGTH;
-        // 写入 fee (u64)
+        // write fee (u64)
         const feeBytes = (0, utils_1.bigintToBytes)(this.fee, FEE_LENGTH);
         new Uint8Array(buffer, offset, FEE_LENGTH).set(feeBytes);
         offset += FEE_LENGTH;
-        // 写入 userAddress (u160)
+        // write userAddress (u160)
         const userAddressBytes = (0, utils_1.bigintToBytes)(this.userAddress, ADDR_LENGTH);
         new Uint8Array(buffer, offset, ADDR_LENGTH).set(userAddressBytes);
         offset += ADDR_LENGTH;
-        // 写入 providerAddress (u160)
+        // write providerAddress (u160)
         const providerAddressBytes = (0, utils_1.bigintToBytes)(this.providerAddress, ADDR_LENGTH);
         new Uint8Array(buffer, offset, ADDR_LENGTH).set(providerAddressBytes);
         offset += ADDR_LENGTH;
@@ -47,16 +46,16 @@ class Request {
         }
         const view = new DataView(byteArray.buffer);
         let offset = 0;
-        // 读取 nonce (u32)
+        // read nonce (u32)
         const nonce = view.getUint32(offset, true);
         offset += NONCE_LENGTH;
-        // 读取 fee (u64)
+        // read fee (u64)
         const fee = (0, utils_1.bytesToBigint)(new Uint8Array(byteArray.slice(offset, offset + FEE_LENGTH)));
         offset += FEE_LENGTH;
-        // 读取 userAddress (u160)
+        // read userAddress (u160)
         const userAddress = (0, utils_1.bytesToBigint)(new Uint8Array(byteArray.slice(offset, offset + ADDR_LENGTH)));
         offset += ADDR_LENGTH;
-        // 读取 providerAddress (u160)
+        // read providerAddress (u160)
         const providerAddress = (0, utils_1.bytesToBigint)(new Uint8Array(byteArray.slice(offset, offset + ADDR_LENGTH)));
         offset += ADDR_LENGTH;
         return new Request(nonce.toString(), fee.toString(), '0x' + userAddress.toString(16), '0x' + providerAddress.toString(16));

@@ -25,6 +25,7 @@ export type AccountStruct = {
     pendingRefund: BigNumberish;
     signer: [BigNumberish, BigNumberish];
     refunds: RefundStruct[];
+    additionalInfo: string;
 };
 export type AccountStructOutput = [
     user: string,
@@ -33,7 +34,8 @@ export type AccountStructOutput = [
     balance: bigint,
     pendingRefund: bigint,
     signer: [bigint, bigint],
-    refunds: RefundStructOutput[]
+    refunds: RefundStructOutput[],
+    additionalInfo: string
 ] & {
     user: string;
     provider: string;
@@ -42,6 +44,7 @@ export type AccountStructOutput = [
     pendingRefund: bigint;
     signer: [bigint, bigint];
     refunds: RefundStructOutput[];
+    additionalInfo: string;
 };
 export type ServiceStruct = {
     provider: AddressLike;
@@ -95,7 +98,7 @@ export type VerifierInputStructOutput = [
 export interface ServingInterface extends Interface {
     getFunction(nameOrSignature: "addAccount" | "addOrUpdateService" | "batchVerifierAddress" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getService" | "initialize" | "initialized" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefund" | "settleFees" | "transferOwnership" | "updateBatchVerifierAddress" | "updateLockTime"): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
-    encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, [BigNumberish, BigNumberish]]): string;
+    encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, [BigNumberish, BigNumberish], string]): string;
     encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, string, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "batchVerifierAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike]): string;
@@ -262,7 +265,8 @@ export interface Serving extends BaseContract {
     removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
     addAccount: TypedContractMethod<[
         provider: AddressLike,
-        signer: [BigNumberish, BigNumberish]
+        signer: [BigNumberish, BigNumberish],
+        additionalInfo: string
     ], [
         void
     ], "payable">;
@@ -340,7 +344,8 @@ export interface Serving extends BaseContract {
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
     getFunction(nameOrSignature: "addAccount"): TypedContractMethod<[
         provider: AddressLike,
-        signer: [BigNumberish, BigNumberish]
+        signer: [BigNumberish, BigNumberish],
+        additionalInfo: string
     ], [
         void
     ], "payable">;

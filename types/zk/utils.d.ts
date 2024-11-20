@@ -1,3 +1,4 @@
+export declare const BYTE_SIZE = 8;
 export declare function bigintToBytes(bigint: bigint, length: number): Uint8Array;
 export declare function bytesToBigint(bytes: Uint8Array): bigint;
 export declare function convertToBiguint64(timestamp: number | bigint): bigint;
