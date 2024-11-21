@@ -1,8 +1,9 @@
 import { Extractor } from '../extractor'
-import { signData } from '../zk'
-import { REQUEST_LENGTH } from './const'
+import { signData } from '../settle-signer'
+import { REQUEST_LENGTH } from '../const'
 import { ZGServingUserBrokerBase } from './base'
-import { Request, PackedPrivkey } from '../zk'
+import { Request, PackedPrivkey } from '../settle-signer'
+import { decryptData, stringToSettleSignerPrivateKey } from '../utils/encrypt'
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -54,8 +55,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
     async processRequest(
         providerAddress: string,
         svcName: string,
-        content: string,
-        settlementKey?: string
+        content: string
     ): Promise<ServingRequestHeaders> {
         let extractor: Extractor
         let sig: string
@@ -63,23 +63,26 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         try {
             extractor = await this.getExtractor(providerAddress, svcName)
 
-            let { nonce, outputFee, zkPrivateKey } = await this.getProviderData(
-                providerAddress
-            )
+            let { nonce, outputFee, settleSignerPrivateKey } =
+                await this.getProviderData(providerAddress)
 
-            if (settlementKey) {
-                zkPrivateKey = JSON.parse(settlementKey).map((num: string) =>
-                    BigInt(num)
-                ) as PackedPrivkey
-            }
-
-            if (!zkPrivateKey) {
-                throw new Error('Miss private key for signing request')
-            }
-
-            const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
             const key = `${this.contract.getUserAddress()}_${providerAddress}`
 
+            if (!settleSignerPrivateKey) {
+                const account = await this.contract.getAccount(providerAddress)
+                const settleSignerPrivateKeyStr = await decryptData(
+                    this.contract.signer,
+                    account.additionalInfo
+                )
+                settleSignerPrivateKey = stringToSettleSignerPrivateKey(
+                    settleSignerPrivateKeyStr
+                )
+                this.metadata.storeSettleSignerPrivateKey(
+                    key,
+                    settleSignerPrivateKey
+                )
+            }
+            const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
             this.metadata.storeNonce(key, updatedNonce)
 
             const { fee, inputFee } = await this.calculateFees(
@@ -88,18 +91,18 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 outputFee
             )
 
-            const zkInput = new Request(
+            const request = new Request(
                 updatedNonce.toString(),
                 fee.toString(),
                 this.contract.getUserAddress(),
                 providerAddress
             )
 
-            const zkSig = await signData(
-                [zkInput],
-                zkPrivateKey as PackedPrivkey
+            const settleSignature = await signData(
+                [request],
+                settleSignerPrivateKey as PackedPrivkey
             )
-            sig = JSON.stringify(Array.from(zkSig[0]))
+            sig = JSON.stringify(Array.from(settleSignature[0]))
 
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',

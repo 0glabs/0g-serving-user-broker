@@ -103,9 +103,9 @@ class ZGServingNetworkBroker {
      * @returns headers. Records information such as the request fee and user signature.
      * @throws An error if errors occur during the processing of the request.
      */
-    processRequest = async (providerAddress, svcName, content, settlementKey) => {
+    processRequest = async (providerAddress, svcName, content) => {
         try {
-            return await this.requestProcessor.processRequest(providerAddress, svcName, content, settlementKey);
+            return await this.requestProcessor.processRequest(providerAddress, svcName, content);
         }
         catch (error) {
             throw error;

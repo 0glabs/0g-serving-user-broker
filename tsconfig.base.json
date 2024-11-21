@@ -4,6 +4,7 @@
         "declarationMap": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
         "importHelpers": true,
         "lib": ["es2020", "es5", "dom"],
         "noEmitOnError": true,

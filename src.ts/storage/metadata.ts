@@ -76,10 +76,10 @@ export class Metadata {
         await this.setItem(`${key}_outputFee`, value.toString())
     }
 
-    async storeZKPrivateKey(key: string, value: bigint[]) {
+    async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
-        await this.setItem(`${key}_zkPrivateKey`, bigIntJsonString)
+        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString)
     }
 
     async storeSigningKey(key: string, value: string) {
@@ -96,8 +96,10 @@ export class Metadata {
         return value ? parseInt(value, 10) : null
     }
 
-    async getZKPrivateKey(key: string): Promise<bigint[] | null> {
-        const value: string | null = await this.getItem(`${key}_zkPrivateKey`)
+    async getSettleSignerPrivateKey(key: string): Promise<bigint[] | null> {
+        const value: string | null = await this.getItem(
+            `${key}_settleSignerPrivateKey`
+        )
         if (!value) {
             return null
         }
