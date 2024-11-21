@@ -4,6 +4,7 @@ import { ServiceStructOutput } from './serving/Serving'
 
 export class ServingContract {
     public serving: Serving
+    public signer: JsonRpcSigner | Wallet
 
     private _userAddress: string
 
@@ -13,6 +14,7 @@ export class ServingContract {
         userAddress: string
     ) {
         this.serving = Serving__factory.connect(contractAddress, signer)
+        this.signer = signer
         this._userAddress = userAddress
     }
 
@@ -38,10 +40,26 @@ export class ServingContract {
         }
     }
 
-    async getAccount(user: AddressLike, provider: AddressLike) {
+    async getAccount(provider: AddressLike) {
         try {
+            const user = this.getUserAddress()
             const account = await this.serving.getAccount(user, provider)
             return account
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async deleteAccount(provider: AddressLike) {
+        try {
+            const tx = await this.serving.deleteAccount(provider)
+
+            const receipt = await tx.wait()
+
+            if (!receipt || receipt.status !== 1) {
+                const error = new Error('Transaction failed')
+                throw error
+            }
         } catch (error) {
             throw error
         }
@@ -81,13 +99,14 @@ export class ServingContract {
     async addAccount(
         providerAddress: AddressLike,
         signer: [BigNumberish, BigNumberish],
-        balance: string
+        balance: string,
+        settleSignerEncryptedPrivateKey: string
     ) {
         try {
             const tx = await this.serving.addAccount(
                 providerAddress,
                 signer,
-                'test',
+                settleSignerEncryptedPrivateKey,
                 {
                     value: BigInt(balance),
                 }

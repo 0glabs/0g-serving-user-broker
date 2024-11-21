@@ -56,7 +56,7 @@ export declare class ZGServingNetworkBroker {
      * @returns headers. Records information such as the request fee and user signature.
      * @throws An error if errors occur during the processing of the request.
      */
-    processRequest: (providerAddress: string, svcName: string, content: string, settlementKey?: string) => Promise<import("./request").ServingRequestHeaders>;
+    processRequest: (providerAddress: string, svcName: string, content: string) => Promise<import("./request").ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *

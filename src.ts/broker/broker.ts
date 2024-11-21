@@ -119,15 +119,13 @@ export class ZGServingNetworkBroker {
     public processRequest = async (
         providerAddress: string,
         svcName: string,
-        content: string,
-        settlementKey?: string
+        content: string
     ) => {
         try {
             return await this.requestProcessor.processRequest(
                 providerAddress,
                 svcName,
-                content,
-                settlementKey
+                content
             )
         } catch (error) {
             throw error

@@ -96,11 +96,12 @@ export type VerifierInputStructOutput = [
     segmentSize: bigint[];
 };
 export interface ServingInterface extends Interface {
-    getFunction(nameOrSignature: "addAccount" | "addOrUpdateService" | "batchVerifierAddress" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getService" | "initialize" | "initialized" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefund" | "settleFees" | "transferOwnership" | "updateBatchVerifierAddress" | "updateLockTime"): FunctionFragment;
+    getFunction(nameOrSignature: "addAccount" | "addOrUpdateService" | "batchVerifierAddress" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getService" | "initialize" | "initialized" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefund" | "settleFees" | "transferOwnership" | "updateBatchVerifierAddress" | "updateLockTime"): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, [BigNumberish, BigNumberish], string]): string;
     encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, string, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "batchVerifierAddress", values?: undefined): string;
+    encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
@@ -121,6 +122,7 @@ export interface ServingInterface extends Interface {
     decodeFunctionResult(functionFragment: "addAccount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "addOrUpdateService", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "batchVerifierAddress", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "deleteAccount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "depositFund", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAccount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAllAccounts", data: BytesLike): Result;
@@ -282,6 +284,11 @@ export interface Serving extends BaseContract {
         void
     ], "nonpayable">;
     batchVerifierAddress: TypedContractMethod<[], [string], "view">;
+    deleteAccount: TypedContractMethod<[
+        provider: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
     depositFund: TypedContractMethod<[provider: AddressLike], [void], "payable">;
     getAccount: TypedContractMethod<[
         user: AddressLike,
@@ -361,6 +368,7 @@ export interface Serving extends BaseContract {
         void
     ], "nonpayable">;
     getFunction(nameOrSignature: "batchVerifierAddress"): TypedContractMethod<[], [string], "view">;
+    getFunction(nameOrSignature: "deleteAccount"): TypedContractMethod<[provider: AddressLike], [void], "nonpayable">;
     getFunction(nameOrSignature: "depositFund"): TypedContractMethod<[provider: AddressLike], [void], "payable">;
     getFunction(nameOrSignature: "getAccount"): TypedContractMethod<[
         user: AddressLike,

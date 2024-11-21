@@ -1,35 +1,36 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestProcessor = void 0;
-const zk_1 = require("../zk");
-const const_1 = require("./const");
+const settle_signer_1 = require("../settle-signer");
+const const_1 = require("../const");
 const base_1 = require("./base");
-const zk_2 = require("../zk");
+const settle_signer_2 = require("../settle-signer");
+const encrypt_1 = require("../utils/encrypt");
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
  * before use.
  */
 class RequestProcessor extends base_1.ZGServingUserBrokerBase {
-    async processRequest(providerAddress, svcName, content, settlementKey) {
+    async processRequest(providerAddress, svcName, content) {
         let extractor;
         let sig;
         try {
             extractor = await this.getExtractor(providerAddress, svcName);
-            let { nonce, outputFee, zkPrivateKey } = await this.getProviderData(providerAddress);
-            if (settlementKey) {
-                zkPrivateKey = JSON.parse(settlementKey).map((num) => BigInt(num));
-            }
-            if (!zkPrivateKey) {
-                throw new Error('Miss private key for signing request');
+            let { nonce, outputFee, settleSignerPrivateKey } = await this.getProviderData(providerAddress);
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            if (!settleSignerPrivateKey) {
+                const account = await this.contract.getAccount(providerAddress);
+                const settleSignerPrivateKeyStr = await (0, encrypt_1.decryptData)(this.contract.signer, account.additionalInfo);
+                settleSignerPrivateKey = (0, encrypt_1.stringToSettleSignerPrivateKey)(settleSignerPrivateKeyStr);
+                this.metadata.storeSettleSignerPrivateKey(key, settleSignerPrivateKey);
             }
             const updatedNonce = !nonce ? 1 : nonce + const_1.REQUEST_LENGTH;
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
             this.metadata.storeNonce(key, updatedNonce);
             const { fee, inputFee } = await this.calculateFees(extractor, content, outputFee);
-            const zkInput = new zk_2.Request(updatedNonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
-            const zkSig = await (0, zk_1.signData)([zkInput], zkPrivateKey);
-            sig = JSON.stringify(Array.from(zkSig[0]));
+            const request = new settle_signer_2.Request(updatedNonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
+            const settleSignature = await (0, settle_signer_1.signData)([request], settleSignerPrivateKey);
+            sig = JSON.stringify(Array.from(settleSignature[0]));
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: this.contract.getUserAddress(),

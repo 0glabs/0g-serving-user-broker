@@ -4,9 +4,11 @@ exports.ServingContract = void 0;
 const serving_1 = require("./serving");
 class ServingContract {
     serving;
+    signer;
     _userAddress;
     constructor(signer, contractAddress, userAddress) {
         this.serving = serving_1.Serving__factory.connect(contractAddress, signer);
+        this.signer = signer;
         this._userAddress = userAddress;
     }
     lockTime() {
@@ -30,10 +32,24 @@ class ServingContract {
             throw error;
         }
     }
-    async getAccount(user, provider) {
+    async getAccount(provider) {
         try {
+            const user = this.getUserAddress();
             const account = await this.serving.getAccount(user, provider);
             return account;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async deleteAccount(provider) {
+        try {
+            const tx = await this.serving.deleteAccount(provider);
+            const receipt = await tx.wait();
+            if (!receipt || receipt.status !== 1) {
+                const error = new Error('Transaction failed');
+                throw error;
+            }
         }
         catch (error) {
             throw error;
@@ -52,9 +68,9 @@ class ServingContract {
             throw error;
         }
     }
-    async addAccount(providerAddress, signer, balance) {
+    async addAccount(providerAddress, signer, balance, settleSignerEncryptedPrivateKey) {
         try {
-            const tx = await this.serving.addAccount(providerAddress, signer, 'test', {
+            const tx = await this.serving.addAccount(providerAddress, signer, settleSignerEncryptedPrivateKey, {
                 value: BigInt(balance),
             });
             const receipt = await tx.wait();

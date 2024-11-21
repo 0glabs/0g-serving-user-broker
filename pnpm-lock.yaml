@@ -32,6 +32,9 @@ dependencies:
   '@types/circomlibjs':
     specifier: ^0.1.6
     version: 0.1.6
+  '@types/crypto-js':
+    specifier: ^4.2.2
+    version: 4.2.2
   '@types/jest':
     specifier: ^29.5.4
     version: 29.5.13
@@ -50,6 +53,9 @@ dependencies:
   circomlibjs:
     specifier: ^0.1.6
     version: 0.1.7
+  crypto-js:
+    specifier: ^4.2.0
+    version: 4.2.0
   ethers:
     specifier: 6.13.1
     version: 6.13.1
@@ -1280,6 +1286,10 @@ packages:
     resolution: {integrity: sha512-yF174bPDaiKgejlZzCSqKwZaqXhlxMcVEHrAtstFohwP05OjtvHXOdxO6HQeTg8WwIdgMg7MJb1WyWZdUCGlPQ==}
     dev: false
 
+  /@types/crypto-js@4.2.2:
+    resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
+    dev: false
+
   /@types/estree@1.0.6:
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
     dev: false
@@ -1897,6 +1907,10 @@ packages:
       shebang-command: 2.0.0
       which: 2.0.2
     dev: true
+
+  /crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    dev: false
 
   /d@1.0.2:
     resolution: {integrity: sha512-MOqHvMWF9/9MX6nza0KgvFH4HpMU0EF5uUDXqX/BtxtU8NfB0QzRtJ8Oe/6SuS4kbhyzVJwjd97EA4PKrzJ8bw==}
