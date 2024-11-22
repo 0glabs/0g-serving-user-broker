@@ -64,9 +64,6 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return `${svc.url}/v1/proxy/${svcName}/attestation/report`;
         }
         catch (error) {
-            if (error instanceof Error) {
-                console.error(error?.message);
-            }
             throw error;
         }
     }

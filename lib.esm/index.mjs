@@ -1,6 +1,6 @@
-import { buildBabyjub, buildEddsa } from 'circomlibjs';
 import { ethers, ContractFactory, Interface, Contract } from 'ethers';
 import CryptoJS from 'crypto-js';
+import { buildBabyjub, buildEddsa } from 'circomlibjs';
 
 class Metadata {
     isBrowser = typeof window !== 'undefined' &&
@@ -66,9 +66,6 @@ class Metadata {
     async storeNonce(key, value) {
         await this.setItem(`${key}_nonce`, value.toString());
     }
-    async storeOutputFee(key, value) {
-        await this.setItem(`${key}_outputFee`, value.toString());
-    }
     async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
@@ -79,10 +76,6 @@ class Metadata {
     }
     async getNonce(key) {
         const value = await this.getItem(`${key}_nonce`);
-        return value ? parseInt(value, 10) : null;
-    }
-    async getOutputFee(key) {
-        const value = await this.getItem(`${key}_outputFee`);
         return value ? parseInt(value, 10) : null;
     }
     async getSettleSignerPrivateKey(key) {
@@ -230,64 +223,80 @@ class ChatBot extends Extractor {
         return Promise.resolve(this.svcInfo);
     }
     async getInputCount(content) {
+        if (!content) {
+            return 0;
+        }
         return content.split(/\s+/).length;
     }
     async getOutputCount(content) {
+        if (!content) {
+            return 0;
+        }
         return content.split(/\s+/).length;
     }
 }
 
-class ZGServingUserBrokerBase {
-    contract;
-    metadata;
-    cache;
-    constructor(contract, metadata, cache) {
-        this.contract = contract;
-        this.metadata = metadata;
-        this.cache = cache;
+/**
+ * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
+ *
+ * Background:
+ * To ensure a consistent and unique encryption key can be generated from a user's Ethereum wallet,
+ * we utilize a fixed message combined with a signing mechanism.
+ *
+ * Purpose:
+ * - This string is provided to the Ethereum signing function to generate a digital signature based on the user's private key.
+ * - The produced signature is then hashed (using SHA-256) to create a consistent 256-bit encryption key from the same wallet.
+ * - This process offers a way to protect data without storing additional keys.
+ *
+ * Note:
+ * - The uniqueness and stability of this message are crucial; do not change it unless you fully understand the impact
+ *   on the key derivation and encryption process.
+ * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
+ */
+const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
+
+async function deriveEncryptionKey(signer) {
+    const signature = await signer.signMessage(MESSAGE_FOR_ENCRYPTION_KEY);
+    const hash = ethers.sha256(ethers.toUtf8Bytes(signature));
+    return hash;
+}
+async function encryptData(signer, data) {
+    const key = await deriveEncryptionKey(signer);
+    const encrypted = CryptoJS.AES.encrypt(data, key).toString();
+    return encrypted;
+}
+async function decryptData(signer, encryptedData) {
+    const key = await deriveEncryptionKey(signer);
+    const bytes = CryptoJS.AES.decrypt(encryptedData, key);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    return decrypted;
+}
+
+function strToPrivateKey(str) {
+    const parsed = JSON.parse(str);
+    if (!Array.isArray(parsed) || parsed.length !== 2) {
+        throw new Error('Invalid input string');
     }
-    async getProviderData(providerAddress) {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
-        const [nonce, outputFee, settleSignerPrivateKey] = await Promise.all([
-            this.metadata.getNonce(key),
-            this.metadata.getOutputFee(key),
-            this.metadata.getSettleSignerPrivateKey(key),
-        ]);
-        return { nonce, outputFee, settleSignerPrivateKey };
+    const [first, second] = parsed.map((value) => {
+        if (typeof value === 'string' || typeof value === 'number') {
+            return BigInt(value);
+        }
+        throw new Error('Invalid number format');
+    });
+    return [first, second];
+}
+function privateKeyToStr(key) {
+    try {
+        return JSON.stringify(key.map((v) => v.toString()));
     }
-    async getService(providerAddress, svcName, useCache = true) {
-        const key = providerAddress + svcName;
-        const cachedSvc = await this.cache.getItem(key);
-        if (cachedSvc && useCache) {
-            return cachedSvc;
-        }
-        try {
-            const svc = await this.contract.getService(providerAddress, svcName);
-            await this.cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service);
-            return svc;
-        }
-        catch (error) {
-            throw error;
-        }
+    catch (error) {
+        throw error;
     }
-    async getExtractor(providerAddress, svcName, useCache = true) {
-        try {
-            const svc = await this.getService(providerAddress, svcName, useCache);
-            const extractor = this.createExtractor(svc);
-            return extractor;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    createExtractor(svc) {
-        switch (svc.serviceType) {
-            case 'chatbot':
-                return new ChatBot(svc);
-            default:
-                throw new Error('Unknown service type');
-        }
-    }
+}
+
+function getNonce() {
+    const now = new Date();
+    return now.getTime() * 10000 + 40;
 }
 
 let eddsa;
@@ -455,62 +464,93 @@ class Request {
     }
 }
 
-const REQUEST_LENGTH = 40;
-/**
- * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
- *
- * Background:
- * To ensure a consistent and unique encryption key can be generated from a user's Ethereum wallet,
- * we utilize a fixed message combined with a signing mechanism.
- *
- * Purpose:
- * - This string is provided to the Ethereum signing function to generate a digital signature based on the user's private key.
- * - The produced signature is then hashed (using SHA-256) to create a consistent 256-bit encryption key from the same wallet.
- * - This process offers a way to protect data without storing additional keys.
- *
- * Note:
- * - The uniqueness and stability of this message are crucial; do not change it unless you fully understand the impact
- *   on the key derivation and encryption process.
- * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
- */
-const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
-
-async function deriveEncryptionKey(signer) {
-    const signature = await signer.signMessage(MESSAGE_FOR_ENCRYPTION_KEY);
-    const hash = ethers.sha256(ethers.toUtf8Bytes(signature));
-    return hash;
-}
-async function encryptData(signer, data) {
-    const key = await deriveEncryptionKey(signer);
-    console.log('CryptoJS', CryptoJS);
-    const encrypted = CryptoJS.AES.encrypt(data, key).toString();
-    return encrypted;
-}
-async function decryptData(signer, encryptedData) {
-    const key = await deriveEncryptionKey(signer);
-    const bytes = CryptoJS.AES.decrypt(encryptedData, key);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-    return decrypted;
-}
-function stringToSettleSignerPrivateKey(str) {
-    const parsed = JSON.parse(str);
-    if (!Array.isArray(parsed) || parsed.length !== 2) {
-        throw new Error('Invalid input string');
+class ZGServingUserBrokerBase {
+    contract;
+    metadata;
+    cache;
+    constructor(contract, metadata, cache) {
+        this.contract = contract;
+        this.metadata = metadata;
+        this.cache = cache;
     }
-    const [first, second] = parsed.map((value) => {
-        if (typeof value === 'string' || typeof value === 'number') {
-            return BigInt(value);
+    async getProviderData(providerAddress) {
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+        const [settleSignerPrivateKey] = await Promise.all([
+            this.metadata.getSettleSignerPrivateKey(key),
+        ]);
+        return { settleSignerPrivateKey };
+    }
+    async getService(providerAddress, svcName, useCache = true) {
+        const key = providerAddress + svcName;
+        const cachedSvc = await this.cache.getItem(key);
+        if (cachedSvc && useCache) {
+            return cachedSvc;
         }
-        throw new Error('Invalid number format');
-    });
-    return [first, second];
-}
-function settlePrivateKeyToString(key) {
-    try {
-        return JSON.stringify(key.map((v) => v.toString()));
+        try {
+            const svc = await this.contract.getService(providerAddress, svcName);
+            await this.cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service);
+            return svc;
+        }
+        catch (error) {
+            throw error;
+        }
     }
-    catch (error) {
-        throw error;
+    async getExtractor(providerAddress, svcName, useCache = true) {
+        try {
+            const svc = await this.getService(providerAddress, svcName, useCache);
+            const extractor = this.createExtractor(svc);
+            return extractor;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    createExtractor(svc) {
+        switch (svc.serviceType) {
+            case 'chatbot':
+                return new ChatBot(svc);
+            default:
+                throw new Error('Unknown service type');
+        }
+    }
+    async getHeader(providerAddress, svcName, content, outputFee) {
+        try {
+            const extractor = await this.getExtractor(providerAddress, svcName);
+            const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            let privateKey = settleSignerPrivateKey;
+            if (!privateKey) {
+                const account = await this.contract.getAccount(providerAddress);
+                const privateKeyStr = await decryptData(this.contract.signer, account.additionalInfo);
+                privateKey = strToPrivateKey(privateKeyStr);
+                this.metadata.storeSettleSignerPrivateKey(key, privateKey);
+            }
+            const nonce = getNonce();
+            const inputFee = await this.calculateInputFees(extractor, content);
+            const fee = inputFee + outputFee;
+            const request = new Request(nonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
+            const settleSignature = await signData([request], privateKey);
+            const sig = JSON.stringify(Array.from(settleSignature[0]));
+            return {
+                'X-Phala-Signature-Type': 'StandaloneApi',
+                Address: this.contract.getUserAddress(),
+                Fee: fee.toString(),
+                'Input-Fee': inputFee.toString(),
+                Nonce: nonce.toString(),
+                'Previous-Output-Fee': outputFee.toString(),
+                'Service-Name': svcName,
+                Signature: sig,
+            };
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async calculateInputFees(extractor, content) {
+        const svc = await extractor.getSvcInfo();
+        const inputCount = await extractor.getInputCount(content);
+        const inputFee = inputCount * Number(svc.inputPrice);
+        return inputFee;
     }
 }
 
@@ -579,7 +619,7 @@ class AccountProcessor extends ZGServingUserBrokerBase {
             const keyPair = await genKeyPair();
             const key = `${this.contract.getUserAddress()}_${providerAddress}`;
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
-            const settleSignerEncryptedPrivateKey = await encryptData(this.contract.signer, settlePrivateKeyToString(keyPair.packedPrivkey));
+            const settleSignerEncryptedPrivateKey = await encryptData(this.contract.signer, privateKeyToStr(keyPair.packedPrivkey));
             return {
                 settleSignerEncryptedPrivateKey,
                 settleSignerPublicKey: keyPair.doublePackedPubkey,
@@ -1633,46 +1673,14 @@ class ServingContract {
  * before use.
  */
 class RequestProcessor extends ZGServingUserBrokerBase {
-    async processRequest(providerAddress, svcName, content) {
-        let extractor;
-        let sig;
-        try {
-            extractor = await this.getExtractor(providerAddress, svcName);
-            let { nonce, outputFee, settleSignerPrivateKey } = await this.getProviderData(providerAddress);
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
-            if (!settleSignerPrivateKey) {
-                const account = await this.contract.getAccount(providerAddress);
-                const settleSignerPrivateKeyStr = await decryptData(this.contract.signer, account.additionalInfo);
-                settleSignerPrivateKey = stringToSettleSignerPrivateKey(settleSignerPrivateKeyStr);
-                this.metadata.storeSettleSignerPrivateKey(key, settleSignerPrivateKey);
-            }
-            const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH;
-            this.metadata.storeNonce(key, updatedNonce);
-            const { fee, inputFee } = await this.calculateFees(extractor, content, outputFee);
-            const request = new Request(updatedNonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
-            const settleSignature = await signData([request], settleSignerPrivateKey);
-            sig = JSON.stringify(Array.from(settleSignature[0]));
-            return {
-                'X-Phala-Signature-Type': 'StandaloneApi',
-                Address: this.contract.getUserAddress(),
-                Fee: fee.toString(),
-                'Input-Fee': inputFee.toString(),
-                Nonce: updatedNonce.toString(),
-                'Previous-Output-Fee': (outputFee ?? 0).toString(),
-                'Service-Name': svcName,
-                Signature: sig,
-            };
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async calculateFees(extractor, content, outputFee) {
-        const svc = await extractor.getSvcInfo();
-        const inputCount = await extractor.getInputCount(content);
-        const inputFee = inputCount * Number(svc.inputPrice);
-        const fee = inputFee + (outputFee ?? 0);
-        return { fee, inputFee };
+    async getRequestMetadata(providerAddress, svcName, content) {
+        const service = await this.getService(providerAddress, svcName);
+        const headers = await this.getHeader(providerAddress, svcName, content, 0);
+        return {
+            headers,
+            endpoint: `${service.url}/v1/proxy/${svcName}`,
+            model: service.model,
+        };
     }
 }
 
@@ -1758,9 +1766,6 @@ class Verifier extends ZGServingUserBrokerBase {
             return `${svc.url}/v1/proxy/${svcName}/attestation/report`;
         }
         catch (error) {
-            if (error instanceof Error) {
-                console.error(error?.message);
-            }
             throw error;
         }
     }
@@ -1880,12 +1885,42 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.verifier = new Verifier(contract, metadata, cache);
     }
+    /**
+     * settleFee sends an empty request to the service provider to settle the fee.
+     */
+    async settleFee(providerAddress, serviceName, fee) {
+        try {
+            if (!fee) {
+                return;
+            }
+            const service = await this.contract.getService(providerAddress, serviceName);
+            if (!service) {
+                throw new Error('Service is not available');
+            }
+            const { provider, name, url } = service;
+            const headers = await this.getHeader(provider, name, '', fee);
+            const response = await fetch(`${url}/v1/proxy/${name}/settle-fee`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers,
+                },
+            });
+            if (response.status !== 202 && response.status !== 200) {
+                const errorData = await response.json();
+                throw new Error(errorData.error);
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async processResponse(providerAddress, svcName, content, chatID) {
         try {
             let extractor;
             extractor = await this.getExtractor(providerAddress, svcName);
             const outputFee = await this.calculateOutputFees(extractor, content);
-            this.metadata.storeOutputFee(`${this.contract.getUserAddress()}_${providerAddress}`, outputFee);
+            await this.settleFee(providerAddress, svcName, outputFee);
             const svc = await extractor.getSvcInfo();
             // TODO: Temporarily return true for non-TeeML verifiability.
             // these cases will be handled in the future.
@@ -1998,8 +2033,11 @@ class ZGServingNetworkBroker {
         }
     };
     /**
-     * processRequest generates billing-related headers for the request
-     * when the user uses the provider service.
+     * Generates request metadata for the provider service.
+     * Includes:
+     * 1. Request endpoint for the provider service
+     * 2. Billing-related headers for the request
+     * 3. Model information for the provider service
      *
      * In the 0G Serving system, a request with valid billing headers
      * is considered a settlement proof and will be used by the provider
@@ -2008,12 +2046,36 @@ class ZGServingNetworkBroker {
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
      * @param content - The content being billed. For example, in a chatbot service, it is the text input by the user.
-     * @returns headers. Records information such as the request fee and user signature.
+     *
+     * @returns { endpoint, headers, model } - Object containing endpoint, headers, and model.
+     * @example
+     *
+     * const { endpoint, headers, model } = await broker.requestProcessor.getRequestMetadata(
+     *   providerAddress,
+     *   serviceName,
+     *   content
+     * );
+     *
+     * const openai = new OpenAI({
+     *   baseURL: endpoint,
+     *   apiKey: "",
+     * });
+     *
+     * const completion = await openai.chat.completions.create(
+     *   {
+     *     messages: [{ role: "system", content }],
+     *     model,
+     *   },
+     *   headers: {
+     *     ...headers,
+     *   },
+     * );
+     *
      * @throws An error if errors occur during the processing of the request.
      */
-    processRequest = async (providerAddress, svcName, content) => {
+    getRequestMetadata = async (providerAddress, svcName, content) => {
         try {
-            return await this.requestProcessor.processRequest(providerAddress, svcName, content);
+            return await this.requestProcessor.getRequestMetadata(providerAddress, svcName, content);
         }
         catch (error) {
             throw error;

@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MESSAGE_FOR_ENCRYPTION_KEY = exports.REQUEST_LENGTH = void 0;
-exports.REQUEST_LENGTH = 40;
+exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *

@@ -1,5 +1,3 @@
-export const REQUEST_LENGTH = 40
-
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *

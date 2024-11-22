@@ -14,10 +14,16 @@ export class ChatBot extends Extractor {
     }
 
     async getInputCount(content: string): Promise<number> {
+        if (!content) {
+            return 0
+        }
         return content.split(/\s+/).length
     }
 
     async getOutputCount(content: string): Promise<number> {
+        if (!content) {
+            return 0
+        }
         return content.split(/\s+/).length
     }
 }

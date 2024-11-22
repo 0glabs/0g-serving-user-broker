@@ -1,6 +1,6 @@
 import { ServingContract } from '../contract'
 import { JsonRpcSigner, Wallet } from 'ethers'
-import { RequestProcessor } from './request'
+import { RequestProcessor, ServingRequestHeaders } from './request'
 import { ResponseProcessor } from './response'
 import { Verifier } from './verifier'
 import { AccountProcessor } from './account'
@@ -103,8 +103,11 @@ export class ZGServingNetworkBroker {
     }
 
     /**
-     * processRequest generates billing-related headers for the request
-     * when the user uses the provider service.
+     * Generates request metadata for the provider service.
+     * Includes:
+     * 1. Request endpoint for the provider service
+     * 2. Billing-related headers for the request
+     * 3. Model information for the provider service
      *
      * In the 0G Serving system, a request with valid billing headers
      * is considered a settlement proof and will be used by the provider
@@ -113,16 +116,44 @@ export class ZGServingNetworkBroker {
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
      * @param content - The content being billed. For example, in a chatbot service, it is the text input by the user.
-     * @returns headers. Records information such as the request fee and user signature.
+     *
+     * @returns { endpoint, headers, model } - Object containing endpoint, headers, and model.
+     * @example
+     *
+     * const { endpoint, headers, model } = await broker.requestProcessor.getRequestMetadata(
+     *   providerAddress,
+     *   serviceName,
+     *   content
+     * );
+     *
+     * const openai = new OpenAI({
+     *   baseURL: endpoint,
+     *   apiKey: "",
+     * });
+     *
+     * const completion = await openai.chat.completions.create(
+     *   {
+     *     messages: [{ role: "system", content }],
+     *     model,
+     *   },
+     *   headers: {
+     *     ...headers,
+     *   },
+     * );
+     *
      * @throws An error if errors occur during the processing of the request.
      */
-    public processRequest = async (
+    public getRequestMetadata = async (
         providerAddress: string,
         svcName: string,
         content: string
-    ) => {
+    ): Promise<{
+        endpoint: string
+        headers: ServingRequestHeaders
+        model: string
+    }> => {
         try {
-            return await this.requestProcessor.processRequest(
+            return await this.requestProcessor.getRequestMetadata(
                 providerAddress,
                 svcName,
                 content

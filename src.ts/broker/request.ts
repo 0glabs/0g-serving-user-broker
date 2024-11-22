@@ -1,9 +1,4 @@
-import { Extractor } from '../extractor'
-import { signData } from '../settle-signer'
-import { REQUEST_LENGTH } from '../const'
 import { ZGServingUserBrokerBase } from './base'
-import { Request, PackedPrivkey } from '../settle-signer'
-import { decryptData, stringToSettleSignerPrivateKey } from '../utils/encrypt'
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -52,82 +47,26 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export class RequestProcessor extends ZGServingUserBrokerBase {
-    async processRequest(
+    async getRequestMetadata(
         providerAddress: string,
         svcName: string,
         content: string
-    ): Promise<ServingRequestHeaders> {
-        let extractor: Extractor
-        let sig: string
-
-        try {
-            extractor = await this.getExtractor(providerAddress, svcName)
-
-            let { nonce, outputFee, settleSignerPrivateKey } =
-                await this.getProviderData(providerAddress)
-
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`
-
-            if (!settleSignerPrivateKey) {
-                const account = await this.contract.getAccount(providerAddress)
-                const settleSignerPrivateKeyStr = await decryptData(
-                    this.contract.signer,
-                    account.additionalInfo
-                )
-                settleSignerPrivateKey = stringToSettleSignerPrivateKey(
-                    settleSignerPrivateKeyStr
-                )
-                this.metadata.storeSettleSignerPrivateKey(
-                    key,
-                    settleSignerPrivateKey
-                )
-            }
-            const updatedNonce = !nonce ? 1 : nonce + REQUEST_LENGTH
-            this.metadata.storeNonce(key, updatedNonce)
-
-            const { fee, inputFee } = await this.calculateFees(
-                extractor,
-                content,
-                outputFee
-            )
-
-            const request = new Request(
-                updatedNonce.toString(),
-                fee.toString(),
-                this.contract.getUserAddress(),
-                providerAddress
-            )
-
-            const settleSignature = await signData(
-                [request],
-                settleSignerPrivateKey as PackedPrivkey
-            )
-            sig = JSON.stringify(Array.from(settleSignature[0]))
-
-            return {
-                'X-Phala-Signature-Type': 'StandaloneApi',
-                Address: this.contract.getUserAddress(),
-                Fee: fee.toString(),
-                'Input-Fee': inputFee.toString(),
-                Nonce: updatedNonce.toString(),
-                'Previous-Output-Fee': (outputFee ?? 0).toString(),
-                'Service-Name': svcName,
-                Signature: sig,
-            }
-        } catch (error) {
-            throw error
+    ): Promise<{
+        endpoint: string
+        headers: ServingRequestHeaders
+        model: string
+    }> {
+        const service = await this.getService(providerAddress, svcName)
+        const headers = await this.getHeader(
+            providerAddress,
+            svcName,
+            content,
+            0
+        )
+        return {
+            headers,
+            endpoint: `${service.url}/v1/proxy/${svcName}`,
+            model: service.model,
         }
-    }
-
-    private async calculateFees(
-        extractor: Extractor,
-        content: string,
-        outputFee: number | null
-    ) {
-        const svc = await extractor.getSvcInfo()
-        const inputCount = await extractor.getInputCount(content)
-        const inputFee = inputCount * Number(svc.inputPrice)
-        const fee = inputFee + (outputFee ?? 0)
-        return { fee, inputFee }
     }
 }

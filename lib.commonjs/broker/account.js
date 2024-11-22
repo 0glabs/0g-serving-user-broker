@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountProcessor = void 0;
 const base_1 = require("./base");
 const settle_signer_1 = require("../settle-signer");
-const encrypt_1 = require("../utils/encrypt");
+const utils_1 = require("../utils");
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
@@ -69,7 +69,7 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
             const keyPair = await (0, settle_signer_1.genKeyPair)();
             const key = `${this.contract.getUserAddress()}_${providerAddress}`;
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
-            const settleSignerEncryptedPrivateKey = await (0, encrypt_1.encryptData)(this.contract.signer, (0, encrypt_1.settlePrivateKeyToString)(keyPair.packedPrivkey));
+            const settleSignerEncryptedPrivateKey = await (0, utils_1.encryptData)(this.contract.signer, (0, utils_1.privateKeyToStr)(keyPair.packedPrivkey));
             return {
                 settleSignerEncryptedPrivateKey,
                 settleSignerPublicKey: keyPair.doublePackedPubkey,

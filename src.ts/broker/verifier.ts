@@ -110,9 +110,6 @@ export class Verifier extends ZGServingUserBrokerBase {
             const svc = await this.getService(providerAddress, svcName)
             return `${svc.url}/v1/proxy/${svcName}/attestation/report`
         } catch (error) {
-            if (error instanceof Error) {
-                console.error(error?.message)
-            }
             throw error
         }
     }

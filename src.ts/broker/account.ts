@@ -1,7 +1,7 @@
 import { ZGServingUserBrokerBase } from './base'
 import { genKeyPair } from '../settle-signer'
 import { AddressLike } from 'ethers'
-import { encryptData, settlePrivateKeyToString } from '../utils/encrypt'
+import { encryptData, privateKeyToStr } from '../utils'
 
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
@@ -87,7 +87,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
 
             const settleSignerEncryptedPrivateKey = await encryptData(
                 this.contract.signer,
-                settlePrivateKeyToString(keyPair.packedPrivkey)
+                privateKeyToStr(keyPair.packedPrivkey)
             )
 
             return {

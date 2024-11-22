@@ -17,12 +17,42 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.verifier = new verifier_1.Verifier(contract, metadata, cache);
     }
+    /**
+     * settleFee sends an empty request to the service provider to settle the fee.
+     */
+    async settleFee(providerAddress, serviceName, fee) {
+        try {
+            if (!fee) {
+                return;
+            }
+            const service = await this.contract.getService(providerAddress, serviceName);
+            if (!service) {
+                throw new Error('Service is not available');
+            }
+            const { provider, name, url } = service;
+            const headers = await this.getHeader(provider, name, '', fee);
+            const response = await fetch(`${url}/v1/proxy/${name}/settle-fee`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers,
+                },
+            });
+            if (response.status !== 202 && response.status !== 200) {
+                const errorData = await response.json();
+                throw new Error(errorData.error);
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async processResponse(providerAddress, svcName, content, chatID) {
         try {
             let extractor;
             extractor = await this.getExtractor(providerAddress, svcName);
             const outputFee = await this.calculateOutputFees(extractor, content);
-            this.metadata.storeOutputFee(`${this.contract.getUserAddress()}_${providerAddress}`, outputFee);
+            await this.settleFee(providerAddress, svcName, outputFee);
             const svc = await extractor.getSvcInfo();
             // TODO: Temporarily return true for non-TeeML verifiability.
             // these cases will be handled in the future.

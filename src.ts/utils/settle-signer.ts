@@ -1,6 +1,6 @@
 import { PackedPrivkey } from '../settle-signer'
 
-export function stringToSettleSignerPrivateKey(str: string): PackedPrivkey {
+export function strToPrivateKey(str: string): PackedPrivkey {
     const parsed = JSON.parse(str)
 
     if (!Array.isArray(parsed) || parsed.length !== 2) {
@@ -17,7 +17,7 @@ export function stringToSettleSignerPrivateKey(str: string): PackedPrivkey {
     return [first, second]
 }
 
-export function settlePrivateKeyToString(key: PackedPrivkey): string {
+export function privateKeyToStr(key: PackedPrivkey): string {
     try {
         return JSON.stringify(key.map((v: BigInt) => v.toString()))
     } catch (error) {

@@ -1,4 +1,4 @@
 import { PackedPrivkey } from '../settle-signer';
-export declare function stringToSettleSignerPrivateKey(str: string): PackedPrivkey;
-export declare function settlePrivateKeyToString(key: PackedPrivkey): string;
+export declare function strToPrivateKey(str: string): PackedPrivkey;
+export declare function privateKeyToStr(key: PackedPrivkey): string;
 //# sourceMappingURL=settle-signer.d.ts.map

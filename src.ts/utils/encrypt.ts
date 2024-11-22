@@ -1,6 +1,5 @@
 import { JsonRpcSigner, Wallet, ethers } from 'ethers'
 import { MESSAGE_FOR_ENCRYPTION_KEY } from '../const'
-import { PackedPrivkey } from '../settle-signer'
 import CryptoJS from 'crypto-js'
 
 async function deriveEncryptionKey(
@@ -16,7 +15,6 @@ export async function encryptData(
     data: string
 ): Promise<string> {
     const key = await deriveEncryptionKey(signer)
-    console.log('CryptoJS', CryptoJS)
     const encrypted = CryptoJS.AES.encrypt(data, key).toString()
     return encrypted
 }
@@ -29,29 +27,4 @@ export async function decryptData(
     const bytes = CryptoJS.AES.decrypt(encryptedData, key)
     const decrypted = bytes.toString(CryptoJS.enc.Utf8)
     return decrypted
-}
-
-export function stringToSettleSignerPrivateKey(str: string): PackedPrivkey {
-    const parsed = JSON.parse(str)
-
-    if (!Array.isArray(parsed) || parsed.length !== 2) {
-        throw new Error('Invalid input string')
-    }
-
-    const [first, second] = parsed.map((value) => {
-        if (typeof value === 'string' || typeof value === 'number') {
-            return BigInt(value)
-        }
-        throw new Error('Invalid number format')
-    }) as PackedPrivkey
-
-    return [first, second]
-}
-
-export function settlePrivateKeyToString(key: PackedPrivkey): string {
-    try {
-        return JSON.stringify(key.map((v: BigInt) => v.toString()))
-    } catch (error) {
-        throw error
-    }
 }

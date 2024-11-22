@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stringToSettleSignerPrivateKey = stringToSettleSignerPrivateKey;
-exports.settlePrivateKeyToString = settlePrivateKeyToString;
-function stringToSettleSignerPrivateKey(str) {
+exports.strToPrivateKey = strToPrivateKey;
+exports.privateKeyToStr = privateKeyToStr;
+function strToPrivateKey(str) {
     const parsed = JSON.parse(str);
     if (!Array.isArray(parsed) || parsed.length !== 2) {
         throw new Error('Invalid input string');
@@ -15,7 +15,7 @@ function stringToSettleSignerPrivateKey(str) {
     });
     return [first, second];
 }
-function settlePrivateKeyToString(key) {
+function privateKeyToStr(key) {
     try {
         return JSON.stringify(key.map((v) => v.toString()));
     }
