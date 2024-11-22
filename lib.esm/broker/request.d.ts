@@ -45,10 +45,10 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export declare class RequestProcessor extends ZGServingUserBrokerBase {
-    getRequestMetadata(providerAddress: string, svcName: string, content: string): Promise<{
+    getRequestMetadata(providerAddress: string, svcName: string): Promise<{
         endpoint: string;
-        headers: ServingRequestHeaders;
         model: string;
     }>;
+    getRequestHeaders(providerAddress: string, svcName: string, content: string): Promise<ServingRequestHeaders>;
 }
 //# sourceMappingURL=request.d.ts.map

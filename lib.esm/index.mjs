@@ -1601,14 +1601,16 @@ class ServingContract {
  * before use.
  */
 class RequestProcessor extends ZGServingUserBrokerBase {
-    async getRequestMetadata(providerAddress, svcName, content) {
+    async getRequestMetadata(providerAddress, svcName) {
         const service = await this.getService(providerAddress, svcName);
-        const headers = await this.getHeader(providerAddress, svcName, content, 0);
         return {
-            headers,
             endpoint: `${service.url}/v1/proxy/${svcName}`,
             model: service.model,
         };
+    }
+    async getRequestHeaders(providerAddress, svcName, content) {
+        const headers = await this.getHeader(providerAddress, svcName, content, 0);
+        return headers;
     }
 }
 
@@ -1979,8 +1981,26 @@ class ZGServingNetworkBroker {
      * Generates request metadata for the provider service.
      * Includes:
      * 1. Request endpoint for the provider service
-     * 2. Billing-related headers for the request
-     * 3. Model information for the provider service
+     * 2. Model information for the provider service
+     *
+     * @param providerAddress - The address of the provider.
+     * @param svcName - The name of the service.
+     *
+     * @returns { endpoint, model } - Object containing endpoint and model.
+     *
+     * @throws An error if errors occur during the processing of the request.
+     */
+    getRequestMetadata = async (providerAddress, svcName) => {
+        try {
+            return await this.requestProcessor.getRequestMetadata(providerAddress, svcName);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    /**
+     * getRequestHeaders generates billing-related headers for the request
+     * when the user uses the provider service.
      *
      * In the 0G Serving system, a request with valid billing headers
      * is considered a settlement proof and will be used by the provider
@@ -1990,13 +2010,19 @@ class ZGServingNetworkBroker {
      * @param svcName - The name of the service.
      * @param content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
-     * @returns { endpoint, headers, model } - Object containing endpoint, headers, and model.
+     * @returns headers. Records information such as the request fee and user signature.
+     *
      * @example
      *
-     * const { endpoint, headers, model } = await broker.requestProcessor.getRequestMetadata(
+     * const { endpoint, model } = await broker.getRequestMetadata(
      *   providerAddress,
      *   serviceName,
-     *   content
+     * );
+     *
+     * const headers = await broker.getRequestMetadata(
+     *   providerAddress,
+     *   serviceName,
+     *   content,
      * );
      *
      * const openai = new OpenAI({
@@ -2016,9 +2042,9 @@ class ZGServingNetworkBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestMetadata = async (providerAddress, svcName, content) => {
+    getRequestHeaders = async (providerAddress, svcName, content) => {
         try {
-            return await this.requestProcessor.getRequestMetadata(providerAddress, svcName, content);
+            return await this.requestProcessor.getRequestHeaders(providerAddress, svcName, content);
         }
         catch (error) {
             throw error;

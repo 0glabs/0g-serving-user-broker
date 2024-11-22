@@ -49,24 +49,29 @@ export interface ServingRequestHeaders {
 export class RequestProcessor extends ZGServingUserBrokerBase {
     async getRequestMetadata(
         providerAddress: string,
-        svcName: string,
-        content: string
+        svcName: string
     ): Promise<{
         endpoint: string
-        headers: ServingRequestHeaders
         model: string
     }> {
         const service = await this.getService(providerAddress, svcName)
+        return {
+            endpoint: `${service.url}/v1/proxy/${svcName}`,
+            model: service.model,
+        }
+    }
+
+    async getRequestHeaders(
+        providerAddress: string,
+        svcName: string,
+        content: string
+    ): Promise<ServingRequestHeaders> {
         const headers = await this.getHeader(
             providerAddress,
             svcName,
             content,
             0
         )
-        return {
-            headers,
-            endpoint: `${service.url}/v1/proxy/${svcName}`,
-            model: service.model,
-        }
+        return headers
     }
 }

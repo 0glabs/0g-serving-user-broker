@@ -8,14 +8,16 @@ const base_1 = require("./base");
  * before use.
  */
 class RequestProcessor extends base_1.ZGServingUserBrokerBase {
-    async getRequestMetadata(providerAddress, svcName, content) {
+    async getRequestMetadata(providerAddress, svcName) {
         const service = await this.getService(providerAddress, svcName);
-        const headers = await this.getHeader(providerAddress, svcName, content, 0);
         return {
-            headers,
             endpoint: `${service.url}/v1/proxy/${svcName}`,
             model: service.model,
         };
+    }
+    async getRequestHeaders(providerAddress, svcName, content) {
+        const headers = await this.getHeader(providerAddress, svcName, content, 0);
+        return headers;
     }
 }
 exports.RequestProcessor = RequestProcessor;

@@ -555,11 +555,11 @@ interface ServingRequestHeaders {
  * before use.
  */
 declare class RequestProcessor extends ZGServingUserBrokerBase {
-    getRequestMetadata(providerAddress: string, svcName: string, content: string): Promise<{
+    getRequestMetadata(providerAddress: string, svcName: string): Promise<{
         endpoint: string;
-        headers: ServingRequestHeaders;
         model: string;
     }>;
+    getRequestHeaders(providerAddress: string, svcName: string, content: string): Promise<ServingRequestHeaders>;
 }
 
 declare abstract class ZGServingUserBrokerBase {
@@ -709,8 +709,22 @@ declare class ZGServingNetworkBroker {
      * Generates request metadata for the provider service.
      * Includes:
      * 1. Request endpoint for the provider service
-     * 2. Billing-related headers for the request
-     * 3. Model information for the provider service
+     * 2. Model information for the provider service
+     *
+     * @param providerAddress - The address of the provider.
+     * @param svcName - The name of the service.
+     *
+     * @returns { endpoint, model } - Object containing endpoint and model.
+     *
+     * @throws An error if errors occur during the processing of the request.
+     */
+    getRequestMetadata: (providerAddress: string, svcName: string) => Promise<{
+        endpoint: string;
+        model: string;
+    }>;
+    /**
+     * getRequestHeaders generates billing-related headers for the request
+     * when the user uses the provider service.
      *
      * In the 0G Serving system, a request with valid billing headers
      * is considered a settlement proof and will be used by the provider
@@ -720,13 +734,19 @@ declare class ZGServingNetworkBroker {
      * @param svcName - The name of the service.
      * @param content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
-     * @returns { endpoint, headers, model } - Object containing endpoint, headers, and model.
+     * @returns headers. Records information such as the request fee and user signature.
+     *
      * @example
      *
-     * const { endpoint, headers, model } = await broker.requestProcessor.getRequestMetadata(
+     * const { endpoint, model } = await broker.getRequestMetadata(
      *   providerAddress,
      *   serviceName,
-     *   content
+     * );
+     *
+     * const headers = await broker.getRequestMetadata(
+     *   providerAddress,
+     *   serviceName,
+     *   content,
      * );
      *
      * const openai = new OpenAI({
@@ -746,11 +766,7 @@ declare class ZGServingNetworkBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestMetadata: (providerAddress: string, svcName: string, content: string) => Promise<{
-        endpoint: string;
-        headers: ServingRequestHeaders;
-        model: string;
-    }>;
+    getRequestHeaders: (providerAddress: string, svcName: string, content: string) => Promise<ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
