@@ -3,65 +3,23 @@ import CryptoJS from 'crypto-js';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
 
 class Metadata {
-    isBrowser = typeof window !== 'undefined' &&
-        typeof window.localStorage !== 'undefined';
-    nodeStorageFilePath = '';
     nodeStorage = {};
     initialized = false;
-    customPath;
-    constructor(customPath) {
-        this.customPath = customPath;
-    }
+    constructor() { }
     async initialize() {
         if (this.initialized) {
             return;
         }
-        if (!this.isBrowser) {
-            // const path = await import('path')
-            const fs = await import('fs');
-            // this.nodeStorageFilePath = path.join(this.customPath, 'nodeStorage.json')
-            this.nodeStorageFilePath = this.customPath;
-            this.nodeStorage = this.loadNodeStorage(fs);
-        }
-        else {
-            this.nodeStorage = {};
-        }
+        this.nodeStorage = {};
         this.initialized = true;
-    }
-    loadNodeStorage(fs) {
-        if (fs.existsSync(this.nodeStorageFilePath)) {
-            const data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8');
-            if (!data) {
-                return {};
-            }
-            return JSON.parse(data);
-        }
-        return {};
-    }
-    async saveNodeStorage() {
-        if (!this.isBrowser) {
-            const fs = await import('fs');
-            fs.writeFileSync(this.nodeStorageFilePath, JSON.stringify(this.nodeStorage, null, 2), 'utf-8');
-        }
     }
     async setItem(key, value) {
         await this.initialize();
-        if (this.isBrowser) {
-            localStorage.setItem(key, value);
-        }
-        else {
-            this.nodeStorage[key] = value;
-            await this.saveNodeStorage();
-        }
+        this.nodeStorage[key] = value;
     }
     async getItem(key) {
         await this.initialize();
-        if (this.isBrowser) {
-            return localStorage.getItem(key);
-        }
-        else {
-            return this.nodeStorage[key] ?? null;
-        }
+        return this.nodeStorage[key] ?? null;
     }
     async storeNonce(key, value) {
         await this.setItem(`${key}_nonce`, value.toString());
@@ -97,15 +55,9 @@ var CacheValueTypeEnum;
     CacheValueTypeEnum["Service"] = "service";
 })(CacheValueTypeEnum || (CacheValueTypeEnum = {}));
 class Cache {
-    isBrowser = typeof window !== 'undefined' &&
-        typeof window.localStorage !== 'undefined';
-    nodeStorageFilePath = '';
     nodeStorage = {};
     initialized = false;
-    customPath;
-    constructor(customPath) {
-        this.customPath = customPath;
-    }
+    constructor() { }
     async setItem(key, value, ttl, type) {
         await this.initialize();
         const now = new Date();
@@ -114,36 +66,18 @@ class Cache {
             value: Cache.encodeValue(value),
             expiry: now.getTime() + ttl,
         };
-        if (this.isBrowser) {
-            localStorage.setItem(key, JSON.stringify(item));
-        }
-        else {
-            this.nodeStorage[key] = JSON.stringify(item);
-            await this.saveNodeStorage();
-        }
+        this.nodeStorage[key] = JSON.stringify(item);
     }
     async getItem(key) {
         await this.initialize();
-        let itemStr;
-        if (this.isBrowser) {
-            itemStr = localStorage.getItem(key);
-        }
-        else {
-            itemStr = this.nodeStorage[key] ?? null;
-        }
+        const itemStr = this.nodeStorage[key] ?? null;
         if (!itemStr) {
             return null;
         }
         const item = JSON.parse(itemStr);
         const now = new Date();
         if (now.getTime() > item.expiry) {
-            if (this.isBrowser) {
-                localStorage.removeItem(key);
-            }
-            else {
-                delete this.nodeStorage[key];
-                await this.saveNodeStorage();
-            }
+            delete this.nodeStorage[key];
             return null;
         }
         return Cache.decodeValue(item.value, item.type);
@@ -152,31 +86,8 @@ class Cache {
         if (this.initialized) {
             return;
         }
-        if (!this.isBrowser) {
-            const fs = await import('fs');
-            this.nodeStorageFilePath = this.customPath;
-            this.nodeStorage = this.loadNodeStorage(fs);
-        }
-        else {
-            this.nodeStorage = {};
-        }
+        this.nodeStorage = {};
         this.initialized = true;
-    }
-    loadNodeStorage(fs) {
-        if (fs.existsSync(this.nodeStorageFilePath)) {
-            const data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8');
-            if (!data) {
-                return {};
-            }
-            return JSON.parse(data);
-        }
-        return {};
-    }
-    async saveNodeStorage() {
-        if (!this.isBrowser) {
-            const fs = await import('fs');
-            fs.writeFileSync(this.nodeStorageFilePath, JSON.stringify(this.nodeStorage, null, 2), 'utf-8');
-        }
     }
     static encodeValue(value) {
         return JSON.stringify(value, (_, val) => typeof val === 'bigint' ? `${val.toString()}n` : val);
@@ -560,8 +471,8 @@ class ZGServingUserBrokerBase {
 class AccountProcessor extends ZGServingUserBrokerBase {
     async getAccount(provider) {
         try {
-            const accounts = await this.contract.getAccount(provider);
-            return accounts;
+            const account = await this.contract.getAccount(provider);
+            return account;
         }
         catch (error) {
             throw error;
@@ -582,7 +493,8 @@ class AccountProcessor extends ZGServingUserBrokerBase {
                 const account = await this.getAccount(providerAddress);
                 if (account) {
                     throw new Error('Account already exists, with balance: ' +
-                        account.balance);
+                        this.neuronToA0gi(account.balance) +
+                        ' A0GI');
                 }
             }
             catch (error) {
@@ -591,7 +503,7 @@ class AccountProcessor extends ZGServingUserBrokerBase {
                 }
             }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey(providerAddress);
-            await this.contract.addAccount(providerAddress, settleSignerPublicKey, balance, settleSignerEncryptedPrivateKey);
+            await this.contract.addAccount(providerAddress, settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
         }
         catch (error) {
             throw error;
@@ -607,7 +519,8 @@ class AccountProcessor extends ZGServingUserBrokerBase {
     }
     async depositFund(providerAddress, balance) {
         try {
-            await this.contract.depositFund(providerAddress, balance);
+            const amount = this.a0giToNeuron(balance).toString();
+            await this.contract.depositFund(providerAddress, amount);
         }
         catch (error) {
             throw error;
@@ -628,6 +541,21 @@ class AccountProcessor extends ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
+    }
+    a0giToNeuron(value) {
+        // 1 A0GI = 10^18 neuron
+        const scaledValue = value * 10 ** 18;
+        if (!Number.isSafeInteger(scaledValue)) {
+            throw new Error('Input number is too small.');
+        }
+        return BigInt(scaledValue);
+    }
+    neuronToA0gi(value) {
+        const divisor = BigInt(10 ** 18);
+        const integerPart = value / divisor;
+        const remainder = value % divisor;
+        const decimalPart = Number(remainder) / Number(divisor);
+        return Number(integerPart) + decimalPart;
     }
 }
 
@@ -1627,7 +1555,7 @@ class ServingContract {
     async addAccount(providerAddress, signer, balance, settleSignerEncryptedPrivateKey) {
         try {
             const tx = await this.serving.addAccount(providerAddress, signer, settleSignerEncryptedPrivateKey, {
-                value: BigInt(balance),
+                value: balance,
             });
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
@@ -1960,11 +1888,9 @@ class ZGServingNetworkBroker {
     accountProcessor;
     modelProcessor;
     signer;
-    customPath;
     contractAddress;
-    constructor(signer, customPath, contractAddress) {
+    constructor(signer, contractAddress) {
         this.signer = signer;
-        this.customPath = customPath;
         this.contractAddress = contractAddress;
     }
     async initialize() {
@@ -1976,8 +1902,8 @@ class ZGServingNetworkBroker {
             throw error;
         }
         const contract = new ServingContract(this.signer, this.contractAddress, userAddress);
-        const metadata = new Metadata(this.customPath);
-        const cache = new Cache(this.customPath);
+        const metadata = new Metadata();
+        const cache = new Cache();
         this.requestProcessor = new RequestProcessor(contract, metadata, cache);
         this.responseProcessor = new ResponseProcessor(contract, metadata, cache);
         this.accountProcessor = new AccountProcessor(contract, metadata, cache);
@@ -2002,16 +1928,33 @@ class ZGServingNetworkBroker {
      * Adds a new account to the contract.
      *
      * @param providerAddress - The address of the provider for whom the account is being created.
-     * @param balance - The initial balance to be assigned to the new account.
+     * @param balance - The initial balance to be assigned to the new account. Units are in A0GI.
      *
      * @throws  An error if the account creation fails.
      *
      * @remarks
      * When creating an account, a key pair is also created to sign the request.
      */
-    addAccount = async (account, balance) => {
+    addAccount = async (providerAddress, balance) => {
         try {
-            return await this.accountProcessor.addAccount(account, balance);
+            return await this.accountProcessor.addAccount(providerAddress, balance);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    /**
+     * Retrieves the account information for a given provider address.
+     *
+     * @param providerAddress - The address of the provider identifying the account.
+     *
+     * @returns A promise that resolves to the account information.
+     *
+     * @throws Will throw an error if the account retrieval process fails.
+     */
+    getAccount = async (providerAddress) => {
+        try {
+            return await this.accountProcessor.getAccount(providerAddress);
         }
         catch (error) {
             throw error;
@@ -2021,7 +1964,7 @@ class ZGServingNetworkBroker {
      * Deposits a specified amount of funds into the given account.
      *
      * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited.
+     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
      * @throws  An error if the deposit fails.
      */
     depositFund = async (account, amount) => {
@@ -2084,22 +2027,22 @@ class ZGServingNetworkBroker {
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
-     * processResponse extracts necessary information from the response and records it
-     * in localStorage for generating billing headers for subsequent requests.
-     *
-     * Additionally, if the service is verifiable, input the chat ID from the response and
-     * processResponse will determine the validity of the returned content by checking the
-     * provider service's response and corresponding signature corresponding to the chat ID.
+     * It will settle the fee for the response content. Additionally, if the service is verifiable,
+     * input the chat ID from the response and processResponse will determine the validity of the
+     * returned content by checking the provider service's response and corresponding signature associated
+     * with the chat ID.
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
      * @param content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
-     * @param chatID - Only for verifiable service. You can fill in the chat ID obtained from response to
+     * @param chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
+     *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
-     * @throws An error if errors occur during the processing of the response.
+     *
+     * @throws An error if any issues occur during the processing of the response.
      */
     processResponse = async (providerAddress, svcName, content, chatID) => {
         try {
@@ -2114,7 +2057,9 @@ class ZGServingNetworkBroker {
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
+     *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
+     *
      * @throws An error if errors occur during the verification process.
      */
     verifyService = async (providerAddress, svcName) => {
@@ -2132,6 +2077,7 @@ class ZGServingNetworkBroker {
      *
      * @param providerAddress - provider address.
      * @param svcName - service name.
+     *
      * @returns Download link.
      */
     getSignerRaDownloadLink = async (providerAddress, svcName) => {
@@ -2175,11 +2121,13 @@ class ZGServingNetworkBroker {
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ *
  * @returns broker instance.
+ *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGServingNetworkBroker(signer, customPath, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
-    const broker = new ZGServingNetworkBroker(signer, customPath, contractAddress);
+async function createZGServingNetworkBroker(signer, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
+    const broker = new ZGServingNetworkBroker(signer, contractAddress);
     try {
         await broker.initialize();
         return broker;

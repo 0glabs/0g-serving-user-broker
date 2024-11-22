@@ -10,8 +10,8 @@ const utils_1 = require("../utils");
 class AccountProcessor extends base_1.ZGServingUserBrokerBase {
     async getAccount(provider) {
         try {
-            const accounts = await this.contract.getAccount(provider);
-            return accounts;
+            const account = await this.contract.getAccount(provider);
+            return account;
         }
         catch (error) {
             throw error;
@@ -32,7 +32,8 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
                 const account = await this.getAccount(providerAddress);
                 if (account) {
                     throw new Error('Account already exists, with balance: ' +
-                        account.balance);
+                        this.neuronToA0gi(account.balance) +
+                        ' A0GI');
                 }
             }
             catch (error) {
@@ -41,7 +42,7 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
                 }
             }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey(providerAddress);
-            await this.contract.addAccount(providerAddress, settleSignerPublicKey, balance, settleSignerEncryptedPrivateKey);
+            await this.contract.addAccount(providerAddress, settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
         }
         catch (error) {
             throw error;
@@ -57,7 +58,8 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
     }
     async depositFund(providerAddress, balance) {
         try {
-            await this.contract.depositFund(providerAddress, balance);
+            const amount = this.a0giToNeuron(balance).toString();
+            await this.contract.depositFund(providerAddress, amount);
         }
         catch (error) {
             throw error;
@@ -78,6 +80,21 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
+    }
+    a0giToNeuron(value) {
+        // 1 A0GI = 10^18 neuron
+        const scaledValue = value * 10 ** 18;
+        if (!Number.isSafeInteger(scaledValue)) {
+            throw new Error('Input number is too small.');
+        }
+        return BigInt(scaledValue);
+    }
+    neuronToA0gi(value) {
+        const divisor = BigInt(10 ** 18);
+        const integerPart = value / divisor;
+        const remainder = value % divisor;
+        const decimalPart = Number(remainder) / Number(divisor);
+        return Number(integerPart) + decimalPart;
     }
 }
 exports.AccountProcessor = AccountProcessor;

@@ -1,3 +1,4 @@
+import { AccountStructOutput } from '../contract';
 import { JsonRpcSigner, Wallet } from 'ethers';
 import { RequestProcessor, ServingRequestHeaders } from './request';
 import { ResponseProcessor } from './response';
@@ -11,9 +12,8 @@ export declare class ZGServingNetworkBroker {
     accountProcessor: AccountProcessor;
     modelProcessor: ModelProcessor;
     private signer;
-    private customPath;
     private contractAddress;
-    constructor(signer: JsonRpcSigner | Wallet, customPath: string, contractAddress: string);
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string);
     initialize(): Promise<void>;
     /**
      * Retrieves a list of services from the contract.
@@ -26,22 +26,32 @@ export declare class ZGServingNetworkBroker {
      * Adds a new account to the contract.
      *
      * @param providerAddress - The address of the provider for whom the account is being created.
-     * @param balance - The initial balance to be assigned to the new account.
+     * @param balance - The initial balance to be assigned to the new account. Units are in A0GI.
      *
      * @throws  An error if the account creation fails.
      *
      * @remarks
      * When creating an account, a key pair is also created to sign the request.
      */
-    addAccount: (account: string, balance: string) => Promise<void>;
+    addAccount: (providerAddress: string, balance: number) => Promise<void>;
+    /**
+     * Retrieves the account information for a given provider address.
+     *
+     * @param providerAddress - The address of the provider identifying the account.
+     *
+     * @returns A promise that resolves to the account information.
+     *
+     * @throws Will throw an error if the account retrieval process fails.
+     */
+    getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
     /**
      * Deposits a specified amount of funds into the given account.
      *
      * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited.
+     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
      * @throws  An error if the deposit fails.
      */
-    depositFund: (account: string, amount: string) => Promise<void>;
+    depositFund: (account: string, amount: number) => Promise<void>;
     /**
      * Generates request metadata for the provider service.
      * Includes:
@@ -91,22 +101,22 @@ export declare class ZGServingNetworkBroker {
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
-     * processResponse extracts necessary information from the response and records it
-     * in localStorage for generating billing headers for subsequent requests.
-     *
-     * Additionally, if the service is verifiable, input the chat ID from the response and
-     * processResponse will determine the validity of the returned content by checking the
-     * provider service's response and corresponding signature corresponding to the chat ID.
+     * It will settle the fee for the response content. Additionally, if the service is verifiable,
+     * input the chat ID from the response and processResponse will determine the validity of the
+     * returned content by checking the provider service's response and corresponding signature associated
+     * with the chat ID.
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
      * @param content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
-     * @param chatID - Only for verifiable service. You can fill in the chat ID obtained from response to
+     * @param chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
+     *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
-     * @throws An error if errors occur during the processing of the response.
+     *
+     * @throws An error if any issues occur during the processing of the response.
      */
     processResponse: (providerAddress: string, svcName: string, content: string, chatID?: string) => Promise<boolean | null>;
     /**
@@ -114,7 +124,9 @@ export declare class ZGServingNetworkBroker {
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
+     *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
+     *
      * @throws An error if errors occur during the verification process.
      */
     verifyService: (providerAddress: string, svcName: string) => Promise<boolean | null>;
@@ -125,6 +137,7 @@ export declare class ZGServingNetworkBroker {
      *
      * @param providerAddress - provider address.
      * @param svcName - service name.
+     *
      * @returns Download link.
      */
     getSignerRaDownloadLink: (providerAddress: string, svcName: string) => Promise<string>;
@@ -154,8 +167,10 @@ export declare class ZGServingNetworkBroker {
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ *
  * @returns broker instance.
+ *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createZGServingNetworkBroker(signer: JsonRpcSigner | Wallet, customPath: string, contractAddress?: string): Promise<ZGServingNetworkBroker>;
+export declare function createZGServingNetworkBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<ZGServingNetworkBroker>;
 //# sourceMappingURL=broker.d.ts.map

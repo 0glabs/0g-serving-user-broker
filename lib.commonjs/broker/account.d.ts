@@ -6,9 +6,11 @@ import { AddressLike } from 'ethers';
 export declare class AccountProcessor extends ZGServingUserBrokerBase {
     getAccount(provider: AddressLike): Promise<import("..").AccountStructOutput>;
     listAccount(): Promise<import("..").AccountStructOutput[]>;
-    addAccount(providerAddress: string, balance: string): Promise<void>;
+    addAccount(providerAddress: string, balance: number): Promise<void>;
     deleteAccount(provider: AddressLike): Promise<void>;
-    depositFund(providerAddress: string, balance: string): Promise<void>;
+    depositFund(providerAddress: string, balance: number): Promise<void>;
     private createSettleSignerKey;
+    private a0giToNeuron;
+    private neuronToA0gi;
 }
 //# sourceMappingURL=account.d.ts.map

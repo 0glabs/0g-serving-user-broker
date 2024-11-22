@@ -12,7 +12,7 @@ export declare class ServingContract {
     getAccount(provider: AddressLike): Promise<import(".").AccountStructOutput>;
     deleteAccount(provider: AddressLike): Promise<void>;
     addOrUpdateService(name: string, serviceType: string, url: string, model: string, verifiability: string, inputPrice: BigNumberish, outputPrice: BigNumberish): Promise<void>;
-    addAccount(providerAddress: AddressLike, signer: [BigNumberish, BigNumberish], balance: string, settleSignerEncryptedPrivateKey: string): Promise<void>;
+    addAccount(providerAddress: AddressLike, signer: [BigNumberish, BigNumberish], balance: bigint, settleSignerEncryptedPrivateKey: string): Promise<void>;
     depositFund(providerAddress: AddressLike, balance: string): Promise<void>;
     getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
     getUserAddress(): string;

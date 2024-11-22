@@ -17,11 +17,9 @@ class ZGServingNetworkBroker {
     accountProcessor;
     modelProcessor;
     signer;
-    customPath;
     contractAddress;
-    constructor(signer, customPath, contractAddress) {
+    constructor(signer, contractAddress) {
         this.signer = signer;
-        this.customPath = customPath;
         this.contractAddress = contractAddress;
     }
     async initialize() {
@@ -33,8 +31,8 @@ class ZGServingNetworkBroker {
             throw error;
         }
         const contract = new contract_1.ServingContract(this.signer, this.contractAddress, userAddress);
-        const metadata = new storage_1.Metadata(this.customPath);
-        const cache = new storage_2.Cache(this.customPath);
+        const metadata = new storage_1.Metadata();
+        const cache = new storage_2.Cache();
         this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache);
         this.responseProcessor = new response_1.ResponseProcessor(contract, metadata, cache);
         this.accountProcessor = new account_1.AccountProcessor(contract, metadata, cache);
@@ -59,16 +57,33 @@ class ZGServingNetworkBroker {
      * Adds a new account to the contract.
      *
      * @param providerAddress - The address of the provider for whom the account is being created.
-     * @param balance - The initial balance to be assigned to the new account.
+     * @param balance - The initial balance to be assigned to the new account. Units are in A0GI.
      *
      * @throws  An error if the account creation fails.
      *
      * @remarks
      * When creating an account, a key pair is also created to sign the request.
      */
-    addAccount = async (account, balance) => {
+    addAccount = async (providerAddress, balance) => {
         try {
-            return await this.accountProcessor.addAccount(account, balance);
+            return await this.accountProcessor.addAccount(providerAddress, balance);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    /**
+     * Retrieves the account information for a given provider address.
+     *
+     * @param providerAddress - The address of the provider identifying the account.
+     *
+     * @returns A promise that resolves to the account information.
+     *
+     * @throws Will throw an error if the account retrieval process fails.
+     */
+    getAccount = async (providerAddress) => {
+        try {
+            return await this.accountProcessor.getAccount(providerAddress);
         }
         catch (error) {
             throw error;
@@ -78,7 +93,7 @@ class ZGServingNetworkBroker {
      * Deposits a specified amount of funds into the given account.
      *
      * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited.
+     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
      * @throws  An error if the deposit fails.
      */
     depositFund = async (account, amount) => {
@@ -141,22 +156,22 @@ class ZGServingNetworkBroker {
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
-     * processResponse extracts necessary information from the response and records it
-     * in localStorage for generating billing headers for subsequent requests.
-     *
-     * Additionally, if the service is verifiable, input the chat ID from the response and
-     * processResponse will determine the validity of the returned content by checking the
-     * provider service's response and corresponding signature corresponding to the chat ID.
+     * It will settle the fee for the response content. Additionally, if the service is verifiable,
+     * input the chat ID from the response and processResponse will determine the validity of the
+     * returned content by checking the provider service's response and corresponding signature associated
+     * with the chat ID.
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
      * @param content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
-     * @param chatID - Only for verifiable service. You can fill in the chat ID obtained from response to
+     * @param chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
+     *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
-     * @throws An error if errors occur during the processing of the response.
+     *
+     * @throws An error if any issues occur during the processing of the response.
      */
     processResponse = async (providerAddress, svcName, content, chatID) => {
         try {
@@ -171,7 +186,9 @@ class ZGServingNetworkBroker {
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
+     *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
+     *
      * @throws An error if errors occur during the verification process.
      */
     verifyService = async (providerAddress, svcName) => {
@@ -189,6 +206,7 @@ class ZGServingNetworkBroker {
      *
      * @param providerAddress - provider address.
      * @param svcName - service name.
+     *
      * @returns Download link.
      */
     getSignerRaDownloadLink = async (providerAddress, svcName) => {
@@ -233,11 +251,13 @@ exports.ZGServingNetworkBroker = ZGServingNetworkBroker;
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ *
  * @returns broker instance.
+ *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGServingNetworkBroker(signer, customPath, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
-    const broker = new ZGServingNetworkBroker(signer, customPath, contractAddress);
+async function createZGServingNetworkBroker(signer, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
+    const broker = new ZGServingNetworkBroker(signer, contractAddress);
     try {
         await broker.initialize();
         return broker;

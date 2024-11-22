@@ -99,7 +99,7 @@ export class ServingContract {
     async addAccount(
         providerAddress: AddressLike,
         signer: [BigNumberish, BigNumberish],
-        balance: string,
+        balance: bigint,
         settleSignerEncryptedPrivateKey: string
     ) {
         try {
@@ -108,7 +108,7 @@ export class ServingContract {
                 signer,
                 settleSignerEncryptedPrivateKey,
                 {
-                    value: BigInt(balance),
+                    value: balance,
                 }
             )
 

@@ -1,71 +1,25 @@
 export class Metadata {
-    private isBrowser: boolean =
-        typeof window !== 'undefined' &&
-        typeof window.localStorage !== 'undefined'
-    private nodeStorageFilePath: string = ''
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
-    private customPath: string
 
-    constructor(customPath: string) {
-        this.customPath = customPath
-    }
+    constructor() {}
 
     async initialize() {
         if (this.initialized) {
             return
         }
-        if (!this.isBrowser) {
-            // const path = await import('path')
-            const fs = await import('fs')
-            // this.nodeStorageFilePath = path.join(this.customPath, 'nodeStorage.json')
-            this.nodeStorageFilePath = this.customPath
-            this.nodeStorage = this.loadNodeStorage(fs)
-        } else {
-            this.nodeStorage = {}
-        }
+        this.nodeStorage = {}
         this.initialized = true
-    }
-
-    private loadNodeStorage(fs: any): { [key: string]: string } {
-        if (fs.existsSync(this.nodeStorageFilePath)) {
-            const data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8')
-            if (!data) {
-                return {}
-            }
-            return JSON.parse(data)
-        }
-        return {}
-    }
-
-    private async saveNodeStorage() {
-        if (!this.isBrowser) {
-            const fs = await import('fs')
-            fs.writeFileSync(
-                this.nodeStorageFilePath,
-                JSON.stringify(this.nodeStorage, null, 2),
-                'utf-8'
-            )
-        }
     }
 
     private async setItem(key: string, value: string) {
         await this.initialize()
-        if (this.isBrowser) {
-            localStorage.setItem(key, value)
-        } else {
-            this.nodeStorage[key] = value
-            await this.saveNodeStorage()
-        }
+        this.nodeStorage[key] = value
     }
 
     private async getItem(key: string): Promise<string | null> {
         await this.initialize()
-        if (this.isBrowser) {
-            return localStorage.getItem(key)
-        } else {
-            return this.nodeStorage[key] ?? null
-        }
+        return this.nodeStorage[key] ?? null
     }
 
     async storeNonce(key: string, value: number) {

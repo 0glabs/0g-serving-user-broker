@@ -71,7 +71,7 @@ class ServingContract {
     async addAccount(providerAddress, signer, balance, settleSignerEncryptedPrivateKey) {
         try {
             const tx = await this.serving.addAccount(providerAddress, signer, settleSignerEncryptedPrivateKey, {
-                value: BigInt(balance),
+                value: balance,
             });
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {

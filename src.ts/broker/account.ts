@@ -9,8 +9,8 @@ import { encryptData, privateKeyToStr } from '../utils'
 export class AccountProcessor extends ZGServingUserBrokerBase {
     async getAccount(provider: AddressLike) {
         try {
-            const accounts = await this.contract.getAccount(provider)
-            return accounts
+            const account = await this.contract.getAccount(provider)
+            return account
         } catch (error) {
             throw error
         }
@@ -25,14 +25,15 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         }
     }
 
-    async addAccount(providerAddress: string, balance: string) {
+    async addAccount(providerAddress: string, balance: number) {
         try {
             try {
                 const account = await this.getAccount(providerAddress)
                 if (account) {
                     throw new Error(
                         'Account already exists, with balance: ' +
-                            account.balance
+                            this.neuronToA0gi(account.balance) +
+                            ' A0GI'
                     )
                 }
             } catch (error) {
@@ -47,7 +48,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
             await this.contract.addAccount(
                 providerAddress,
                 settleSignerPublicKey,
-                balance,
+                this.a0giToNeuron(balance),
                 settleSignerEncryptedPrivateKey
             )
         } catch (error) {
@@ -63,9 +64,10 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         }
     }
 
-    async depositFund(providerAddress: string, balance: string) {
+    async depositFund(providerAddress: string, balance: number) {
         try {
-            await this.contract.depositFund(providerAddress, balance)
+            const amount = this.a0giToNeuron(balance).toString()
+            await this.contract.depositFund(providerAddress, amount)
         } catch (error) {
             throw error
         }
@@ -97,5 +99,25 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         } catch (error) {
             throw error
         }
+    }
+
+    private a0giToNeuron(value: number): bigint {
+        // 1 A0GI = 10^18 neuron
+        const scaledValue = value * 10 ** 18
+
+        if (!Number.isSafeInteger(scaledValue)) {
+            throw new Error('Input number is too small.')
+        }
+
+        return BigInt(scaledValue)
+    }
+
+    private neuronToA0gi(value: bigint): number {
+        const divisor = BigInt(10 ** 18)
+        const integerPart = value / divisor
+        const remainder = value % divisor
+        const decimalPart = Number(remainder) / Number(divisor)
+
+        return Number(integerPart) + decimalPart
     }
 }

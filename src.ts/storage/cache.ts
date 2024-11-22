@@ -7,17 +7,10 @@ export enum CacheValueTypeEnum {
 export type CacheValueType = CacheValueTypeEnum.Service
 
 export class Cache {
-    private isBrowser: boolean =
-        typeof window !== 'undefined' &&
-        typeof window.localStorage !== 'undefined'
-    private nodeStorageFilePath: string = ''
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
-    private customPath: string
 
-    constructor(customPath: string) {
-        this.customPath = customPath
-    }
+    constructor() {}
 
     public async setItem(
         key: string,
@@ -32,34 +25,19 @@ export class Cache {
             value: Cache.encodeValue(value),
             expiry: now.getTime() + ttl,
         }
-        if (this.isBrowser) {
-            localStorage.setItem(key, JSON.stringify(item))
-        } else {
-            this.nodeStorage[key] = JSON.stringify(item)
-            await this.saveNodeStorage()
-        }
+        this.nodeStorage[key] = JSON.stringify(item)
     }
 
     public async getItem(key: string): Promise<any | null> {
         await this.initialize()
-        let itemStr: string | null
-        if (this.isBrowser) {
-            itemStr = localStorage.getItem(key)
-        } else {
-            itemStr = this.nodeStorage[key] ?? null
-        }
+        const itemStr = this.nodeStorage[key] ?? null
         if (!itemStr) {
             return null
         }
         const item = JSON.parse(itemStr)
         const now = new Date()
         if (now.getTime() > item.expiry) {
-            if (this.isBrowser) {
-                localStorage.removeItem(key)
-            } else {
-                delete this.nodeStorage[key]
-                await this.saveNodeStorage()
-            }
+            delete this.nodeStorage[key]
             return null
         }
         return Cache.decodeValue(item.value, item.type)
@@ -69,36 +47,8 @@ export class Cache {
         if (this.initialized) {
             return
         }
-        if (!this.isBrowser) {
-            const fs = await import('fs')
-            this.nodeStorageFilePath = this.customPath
-            this.nodeStorage = this.loadNodeStorage(fs)
-        } else {
-            this.nodeStorage = {}
-        }
+        this.nodeStorage = {}
         this.initialized = true
-    }
-
-    private loadNodeStorage(fs: any): { [key: string]: string } {
-        if (fs.existsSync(this.nodeStorageFilePath)) {
-            const data = fs.readFileSync(this.nodeStorageFilePath, 'utf-8')
-            if (!data) {
-                return {}
-            }
-            return JSON.parse(data)
-        }
-        return {}
-    }
-
-    private async saveNodeStorage() {
-        if (!this.isBrowser) {
-            const fs = await import('fs')
-            fs.writeFileSync(
-                this.nodeStorageFilePath,
-                JSON.stringify(this.nodeStorage, null, 2),
-                'utf-8'
-            )
-        }
     }
 
     static encodeValue(value: any): string {

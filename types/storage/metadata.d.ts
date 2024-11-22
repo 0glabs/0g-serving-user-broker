@@ -1,13 +1,8 @@
 export declare class Metadata {
-    private isBrowser;
-    private nodeStorageFilePath;
     private nodeStorage;
     private initialized;
-    private customPath;
-    constructor(customPath: string);
+    constructor();
     initialize(): Promise<void>;
-    private loadNodeStorage;
-    private saveNodeStorage;
     private setItem;
     private getItem;
     storeNonce(key: string, value: number): Promise<void>;
