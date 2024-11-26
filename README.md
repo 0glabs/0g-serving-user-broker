@@ -218,5 +218,3 @@ const valid = broker.processResponse(
 ## Interface
 
 Access the more details of interfaces via opening [index.html](./docs/index.html) in browser.
-
-By following the above steps, you will set up the 0G Serving Broker in your project correctly. Refer to the [example](https://github.com/Ravenyjh/serving-demo) and [video](https://raven.neetorecord.com/watch/3a4f134d-2c52-4cb7-b4ce-e02a8cefc2f1) for detailed usage instructions and additional information.
