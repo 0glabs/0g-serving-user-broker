@@ -12,9 +12,15 @@ class ChatBot extends extractor_1.Extractor {
         return Promise.resolve(this.svcInfo);
     }
     async getInputCount(content) {
+        if (!content) {
+            return 0;
+        }
         return content.split(/\s+/).length;
     }
     async getOutputCount(content) {
+        if (!content) {
+            return 0;
+        }
         return content.split(/\s+/).length;
     }
 }

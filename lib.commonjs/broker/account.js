@@ -1,17 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountProcessor = void 0;
-const storage_1 = require("../storage");
 const base_1 = require("./base");
-const zk_1 = require("../zk");
+const settle_signer_1 = require("../settle-signer");
+const utils_1 = require("../utils");
 /**
- * AccountProcessor 包含对 0G Serving Account 的创建，充值和获取的方法。
+ * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
 class AccountProcessor extends base_1.ZGServingUserBrokerBase {
-    async getAccount(user, provider) {
+    async getAccount(provider) {
         try {
-            const accounts = await this.contract.getAccount(user, provider);
-            return accounts;
+            const account = await this.contract.getAccount(provider);
+            return account;
         }
         catch (error) {
             throw error;
@@ -26,55 +26,75 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
-    /**
-     * addAccount 创建 0G Serving 账户。
-     *
-     * @param providerAddress - provider 地址。
-     * @param balance - 账户预存金额。
-     */
     async addAccount(providerAddress, balance) {
-        let zkSignerPublicKey;
         try {
-            zkSignerPublicKey = await this.createAndStoreKey(providerAddress);
-        }
-        catch (error) {
-            throw error;
-        }
-        try {
-            await this.contract.addAccount(providerAddress, zkSignerPublicKey, balance);
+            try {
+                const account = await this.getAccount(providerAddress);
+                if (account) {
+                    throw new Error('Account already exists, with balance: ' +
+                        this.neuronToA0gi(account.balance) +
+                        ' A0GI');
+                }
+            }
+            catch (error) {
+                if (!error.message.includes('AccountNotexists')) {
+                    throw error;
+                }
+            }
+            const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey(providerAddress);
+            await this.contract.addAccount(providerAddress, settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
         }
         catch (error) {
             throw error;
         }
     }
-    /**
-     * depositFund 给 0G Serving 账户充值。
-     *
-     * @param providerAddress - provider 地址。
-     * @param balance - 充值金额。
-     */
+    async deleteAccount(provider) {
+        try {
+            await this.contract.deleteAccount(provider);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async depositFund(providerAddress, balance) {
         try {
-            await this.contract.depositFund(providerAddress, balance);
+            const amount = this.a0giToNeuron(balance).toString();
+            await this.contract.depositFund(providerAddress, amount);
         }
         catch (error) {
             throw error;
         }
     }
-    async createAndStoreKey(providerAddress) {
-        // [pri, pub]
-        let keyPair;
+    async createSettleSignerKey(providerAddress) {
         try {
-            keyPair = await (0, zk_1.createKey)();
+            // [pri, pub]
+            const keyPair = await (0, settle_signer_1.genKeyPair)();
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
+            const settleSignerEncryptedPrivateKey = await (0, utils_1.encryptData)(this.contract.signer, (0, utils_1.privateKeyToStr)(keyPair.packedPrivkey));
+            return {
+                settleSignerEncryptedPrivateKey,
+                settleSignerPublicKey: keyPair.doublePackedPubkey,
+            };
         }
         catch (error) {
             throw error;
         }
-        const key = this.contract.getUserAddress() + providerAddress;
-        // private key will be used for signing request
-        storage_1.Metadata.storeZKPrivateKey(key, keyPair[0]);
-        // public key will be used to create serving account
-        return keyPair[1];
+    }
+    a0giToNeuron(value) {
+        // 1 A0GI = 10^18 neuron
+        const scaledValue = value * 10 ** 18;
+        if (!Number.isSafeInteger(scaledValue)) {
+            throw new Error('Input number is too small.');
+        }
+        return BigInt(scaledValue);
+    }
+    neuronToA0gi(value) {
+        const divisor = BigInt(10 ** 18);
+        const integerPart = value / divisor;
+        const remainder = value % divisor;
+        const decimalPart = Number(remainder) / Number(divisor);
+        return Number(integerPart) + decimalPart;
     }
 }
 exports.AccountProcessor = AccountProcessor;

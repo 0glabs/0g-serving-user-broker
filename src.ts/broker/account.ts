@@ -1,16 +1,16 @@
-import { Metadata } from '../storage'
 import { ZGServingUserBrokerBase } from './base'
-import { createKey } from '../zk'
+import { genKeyPair } from '../settle-signer'
 import { AddressLike } from 'ethers'
+import { encryptData, privateKeyToStr } from '../utils'
 
 /**
- * AccountProcessor 包含对 0G Serving Account 的创建，充值和获取的方法。
+ * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
 export class AccountProcessor extends ZGServingUserBrokerBase {
-    async getAccount(user: AddressLike, provider: AddressLike) {
+    async getAccount(provider: AddressLike) {
         try {
-            const accounts = await this.contract.getAccount(user, provider)
-            return accounts
+            const account = await this.contract.getAccount(provider)
+            return account
         } catch (error) {
             throw error
         }
@@ -25,59 +25,99 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         }
     }
 
-    /**
-     * addAccount 创建 0G Serving 账户。
-     *
-     * @param providerAddress - provider 地址。
-     * @param balance - 账户预存金额。
-     */
-    async addAccount(providerAddress: string, balance: string) {
-        let zkSignerPublicKey: [bigint, bigint]
+    async addAccount(providerAddress: string, balance: number) {
         try {
-            zkSignerPublicKey = await this.createAndStoreKey(providerAddress)
-        } catch (error) {
-            throw error
-        }
+            try {
+                const account = await this.getAccount(providerAddress)
+                if (account) {
+                    throw new Error(
+                        'Account already exists, with balance: ' +
+                            this.neuronToA0gi(account.balance) +
+                            ' A0GI'
+                    )
+                }
+            } catch (error) {
+                if (!(error as any).message.includes('AccountNotexists')) {
+                    throw error
+                }
+            }
 
-        try {
+            const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } =
+                await this.createSettleSignerKey(providerAddress)
+
             await this.contract.addAccount(
                 providerAddress,
-                zkSignerPublicKey,
-                balance
+                settleSignerPublicKey,
+                this.a0giToNeuron(balance),
+                settleSignerEncryptedPrivateKey
             )
         } catch (error) {
             throw error
         }
     }
 
-    /**
-     * depositFund 给 0G Serving 账户充值。
-     *
-     * @param providerAddress - provider 地址。
-     * @param balance - 充值金额。
-     */
-    async depositFund(providerAddress: string, balance: string) {
+    async deleteAccount(provider: AddressLike) {
         try {
-            await this.contract.depositFund(providerAddress, balance)
+            await this.contract.deleteAccount(provider)
         } catch (error) {
             throw error
         }
     }
 
-    private async createAndStoreKey(
-        providerAddress: string
-    ): Promise<[bigint, bigint]> {
-        // [pri, pub]
-        let keyPair: [[bigint, bigint], [bigint, bigint]]
+    async depositFund(providerAddress: string, balance: number) {
         try {
-            keyPair = await createKey()
+            const amount = this.a0giToNeuron(balance).toString()
+            await this.contract.depositFund(providerAddress, amount)
         } catch (error) {
             throw error
         }
-        const key = this.contract.getUserAddress() + providerAddress
-        // private key will be used for signing request
-        Metadata.storeZKPrivateKey(key, keyPair[0])
-        // public key will be used to create serving account
-        return keyPair[1]
+    }
+
+    private async createSettleSignerKey(providerAddress: string): Promise<{
+        settleSignerPublicKey: [bigint, bigint]
+        settleSignerEncryptedPrivateKey: string
+    }> {
+        try {
+            // [pri, pub]
+            const keyPair = await genKeyPair()
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+
+            this.metadata.storeSettleSignerPrivateKey(
+                key,
+                keyPair.packedPrivkey
+            )
+
+            const settleSignerEncryptedPrivateKey = await encryptData(
+                this.contract.signer,
+                privateKeyToStr(keyPair.packedPrivkey)
+            )
+
+            return {
+                settleSignerEncryptedPrivateKey,
+                settleSignerPublicKey: keyPair.doublePackedPubkey,
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
+    private a0giToNeuron(value: number): bigint {
+        // 1 A0GI = 10^18 neuron
+        const scaledValue = value * 10 ** 18
+
+        if (!Number.isSafeInteger(scaledValue)) {
+            throw new Error('Input number is too small.')
+        }
+
+        return BigInt(scaledValue)
+    }
+
+    private neuronToA0gi(value: bigint): number {
+        const divisor = BigInt(10 ** 18)
+        const integerPart = value / divisor
+        const remainder = value % divisor
+        const decimalPart = Number(remainder) / Number(divisor)
+
+        return Number(integerPart) + decimalPart
     }
 }

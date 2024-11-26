@@ -45,6 +45,7 @@ export type AccountStruct = {
   pendingRefund: BigNumberish;
   signer: [BigNumberish, BigNumberish];
   refunds: RefundStruct[];
+  additionalInfo: string;
 };
 
 export type AccountStructOutput = [
@@ -54,7 +55,8 @@ export type AccountStructOutput = [
   balance: bigint,
   pendingRefund: bigint,
   signer: [bigint, bigint],
-  refunds: RefundStructOutput[]
+  refunds: RefundStructOutput[],
+  additionalInfo: string
 ] & {
   user: string;
   provider: string;
@@ -63,6 +65,7 @@ export type AccountStructOutput = [
   pendingRefund: bigint;
   signer: [bigint, bigint];
   refunds: RefundStructOutput[];
+  additionalInfo: string;
 };
 
 export type ServiceStruct = {
@@ -124,6 +127,7 @@ export interface ServingInterface extends Interface {
       | "addAccount"
       | "addOrUpdateService"
       | "batchVerifierAddress"
+      | "deleteAccount"
       | "depositFund"
       | "getAccount"
       | "getAllAccounts"
@@ -154,7 +158,7 @@ export interface ServingInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "addAccount",
-    values: [AddressLike, [BigNumberish, BigNumberish]]
+    values: [AddressLike, [BigNumberish, BigNumberish], string]
   ): string;
   encodeFunctionData(
     functionFragment: "addOrUpdateService",
@@ -163,6 +167,10 @@ export interface ServingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "batchVerifierAddress",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "deleteAccount",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "depositFund",
@@ -234,6 +242,10 @@ export interface ServingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "batchVerifierAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "deleteAccount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -448,7 +460,11 @@ export interface Serving extends BaseContract {
   ): Promise<this>;
 
   addAccount: TypedContractMethod<
-    [provider: AddressLike, signer: [BigNumberish, BigNumberish]],
+    [
+      provider: AddressLike,
+      signer: [BigNumberish, BigNumberish],
+      additionalInfo: string
+    ],
     [void],
     "payable"
   >;
@@ -468,6 +484,12 @@ export interface Serving extends BaseContract {
   >;
 
   batchVerifierAddress: TypedContractMethod<[], [string], "view">;
+
+  deleteAccount: TypedContractMethod<
+    [provider: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   depositFund: TypedContractMethod<[provider: AddressLike], [void], "payable">;
 
@@ -550,7 +572,11 @@ export interface Serving extends BaseContract {
   getFunction(
     nameOrSignature: "addAccount"
   ): TypedContractMethod<
-    [provider: AddressLike, signer: [BigNumberish, BigNumberish]],
+    [
+      provider: AddressLike,
+      signer: [BigNumberish, BigNumberish],
+      additionalInfo: string
+    ],
     [void],
     "payable"
   >;
@@ -572,6 +598,9 @@ export interface Serving extends BaseContract {
   getFunction(
     nameOrSignature: "batchVerifierAddress"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "deleteAccount"
+  ): TypedContractMethod<[provider: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "depositFund"
   ): TypedContractMethod<[provider: AddressLike], [void], "payable">;

@@ -2,38 +2,49 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Metadata = void 0;
 class Metadata {
-    static storeNonce(key, value) {
-        localStorage.setItem(`${key}_nonce`, value.toString());
+    nodeStorage = {};
+    initialized = false;
+    constructor() { }
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+        this.nodeStorage = {};
+        this.initialized = true;
     }
-    static storeOutputFee(key, value) {
-        localStorage.setItem(`${key}_outputFee`, value.toString());
+    async setItem(key, value) {
+        await this.initialize();
+        this.nodeStorage[key] = value;
     }
-    static storeZKPrivateKey(key, value) {
+    async getItem(key) {
+        await this.initialize();
+        return this.nodeStorage[key] ?? null;
+    }
+    async storeNonce(key, value) {
+        await this.setItem(`${key}_nonce`, value.toString());
+    }
+    async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
-        localStorage.setItem(`${key}_privateKey`, bigIntJsonString);
+        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
     }
-    static storeSigningKey(key, value) {
-        localStorage.setItem(`${key}_signingKey`, value);
+    async storeSigningKey(key, value) {
+        await this.setItem(`${key}_signingKey`, value);
     }
-    static getNonce(key) {
-        const value = localStorage.getItem(`${key}_nonce`);
+    async getNonce(key) {
+        const value = await this.getItem(`${key}_nonce`);
         return value ? parseInt(value, 10) : null;
     }
-    static getOutputFee(key) {
-        const value = localStorage.getItem(`${key}_outputFee`);
-        return value ? parseInt(value, 10) : null;
-    }
-    static getZKPrivateKey(key) {
-        const value = localStorage.getItem(`${key}_privateKey`);
+    async getSettleSignerPrivateKey(key) {
+        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
         if (!value) {
             return null;
         }
         const bigIntStringArray = JSON.parse(value);
         return bigIntStringArray.map((str) => BigInt(str));
     }
-    static getSigningKey(key) {
-        const value = localStorage.getItem(`${key}_signingKey`);
+    async getSigningKey(key) {
+        const value = await this.getItem(`${key}_signingKey`);
         return value ?? null;
     }
 }

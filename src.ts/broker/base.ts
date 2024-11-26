@@ -2,36 +2,27 @@ import { ServingContract } from '../contract'
 import { Cache, CacheValueTypeEnum, Metadata } from '../storage'
 import { ChatBot, Extractor } from '../extractor'
 import { ServiceStructOutput } from '../contract/serving/Serving'
-
-export interface ZGServingUserBrokerConfig {
-    /**
-     * WebAssembly 二进制文件路径。
-     *
-     * 该文件用于验证 signing address 的 Remote attestation 报告。
-     *
-     * 0G Serving Broker SDK 的使用者需要将该二进制文件放到服务器的
-     * 静态资源目录，并在此填写路径。
-     */
-    dcapWasmPath: string
-}
+import { ServingRequestHeaders } from './request'
+import { decryptData, getNonce, strToPrivateKey } from '../utils'
+import { PackedPrivkey, Request, signData } from '../settle-signer'
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: ServingContract
-    protected config: ZGServingUserBrokerConfig
+    protected metadata: Metadata
+    protected cache: Cache
 
-    constructor(contract: ServingContract, config: ZGServingUserBrokerConfig) {
+    constructor(contract: ServingContract, metadata: Metadata, cache: Cache) {
         this.contract = contract
-        this.config = config
+        this.metadata = metadata
+        this.cache = cache
     }
 
     protected async getProviderData(providerAddress: string) {
-        const key = this.contract.getUserAddress() + providerAddress
-        const [nonce, outputFee, zkPrivateKey] = await Promise.all([
-            Metadata.getNonce(key),
-            Metadata.getOutputFee(key),
-            Metadata.getZKPrivateKey(key),
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`
+        const [settleSignerPrivateKey] = await Promise.all([
+            this.metadata.getSettleSignerPrivateKey(key),
         ])
-        return { nonce, outputFee, zkPrivateKey }
+        return { settleSignerPrivateKey }
     }
 
     protected async getService(
@@ -40,14 +31,19 @@ export abstract class ZGServingUserBrokerBase {
         useCache = true
     ): Promise<ServiceStructOutput> {
         const key = providerAddress + svcName
-        const cachedSvc = Cache.getItem(key)
+        const cachedSvc = await this.cache.getItem(key)
         if (cachedSvc && useCache) {
             return cachedSvc
         }
 
         try {
             const svc = await this.contract.getService(providerAddress, svcName)
-            Cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service)
+            await this.cache.setItem(
+                key,
+                svc,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.Service
+            )
             return svc
         } catch (error) {
             throw error
@@ -65,7 +61,8 @@ export abstract class ZGServingUserBrokerBase {
                 svcName,
                 useCache
             )
-            return this.createExtractor(svc)
+            const extractor = this.createExtractor(svc)
+            return extractor
         } catch (error) {
             throw error
         }
@@ -78,5 +75,68 @@ export abstract class ZGServingUserBrokerBase {
             default:
                 throw new Error('Unknown service type')
         }
+    }
+
+    async getHeader(
+        providerAddress: string,
+        svcName: string,
+        content: string,
+        outputFee: number
+    ): Promise<ServingRequestHeaders> {
+        try {
+            const extractor = await this.getExtractor(providerAddress, svcName)
+            const { settleSignerPrivateKey } = await this.getProviderData(
+                providerAddress
+            )
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+
+            let privateKey = settleSignerPrivateKey
+            if (!privateKey) {
+                const account = await this.contract.getAccount(providerAddress)
+                const privateKeyStr = await decryptData(
+                    this.contract.signer,
+                    account.additionalInfo
+                )
+                privateKey = strToPrivateKey(privateKeyStr)
+                this.metadata.storeSettleSignerPrivateKey(key, privateKey)
+            }
+
+            const nonce = getNonce()
+
+            const inputFee = await this.calculateInputFees(extractor, content)
+            const fee = inputFee + outputFee
+
+            const request = new Request(
+                nonce.toString(),
+                fee.toString(),
+                this.contract.getUserAddress(),
+                providerAddress
+            )
+            const settleSignature = await signData(
+                [request],
+                privateKey as PackedPrivkey
+            )
+            const sig = JSON.stringify(Array.from(settleSignature[0]))
+
+            return {
+                'X-Phala-Signature-Type': 'StandaloneApi',
+                Address: this.contract.getUserAddress(),
+                Fee: fee.toString(),
+                'Input-Fee': inputFee.toString(),
+                Nonce: nonce.toString(),
+                'Previous-Output-Fee': outputFee.toString(),
+                'Service-Name': svcName,
+                Signature: sig,
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
+    private async calculateInputFees(extractor: Extractor, content: string) {
+        const svc = await extractor.getSvcInfo()
+        const inputCount = await extractor.getInputCount(content)
+        const inputFee = inputCount * Number(svc.inputPrice)
+        return inputFee
     }
 }

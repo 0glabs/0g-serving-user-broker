@@ -7,38 +7,48 @@ export enum CacheValueTypeEnum {
 export type CacheValueType = CacheValueTypeEnum.Service
 
 export class Cache {
-    static setItem(key: string, value: any, ttl: number, type: CacheValueType) {
-        const now = new Date()
+    private nodeStorage: { [key: string]: string } = {}
+    private initialized = false
 
+    constructor() {}
+
+    public async setItem(
+        key: string,
+        value: any,
+        ttl: number,
+        type: CacheValueType
+    ) {
+        await this.initialize()
+        const now = new Date()
         const item = {
             type,
             value: Cache.encodeValue(value),
             expiry: now.getTime() + ttl,
         }
-
-        localStorage.setItem(key, JSON.stringify(item))
+        this.nodeStorage[key] = JSON.stringify(item)
     }
 
-    static getItem(key: string) {
-        const itemStr = localStorage.getItem(key)
-
+    public async getItem(key: string): Promise<any | null> {
+        await this.initialize()
+        const itemStr = this.nodeStorage[key] ?? null
         if (!itemStr) {
             return null
         }
-
         const item = JSON.parse(itemStr)
         const now = new Date()
-
         if (now.getTime() > item.expiry) {
-            localStorage.removeItem(key)
+            delete this.nodeStorage[key]
             return null
         }
-
         return Cache.decodeValue(item.value, item.type)
     }
 
-    static removeItem(key: string) {
-        localStorage.removeItem(key)
+    private async initialize() {
+        if (this.initialized) {
+            return
+        }
+        this.nodeStorage = {}
+        this.initialized = true
     }
 
     static encodeValue(value: any): string {

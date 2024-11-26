@@ -1,34 +1,50 @@
 export class Metadata {
-    static storeNonce(key: string, value: number) {
-        localStorage.setItem(`${key}_nonce`, value.toString())
+    private nodeStorage: { [key: string]: string } = {}
+    private initialized = false
+
+    constructor() {}
+
+    async initialize() {
+        if (this.initialized) {
+            return
+        }
+        this.nodeStorage = {}
+        this.initialized = true
     }
 
-    static storeOutputFee(key: string, value: number) {
-        localStorage.setItem(`${key}_outputFee`, value.toString())
+    private async setItem(key: string, value: string) {
+        await this.initialize()
+        this.nodeStorage[key] = value
     }
 
-    static storeZKPrivateKey(key: string, value: bigint[]) {
+    private async getItem(key: string): Promise<string | null> {
+        await this.initialize()
+        return this.nodeStorage[key] ?? null
+    }
+
+    async storeNonce(key: string, value: number) {
+        await this.setItem(`${key}_nonce`, value.toString())
+    }
+
+    async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
-        localStorage.setItem(`${key}_privateKey`, bigIntJsonString)
+        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString)
     }
 
-    static storeSigningKey(key: string, value: string) {
-        localStorage.setItem(`${key}_signingKey`, value)
+    async storeSigningKey(key: string, value: string) {
+        await this.setItem(`${key}_signingKey`, value)
     }
 
-    static getNonce(key: string): number | null {
-        const value = localStorage.getItem(`${key}_nonce`)
+    async getNonce(key: string): Promise<number | null> {
+        const value = await this.getItem(`${key}_nonce`)
         return value ? parseInt(value, 10) : null
     }
 
-    static getOutputFee(key: string): number | null {
-        const value = localStorage.getItem(`${key}_outputFee`)
-        return value ? parseInt(value, 10) : null
-    }
-
-    static getZKPrivateKey(key: string): bigint[] | null {
-        const value: string | null = localStorage.getItem(`${key}_privateKey`)
+    async getSettleSignerPrivateKey(key: string): Promise<bigint[] | null> {
+        const value: string | null = await this.getItem(
+            `${key}_settleSignerPrivateKey`
+        )
         if (!value) {
             return null
         }
@@ -36,8 +52,8 @@ export class Metadata {
         return bigIntStringArray.map((str) => BigInt(str))
     }
 
-    static getSigningKey(key: string): string | null {
-        const value = localStorage.getItem(`${key}_signingKey`)
+    async getSigningKey(key: string): Promise<string | null> {
+        const value = await this.getItem(`${key}_signingKey`)
         return value ?? null
     }
 }

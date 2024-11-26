@@ -6,30 +6,39 @@ var CacheValueTypeEnum;
     CacheValueTypeEnum["Service"] = "service";
 })(CacheValueTypeEnum || (exports.CacheValueTypeEnum = CacheValueTypeEnum = {}));
 class Cache {
-    static setItem(key, value, ttl, type) {
+    nodeStorage = {};
+    initialized = false;
+    constructor() { }
+    async setItem(key, value, ttl, type) {
+        await this.initialize();
         const now = new Date();
         const item = {
             type,
             value: Cache.encodeValue(value),
             expiry: now.getTime() + ttl,
         };
-        localStorage.setItem(key, JSON.stringify(item));
+        this.nodeStorage[key] = JSON.stringify(item);
     }
-    static getItem(key) {
-        const itemStr = localStorage.getItem(key);
+    async getItem(key) {
+        await this.initialize();
+        const itemStr = this.nodeStorage[key] ?? null;
         if (!itemStr) {
             return null;
         }
         const item = JSON.parse(itemStr);
         const now = new Date();
         if (now.getTime() > item.expiry) {
-            localStorage.removeItem(key);
+            delete this.nodeStorage[key];
             return null;
         }
         return Cache.decodeValue(item.value, item.type);
     }
-    static removeItem(key) {
-        localStorage.removeItem(key);
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+        this.nodeStorage = {};
+        this.initialized = true;
     }
     static encodeValue(value) {
         return JSON.stringify(value, (_, val) => typeof val === 'bigint' ? `${val.toString()}n` : val);

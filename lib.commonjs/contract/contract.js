@@ -4,9 +4,11 @@ exports.ServingContract = void 0;
 const serving_1 = require("./serving");
 class ServingContract {
     serving;
+    signer;
     _userAddress;
     constructor(signer, contractAddress, userAddress) {
         this.serving = serving_1.Serving__factory.connect(contractAddress, signer);
+        this.signer = signer;
         this._userAddress = userAddress;
     }
     lockTime() {
@@ -18,7 +20,6 @@ class ServingContract {
             return services;
         }
         catch (error) {
-            console.error('Error list services:', error);
             throw error;
         }
     }
@@ -28,17 +29,29 @@ class ServingContract {
             return accounts;
         }
         catch (error) {
-            console.error('Error list accounts:', error);
             throw error;
         }
     }
-    async getAccount(user, provider) {
+    async getAccount(provider) {
         try {
+            const user = this.getUserAddress();
             const account = await this.serving.getAccount(user, provider);
             return account;
         }
         catch (error) {
-            console.error('Error get account:', error);
+            throw error;
+        }
+    }
+    async deleteAccount(provider) {
+        try {
+            const tx = await this.serving.deleteAccount(provider);
+            const receipt = await tx.wait();
+            if (!receipt || receipt.status !== 1) {
+                const error = new Error('Transaction failed');
+                throw error;
+            }
+        }
+        catch (error) {
             throw error;
         }
     }
@@ -46,37 +59,27 @@ class ServingContract {
         try {
             const tx = await this.serving.addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice);
             const receipt = await tx.wait();
-            if (receipt?.status === 1) {
-                console.log('Transaction was successful!');
-            }
-            else {
+            if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
-                console.error(error.message);
                 throw error;
             }
         }
         catch (error) {
-            console.error('Error sending transaction:', error);
             throw error;
         }
     }
-    async addAccount(providerAddress, signer, balance) {
+    async addAccount(providerAddress, signer, balance, settleSignerEncryptedPrivateKey) {
         try {
-            const tx = await this.serving.addAccount(providerAddress, signer, {
-                value: BigInt(balance),
+            const tx = await this.serving.addAccount(providerAddress, signer, settleSignerEncryptedPrivateKey, {
+                value: balance,
             });
             const receipt = await tx.wait();
-            if (receipt?.status === 1) {
-                console.log('Transaction was successful!');
-            }
-            else {
+            if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
-                console.error(error.message);
                 throw error;
             }
         }
         catch (error) {
-            console.error('Error sending transaction:', error);
             throw error;
         }
     }
@@ -86,17 +89,12 @@ class ServingContract {
                 value: balance,
             });
             const receipt = await tx.wait();
-            if (receipt?.status === 1) {
-                console.log('Transaction was successful!');
-            }
-            else {
+            if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
-                console.error(error.message);
                 throw error;
             }
         }
         catch (error) {
-            console.error('Error sending transaction:', error);
             throw error;
         }
     }
