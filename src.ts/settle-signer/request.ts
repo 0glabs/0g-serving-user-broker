@@ -1,23 +1,23 @@
 import { bigintToBytes, bytesToBigint } from './utils'
 
 const ADDR_LENGTH = 20
-const NONCE_LENGTH = 4
-const FEE_LENGTH = 8
+const NONCE_LENGTH = 8
+const FEE_LENGTH = 16
 
 export class Request {
-    private nonce: number
+    private nonce: bigint
     private fee: bigint
     private userAddress: bigint
     private providerAddress: bigint
 
     constructor(
-        nonce: string | number,
-        fee: string | number,
+        nonce: string,
+        fee: string,
         userAddress: string, // hexstring format with '0x' prefix
         providerAddress: string // hexstring format with '0x' prefix
     ) {
-        this.nonce = parseInt(nonce.toString())
-        this.fee = BigInt(parseInt(fee.toString()))
+        this.nonce = BigInt(nonce)
+        this.fee = BigInt(fee)
 
         this.userAddress = BigInt(userAddress)
         this.providerAddress = BigInt(providerAddress)
@@ -27,14 +27,14 @@ export class Request {
         const buffer = new ArrayBuffer(
             NONCE_LENGTH + ADDR_LENGTH * 2 + FEE_LENGTH
         )
-        const view = new DataView(buffer)
         let offset = 0
 
-        // write nonce (u32)
-        view.setUint32(offset, this.nonce, true)
+        // write nonce (u64)
+        const nonceBytes = bigintToBytes(this.nonce, NONCE_LENGTH)
+        new Uint8Array(buffer, offset, NONCE_LENGTH).set(nonceBytes)
         offset += NONCE_LENGTH
 
-        // write fee (u64)
+        // write fee (u128)
         const feeBytes = bigintToBytes(this.fee, FEE_LENGTH)
         new Uint8Array(buffer, offset, FEE_LENGTH).set(feeBytes)
         offset += FEE_LENGTH
@@ -63,14 +63,15 @@ export class Request {
             )
         }
 
-        const view = new DataView(byteArray.buffer)
         let offset = 0
 
-        // read nonce (u32)
-        const nonce = view.getUint32(offset, true)
+        // read nonce (u64)
+        const nonce = bytesToBigint(
+            new Uint8Array(byteArray.slice(offset, offset + NONCE_LENGTH))
+        )
         offset += NONCE_LENGTH
 
-        // read fee (u64)
+        // read fee (u128)
         const fee = bytesToBigint(
             new Uint8Array(byteArray.slice(offset, offset + FEE_LENGTH))
         )
@@ -97,7 +98,7 @@ export class Request {
     }
 
     // Getters
-    public getNonce(): number {
+    public getNonce(): bigint {
         return this.nonce
     }
 
