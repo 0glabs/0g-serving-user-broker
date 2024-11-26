@@ -78,10 +78,10 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/0glabs/0g-serving-broker.git"
+        "url": "git+https://github.com/0glabs/0g-serving-user-broker.git"
     },
     "bugs": {
-        "url": "https://github.com/0glabs/0g-serving-broker/issues"
+        "url": "https://github.com/0glabs/0g-serving-user-broker/issues"
     },
-    "homepage": "https://github.com/0glabs/0g-serving-broker#readme"
+    "homepage": "https://github.com/0glabs/0g-serving-user-broker#readme"
 }

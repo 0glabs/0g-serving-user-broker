@@ -303,8 +303,8 @@ async function signData(data, packedPrivkey) {
 }
 
 const ADDR_LENGTH = 20;
-const NONCE_LENGTH = 4;
-const FEE_LENGTH = 8;
+const NONCE_LENGTH = 8;
+const FEE_LENGTH = 16;
 class Request {
     nonce;
     fee;
@@ -313,19 +313,19 @@ class Request {
     constructor(nonce, fee, userAddress, // hexstring format with '0x' prefix
     providerAddress // hexstring format with '0x' prefix
     ) {
-        this.nonce = parseInt(nonce.toString());
-        this.fee = BigInt(parseInt(fee.toString()));
+        this.nonce = BigInt(nonce);
+        this.fee = BigInt(fee);
         this.userAddress = BigInt(userAddress);
         this.providerAddress = BigInt(providerAddress);
     }
     serialize() {
         const buffer = new ArrayBuffer(NONCE_LENGTH + ADDR_LENGTH * 2 + FEE_LENGTH);
-        const view = new DataView(buffer);
         let offset = 0;
-        // write nonce (u32)
-        view.setUint32(offset, this.nonce, true);
+        // write nonce (u64)
+        const nonceBytes = bigintToBytes(this.nonce, NONCE_LENGTH);
+        new Uint8Array(buffer, offset, NONCE_LENGTH).set(nonceBytes);
         offset += NONCE_LENGTH;
-        // write fee (u64)
+        // write fee (u128)
         const feeBytes = bigintToBytes(this.fee, FEE_LENGTH);
         new Uint8Array(buffer, offset, FEE_LENGTH).set(feeBytes);
         offset += FEE_LENGTH;
@@ -344,12 +344,11 @@ class Request {
         if (byteArray.length !== expectedLength) {
             throw new Error(`Invalid byte array length for deserialization. Expected: ${expectedLength}, but got: ${byteArray.length}`);
         }
-        const view = new DataView(byteArray.buffer);
         let offset = 0;
-        // read nonce (u32)
-        const nonce = view.getUint32(offset, true);
+        // read nonce (u64)
+        const nonce = bytesToBigint(new Uint8Array(byteArray.slice(offset, offset + NONCE_LENGTH)));
         offset += NONCE_LENGTH;
-        // read fee (u64)
+        // read fee (u128)
         const fee = bytesToBigint(new Uint8Array(byteArray.slice(offset, offset + FEE_LENGTH)));
         offset += FEE_LENGTH;
         // read userAddress (u160)
