@@ -325,6 +325,38 @@ export class ZGServingNetworkBroker {
             throw error
         }
     }
+
+    /**
+     * settleFee is used to settle the fee for the provider service.
+     *
+     * Normally, the fee for each request will be automatically settled in processResponse.
+     * However, if processResponse fails due to network issues or other reasons,
+     * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
+     * 1 A0GI = 1e18 neuron.
+     *
+     * @param providerAddress - The address of the provider.
+     * @param svcName - The name of the service.
+     * @param fee - The fee to be settled.
+     *
+     * @returns A promise that resolves when the fee settlement is successful.
+     *
+     * @throws An error if any issues occur during the fee settlement process.
+     */
+    public settleFee = async (
+        providerAddress: string,
+        svcName: string,
+        fee: number
+    ): Promise<void> => {
+        try {
+            return await this.responseProcessor.settleFee(
+                providerAddress,
+                svcName,
+                fee
+            )
+        } catch (error) {
+            throw error
+        }
+    }
 }
 
 /**

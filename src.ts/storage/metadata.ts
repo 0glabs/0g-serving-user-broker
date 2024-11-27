@@ -22,10 +22,6 @@ export class Metadata {
         return this.nodeStorage[key] ?? null
     }
 
-    async storeNonce(key: string, value: number) {
-        await this.setItem(`${key}_nonce`, value.toString())
-    }
-
     async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
@@ -34,11 +30,6 @@ export class Metadata {
 
     async storeSigningKey(key: string, value: string) {
         await this.setItem(`${key}_signingKey`, value)
-    }
-
-    async getNonce(key: string): Promise<number | null> {
-        const value = await this.getItem(`${key}_nonce`)
-        return value ? parseInt(value, 10) : null
     }
 
     async getSettleSignerPrivateKey(key: string): Promise<bigint[] | null> {

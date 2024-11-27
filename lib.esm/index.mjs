@@ -21,9 +21,6 @@ class Metadata {
         await this.initialize();
         return this.nodeStorage[key] ?? null;
     }
-    async storeNonce(key, value) {
-        await this.setItem(`${key}_nonce`, value.toString());
-    }
     async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
@@ -31,10 +28,6 @@ class Metadata {
     }
     async storeSigningKey(key, value) {
         await this.setItem(`${key}_signingKey`, value);
-    }
-    async getNonce(key) {
-        const value = await this.getItem(`${key}_nonce`);
-        return value ? parseInt(value, 10) : null;
     }
     async getSettleSignerPrivateKey(key) {
         const value = await this.getItem(`${key}_settleSignerPrivateKey`);
@@ -2135,6 +2128,30 @@ class ZGServingNetworkBroker {
     getChatSignatureDownloadLink = async (providerAddress, svcName, chatID) => {
         try {
             return await this.verifier.getChatSignatureDownloadLink(providerAddress, svcName, chatID);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    /**
+     * settleFee is used to settle the fee for the provider service.
+     *
+     * Normally, the fee for each request will be automatically settled in processResponse.
+     * However, if processResponse fails due to network issues or other reasons,
+     * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
+     * 1 A0GI = 1e18 neuron.
+     *
+     * @param providerAddress - The address of the provider.
+     * @param svcName - The name of the service.
+     * @param fee - The fee to be settled.
+     *
+     * @returns A promise that resolves when the fee settlement is successful.
+     *
+     * @throws An error if any issues occur during the fee settlement process.
+     */
+    settleFee = async (providerAddress, svcName, fee) => {
+        try {
+            return await this.responseProcessor.settleFee(providerAddress, svcName, fee);
         }
         catch (error) {
             throw error;

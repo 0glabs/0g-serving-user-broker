@@ -20,9 +20,6 @@ class Metadata {
         await this.initialize();
         return this.nodeStorage[key] ?? null;
     }
-    async storeNonce(key, value) {
-        await this.setItem(`${key}_nonce`, value.toString());
-    }
     async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
@@ -30,10 +27,6 @@ class Metadata {
     }
     async storeSigningKey(key, value) {
         await this.setItem(`${key}_signingKey`, value);
-    }
-    async getNonce(key) {
-        const value = await this.getItem(`${key}_nonce`);
-        return value ? parseInt(value, 10) : null;
     }
     async getSettleSignerPrivateKey(key) {
         const value = await this.getItem(`${key}_settleSignerPrivateKey`);

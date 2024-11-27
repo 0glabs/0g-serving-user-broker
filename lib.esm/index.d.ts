@@ -469,10 +469,8 @@ declare class Metadata {
     initialize(): Promise<void>;
     private setItem;
     private getItem;
-    storeNonce(key: string, value: number): Promise<void>;
     storeSettleSignerPrivateKey(key: string, value: bigint[]): Promise<void>;
     storeSigningKey(key: string, value: string): Promise<void>;
-    getNonce(key: string): Promise<number | null>;
     getSettleSignerPrivateKey(key: string): Promise<bigint[] | null>;
     getSigningKey(key: string): Promise<string | null>;
 }
@@ -830,6 +828,23 @@ declare class ZGServingNetworkBroker {
      * @returns Download link.
      */
     getChatSignatureDownloadLink: (providerAddress: string, svcName: string, chatID: string) => Promise<string>;
+    /**
+     * settleFee is used to settle the fee for the provider service.
+     *
+     * Normally, the fee for each request will be automatically settled in processResponse.
+     * However, if processResponse fails due to network issues or other reasons,
+     * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
+     * 1 A0GI = 1e18 neuron.
+     *
+     * @param providerAddress - The address of the provider.
+     * @param svcName - The name of the service.
+     * @param fee - The fee to be settled.
+     *
+     * @returns A promise that resolves when the fee settlement is successful.
+     *
+     * @throws An error if any issues occur during the fee settlement process.
+     */
+    settleFee: (providerAddress: string, svcName: string, fee: number) => Promise<void>;
 }
 /**
  * createZGServingNetworkBroker is used to initialize ZGServingUserBroker
