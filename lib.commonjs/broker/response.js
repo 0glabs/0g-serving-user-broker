@@ -81,7 +81,7 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
     async calculateOutputFees(extractor, content) {
         const svc = await extractor.getSvcInfo();
         const outputCount = await extractor.getOutputCount(content);
-        return outputCount * Number(svc.outputPrice);
+        return BigInt(outputCount) * svc.outputPrice;
     }
 }
 exports.ResponseProcessor = ResponseProcessor;

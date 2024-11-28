@@ -14,7 +14,7 @@ export declare abstract class ZGServingUserBrokerBase {
     protected getService(providerAddress: string, svcName: string, useCache?: boolean): Promise<ServiceStructOutput>;
     protected getExtractor(providerAddress: string, svcName: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput): Extractor;
-    getHeader(providerAddress: string, svcName: string, content: string, outputFee: number): Promise<ServingRequestHeaders>;
+    getHeader(providerAddress: string, svcName: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
     private calculateInputFees;
 }
 //# sourceMappingURL=base.d.ts.map

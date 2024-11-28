@@ -273,12 +273,12 @@ class ZGServingNetworkBroker {
      *
      * Normally, the fee for each request will be automatically settled in processResponse.
      * However, if processResponse fails due to network issues or other reasons,
-     * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
-     * 1 A0GI = 1e18 neuron.
+     * you can manually call settleFee to settle the fee.
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
-     * @param fee - The fee to be settled.
+     * @param fee - The fee to be settled. The unit of the fee is neuron.
+     * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
@@ -286,7 +286,10 @@ class ZGServingNetworkBroker {
      */
     settleFee = async (providerAddress, svcName, fee) => {
         try {
-            return await this.responseProcessor.settleFee(providerAddress, svcName, fee);
+            if (!/^-?\d+$/.test(fee)) {
+                throw new Error('Invalid input: The fee is not a valid integer representation');
+            }
+            return await this.responseProcessor.settleFee(providerAddress, svcName, BigInt(fee));
         }
         catch (error) {
             throw error;

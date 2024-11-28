@@ -70,7 +70,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             providerAddress,
             svcName,
             content,
-            0
+            BigInt(0)
         )
         return headers
     }

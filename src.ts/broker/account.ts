@@ -102,14 +102,28 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
     }
 
     private a0giToNeuron(value: number): bigint {
-        // 1 A0GI = 10^18 neuron
-        const scaledValue = value * 10 ** 18
+        const valueStr = value.toFixed(18)
+        const parts = valueStr.split('.')
 
-        if (!Number.isSafeInteger(scaledValue)) {
-            throw new Error('Input number is too small.')
+        // Handle integer part
+        const integerPart = parts[0]
+        let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18)
+
+        // Handle fractional part if it exists
+        if (parts.length > 1) {
+            let fractionalPart = parts[1]
+            while (fractionalPart.length < 18) {
+                fractionalPart += '0'
+            }
+            if (fractionalPart.length > 18) {
+                fractionalPart = fractionalPart.slice(0, 18) // Truncate to avoid overflow
+            }
+
+            const fractionalPartAsBigInt = BigInt(fractionalPart)
+            integerPartAsBigInt += fractionalPartAsBigInt
         }
 
-        return BigInt(scaledValue)
+        return integerPartAsBigInt
     }
 
     private neuronToA0gi(value: bigint): number {

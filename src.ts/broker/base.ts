@@ -81,7 +81,7 @@ export abstract class ZGServingUserBrokerBase {
         providerAddress: string,
         svcName: string,
         content: string,
-        outputFee: number
+        outputFee: bigint
     ): Promise<ServingRequestHeaders> {
         try {
             const extractor = await this.getExtractor(providerAddress, svcName)
@@ -136,7 +136,7 @@ export abstract class ZGServingUserBrokerBase {
     private async calculateInputFees(extractor: Extractor, content: string) {
         const svc = await extractor.getSvcInfo()
         const inputCount = await extractor.getInputCount(content)
-        const inputFee = inputCount * Number(svc.inputPrice)
+        const inputFee = BigInt(inputCount) * svc.inputPrice
         return inputFee
     }
 }

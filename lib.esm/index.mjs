@@ -452,7 +452,7 @@ class ZGServingUserBrokerBase {
     async calculateInputFees(extractor, content) {
         const svc = await extractor.getSvcInfo();
         const inputCount = await extractor.getInputCount(content);
-        const inputFee = inputCount * Number(svc.inputPrice);
+        const inputFee = BigInt(inputCount) * svc.inputPrice;
         return inputFee;
     }
 }
@@ -535,12 +535,24 @@ class AccountProcessor extends ZGServingUserBrokerBase {
         }
     }
     a0giToNeuron(value) {
-        // 1 A0GI = 10^18 neuron
-        const scaledValue = value * 10 ** 18;
-        if (!Number.isSafeInteger(scaledValue)) {
-            throw new Error('Input number is too small.');
+        const valueStr = value.toFixed(18);
+        const parts = valueStr.split('.');
+        // Handle integer part
+        const integerPart = parts[0];
+        let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18);
+        // Handle fractional part if it exists
+        if (parts.length > 1) {
+            let fractionalPart = parts[1];
+            while (fractionalPart.length < 18) {
+                fractionalPart += '0';
+            }
+            if (fractionalPart.length > 18) {
+                fractionalPart = fractionalPart.slice(0, 18); // Truncate to avoid overflow
+            }
+            const fractionalPartAsBigInt = BigInt(fractionalPart);
+            integerPartAsBigInt += fractionalPartAsBigInt;
         }
-        return BigInt(scaledValue);
+        return integerPartAsBigInt;
     }
     neuronToA0gi(value) {
         const divisor = BigInt(10 ** 18);
@@ -1601,7 +1613,7 @@ class RequestProcessor extends ZGServingUserBrokerBase {
         };
     }
     async getRequestHeaders(providerAddress, svcName, content) {
-        const headers = await this.getHeader(providerAddress, svcName, content, 0);
+        const headers = await this.getHeader(providerAddress, svcName, content, BigInt(0));
         return headers;
     }
 }
@@ -1871,7 +1883,7 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
     async calculateOutputFees(extractor, content) {
         const svc = await extractor.getSvcInfo();
         const outputCount = await extractor.getOutputCount(content);
-        return outputCount * Number(svc.outputPrice);
+        return BigInt(outputCount) * svc.outputPrice;
     }
 }
 
@@ -2138,12 +2150,12 @@ class ZGServingNetworkBroker {
      *
      * Normally, the fee for each request will be automatically settled in processResponse.
      * However, if processResponse fails due to network issues or other reasons,
-     * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
-     * 1 A0GI = 1e18 neuron.
+     * you can manually call settleFee to settle the fee.
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
-     * @param fee - The fee to be settled.
+     * @param fee - The fee to be settled. The unit of the fee is neuron.
+     * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
@@ -2151,7 +2163,10 @@ class ZGServingNetworkBroker {
      */
     settleFee = async (providerAddress, svcName, fee) => {
         try {
-            return await this.responseProcessor.settleFee(providerAddress, svcName, fee);
+            if (!/^-?\d+$/.test(fee)) {
+                throw new Error('Invalid input: The fee is not a valid integer representation');
+            }
+            return await this.responseProcessor.settleFee(providerAddress, svcName, BigInt(fee));
         }
         catch (error) {
             throw error;

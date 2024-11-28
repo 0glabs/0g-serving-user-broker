@@ -16,7 +16,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
         };
     }
     async getRequestHeaders(providerAddress, svcName, content) {
-        const headers = await this.getHeader(providerAddress, svcName, content, 0);
+        const headers = await this.getHeader(providerAddress, svcName, content, BigInt(0));
         return headers;
     }
 }

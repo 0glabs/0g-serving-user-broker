@@ -90,7 +90,7 @@ class ZGServingUserBrokerBase {
     async calculateInputFees(extractor, content) {
         const svc = await extractor.getSvcInfo();
         const inputCount = await extractor.getInputCount(content);
-        const inputFee = inputCount * Number(svc.inputPrice);
+        const inputFee = BigInt(inputCount) * svc.inputPrice;
         return inputFee;
     }
 }

@@ -26,7 +26,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
     async settleFee(
         providerAddress: string,
         serviceName: string,
-        fee: number
+        fee: bigint
     ): Promise<void> {
         try {
             if (!fee) {
@@ -122,9 +122,9 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
     private async calculateOutputFees(
         extractor: Extractor,
         content: string
-    ): Promise<number> {
+    ): Promise<bigint> {
         const svc = await extractor.getSvcInfo()
         const outputCount = await extractor.getOutputCount(content)
-        return outputCount * Number(svc.outputPrice)
+        return BigInt(outputCount) * svc.outputPrice
     }
 }

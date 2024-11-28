@@ -12,7 +12,7 @@ export declare class ResponseProcessor extends ZGServingUserBrokerBase {
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
-    settleFee(providerAddress: string, serviceName: string, fee: number): Promise<void>;
+    settleFee(providerAddress: string, serviceName: string, fee: bigint): Promise<void>;
     processResponse(providerAddress: string, svcName: string, content: string, chatID?: string): Promise<boolean | null>;
     private calculateOutputFees;
 }

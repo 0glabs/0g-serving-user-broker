@@ -571,7 +571,7 @@ declare abstract class ZGServingUserBrokerBase {
     protected getService(providerAddress: string, svcName: string, useCache?: boolean): Promise<ServiceStructOutput>;
     protected getExtractor(providerAddress: string, svcName: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput): Extractor;
-    getHeader(providerAddress: string, svcName: string, content: string, outputFee: number): Promise<ServingRequestHeaders>;
+    getHeader(providerAddress: string, svcName: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
     private calculateInputFees;
 }
 
@@ -600,7 +600,7 @@ declare class ResponseProcessor extends ZGServingUserBrokerBase {
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
-    settleFee(providerAddress: string, serviceName: string, fee: number): Promise<void>;
+    settleFee(providerAddress: string, serviceName: string, fee: bigint): Promise<void>;
     processResponse(providerAddress: string, svcName: string, content: string, chatID?: string): Promise<boolean | null>;
     private calculateOutputFees;
 }
@@ -833,18 +833,18 @@ declare class ZGServingNetworkBroker {
      *
      * Normally, the fee for each request will be automatically settled in processResponse.
      * However, if processResponse fails due to network issues or other reasons,
-     * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
-     * 1 A0GI = 1e18 neuron.
+     * you can manually call settleFee to settle the fee.
      *
      * @param providerAddress - The address of the provider.
      * @param svcName - The name of the service.
-     * @param fee - The fee to be settled.
+     * @param fee - The fee to be settled. The unit of the fee is neuron.
+     * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
      * @throws An error if any issues occur during the fee settlement process.
      */
-    settleFee: (providerAddress: string, svcName: string, fee: number) => Promise<void>;
+    settleFee: (providerAddress: string, svcName: string, fee: string) => Promise<void>;
 }
 /**
  * createZGServingNetworkBroker is used to initialize ZGServingUserBroker

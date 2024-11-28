@@ -146,6 +146,8 @@ const headers = await broker.getRequestHeaders(
 After obtaining the `endpoint`, `model`, and `headers`, you can use client SDKs
 compatible with the OpenAI interface to make requests.
 
+_Note_: After receiving the response, you need to use `processResponse` as demonstrated in step 5.4 to settle the fee of the response. Otherwise, subsequent requests will be denied due to unpaid fees. If this occurs, you can use `settleFee` as demonstrated in step 5.5 to settle the fee manually. The amount owed will be indicated in the error message.
+
 ```typescript
 /**
  * Use OpenAI TS SDK
@@ -226,6 +228,7 @@ const valid = await broker.processResponse(
  * @param providerAddress - The address of the provider.
  * @param serviceName - The name of the service.
  * @param fee - The fee to be settled. The unit is neuron. 1 A0GI = 1e18 neuron.
+ * To accommodate large values, it needs to use string type, e.g. '1000'.
  *
  * @returns A promise that resolves when the fee settlement is successful.
  *
