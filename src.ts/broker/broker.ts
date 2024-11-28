@@ -370,7 +370,7 @@ export class ZGServingNetworkBroker {
  */
 export async function createZGServingNetworkBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F'
+    contractAddress = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435'
 ): Promise<ZGServingNetworkBroker> {
     const broker = new ZGServingNetworkBroker(signer, contractAddress)
     try {

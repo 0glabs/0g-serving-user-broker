@@ -186,8 +186,7 @@ export declare class ZGServingNetworkBroker {
      *
      * @param {string} providerAddress - The address of the provider.
      * @param {string} svcName - The name of the service.
-     * @param {number} fee - The fee to be settled. The unit of the fee is neuron.
-     * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
+     * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *

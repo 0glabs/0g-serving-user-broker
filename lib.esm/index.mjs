@@ -2160,8 +2160,7 @@ class ZGServingNetworkBroker {
      *
      * @param {string} providerAddress - The address of the provider.
      * @param {string} svcName - The name of the service.
-     * @param {number} fee - The fee to be settled. The unit of the fee is neuron.
-     * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
+     * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
@@ -2186,7 +2185,7 @@ class ZGServingNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGServingNetworkBroker(signer, contractAddress = '0x9Ae9b2C822beFF4B4466075006bc6b5ac35E779F') {
+async function createZGServingNetworkBroker(signer, contractAddress = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435') {
     const broker = new ZGServingNetworkBroker(signer, contractAddress);
     try {
         await broker.initialize();
