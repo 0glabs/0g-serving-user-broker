@@ -553,7 +553,7 @@ interface ServingRequestHeaders {
  * before use.
  */
 declare class RequestProcessor extends ZGServingUserBrokerBase {
-    getRequestMetadata(providerAddress: string, svcName: string): Promise<{
+    getServiceMetadata(providerAddress: string, svcName: string): Promise<{
         endpoint: string;
         model: string;
     }>;
@@ -716,7 +716,7 @@ declare class ZGServingNetworkBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestMetadata: (providerAddress: string, svcName: string) => Promise<{
+    getServiceMetadata: (providerAddress: string, svcName: string) => Promise<{
         endpoint: string;
         model: string;
     }>;
@@ -736,12 +736,12 @@ declare class ZGServingNetworkBroker {
      *
      * @example
      *
-     * const { endpoint, model } = await broker.getRequestMetadata(
+     * const { endpoint, model } = await broker.getServiceMetadata(
      *   providerAddress,
      *   serviceName,
      * );
      *
-     * const headers = await broker.getRequestMetadata(
+     * const headers = await broker.getServiceMetadata(
      *   providerAddress,
      *   serviceName,
      *   content,

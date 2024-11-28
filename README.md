@@ -97,9 +97,9 @@ await broker.depositFund(providerAddress, amount)
 
 ```typescript
 /**
- * 'getRequestMetadata' generates request metadata for the provider service.
+ * 'getServiceMetadata' returns metadata for the provider service.
  * Includes:
- * 1. Request endpoint for the provider service
+ * 1. Service endpoint of the provider service
  * 2. Model information for the provider service
  *
  * @param providerAddress - The address of the provider.
@@ -109,7 +109,7 @@ await broker.depositFund(providerAddress, amount)
  *
  * @throws An error if errors occur during the processing of the request.
  */
-const { endpoint, model } = await broker.getRequestMetadata(
+const { endpoint, model } = await broker.getServiceMetadata(
     providerAddress,
     serviceName
 )

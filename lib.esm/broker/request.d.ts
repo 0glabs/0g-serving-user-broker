@@ -45,7 +45,7 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export declare class RequestProcessor extends ZGServingUserBrokerBase {
-    getRequestMetadata(providerAddress: string, svcName: string): Promise<{
+    getServiceMetadata(providerAddress: string, svcName: string): Promise<{
         endpoint: string;
         model: string;
     }>;

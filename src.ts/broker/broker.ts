@@ -131,7 +131,7 @@ export class ZGServingNetworkBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    public getRequestMetadata = async (
+    public getServiceMetadata = async (
         providerAddress: string,
         svcName: string
     ): Promise<{
@@ -139,7 +139,7 @@ export class ZGServingNetworkBroker {
         model: string
     }> => {
         try {
-            return await this.requestProcessor.getRequestMetadata(
+            return await this.requestProcessor.getServiceMetadata(
                 providerAddress,
                 svcName
             )
@@ -164,12 +164,12 @@ export class ZGServingNetworkBroker {
      *
      * @example
      *
-     * const { endpoint, model } = await broker.getRequestMetadata(
+     * const { endpoint, model } = await broker.getServiceMetadata(
      *   providerAddress,
      *   serviceName,
      * );
      *
-     * const headers = await broker.getRequestMetadata(
+     * const headers = await broker.getServiceMetadata(
      *   providerAddress,
      *   serviceName,
      *   content,
