@@ -77,6 +77,40 @@ export abstract class ZGServingUserBrokerBase {
         }
     }
 
+    protected a0giToNeuron(value: number): bigint {
+        const valueStr = value.toFixed(18)
+        const parts = valueStr.split('.')
+
+        // Handle integer part
+        const integerPart = parts[0]
+        let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18)
+
+        // Handle fractional part if it exists
+        if (parts.length > 1) {
+            let fractionalPart = parts[1]
+            while (fractionalPart.length < 18) {
+                fractionalPart += '0'
+            }
+            if (fractionalPart.length > 18) {
+                fractionalPart = fractionalPart.slice(0, 18) // Truncate to avoid overflow
+            }
+
+            const fractionalPartAsBigInt = BigInt(fractionalPart)
+            integerPartAsBigInt += fractionalPartAsBigInt
+        }
+
+        return integerPartAsBigInt
+    }
+
+    protected neuronToA0gi(value: bigint): number {
+        const divisor = BigInt(10 ** 18)
+        const integerPart = value / divisor
+        const remainder = value % divisor
+        const decimalPart = Number(remainder) / Number(divisor)
+
+        return Number(integerPart) + decimalPart
+    }
+
     async getHeader(
         providerAddress: string,
         svcName: string,

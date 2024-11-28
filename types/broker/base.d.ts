@@ -14,6 +14,8 @@ export declare abstract class ZGServingUserBrokerBase {
     protected getService(providerAddress: string, svcName: string, useCache?: boolean): Promise<ServiceStructOutput>;
     protected getExtractor(providerAddress: string, svcName: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput): Extractor;
+    protected a0giToNeuron(value: number): bigint;
+    protected neuronToA0gi(value: bigint): number;
     getHeader(providerAddress: string, svcName: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
     private calculateInputFees;
 }

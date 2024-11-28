@@ -416,6 +416,33 @@ class ZGServingUserBrokerBase {
                 throw new Error('Unknown service type');
         }
     }
+    a0giToNeuron(value) {
+        const valueStr = value.toFixed(18);
+        const parts = valueStr.split('.');
+        // Handle integer part
+        const integerPart = parts[0];
+        let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18);
+        // Handle fractional part if it exists
+        if (parts.length > 1) {
+            let fractionalPart = parts[1];
+            while (fractionalPart.length < 18) {
+                fractionalPart += '0';
+            }
+            if (fractionalPart.length > 18) {
+                fractionalPart = fractionalPart.slice(0, 18); // Truncate to avoid overflow
+            }
+            const fractionalPartAsBigInt = BigInt(fractionalPart);
+            integerPartAsBigInt += fractionalPartAsBigInt;
+        }
+        return integerPartAsBigInt;
+    }
+    neuronToA0gi(value) {
+        const divisor = BigInt(10 ** 18);
+        const integerPart = value / divisor;
+        const remainder = value % divisor;
+        const decimalPart = Number(remainder) / Number(divisor);
+        return Number(integerPart) + decimalPart;
+    }
     async getHeader(providerAddress, svcName, content, outputFee) {
         try {
             const extractor = await this.getExtractor(providerAddress, svcName);
@@ -533,33 +560,6 @@ class AccountProcessor extends ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
-    }
-    a0giToNeuron(value) {
-        const valueStr = value.toFixed(18);
-        const parts = valueStr.split('.');
-        // Handle integer part
-        const integerPart = parts[0];
-        let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18);
-        // Handle fractional part if it exists
-        if (parts.length > 1) {
-            let fractionalPart = parts[1];
-            while (fractionalPart.length < 18) {
-                fractionalPart += '0';
-            }
-            if (fractionalPart.length > 18) {
-                fractionalPart = fractionalPart.slice(0, 18); // Truncate to avoid overflow
-            }
-            const fractionalPartAsBigInt = BigInt(fractionalPart);
-            integerPartAsBigInt += fractionalPartAsBigInt;
-        }
-        return integerPartAsBigInt;
-    }
-    neuronToA0gi(value) {
-        const divisor = BigInt(10 ** 18);
-        const integerPart = value / divisor;
-        const remainder = value % divisor;
-        const decimalPart = Number(remainder) / Number(divisor);
-        return Number(integerPart) + decimalPart;
     }
 }
 
@@ -1819,6 +1819,12 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.verifier = new Verifier(contract, metadata, cache);
     }
+    async settleFeeWithA0gi(providerAddress, serviceName, fee) {
+        if (!fee) {
+            return;
+        }
+        await this.settleFee(providerAddress, serviceName, this.a0giToNeuron(fee));
+    }
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
@@ -1933,8 +1939,8 @@ class ZGServingNetworkBroker {
     /**
      * Adds a new account to the contract.
      *
-     * @param providerAddress - The address of the provider for whom the account is being created.
-     * @param balance - The initial balance to be assigned to the new account. Units are in A0GI.
+     * @param {string} providerAddress - The address of the provider for whom the account is being created.
+     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
      *
      * @throws  An error if the account creation fails.
      *
@@ -1952,7 +1958,7 @@ class ZGServingNetworkBroker {
     /**
      * Retrieves the account information for a given provider address.
      *
-     * @param providerAddress - The address of the provider identifying the account.
+     * @param {string} providerAddress - The address of the provider identifying the account.
      *
      * @returns A promise that resolves to the account information.
      *
@@ -1987,8 +1993,8 @@ class ZGServingNetworkBroker {
      * 1. Request endpoint for the provider service
      * 2. Model information for the provider service
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
      *
      * @returns { endpoint, model } - Object containing endpoint and model.
      *
@@ -2010,9 +2016,9 @@ class ZGServingNetworkBroker {
      * is considered a settlement proof and will be used by the provider
      * for contract settlement.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param content - The content being billed. For example, in a chatbot service, it is the text input by the user.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
+     * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
      * @returns headers. Records information such as the request fee and user signature.
      *
@@ -2062,11 +2068,11 @@ class ZGServingNetworkBroker {
      * returned content by checking the provider service's response and corresponding signature associated
      * with the chat ID.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param content - The main content returned by the service. For example, in the case of a chatbot service,
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
+     * @param {string} content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
-     * @param chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
+     * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
      *
@@ -2085,8 +2091,8 @@ class ZGServingNetworkBroker {
     /**
      * verifyService is used to verify the reliability of the service.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
      *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
      *
@@ -2105,8 +2111,8 @@ class ZGServingNetworkBroker {
      *
      * It can be provided to users who wish to manually verify the Signer RA.
      *
-     * @param providerAddress - provider address.
-     * @param svcName - service name.
+     * @param {string} providerAddress - provider address.
+     * @param {string} svcName - service name.
      *
      * @returns Download link.
      */
@@ -2123,9 +2129,9 @@ class ZGServingNetworkBroker {
      *
      * It can be provided to users who wish to manually verify the content of a single chat.
      *
-     * @param providerAddress - provider address.
-     * @param svcName - service name.
-     * @param chatID - ID of the chat.
+     * @param {string} providerAddress - provider address.
+     * @param {string} svcName - service name.
+     * @param {string} chatID - ID of the chat.
      *
      * @description To verify the chat signature, use the following code:
      *
@@ -2152,9 +2158,9 @@ class ZGServingNetworkBroker {
      * However, if processResponse fails due to network issues or other reasons,
      * you can manually call settleFee to settle the fee.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param fee - The fee to be settled. The unit of the fee is neuron.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
+     * @param {number} fee - The fee to be settled. The unit of the fee is neuron.
      * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
      *
      * @returns A promise that resolves when the fee settlement is successful.
@@ -2163,10 +2169,7 @@ class ZGServingNetworkBroker {
      */
     settleFee = async (providerAddress, svcName, fee) => {
         try {
-            if (!/^-?\d+$/.test(fee)) {
-                throw new Error('Invalid input: The fee is not a valid integer representation');
-            }
-            return await this.responseProcessor.settleFee(providerAddress, svcName, BigInt(fee));
+            return await this.responseProcessor.settleFeeWithA0gi(providerAddress, svcName, fee);
         }
         catch (error) {
             throw error;

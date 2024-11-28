@@ -20,6 +20,21 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         this.verifier = new Verifier(contract, metadata, cache)
     }
 
+    async settleFeeWithA0gi(
+        providerAddress: string,
+        serviceName: string,
+        fee: number
+    ): Promise<void> {
+        if (!fee) {
+            return
+        }
+        await this.settleFee(
+            providerAddress,
+            serviceName,
+            this.a0giToNeuron(fee)
+        )
+    }
+
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */

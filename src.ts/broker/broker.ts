@@ -65,8 +65,8 @@ export class ZGServingNetworkBroker {
     /**
      * Adds a new account to the contract.
      *
-     * @param providerAddress - The address of the provider for whom the account is being created.
-     * @param balance - The initial balance to be assigned to the new account. Units are in A0GI.
+     * @param {string} providerAddress - The address of the provider for whom the account is being created.
+     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
      *
      * @throws  An error if the account creation fails.
      *
@@ -87,7 +87,7 @@ export class ZGServingNetworkBroker {
     /**
      * Retrieves the account information for a given provider address.
      *
-     * @param providerAddress - The address of the provider identifying the account.
+     * @param {string} providerAddress - The address of the provider identifying the account.
      *
      * @returns A promise that resolves to the account information.
      *
@@ -124,8 +124,8 @@ export class ZGServingNetworkBroker {
      * 1. Request endpoint for the provider service
      * 2. Model information for the provider service
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
      *
      * @returns { endpoint, model } - Object containing endpoint and model.
      *
@@ -156,9 +156,9 @@ export class ZGServingNetworkBroker {
      * is considered a settlement proof and will be used by the provider
      * for contract settlement.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param content - The content being billed. For example, in a chatbot service, it is the text input by the user.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
+     * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
      * @returns headers. Records information such as the request fee and user signature.
      *
@@ -216,11 +216,11 @@ export class ZGServingNetworkBroker {
      * returned content by checking the provider service's response and corresponding signature associated
      * with the chat ID.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param content - The main content returned by the service. For example, in the case of a chatbot service,
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
+     * @param {string} content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
-     * @param chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
+     * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
      *
@@ -249,8 +249,8 @@ export class ZGServingNetworkBroker {
     /**
      * verifyService is used to verify the reliability of the service.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
      *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
      *
@@ -272,8 +272,8 @@ export class ZGServingNetworkBroker {
      *
      * It can be provided to users who wish to manually verify the Signer RA.
      *
-     * @param providerAddress - provider address.
-     * @param svcName - service name.
+     * @param {string} providerAddress - provider address.
+     * @param {string} svcName - service name.
      *
      * @returns Download link.
      */
@@ -296,9 +296,9 @@ export class ZGServingNetworkBroker {
      *
      * It can be provided to users who wish to manually verify the content of a single chat.
      *
-     * @param providerAddress - provider address.
-     * @param svcName - service name.
-     * @param chatID - ID of the chat.
+     * @param {string} providerAddress - provider address.
+     * @param {string} svcName - service name.
+     * @param {string} chatID - ID of the chat.
      *
      * @description To verify the chat signature, use the following code:
      *
@@ -333,10 +333,9 @@ export class ZGServingNetworkBroker {
      * However, if processResponse fails due to network issues or other reasons,
      * you can manually call settleFee to settle the fee.
      *
-     * @param providerAddress - The address of the provider.
-     * @param svcName - The name of the service.
-     * @param fee - The fee to be settled. The unit of the fee is neuron.
-     * 1 A0GI = 1e18 neuron. To accommodate large values, it needs to use string type.
+     * @param {string} providerAddress - The address of the provider.
+     * @param {string} svcName - The name of the service.
+     * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
@@ -345,18 +344,13 @@ export class ZGServingNetworkBroker {
     public settleFee = async (
         providerAddress: string,
         svcName: string,
-        fee: string
+        fee: number
     ): Promise<void> => {
         try {
-            if (!/^-?\d+$/.test(fee)) {
-                throw new Error(
-                    'Invalid input: The fee is not a valid integer representation'
-                )
-            }
-            return await this.responseProcessor.settleFee(
+            return await this.responseProcessor.settleFeeWithA0gi(
                 providerAddress,
                 svcName,
-                BigInt(fee)
+                fee
             )
         } catch (error) {
             throw error

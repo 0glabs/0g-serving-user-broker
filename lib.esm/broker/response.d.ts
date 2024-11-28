@@ -9,6 +9,7 @@ import { ZGServingUserBrokerBase } from './base';
 export declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
     constructor(contract: ServingContract, metadata: Metadata, cache: Cache);
+    settleFeeWithA0gi(providerAddress: string, serviceName: string, fee: number): Promise<void>;
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */

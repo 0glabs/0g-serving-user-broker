@@ -10,7 +10,5 @@ export declare class AccountProcessor extends ZGServingUserBrokerBase {
     deleteAccount(provider: AddressLike): Promise<void>;
     depositFund(providerAddress: string, balance: number): Promise<void>;
     private createSettleSignerKey;
-    private a0giToNeuron;
-    private neuronToA0gi;
 }
 //# sourceMappingURL=account.d.ts.map

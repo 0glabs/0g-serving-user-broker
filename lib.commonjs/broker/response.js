@@ -17,6 +17,12 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.verifier = new verifier_1.Verifier(contract, metadata, cache);
     }
+    async settleFeeWithA0gi(providerAddress, serviceName, fee) {
+        if (!fee) {
+            return;
+        }
+        await this.settleFee(providerAddress, serviceName, this.a0giToNeuron(fee));
+    }
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
