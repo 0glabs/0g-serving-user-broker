@@ -2,13 +2,9 @@
 
 ## Overview
 
-This document provides an overview of the 0G Serving Broker, including setup and usage instructions.
+This document provides an overview of the 0G Serving Broker, including setup and usage instructions for both inference and finetuning services. The broker allows user to create one ledger that is for all services. 
 
-## Setup and Usage
-
-To integrate the 0G Serving Broker into your project, follow these steps
-
-### Step 1: Install the dependency
+## Installation
 
 To get started, you need to install the `@0glabs/0g-serving-broker` package:
 
@@ -16,7 +12,7 @@ To get started, you need to install the `@0glabs/0g-serving-broker` package:
 pnpm add @0glabs/0g-serving-broker @types/crypto-js@4.2.2 crypto-js@4.2.0
 ```
 
-### Step 2: Initialize a Broker Instance
+## Initialize a Broker Instance
 
 The broker instance is initialized with a `signer`. This signer is an instance that implements the `JsonRpcSigner` or `Wallet` interface from the ethers package and is used to sign transactions for a specific Ethereum account. You can create this instance using your private key via the ethers library or use a wallet framework tool like [wagmi](https://wagmi.sh/react/guides/ethers) to initialize the signer.
 
@@ -34,9 +30,25 @@ import { createZGServingNetworkBroker } from '@0glabs/0g-serving-broker'
  * @throws An error if the broker cannot be initialized.
  */
 const broker = await createZGServingNetworkBroker(signer)
+
+
 ```
 
-### Step 3: List Available Services
+Add fund to the ledger, which will be used in both inference and finetuning services.
+
+``` typescript
+
+// Deposite fund to the ledger
+broker.depositFund(amount)
+
+// Refund from ledger
+broker.refund(amount)
+```
+
+## Find available services
+### Inference: List available services
+
+For inferernce, we can list all available services regardless of the hardware quota. 
 
 ```typescript
 /**
@@ -56,8 +68,21 @@ const broker = await createZGServingNetworkBroker(signer)
  *   model: string;
  * };
  */
-const services = await broker.listService()
+const services = await broker.listInferenceService()
 ```
+
+### Finetune: List available services of a given model
+
+For finetuning, we retrive all services according to model name.
+
+``` typescript
+
+const services = await broker.listFinetuneService("llama3-70b")
+
+```
+
+## Setup the account
+The first step to use 0G services is to create a ledger, which will be used for all services.
 
 ### Step 4: Manage Accounts
 
@@ -239,6 +264,7 @@ const valid = await broker.processResponse(
  */
 await broker.settleFee(providerAddress, serviceName, fee)
 ```
+
 
 ## Interface
 
