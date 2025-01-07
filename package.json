@@ -3,12 +3,7 @@
     "version": "0.1.0",
     "description": "TS SDK for 0G Compute Network",
     "main": "./lib.commonjs/index.js",
-    "files": [
-        "types",
-        "lib.commonjs",
-        "lib.esm",
-        "wasm"
-    ],
+    "files": ["types", "lib.commonjs", "lib.esm", "wasm"],
     "exports": {
         "require": "./lib.commonjs/index.js",
         "import": "./lib.esm/index.mjs"
@@ -21,7 +16,7 @@
         "format": "prettier --write src.ts/**/*.ts src.ts/*.ts example/**/*.ts",
         "clean": "rm -rf dist lib.esm lib.commonjs types",
         "build": "npm run clean && tsc -b tsconfig.commonjs.json tsconfig.types.json && npx rollup -c rollup.config.mjs",
-        "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/serving '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/Serving.sol/Serving.json'",
+        "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/serving '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/fine-tune/FineTuneServing.sol/FineTuneServing.json'",
         "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json",
         "test": "mocha -r ts-node/register 'src.ts/**/*.test.ts'"
     },

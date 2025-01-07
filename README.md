@@ -73,10 +73,21 @@ const services = await broker.listInferenceService()
 
 ### Finetune: List available services of a given model
 
-For finetuning, we retrive all services according to model name.
+For finetuning, we retrive all services according to model name. The full model list can be found in [url].
 
 ``` typescript
 
+/**
+ServiceStructOutput = {
+  provider: string;
+  name: string;
+  url: string;
+  quota: QuotaStructOutput;
+  pricePerToken: bigint;
+  occupied: boolean;
+}
+**
+**/
 const services = await broker.listFinetuneService("llama3-70b")
 
 ```
@@ -115,6 +126,13 @@ await broker.addAccount(providerAddress, balance)
  */
 await broker.depositFund(providerAddress, amount)
 ```
+
+
+
+
+
+
+
 
 ### Step 5: Use the Provider's Services
 
