@@ -1,4 +1,4 @@
-import { AccountStructOutput } from '../../contract';
+import { AccountStructOutput } from '../../contract/inference';
 import { JsonRpcSigner, Wallet } from 'ethers';
 import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';
@@ -21,7 +21,7 @@ export declare class ZGServingNetworkBroker {
      * @returns {Promise<ServiceStructOutput[]>} A promise that resolves to an array of ServiceStructOutput objects.
      * @throws An error if the service list cannot be retrieved.
      */
-    listService: () => Promise<import("../../contract").ServiceStructOutput[]>;
+    listService: () => Promise<import("../../contract/inference").ServiceStructOutput[]>;
     /**
      * Adds a new account to the contract.
      *

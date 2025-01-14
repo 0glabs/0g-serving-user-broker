@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../../contract/inference/InferenceServing'
+import { ServiceStructOutput } from '../../contract/inference'
 import { Extractor } from './extractor'
 
 export class ChatBot extends Extractor {

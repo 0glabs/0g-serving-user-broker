@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src.ts/contract/inference/index.ts"],"names":[],"mappings":"AAGA,YAAY,EAAE,gBAAgB,EAAE,MAAM,uBAAuB,CAAC;AAC9D,OAAO,KAAK,SAAS,MAAM,sBAAsB,CAAC;AAClD,OAAO,EAAE,yBAAyB,EAAE,MAAM,0CAA0C,CAAC"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src.ts/contract/inference/index.ts"],"names":[],"mappings":"AAAA,cAAc,aAAa,CAAA;AAC3B,cAAc,8BAA8B,CAAA"}

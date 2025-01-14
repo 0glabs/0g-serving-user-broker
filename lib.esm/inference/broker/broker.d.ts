@@ -1,4 +1,4 @@
-import { AccountStructOutput } from '../../contract';
+import { AccountStructOutput } from '../../contract/inference';
 import { JsonRpcSigner, Wallet } from 'ethers';
 import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';

@@ -1,4 +1,4 @@
-import { InferenceServingContract } from '../../contract';
+import { InferenceServingContract } from '../../contract/inference';
 import { Cache, Metadata } from '../storage';
 import { ZGServingUserBrokerBase } from './base';
 /**

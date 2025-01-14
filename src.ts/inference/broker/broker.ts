@@ -1,4 +1,7 @@
-import { AccountStructOutput, InferenceServingContract } from '../../contract'
+import {
+    AccountStructOutput,
+    InferenceServingContract,
+} from '../../contract/inference'
 import { JsonRpcSigner, Wallet } from 'ethers'
 import { RequestProcessor } from './request'
 import { ResponseProcessor } from './response'

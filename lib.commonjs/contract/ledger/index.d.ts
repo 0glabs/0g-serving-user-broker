@@ -1,4 +1,3 @@
-export type { LedgerManager } from "./LedgerManager.js";
-export * as factories from "./factories/index.js";
-export { LedgerManager__factory } from "./factories/LedgerManager__factory.js";
+export * from './ledger';
+export * from './typechain/LedgerManager';
 //# sourceMappingURL=index.d.ts.map

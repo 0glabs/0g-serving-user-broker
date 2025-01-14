@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZGServingNetworkBroker = void 0;
 exports.createZGServingNetworkBroker = createZGServingNetworkBroker;
-const contract_1 = require("../../contract");
+const inference_1 = require("../../contract/inference");
 const request_1 = require("./request");
 const response_1 = require("./response");
 const verifier_1 = require("./verifier");
@@ -30,7 +30,7 @@ class ZGServingNetworkBroker {
         catch (error) {
             throw error;
         }
-        const contract = new contract_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
+        const contract = new inference_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
         const metadata = new storage_1.Metadata();
         const cache = new storage_2.Cache();
         this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache);

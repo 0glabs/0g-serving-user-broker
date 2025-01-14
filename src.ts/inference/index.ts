@@ -1,4 +1,4 @@
-export { AccountStructOutput, ServiceStructOutput } from '../contract'
+export { AccountStructOutput, ServiceStructOutput } from '../contract/inference'
 export {
     AccountProcessor,
     createZGServingNetworkBroker,

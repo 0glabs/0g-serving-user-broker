@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../../contract';
+import { ServiceStructOutput } from '../../contract/inference';
 import { ZGServingUserBrokerBase } from './base';
 export declare enum VerifiabilityEnum {
     OpML = "OpML",

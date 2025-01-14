@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../../contract/inference/InferenceServing';
+import { ServiceStructOutput } from '../../contract/inference';
 export declare enum CacheValueTypeEnum {
     Service = "service"
 }
