@@ -89,7 +89,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         try {
             let extractor: Extractor
             extractor = await this.getExtractor(providerAddress, svcName)
-            const outputFee = await this.calculateOutputFees(extractor, content)
+            const outputFee = await this._calculateOutputFees(extractor, content)
 
             await this.settleFee(providerAddress, svcName, outputFee)
 
@@ -139,10 +139,21 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         }
     }
 
-    private async calculateOutputFees(
+    private async _calculateOutputFees(
         extractor: Extractor,
         content: string
     ): Promise<bigint> {
+        const svc = await extractor.getSvcInfo()
+        const outputCount = await extractor.getOutputCount(content)
+        return BigInt(outputCount) * svc.outputPrice
+    }
+
+    public async calculateOutputFees(
+        providerAddress: string,
+        svcName: string,
+        content: string
+    ): Promise<bigint> {
+        const extractor = await this.getExtractor(providerAddress, svcName)
         const svc = await extractor.getSvcInfo()
         const outputCount = await extractor.getOutputCount(content)
         return BigInt(outputCount) * svc.outputPrice

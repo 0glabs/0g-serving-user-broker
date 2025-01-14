@@ -43,7 +43,7 @@ export async function createZGComputeNetworkBroker(
     try {
         const ledger = await createLedgerBroker(signer, ledgerCA)
         // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
-        const inferenceBroker = await createInferenceBroker(signer, inferenceCA)
+        const inferenceBroker = await createInferenceBroker(signer, inferenceCA, ledger)
         const fineTuningBroker = await createFineTuningBroker(
             signer,
             fineTuningCA,

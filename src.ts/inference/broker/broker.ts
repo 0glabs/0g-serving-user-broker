@@ -1,12 +1,13 @@
-import { AccountStructOutput, InferenceServingContract } from '../contract'
-import { JsonRpcSigner, Wallet } from 'ethers'
-import { RequestProcessor } from './request'
-import { ResponseProcessor } from './response'
-import { Verifier } from './verifier'
-import { AccountProcessor } from './account'
-import { ModelProcessor } from './model'
-import { Metadata } from '../../common/storage'
-import { Cache } from '../storage'
+import {AccountStructOutput, InferenceServingContract, ServiceStructOutput} from '../contract'
+import {AddressLike, JsonRpcSigner, toNumber, Wallet} from 'ethers'
+import {RequestProcessor} from './request'
+import {ResponseProcessor} from './response'
+import {Verifier} from './verifier'
+import {AccountProcessor} from './account'
+import {ModelProcessor} from './model'
+import {Metadata} from '../../common/storage'
+import {Cache} from '../storage'
+import {LedgerBroker} from '../../ledger'
 
 export class InferenceBroker {
     public requestProcessor!: RequestProcessor
@@ -17,10 +18,12 @@ export class InferenceBroker {
 
     private signer: JsonRpcSigner | Wallet
     private contractAddress: string
+    private ledger: LedgerBroker
 
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string) {
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, ledger: LedgerBroker) {
         this.signer = signer
         this.contractAddress = contractAddress
+        this.ledger = ledger
     }
 
     async initialize() {
@@ -57,6 +60,22 @@ export class InferenceBroker {
     public listService = async () => {
         try {
             return await this.modelProcessor.listService()
+        } catch (error) {
+            throw error
+        }
+    }
+
+    public getService = async (svcName: string): Promise<ServiceStructOutput> => {
+        try {
+            const services = await this.listService()
+            const service = services.find(
+                (service: any) => service.name === svcName
+            )
+            if (!service) {
+                console.error('Service not found.')
+                return
+            }
+            return service
         } catch (error) {
             throw error
         }
@@ -149,6 +168,27 @@ export class InferenceBroker {
     }
 
     /**
+     * Check if the inference account has enough fund, if not, then transfer the difference.
+     * @param amount
+     * @param provider
+     */
+    private transferFundIfNeeded = async (amount: bigint, provider: string) => {
+        const ledger_out = await this.ledger.getLedger()
+        // available amount in ledger
+        const avail_amount = ledger_out.availableBalance
+        const diff = amount - avail_amount
+        if (diff > 0) {
+            // not enough money, transfer more from ledger
+            try {
+                // todo: do we need to check the total amount here? or just let it fail if not enough
+                this.ledger.transferFund(provider, "inference", Number(diff))
+            } catch (error) {
+                throw error
+            }
+        }
+    }
+
+    /**
      * getRequestHeaders generates billing-related headers for the request
      * when the user uses the provider service.
      *
@@ -198,6 +238,11 @@ export class InferenceBroker {
         content: string
     ) => {
         try {
+            // transfer fund from ledger to account if needed
+            await this.addAccount(providerAddress, 0)
+            const amount = await this.requestProcessor.calculateInputFee(providerAddress, svcName, content)
+            await this.transferFundIfNeeded(amount, providerAddress)
+
             return await this.requestProcessor.getRequestHeaders(
                 providerAddress,
                 svcName,
@@ -235,6 +280,11 @@ export class InferenceBroker {
         chatID?: string
     ): Promise<boolean | null> => {
         try {
+            // transfer fund from ledger to account if needed
+            await this.addAccount(providerAddress, 0)
+            const amount = await this.responseProcessor.calculateOutputFees(providerAddress, svcName, content)
+            await this.transferFundIfNeeded(amount, providerAddress)
+
             return await this.responseProcessor.processResponse(
                 providerAddress,
                 svcName,
@@ -356,6 +406,18 @@ export class InferenceBroker {
             throw error
         }
     }
+
+    /**
+     * retrive fund from inference account back to ledger
+     * @param provider
+     */
+    public closeService = async (provider: AddressLike) => {
+        try {
+            await this.ledger.retrieveFund([provider], "inference")
+        } catch (error) {
+            throw error
+        }
+    }
 }
 
 /**
@@ -370,9 +432,10 @@ export class InferenceBroker {
  */
 export async function createInferenceBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress = ''
+    contractAddress = '',
+    ledger: LedgerBroker
 ): Promise<InferenceBroker> {
-    const broker = new InferenceBroker(signer, contractAddress)
+    const broker = new InferenceBroker(signer, contractAddress, ledger)
     try {
         await broker.initialize()
         return broker
