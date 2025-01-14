@@ -1,6 +1,6 @@
 import { InferenceServingContract } from '../../contract/inference'
 import { Extractor } from '../extractor'
-import { Cache, Metadata } from '../storage'
+import { Cache, Metadata } from '../../common/storage'
 import { ZGServingUserBrokerBase } from './base'
 import { isVerifiability, VerifiabilityEnum } from './model'
 import { Verifier } from './verifier'

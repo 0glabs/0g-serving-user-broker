@@ -5,7 +5,7 @@ import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
 import { AccountProcessor } from './account';
 import { ModelProcessor } from './model';
-export declare class ZGServingNetworkBroker {
+export declare class InferenceBroker {
     requestProcessor: RequestProcessor;
     responseProcessor: ResponseProcessor;
     verifier: Verifier;
@@ -195,7 +195,7 @@ export declare class ZGServingNetworkBroker {
     settleFee: (providerAddress: string, svcName: string, fee: number) => Promise<void>;
 }
 /**
- * createZGServingNetworkBroker is used to initialize ZGServingUserBroker
+ * createInferenceBroker is used to initialize ZGServingUserBroker
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
@@ -204,5 +204,5 @@ export declare class ZGServingNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createZGServingNetworkBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<ZGServingNetworkBroker>;
+export declare function createInferenceBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<InferenceBroker>;
 //# sourceMappingURL=broker.d.ts.map

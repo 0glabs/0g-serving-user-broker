@@ -1,7 +1,7 @@
 import { ZGServingUserBrokerBase } from './base'
-import { genKeyPair } from '../settle-signer'
+import { genKeyPair } from '../../common/settle-signer'
 import { AddressLike } from 'ethers'
-import { encryptData, privateKeyToStr } from '../utils'
+import { encryptData, privateKeyToStr } from '../../common/utils'
 
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
@@ -43,7 +43,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
             }
 
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } =
-                await this.createSettleSignerKey(providerAddress)
+                await this.createSettleSignerKey()
 
             await this.contract.addAccount(
                 providerAddress,
@@ -73,14 +73,14 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         }
     }
 
-    private async createSettleSignerKey(providerAddress: string): Promise<{
+    private async createSettleSignerKey(): Promise<{
         settleSignerPublicKey: [bigint, bigint]
         settleSignerEncryptedPrivateKey: string
     }> {
         try {
             // [pri, pub]
             const keyPair = await genKeyPair()
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+            const key = this.contract.getUserAddress()
 
             this.metadata.storeSettleSignerPrivateKey(
                 key,

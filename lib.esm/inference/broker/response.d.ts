@@ -1,5 +1,5 @@
 import { InferenceServingContract } from '../../contract/inference';
-import { Cache, Metadata } from '../storage';
+import { Cache, Metadata } from '../../common/storage';
 import { ZGServingUserBrokerBase } from './base';
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.

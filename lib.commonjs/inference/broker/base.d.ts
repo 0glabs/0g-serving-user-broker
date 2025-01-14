@@ -1,5 +1,5 @@
 import { InferenceServingContract } from '../../contract/inference';
-import { Cache, Metadata } from '../storage';
+import { Cache, Metadata } from '../../common/storage';
 import { Extractor } from '../extractor';
 import { ServiceStructOutput } from '../../contract/inference';
 import { ServingRequestHeaders } from './request';

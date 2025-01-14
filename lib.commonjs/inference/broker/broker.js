@@ -1,16 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ZGServingNetworkBroker = void 0;
-exports.createZGServingNetworkBroker = createZGServingNetworkBroker;
+exports.InferenceBroker = void 0;
+exports.createInferenceBroker = createInferenceBroker;
 const inference_1 = require("../../contract/inference");
 const request_1 = require("./request");
 const response_1 = require("./response");
 const verifier_1 = require("./verifier");
 const account_1 = require("./account");
 const model_1 = require("./model");
-const storage_1 = require("../storage");
-const storage_2 = require("../storage");
-class ZGServingNetworkBroker {
+const storage_1 = require("../../common/storage");
+const storage_2 = require("../../common/storage");
+class InferenceBroker {
     requestProcessor;
     responseProcessor;
     verifier;
@@ -292,9 +292,9 @@ class ZGServingNetworkBroker {
         }
     };
 }
-exports.ZGServingNetworkBroker = ZGServingNetworkBroker;
+exports.InferenceBroker = InferenceBroker;
 /**
- * createZGServingNetworkBroker is used to initialize ZGServingUserBroker
+ * createInferenceBroker is used to initialize ZGServingUserBroker
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
@@ -303,8 +303,8 @@ exports.ZGServingNetworkBroker = ZGServingNetworkBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGServingNetworkBroker(signer, contractAddress = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435') {
-    const broker = new ZGServingNetworkBroker(signer, contractAddress);
+async function createInferenceBroker(signer, contractAddress = '') {
+    const broker = new InferenceBroker(signer, contractAddress);
     try {
         await broker.initialize();
         return broker;

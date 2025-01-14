@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZGServingUserBrokerBase = void 0;
-const storage_1 = require("../storage");
+const storage_1 = require("../../common/storage");
 const extractor_1 = require("../extractor");
-const utils_1 = require("../utils");
-const settle_signer_1 = require("../settle-signer");
+const utils_1 = require("../../common/utils");
+const settle_signer_1 = require("../../common/settle-signer");
 class ZGServingUserBrokerBase {
     contract;
     metadata;

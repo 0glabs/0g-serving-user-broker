@@ -8,10 +8,10 @@ import { ResponseProcessor } from './response'
 import { Verifier } from './verifier'
 import { AccountProcessor } from './account'
 import { ModelProcessor } from './model'
-import { Metadata } from '../storage'
-import { Cache } from '../storage'
+import { Metadata } from '../../common/storage'
+import { Cache } from '../../common/storage'
 
-export class ZGServingNetworkBroker {
+export class InferenceBroker {
     public requestProcessor!: RequestProcessor
     public responseProcessor!: ResponseProcessor
     public verifier!: Verifier
@@ -362,7 +362,7 @@ export class ZGServingNetworkBroker {
 }
 
 /**
- * createZGServingNetworkBroker is used to initialize ZGServingUserBroker
+ * createInferenceBroker is used to initialize ZGServingUserBroker
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
@@ -371,11 +371,11 @@ export class ZGServingNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export async function createZGServingNetworkBroker(
+export async function createInferenceBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435'
-): Promise<ZGServingNetworkBroker> {
-    const broker = new ZGServingNetworkBroker(signer, contractAddress)
+    contractAddress = ''
+): Promise<InferenceBroker> {
+    const broker = new InferenceBroker(signer, contractAddress)
     try {
         await broker.initialize()
         return broker

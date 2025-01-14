@@ -1,3 +1,3 @@
-export { AccountStructOutput, ServiceStructOutput } from '../contract/inference';
-export { AccountProcessor, createZGServingNetworkBroker, ModelProcessor, RequestProcessor, ResponseProcessor, ServingRequestHeaders, SingerRAVerificationResult, Verifier, ZGServingNetworkBroker, } from './broker';
+export { AccountStructOutput as InferenceAccountStructOutput, ServiceStructOutput as InferenceServiceStructOutput, } from '../contract/inference';
+export { AccountProcessor as InferenceAccountProcessor, createInferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, ServingRequestHeaders as InferenceServingRequestHeaders, SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, InferenceBroker as InferenceBroker, } from './broker';
 //# sourceMappingURL=index.d.ts.map

@@ -1,10 +1,10 @@
 import { InferenceServingContract } from '../../contract/inference'
-import { Cache, CacheValueTypeEnum, Metadata } from '../storage'
+import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
 import { ChatBot, Extractor } from '../extractor'
 import { ServiceStructOutput } from '../../contract/inference'
 import { ServingRequestHeaders } from './request'
-import { decryptData, getNonce, strToPrivateKey } from '../utils'
-import { PackedPrivkey, Request, signData } from '../settle-signer'
+import { decryptData, getNonce, strToPrivateKey } from '../../common/utils'
+import { PackedPrivkey, Request, signData } from '../../common/settle-signer'
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract

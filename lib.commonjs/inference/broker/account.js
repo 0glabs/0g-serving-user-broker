@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountProcessor = void 0;
 const base_1 = require("./base");
-const settle_signer_1 = require("../settle-signer");
-const utils_1 = require("../utils");
+const settle_signer_1 = require("../../common/settle-signer");
+const utils_1 = require("../../common/utils");
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
@@ -41,7 +41,7 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
                     throw error;
                 }
             }
-            const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey(providerAddress);
+            const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
             await this.contract.addAccount(providerAddress, settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
         }
         catch (error) {
@@ -65,11 +65,11 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
-    async createSettleSignerKey(providerAddress) {
+    async createSettleSignerKey() {
         try {
             // [pri, pub]
             const keyPair = await (0, settle_signer_1.genKeyPair)();
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            const key = this.contract.getUserAddress();
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
             const settleSignerEncryptedPrivateKey = await (0, utils_1.encryptData)(this.contract.signer, (0, utils_1.privateKeyToStr)(keyPair.packedPrivkey));
             return {
