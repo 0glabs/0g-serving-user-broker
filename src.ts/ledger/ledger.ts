@@ -2,7 +2,7 @@ import { AddressLike } from 'ethers'
 import { genKeyPair } from '../common/settle-signer'
 import { encryptData, privateKeyToStr } from '../common/utils'
 import { Metadata } from '../common/storage'
-import { LedgerManagerContract } from '../contract/ledger'
+import { LedgerManagerContract } from './contract'
 
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.

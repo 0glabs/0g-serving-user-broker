@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../../contract/fine-tuning'
+import { ServiceStructOutput } from '../contract'
 import { BrokerBase } from './base'
 
 export class ServiceProcessor extends BrokerBase {

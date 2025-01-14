@@ -1,7 +1,7 @@
 export {
     AccountStructOutput as InferenceAccountStructOutput,
     ServiceStructOutput as InferenceServiceStructOutput,
-} from '../contract/inference'
+} from './contract'
 export {
     AccountProcessor as InferenceAccountProcessor,
     createInferenceBroker,

@@ -2,118 +2,6 @@ import { ethers, ContractFactory, Interface, Contract } from 'ethers';
 import CryptoJS from 'crypto-js';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
 
-class Metadata {
-    nodeStorage = {};
-    initialized = false;
-    constructor() { }
-    async initialize() {
-        if (this.initialized) {
-            return;
-        }
-        this.nodeStorage = {};
-        this.initialized = true;
-    }
-    async setItem(key, value) {
-        await this.initialize();
-        this.nodeStorage[key] = value;
-    }
-    async getItem(key) {
-        await this.initialize();
-        return this.nodeStorage[key] ?? null;
-    }
-    async storeSettleSignerPrivateKey(key, value) {
-        const bigIntStringArray = value.map((bi) => bi.toString());
-        const bigIntJsonString = JSON.stringify(bigIntStringArray);
-        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
-    }
-    async storeSigningKey(key, value) {
-        await this.setItem(`${key}_signingKey`, value);
-    }
-    async getSettleSignerPrivateKey(key) {
-        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
-        if (!value) {
-            return null;
-        }
-        const bigIntStringArray = JSON.parse(value);
-        return bigIntStringArray.map((str) => BigInt(str));
-    }
-    async getSigningKey(key) {
-        const value = await this.getItem(`${key}_signingKey`);
-        return value ?? null;
-    }
-}
-
-var CacheValueTypeEnum;
-(function (CacheValueTypeEnum) {
-    CacheValueTypeEnum["Service"] = "service";
-})(CacheValueTypeEnum || (CacheValueTypeEnum = {}));
-class Cache {
-    nodeStorage = {};
-    initialized = false;
-    constructor() { }
-    async setItem(key, value, ttl, type) {
-        await this.initialize();
-        const now = new Date();
-        const item = {
-            type,
-            value: Cache.encodeValue(value),
-            expiry: now.getTime() + ttl,
-        };
-        this.nodeStorage[key] = JSON.stringify(item);
-    }
-    async getItem(key) {
-        await this.initialize();
-        const itemStr = this.nodeStorage[key] ?? null;
-        if (!itemStr) {
-            return null;
-        }
-        const item = JSON.parse(itemStr);
-        const now = new Date();
-        if (now.getTime() > item.expiry) {
-            delete this.nodeStorage[key];
-            return null;
-        }
-        return Cache.decodeValue(item.value, item.type);
-    }
-    async initialize() {
-        if (this.initialized) {
-            return;
-        }
-        this.nodeStorage = {};
-        this.initialized = true;
-    }
-    static encodeValue(value) {
-        return JSON.stringify(value, (_, val) => typeof val === 'bigint' ? `${val.toString()}n` : val);
-    }
-    static decodeValue(encodedValue, type) {
-        let ret = JSON.parse(encodedValue, (_, val) => {
-            if (typeof val === 'string' && /^\d+n$/.test(val)) {
-                return BigInt(val.slice(0, -1));
-            }
-            return val;
-        });
-        if (type === CacheValueTypeEnum.Service) {
-            return Cache.createServiceStructOutput(ret);
-        }
-        return ret;
-    }
-    static createServiceStructOutput(fields) {
-        const tuple = fields;
-        const object = {
-            provider: fields[0],
-            name: fields[1],
-            serviceType: fields[2],
-            url: fields[3],
-            inputPrice: fields[4],
-            outputPrice: fields[5],
-            updatedAt: fields[6],
-            model: fields[7],
-            verifiability: fields[8],
-        };
-        return Object.assign(tuple, object);
-    }
-}
-
 class Extractor {
 }
 
@@ -364,6 +252,77 @@ class Request {
     }
     getProviderAddress() {
         return this.providerAddress;
+    }
+}
+
+var CacheValueTypeEnum;
+(function (CacheValueTypeEnum) {
+    CacheValueTypeEnum["Service"] = "service";
+})(CacheValueTypeEnum || (CacheValueTypeEnum = {}));
+class Cache {
+    nodeStorage = {};
+    initialized = false;
+    constructor() { }
+    async setItem(key, value, ttl, type) {
+        await this.initialize();
+        const now = new Date();
+        const item = {
+            type,
+            value: Cache.encodeValue(value),
+            expiry: now.getTime() + ttl,
+        };
+        this.nodeStorage[key] = JSON.stringify(item);
+    }
+    async getItem(key) {
+        await this.initialize();
+        const itemStr = this.nodeStorage[key] ?? null;
+        if (!itemStr) {
+            return null;
+        }
+        const item = JSON.parse(itemStr);
+        const now = new Date();
+        if (now.getTime() > item.expiry) {
+            delete this.nodeStorage[key];
+            return null;
+        }
+        return Cache.decodeValue(item.value, item.type);
+    }
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+        this.nodeStorage = {};
+        this.initialized = true;
+    }
+    static encodeValue(value) {
+        return JSON.stringify(value, (_, val) => typeof val === 'bigint' ? `${val.toString()}n` : val);
+    }
+    static decodeValue(encodedValue, type) {
+        let ret = JSON.parse(encodedValue, (_, val) => {
+            if (typeof val === 'string' && /^\d+n$/.test(val)) {
+                return BigInt(val.slice(0, -1));
+            }
+            return val;
+        });
+        if (type === CacheValueTypeEnum.Service) {
+            return Cache.createServiceStructOutput(ret);
+        }
+        return ret;
+    }
+    static createServiceStructOutput(fields) {
+        const tuple = fields;
+        const object = {
+            provider: fields[0],
+            name: fields[1],
+            serviceType: fields[2],
+            url: fields[3],
+            inputPrice: fields[4],
+            outputPrice: fields[5],
+            updatedAt: fields[6],
+            model: fields[7],
+            verifiability: fields[8],
+        };
+        return Object.assign(tuple, object);
     }
 }
 
@@ -1887,6 +1846,47 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
         const svc = await extractor.getSvcInfo();
         const outputCount = await extractor.getOutputCount(content);
         return BigInt(outputCount) * svc.outputPrice;
+    }
+}
+
+class Metadata {
+    nodeStorage = {};
+    initialized = false;
+    constructor() { }
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+        this.nodeStorage = {};
+        this.initialized = true;
+    }
+    async setItem(key, value) {
+        await this.initialize();
+        this.nodeStorage[key] = value;
+    }
+    async getItem(key) {
+        await this.initialize();
+        return this.nodeStorage[key] ?? null;
+    }
+    async storeSettleSignerPrivateKey(key, value) {
+        const bigIntStringArray = value.map((bi) => bi.toString());
+        const bigIntJsonString = JSON.stringify(bigIntStringArray);
+        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
+    }
+    async storeSigningKey(key, value) {
+        await this.setItem(`${key}_signingKey`, value);
+    }
+    async getSettleSignerPrivateKey(key) {
+        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
+        if (!value) {
+            return null;
+        }
+        const bigIntStringArray = JSON.parse(value);
+        return bigIntStringArray.map((str) => BigInt(str));
+    }
+    async getSigningKey(key) {
+        const value = await this.getItem(`${key}_signingKey`);
+        return value ?? null;
     }
 }
 

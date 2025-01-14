@@ -1,8 +1,9 @@
-import { InferenceServingContract } from '../../contract/inference';
-import { Cache, Metadata } from '../../common/storage';
+import { InferenceServingContract } from '../contract';
+import { Metadata } from '../../common/storage';
 import { Extractor } from '../extractor';
-import { ServiceStructOutput } from '../../contract/inference';
+import { ServiceStructOutput } from '../contract';
 import { ServingRequestHeaders } from './request';
+import { Cache } from '../storage';
 export declare abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract;
     protected metadata: Metadata;

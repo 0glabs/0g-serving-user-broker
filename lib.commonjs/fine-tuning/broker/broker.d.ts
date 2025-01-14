@@ -8,7 +8,7 @@ export declare class FineTuningBroker {
     private serviceProcessor;
     constructor(signer: JsonRpcSigner | Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
-    listService: () => Promise<import("../../contract/fine-tuning").ServiceStructOutput[]>;
+    listService: () => Promise<import("../contract").ServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
     uploadDataset: () => Promise<string>;
     createTask: () => Promise<void>;

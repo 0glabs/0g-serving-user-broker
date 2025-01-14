@@ -1,2 +1,2 @@
-export { ServiceStructOutput as FineTuningServiceStructOutput } from '../contract/fine-tuning'
+export { ServiceStructOutput as FineTuningServiceStructOutput } from './contract'
 export { createFineTuningBroker, FineTuningBroker } from './broker'

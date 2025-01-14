@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../../contract/inference'
+import { ServiceStructOutput } from '../contract'
 
 export abstract class Extractor {
     abstract getSvcInfo(): Promise<ServiceStructOutput>

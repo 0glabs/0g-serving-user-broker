@@ -1,9 +1,10 @@
-import { InferenceServingContract } from '../../contract/inference'
+import { InferenceServingContract } from '../contract'
 import { Extractor } from '../extractor'
-import { Cache, Metadata } from '../../common/storage'
+import { Metadata } from '../../common/storage'
 import { ZGServingUserBrokerBase } from './base'
 import { isVerifiability, VerifiabilityEnum } from './model'
 import { Verifier } from './verifier'
+import { Cache } from '../storage'
 
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.

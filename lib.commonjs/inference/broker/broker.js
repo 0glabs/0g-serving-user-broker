@@ -2,14 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InferenceBroker = void 0;
 exports.createInferenceBroker = createInferenceBroker;
-const inference_1 = require("../../contract/inference");
+const contract_1 = require("../contract");
 const request_1 = require("./request");
 const response_1 = require("./response");
 const verifier_1 = require("./verifier");
 const account_1 = require("./account");
 const model_1 = require("./model");
 const storage_1 = require("../../common/storage");
-const storage_2 = require("../../common/storage");
+const storage_2 = require("../storage");
 class InferenceBroker {
     requestProcessor;
     responseProcessor;
@@ -30,7 +30,7 @@ class InferenceBroker {
         catch (error) {
             throw error;
         }
-        const contract = new inference_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
+        const contract = new contract_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
         const metadata = new storage_1.Metadata();
         const cache = new storage_2.Cache();
         this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache);

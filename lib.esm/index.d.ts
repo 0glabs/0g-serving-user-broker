@@ -529,32 +529,6 @@ declare class Metadata {
     getSigningKey(key: string): Promise<string | null>;
 }
 
-declare enum CacheValueTypeEnum {
-    Service = "service"
-}
-type CacheValueType = CacheValueTypeEnum.Service;
-declare class Cache {
-    private nodeStorage;
-    private initialized;
-    constructor();
-    setItem(key: string, value: any, ttl: number, type: CacheValueType): Promise<void>;
-    getItem(key: string): Promise<any | null>;
-    private initialize;
-    static encodeValue(value: any): string;
-    static decodeValue(encodedValue: string, type: CacheValueType): any;
-    static createServiceStructOutput(fields: [
-        string,
-        string,
-        string,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        string
-    ]): ServiceStructOutput$1;
-}
-
 declare abstract class Extractor {
     abstract getSvcInfo(): Promise<ServiceStructOutput$1>;
     abstract getInputCount(content: string): Promise<number>;
@@ -612,6 +586,32 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
         model: string;
     }>;
     getRequestHeaders(providerAddress: string, svcName: string, content: string): Promise<ServingRequestHeaders>;
+}
+
+declare enum CacheValueTypeEnum {
+    Service = "service"
+}
+type CacheValueType = CacheValueTypeEnum.Service;
+declare class Cache {
+    private nodeStorage;
+    private initialized;
+    constructor();
+    setItem(key: string, value: any, ttl: number, type: CacheValueType): Promise<void>;
+    getItem(key: string): Promise<any | null>;
+    private initialize;
+    static encodeValue(value: any): string;
+    static decodeValue(encodedValue: string, type: CacheValueType): any;
+    static createServiceStructOutput(fields: [
+        string,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string
+    ]): ServiceStructOutput$1;
 }
 
 declare abstract class ZGServingUserBrokerBase {

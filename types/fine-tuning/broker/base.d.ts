@@ -1,4 +1,4 @@
-import { FineTuningServingContract } from '../../contract/fine-tuning';
+import { FineTuningServingContract } from '../contract';
 import { LedgerBroker } from '../../ledger';
 export declare abstract class BrokerBase {
     protected contract: FineTuningServingContract;

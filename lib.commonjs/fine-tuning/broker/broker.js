@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FineTuningBroker = void 0;
 exports.createFineTuningBroker = createFineTuningBroker;
-const fine_tuning_1 = require("../../contract/fine-tuning");
+const contract_1 = require("../contract");
 const model_1 = require("./model");
 const service_1 = require("./service");
 class FineTuningBroker {
@@ -24,7 +24,7 @@ class FineTuningBroker {
         catch (error) {
             throw error;
         }
-        const contract = new fine_tuning_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
         this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger);
         this.serviceProcessor = new service_1.ServiceProcessor(contract, this.ledger);
     }

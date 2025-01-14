@@ -1,6 +1,6 @@
 import { AddressLike, JsonRpcSigner, Wallet } from 'ethers'
 import { LedgerProcessor } from './ledger'
-import { LedgerManagerContract, LedgerStructOutput } from '../contract/ledger'
+import { LedgerManagerContract, LedgerStructOutput } from './contract'
 import { Metadata } from '../common/storage'
 
 export class LedgerBroker {

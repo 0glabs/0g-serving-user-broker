@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LedgerBroker = void 0;
 exports.createLedgerBroker = createLedgerBroker;
 const ledger_1 = require("./ledger");
-const ledger_2 = require("../contract/ledger");
+const contract_1 = require("./contract");
 const storage_1 = require("../common/storage");
 class LedgerBroker {
     ledger;
@@ -21,7 +21,7 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const contract = new ledger_2.LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const contract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
         const metadata = new storage_1.Metadata();
         this.ledger = new ledger_1.LedgerProcessor(contract, metadata);
     }

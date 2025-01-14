@@ -1,4 +1,4 @@
-import { FineTuningServingContract } from '../../contract/fine-tuning'
+import { FineTuningServingContract } from '../contract'
 import { JsonRpcSigner, Wallet } from 'ethers'
 import { ModelProcessor } from './model'
 import { ServiceProcessor } from './service'

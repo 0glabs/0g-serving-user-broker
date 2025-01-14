@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../../contract/inference';
+import { ServiceStructOutput } from '../contract';
 import { Extractor } from './extractor';
 export declare class ChatBot extends Extractor {
     svcInfo: ServiceStructOutput;

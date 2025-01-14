@@ -1,7 +1,4 @@
-import {
-    AccountStructOutput,
-    InferenceServingContract,
-} from '../../contract/inference'
+import { AccountStructOutput, InferenceServingContract } from '../contract'
 import { JsonRpcSigner, Wallet } from 'ethers'
 import { RequestProcessor } from './request'
 import { ResponseProcessor } from './response'
@@ -9,7 +6,7 @@ import { Verifier } from './verifier'
 import { AccountProcessor } from './account'
 import { ModelProcessor } from './model'
 import { Metadata } from '../../common/storage'
-import { Cache } from '../../common/storage'
+import { Cache } from '../storage'
 
 export class InferenceBroker {
     public requestProcessor!: RequestProcessor
