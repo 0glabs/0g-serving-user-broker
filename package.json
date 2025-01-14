@@ -21,7 +21,7 @@
         "format": "prettier --write src.ts/**/*.ts src.ts/*.ts example/**/*.ts",
         "clean": "rm -rf dist lib.esm lib.commonjs types",
         "build": "npm run clean && tsc -b tsconfig.commonjs.json tsconfig.types.json && npx rollup -c rollup.config.mjs",
-        "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/serving '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/Serving.sol/Serving.json'",
+        "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/inference '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/inference/InferenceServing.sol/InferenceServing.json' && typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/fine-tuning '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/fine-tuning/FineTuningServing.sol/FineTuningServing.json' && typechain --target ethers-v6 --node16-modules --out-dir src.ts/contract/ledger '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/ledger/LedgerManager.sol/LedgerManager.json'",
         "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json",
         "test": "mocha -r ts-node/register 'src.ts/**/*.test.ts'"
     },

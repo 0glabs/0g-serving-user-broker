@@ -1,3 +1,3 @@
-export * from './contract'
-export * from './serving'
-export * from './serving/Serving'
+export * from './inference-contract'
+export * from './inference'
+export * from './inference/InferenceServing'
