@@ -1,17 +1,22 @@
-import { ServingContract } from '../contract'
+import {
+    InferenceServingContract,
+    FineTuneServingContract,
+    InferenceServiceStruct,
+    FineTuneServing,
+    FineTuneServiceStruct,
+} from '../contract'
 import { Cache, CacheValueTypeEnum, Metadata } from '../storage'
-import { ChatBot, Extractor } from '../extractor'
-import { ServiceStructOutput } from '../contract/serving/Serving'
-import { ServingRequestHeaders } from './request'
-import { decryptData, getNonce, strToPrivateKey } from '../utils'
-import { PackedPrivkey, Request, signData } from '../settle-signer'
+import { ChatBot, Extractor, ModelFineTune } from '../extractor'
+import { ServingRequestHeaders } from './inference/request'
+import { decryptData, encryptData, getNonce, privateKeyToStr, strToPrivateKey } from '../utils'
+import { genKeyPair, PackedPrivkey, Request, signData } from '../settle-signer'
 
 export abstract class ZGServingUserBrokerBase {
-    protected contract: ServingContract
+    protected contract: any
     protected metadata: Metadata
     protected cache: Cache
 
-    constructor(contract: ServingContract, metadata: Metadata, cache: Cache) {
+    constructor(contract: any, metadata: Metadata, cache: Cache) {
         this.contract = contract
         this.metadata = metadata
         this.cache = cache
@@ -23,58 +28,6 @@ export abstract class ZGServingUserBrokerBase {
             this.metadata.getSettleSignerPrivateKey(key),
         ])
         return { settleSignerPrivateKey }
-    }
-
-    protected async getService(
-        providerAddress: string,
-        svcName: string,
-        useCache = true
-    ): Promise<ServiceStructOutput> {
-        const key = providerAddress + svcName
-        const cachedSvc = await this.cache.getItem(key)
-        if (cachedSvc && useCache) {
-            return cachedSvc
-        }
-
-        try {
-            const svc = await this.contract.getService(providerAddress, svcName)
-            await this.cache.setItem(
-                key,
-                svc,
-                1 * 60 * 1000,
-                CacheValueTypeEnum.Service
-            )
-            return svc
-        } catch (error) {
-            throw error
-        }
-    }
-
-    protected async getExtractor(
-        providerAddress: string,
-        svcName: string,
-        useCache = true
-    ): Promise<Extractor> {
-        try {
-            const svc = await this.getService(
-                providerAddress,
-                svcName,
-                useCache
-            )
-            const extractor = this.createExtractor(svc)
-            return extractor
-        } catch (error) {
-            throw error
-        }
-    }
-
-    protected createExtractor(svc: ServiceStructOutput): Extractor {
-        switch (svc.serviceType) {
-            case 'chatbot':
-                return new ChatBot(svc)
-            default:
-                throw new Error('Unknown service type')
-        }
     }
 
     protected a0giToNeuron(value: number): bigint {
@@ -109,6 +62,93 @@ export abstract class ZGServingUserBrokerBase {
         const decimalPart = Number(remainder) / Number(divisor)
 
         return Number(integerPart) + decimalPart
+    }
+
+    protected async createSettleSignerKey(providerAddress: string): Promise<{
+        settleSignerPublicKey: [bigint, bigint]
+        settleSignerEncryptedPrivateKey: string
+    }> {
+        try {
+            // [pri, pub]
+            const keyPair = await genKeyPair()
+            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+
+            await this.metadata.storeSettleSignerPrivateKey(
+                key,
+                keyPair.packedPrivkey
+            )
+
+            const settleSignerEncryptedPrivateKey = await encryptData(
+                this.contract.signer,
+                privateKeyToStr(keyPair.packedPrivkey)
+            )
+
+            return {
+                settleSignerEncryptedPrivateKey,
+                settleSignerPublicKey: keyPair.doublePackedPubkey,
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
+}
+
+export abstract class ZGInferenceServingUserBroker extends ZGServingUserBrokerBase {
+    constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache) {
+        super(contract, metadata, cache)
+    }
+
+    protected async getService(
+        providerAddress: string,
+        svcName: string,
+        useCache = true
+    ): Promise<InferenceServiceStruct> {
+        const key = providerAddress + svcName
+        const cachedSvc = await this.cache.getItem(key)
+        if (cachedSvc && useCache) {
+            return cachedSvc
+        }
+
+        try {
+            const svc: InferenceServiceStruct = await this.contract.getService(providerAddress, svcName)
+            await this.cache.setItem(
+                key,
+                svc,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.InferenceService
+            )
+            return svc
+        } catch (error) {
+            throw error
+        }
+    }
+
+    protected async getExtractor(
+        providerAddress: string,
+        svcName: string,
+        useCache = true
+    ): Promise<Extractor> {
+        try {
+            const svc = await this.getService(
+                providerAddress,
+                svcName,
+                useCache
+            )
+            const extractor = this.createExtractor(svc)
+            return extractor
+        } catch (error) {
+            throw error
+        }
+    }
+
+    protected createExtractor(svc: InferenceServiceStruct): Extractor {
+        switch (svc.serviceType) {
+            case 'chatbot':
+                return new ChatBot(svc)
+            default:
+                throw new Error('Unknown service type')
+        }
     }
 
     async getHeader(
@@ -170,7 +210,73 @@ export abstract class ZGServingUserBrokerBase {
     private async calculateInputFees(extractor: Extractor, content: string) {
         const svc = await extractor.getSvcInfo()
         const inputCount = await extractor.getInputCount(content)
-        const inputFee = BigInt(inputCount) * svc.inputPrice
+        const inputFee = BigInt(inputCount) * svc?.inputPrice
         return inputFee
     }
+}
+
+export abstract class ZGFineTuneServingUserBroker extends ZGServingUserBrokerBase {
+    constructor(contract: FineTuneServingContract, metadata?: Metadata, cache?: Cache) {
+        super(contract, metadata, cache)
+    }
+
+    protected async getService(
+        providerAddress: string,
+        svcName: string,
+        useCache = true
+    ): Promise<FineTuneServiceStruct> {
+        const key = providerAddress + svcName
+        const cachedSvc = await this.cache.getItem(key)
+        if (cachedSvc && useCache) {
+            return cachedSvc
+        }
+
+        try {
+            const svc: FineTuneServiceStruct = await this.contract.getService(providerAddress, svcName)
+            await this.cache.setItem(
+                key,
+                svc,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.FineTuneService
+            )
+            return svc
+        } catch (error) {
+            throw error
+        }
+    }
+
+    protected async getExtractor(
+        providerAddress: string,
+        svcName: string,
+        useCache = true
+    ): Promise<Extractor> {
+        try {
+            const svc = await this.getService(
+                providerAddress,
+                svcName,
+                useCache
+            )
+            const extractor = this.createExtractor(svc)
+            return extractor
+        } catch (error) {
+            throw error
+        }
+    }
+
+    protected createExtractor(svc: FineTuneServiceStruct): Extractor {
+        // todo: extract from finetune service?
+        switch (svc.name) {
+            case 'finetune':
+                return new ModelFineTune(svc)
+            default:
+                throw new Error('Unknown service type')
+        }
+    }
+
+    // private async calculateFee(extractor: Extractor, dataset_hash: string) {
+    //     const svc = await extractor.getSvcInfo()
+    //     const inputCount = await extractor.getInputCount(content)
+    //     const inputFee = BigInt(inputCount) * svc.inputPrice
+    //     return inputFee
+    // }
 }

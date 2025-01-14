@@ -1,4 +1,4 @@
-import { ZGServingUserBrokerBase } from './base'
+import { ZGInferenceServingUserBroker } from '../base'
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -46,7 +46,7 @@ export interface ServingRequestHeaders {
  * It needs to be initialized with createZGServingUserBroker
  * before use.
  */
-export class RequestProcessor extends ZGServingUserBrokerBase {
+export class RequestProcessor extends ZGInferenceServingUserBroker {
     async getServiceMetadata(
         providerAddress: string,
         svcName: string
@@ -66,12 +66,11 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         svcName: string,
         content: string
     ): Promise<ServingRequestHeaders> {
-        const headers = await this.getHeader(
+        return await this.getHeader(
             providerAddress,
             svcName,
             content,
             BigInt(0)
         )
-        return headers
     }
 }

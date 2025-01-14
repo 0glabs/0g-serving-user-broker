@@ -1,7 +1,7 @@
-import { ServingContract } from '../contract'
-import { Extractor } from '../extractor'
-import { Cache, Metadata } from '../storage'
-import { ZGServingUserBrokerBase } from './base'
+import { ServingContract } from '../../contract'
+import { Extractor } from '../../extractor'
+import { Cache, Metadata } from '../../storage'
+import { ZGServingUserBrokerBase } from '../base'
 import { isVerifiability, VerifiabilityEnum } from './model'
 import { Verifier } from './verifier'
 

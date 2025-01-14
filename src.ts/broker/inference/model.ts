@@ -1,5 +1,5 @@
-import { ServiceStructOutput } from '../contract'
-import { ZGServingUserBrokerBase } from './base'
+import { InferenceServiceStruct, InferenceServing } from '../../contract'
+import { ZGInferenceServingUserBroker, ZGServingUserBrokerBase } from '../base'
 
 export enum VerifiabilityEnum {
     OpML = 'OpML',
@@ -12,8 +12,8 @@ export type Verifiability =
     | VerifiabilityEnum.TeeML
     | VerifiabilityEnum.ZKML
 
-export class ModelProcessor extends ZGServingUserBrokerBase {
-    async listService(): Promise<ServiceStructOutput[]> {
+export class ModelProcessor extends ZGInferenceServingUserBroker {
+    async listService(): Promise<InferenceServiceStruct[]> {
         try {
             const services = await this.contract.listService()
             return services

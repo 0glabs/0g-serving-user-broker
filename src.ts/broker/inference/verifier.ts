@@ -1,4 +1,4 @@
-import { ZGServingUserBrokerBase } from './base'
+import { ZGInferenceServingUserBroker, ZGServingUserBrokerBase } from '../base'
 import { ethers } from 'ethers'
 
 export interface ResponseSignature {
@@ -27,7 +27,7 @@ export interface SingerRAVerificationResult {
 /**
  * The Verifier class contains methods for verifying service reliability.
  */
-export class Verifier extends ZGServingUserBrokerBase {
+export class Verifier extends ZGInferenceServingUserBroker {
     async verifyService(
         providerAddress: string,
         svcName: string

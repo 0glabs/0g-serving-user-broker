@@ -1,10 +1,17 @@
-import { AccountStructOutput, ServingContract } from '../contract'
+import {
+    FineTuneAccountStruct,
+    InferenceAccountStruct,
+    FineTuneServingContract,
+    InferenceServingContract,
+    LedgerContract, LedgerStructOutput,
+} from '../contract'
 import { JsonRpcSigner, Wallet } from 'ethers'
-import { RequestProcessor } from './request'
-import { ResponseProcessor } from './response'
-import { Verifier } from './verifier'
+import { RequestProcessor } from './inference/request'
+import { ResponseProcessor } from './inference/response'
+import { Verifier } from './inference/verifier'
 import { AccountProcessor } from './account'
-import { ModelProcessor } from './model'
+import { LedgerProcessor } from './ledger'
+import { ModelProcessor } from './inference/model'
 import { Metadata } from '../storage'
 import { Cache } from '../storage'
 
@@ -12,15 +19,22 @@ export class ZGServingNetworkBroker {
     public requestProcessor!: RequestProcessor
     public responseProcessor!: ResponseProcessor
     public verifier!: Verifier
-    public accountProcessor!: AccountProcessor
+    public ledgerProcessor!: LedgerProcessor
     public modelProcessor!: ModelProcessor
 
     private signer: JsonRpcSigner | Wallet
-    private contractAddress: string
+    private ledgerContractAddr: string
+    private inferenceContractAddr: string
+    private finetuneContractAddr: string
 
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string) {
+    constructor(signer: JsonRpcSigner | Wallet,
+                ledgerContractAddr,
+                inferenceContractAddr,
+                finetuneContractAddr) {
         this.signer = signer
-        this.contractAddress = contractAddress
+        this.ledgerContractAddr = ledgerContractAddr
+        this.inferenceContractAddr = inferenceContractAddr
+        this.finetuneContractAddr = finetuneContractAddr
     }
 
     async initialize() {
@@ -30,22 +44,35 @@ export class ZGServingNetworkBroker {
         } catch (error) {
             throw error
         }
-        const contract = new ServingContract(
+        const inf_contract = new InferenceServingContract(
             this.signer,
-            this.contractAddress,
-            userAddress
+            this.inferenceContractAddr,
+            userAddress,
         )
+        const ft_contract = new FineTuneServingContract(
+            this.signer,
+            this.finetuneContractAddr,
+            userAddress,
+        )
+        const ledger_contract = new LedgerContract(
+            this.signer,
+            this.ledgerContractAddr,
+            userAddress)
+
         const metadata = new Metadata()
         const cache = new Cache()
-        this.requestProcessor = new RequestProcessor(contract, metadata, cache)
+        this.requestProcessor = new RequestProcessor(inf_contract, metadata, cache)
         this.responseProcessor = new ResponseProcessor(
-            contract,
+            inf_contract,
             metadata,
-            cache
+            cache,
         )
-        this.accountProcessor = new AccountProcessor(contract, metadata, cache)
-        this.modelProcessor = new ModelProcessor(contract, metadata, cache)
-        this.verifier = new Verifier(contract, metadata, cache)
+
+        this.ledgerProcessor = new LedgerProcessor(ledger_contract,
+            inf_contract, ft_contract, metadata, cache)
+
+        this.modelProcessor = new ModelProcessor(inf_contract, metadata, cache)
+        this.verifier = new Verifier(inf_contract, metadata, cache)
     }
 
     /**
@@ -54,7 +81,7 @@ export class ZGServingNetworkBroker {
      * @returns {Promise<ServiceStructOutput[]>} A promise that resolves to an array of ServiceStructOutput objects.
      * @throws An error if the service list cannot be retrieved.
      */
-    public listService = async () => {
+    public listInferenceService = async () => {
         try {
             return await this.modelProcessor.listService()
         } catch (error) {
@@ -62,57 +89,35 @@ export class ZGServingNetworkBroker {
         }
     }
 
-    /**
-     * Adds a new account to the contract.
-     *
-     * @param {string} providerAddress - The address of the provider for whom the account is being created.
-     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
-     *
-     * @throws  An error if the account creation fails.
-     *
-     * @remarks
-     * When creating an account, a key pair is also created to sign the request.
-     */
-    public addAccount = async (providerAddress: string, balance: number) => {
+    public listFineTuneService = async () => {
         try {
-            return await this.accountProcessor.addAccount(
-                providerAddress,
-                balance
+            //todo: a predefined list?
+        } catch (error) {
+            throw error
+        }
+    }
+
+    public addLedger = async (providerAddress: string, balance: number) => {
+        try {
+            return await this.ledgerProcessor.addLedger(
+                balance,
             )
         } catch (error) {
             throw error
         }
     }
 
-    /**
-     * Retrieves the account information for a given provider address.
-     *
-     * @param {string} providerAddress - The address of the provider identifying the account.
-     *
-     * @returns A promise that resolves to the account information.
-     *
-     * @throws Will throw an error if the account retrieval process fails.
-     */
-    public getAccount = async (
-        providerAddress: string
-    ): Promise<AccountStructOutput> => {
+    public getLedger = async (): Promise<LedgerStructOutput> => {
         try {
-            return await this.accountProcessor.getAccount(providerAddress)
+            return await this.ledgerProcessor.getLedger()
         } catch (error) {
             throw error
         }
     }
 
-    /**
-     * Deposits a specified amount of funds into the given account.
-     *
-     * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
-     * @throws  An error if the deposit fails.
-     */
-    public depositFund = async (account: string, amount: number) => {
+    public depositFund = async (amount: number) => {
         try {
-            return await this.accountProcessor.depositFund(account, amount)
+            return await this.ledgerProcessor.depositFund(amount)
         } catch (error) {
             throw error
         }
@@ -131,9 +136,9 @@ export class ZGServingNetworkBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    public getServiceMetadata = async (
+    public getInferenceServiceMetadata = async (
         providerAddress: string,
-        svcName: string
+        svcName: string,
     ): Promise<{
         endpoint: string
         model: string
@@ -141,7 +146,7 @@ export class ZGServingNetworkBroker {
         try {
             return await this.requestProcessor.getServiceMetadata(
                 providerAddress,
-                svcName
+                svcName,
             )
         } catch (error) {
             throw error
@@ -195,13 +200,13 @@ export class ZGServingNetworkBroker {
     public getRequestHeaders = async (
         providerAddress: string,
         svcName: string,
-        content: string
+        content: string,
     ) => {
         try {
             return await this.requestProcessor.getRequestHeaders(
                 providerAddress,
                 svcName,
-                content
+                content,
             )
         } catch (error) {
             throw error
@@ -232,14 +237,14 @@ export class ZGServingNetworkBroker {
         providerAddress: string,
         svcName: string,
         content: string,
-        chatID?: string
+        chatID?: string,
     ): Promise<boolean | null> => {
         try {
             return await this.responseProcessor.processResponse(
                 providerAddress,
                 svcName,
                 content,
-                chatID
+                chatID,
             )
         } catch (error) {
             throw error
@@ -256,9 +261,9 @@ export class ZGServingNetworkBroker {
      *
      * @throws An error if errors occur during the verification process.
      */
-    public verifyService = async (
+    public verifyInferenceService = async (
         providerAddress: string,
-        svcName: string
+        svcName: string,
     ): Promise<boolean | null> => {
         try {
             return await this.verifier.verifyService(providerAddress, svcName)
@@ -279,12 +284,12 @@ export class ZGServingNetworkBroker {
      */
     public getSignerRaDownloadLink = async (
         providerAddress: string,
-        svcName: string
+        svcName: string,
     ) => {
         try {
             return await this.verifier.getSignerRaDownloadLink(
                 providerAddress,
-                svcName
+                svcName,
             )
         } catch (error) {
             throw error
@@ -313,13 +318,13 @@ export class ZGServingNetworkBroker {
     public getChatSignatureDownloadLink = async (
         providerAddress: string,
         svcName: string,
-        chatID: string
+        chatID: string,
     ) => {
         try {
             return await this.verifier.getChatSignatureDownloadLink(
                 providerAddress,
                 svcName,
-                chatID
+                chatID,
             )
         } catch (error) {
             throw error
@@ -341,21 +346,31 @@ export class ZGServingNetworkBroker {
      *
      * @throws An error if any issues occur during the fee settlement process.
      */
-    public settleFee = async (
+    public settleFeeForInference = async (
         providerAddress: string,
         svcName: string,
-        fee: number
+        fee: number,
     ): Promise<void> => {
         try {
             return await this.responseProcessor.settleFeeWithA0gi(
                 providerAddress,
                 svcName,
-                fee
+                fee,
             )
         } catch (error) {
             throw error
         }
     }
+
+
+    //todo: API for finetune
+    /**
+     */
+
+    public ackProviderSigner = async(providerAddress: string) => {
+
+    }
+
 }
 
 /**
@@ -370,9 +385,12 @@ export class ZGServingNetworkBroker {
  */
 export async function createZGServingNetworkBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435'
+    ledgerContractAddr = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435',
+    inferenceContractAddr = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435',
+    finetuneContractAddr = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435',
 ): Promise<ZGServingNetworkBroker> {
-    const broker = new ZGServingNetworkBroker(signer, contractAddress)
+    const broker = new ZGServingNetworkBroker(signer,
+        ledgerContractAddr, inferenceContractAddr, finetuneContractAddr)
     try {
         await broker.initialize()
         return broker

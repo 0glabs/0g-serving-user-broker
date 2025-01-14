@@ -121,9 +121,10 @@ export type VerifierInputStructOutput = [
   segmentSize: bigint[];
 };
 
-export interface ServingInterface extends Interface {
+export interface InferenceServingInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "accountExists"
       | "addAccount"
       | "addOrUpdateService"
       | "batchVerifierAddress"
@@ -135,12 +136,13 @@ export interface ServingInterface extends Interface {
       | "getService"
       | "initialize"
       | "initialized"
+      | "ledgerAddress"
       | "lockTime"
       | "owner"
       | "processRefund"
       | "removeService"
       | "renounceOwnership"
-      | "requestRefund"
+      | "requestRefundAll"
       | "settleFees"
       | "transferOwnership"
       | "updateBatchVerifierAddress"
@@ -157,8 +159,12 @@ export interface ServingInterface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(
+    functionFragment: "accountExists",
+    values: [AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "addAccount",
-    values: [AddressLike, [BigNumberish, BigNumberish], string]
+    values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]
   ): string;
   encodeFunctionData(
     functionFragment: "addOrUpdateService",
@@ -170,11 +176,11 @@ export interface ServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "deleteAccount",
-    values: [AddressLike]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "depositFund",
-    values: [AddressLike]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getAccount",
@@ -194,17 +200,21 @@ export interface ServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [BigNumberish, AddressLike, AddressLike]
+    values: [BigNumberish, AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialized",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "ledgerAddress",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "processRefund",
-    values: [AddressLike, BigNumberish[]]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "removeService",
@@ -215,8 +225,8 @@ export interface ServingInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "requestRefund",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "requestRefundAll",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "settleFees",
@@ -235,6 +245,10 @@ export interface ServingInterface extends Interface {
     values: [BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "accountExists",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "addAccount", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "addOrUpdateService",
@@ -267,6 +281,10 @@ export interface ServingInterface extends Interface {
     functionFragment: "initialized",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "ledgerAddress",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "lockTime", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
@@ -282,7 +300,7 @@ export interface ServingInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "requestRefund",
+    functionFragment: "requestRefundAll",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "settleFees", data: BytesLike): Result;
@@ -416,11 +434,11 @@ export namespace ServiceUpdatedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface Serving extends BaseContract {
-  connect(runner?: ContractRunner | null): Serving;
+export interface InferenceServing extends BaseContract {
+  connect(runner?: ContractRunner | null): InferenceServing;
   waitForDeployment(): Promise<this>;
 
-  interface: ServingInterface;
+  interface: InferenceServingInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -459,8 +477,15 @@ export interface Serving extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  accountExists: TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [boolean],
+    "view"
+  >;
+
   addAccount: TypedContractMethod<
     [
+      user: AddressLike,
       provider: AddressLike,
       signer: [BigNumberish, BigNumberish],
       additionalInfo: string
@@ -486,12 +511,16 @@ export interface Serving extends BaseContract {
   batchVerifierAddress: TypedContractMethod<[], [string], "view">;
 
   deleteAccount: TypedContractMethod<
-    [provider: AddressLike],
+    [user: AddressLike, provider: AddressLike],
     [void],
     "nonpayable"
   >;
 
-  depositFund: TypedContractMethod<[provider: AddressLike], [void], "payable">;
+  depositFund: TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [void],
+    "payable"
+  >;
 
   getAccount: TypedContractMethod<
     [user: AddressLike, provider: AddressLike],
@@ -513,6 +542,7 @@ export interface Serving extends BaseContract {
     [
       _locktime: BigNumberish,
       _batchVerifierAddress: AddressLike,
+      _ledgerAddress: AddressLike,
       owner: AddressLike
     ],
     [void],
@@ -521,13 +551,21 @@ export interface Serving extends BaseContract {
 
   initialized: TypedContractMethod<[], [boolean], "view">;
 
+  ledgerAddress: TypedContractMethod<[], [string], "view">;
+
   lockTime: TypedContractMethod<[], [bigint], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
   processRefund: TypedContractMethod<
-    [provider: AddressLike, indices: BigNumberish[]],
-    [void],
+    [user: AddressLike, provider: AddressLike],
+    [
+      [bigint, bigint, bigint] & {
+        totalAmount: bigint;
+        balance: bigint;
+        pendingRefund: bigint;
+      }
+    ],
     "nonpayable"
   >;
 
@@ -535,8 +573,8 @@ export interface Serving extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  requestRefund: TypedContractMethod<
-    [provider: AddressLike, amount: BigNumberish],
+  requestRefundAll: TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -570,9 +608,17 @@ export interface Serving extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "accountExists"
+  ): TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "addAccount"
   ): TypedContractMethod<
     [
+      user: AddressLike,
       provider: AddressLike,
       signer: [BigNumberish, BigNumberish],
       additionalInfo: string
@@ -600,10 +646,18 @@ export interface Serving extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "deleteAccount"
-  ): TypedContractMethod<[provider: AddressLike], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "depositFund"
-  ): TypedContractMethod<[provider: AddressLike], [void], "payable">;
+  ): TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [void],
+    "payable"
+  >;
   getFunction(
     nameOrSignature: "getAccount"
   ): TypedContractMethod<
@@ -630,6 +684,7 @@ export interface Serving extends BaseContract {
     [
       _locktime: BigNumberish,
       _batchVerifierAddress: AddressLike,
+      _ledgerAddress: AddressLike,
       owner: AddressLike
     ],
     [void],
@@ -639,6 +694,9 @@ export interface Serving extends BaseContract {
     nameOrSignature: "initialized"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
+    nameOrSignature: "ledgerAddress"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "lockTime"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -647,8 +705,14 @@ export interface Serving extends BaseContract {
   getFunction(
     nameOrSignature: "processRefund"
   ): TypedContractMethod<
-    [provider: AddressLike, indices: BigNumberish[]],
-    [void],
+    [user: AddressLike, provider: AddressLike],
+    [
+      [bigint, bigint, bigint] & {
+        totalAmount: bigint;
+        balance: bigint;
+        pendingRefund: bigint;
+      }
+    ],
     "nonpayable"
   >;
   getFunction(
@@ -658,9 +722,9 @@ export interface Serving extends BaseContract {
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "requestRefund"
+    nameOrSignature: "requestRefundAll"
   ): TypedContractMethod<
-    [provider: AddressLike, amount: BigNumberish],
+    [user: AddressLike, provider: AddressLike],
     [void],
     "nonpayable"
   >;
