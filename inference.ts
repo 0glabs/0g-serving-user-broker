@@ -64,15 +64,14 @@ async function main() {
                 serviceName
             )
 
-        // Step 5.2: Get the request headers
+        // Get the request headers
         const headers = await broker.inference.getRequestHeaders(
             providerAddress,
             serviceName,
             content
         )
 
-        // Step 6: Send a request to the service
-
+        // Send a request to the service
         const openai = new OpenAI({
             baseURL: endpoint,
             apiKey: '',

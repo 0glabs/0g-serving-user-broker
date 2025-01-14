@@ -167,39 +167,21 @@ export class InferenceBroker {
         }
     }
 
-
-    /**
-     * Estimation the fund transferring from ledger to account
-     *
-     * fund = input_price * count
-     * @param prompt
-     * @param svcName
-     * @param max_token
-     */
-    public estimateTransferFund = async (prompt: string, svcName: string, max_token = 2048): Promise<number> => {
-        try {
-            const wordRegex = /\b\w+\b/g;
-            const punctuationRegex = /[.,!?;:'"-]/g;
-            const words = prompt.match(wordRegex)?.length || 0;
-            const punctuation = prompt.match(punctuationRegex)?.length || 0;
-            const input_tok_count = words * punctuation
-            const svc = await this.getService(svcName)
-            return Number(svc.inputPrice) * input_tok_count + Number(svc.outputPrice) * input_tok_count * 2
-        } catch (error) {
-            throw error
-        }
-    }
-
     /**
      * Check if the inference account has enough fund, if not, then transfer the difference.
      * @param amount
+     * @param provider
      */
-    private transferFundIfNeeded = async (diff: number, provider: string) => {
+    private transferFundIfNeeded = async (amount: bigint, provider: string) => {
+        const ledger_out = await this.ledger.getLedger()
+        // available amount in ledger
+        const avail_amount = ledger_out.availableBalance
+        const diff = amount - avail_amount
         if (diff > 0) {
             // not enough money, transfer more from ledger
             try {
                 // todo: do we need to check the total amount here? or just let it fail if not enough
-                this.ledger.transferFund(provider, "inference", diff)
+                this.ledger.transferFund(provider, "inference", Number(diff))
             } catch (error) {
                 throw error
             }
@@ -255,21 +237,12 @@ export class InferenceBroker {
         svcName: string,
         content: string
     ) => {
-        // transfer fund from ledger to account if needed
         try {
+            // transfer fund from ledger to account if needed
             await this.addAccount(providerAddress, 0)
-            // required amount for inf account
-            const amount = await this.estimateTransferFund(content, svcName)
-            const ledger_out = await this.ledger.getLedger()
-            // available amount in ledger
-            const avail_amount = Number(ledger_out.availableBalance)
-            // transfer from ledger to account if there is not enough available fund
-            await this.transferFundIfNeeded(amount - avail_amount, providerAddress)
-        } catch (error) {
-            throw error
-        }
+            const amount = await this.requestProcessor.calculateInputFee(providerAddress, svcName, content)
+            await this.transferFundIfNeeded(amount, providerAddress)
 
-        try {
             return await this.requestProcessor.getRequestHeaders(
                 providerAddress,
                 svcName,
@@ -307,6 +280,11 @@ export class InferenceBroker {
         chatID?: string
     ): Promise<boolean | null> => {
         try {
+            // transfer fund from ledger to account if needed
+            await this.addAccount(providerAddress, 0)
+            const amount = await this.responseProcessor.calculateOutputFees(providerAddress, svcName, content)
+            await this.transferFundIfNeeded(amount, providerAddress)
+
             return await this.responseProcessor.processResponse(
                 providerAddress,
                 svcName,

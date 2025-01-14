@@ -66,6 +66,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         svcName: string,
         content: string
     ): Promise<ServingRequestHeaders> {
+
         const headers = await this.getHeader(
             providerAddress,
             svcName,
@@ -73,5 +74,15 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             BigInt(0)
         )
         return headers
+    }
+
+    async calculateInputFee(
+        providerAddress: string,
+        svcName: string,
+        content: string
+    ): Promise<bigint> {
+        const extractor = await this.getExtractor(providerAddress, svcName)
+        const inputFee = await this.calculateInputFees(extractor, content)
+        return inputFee
     }
 }
