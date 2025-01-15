@@ -1,19 +1,22 @@
 import { JsonRpcSigner, Wallet } from 'ethers';
 import { LedgerBroker } from '../../ledger';
+import { UploadArgs } from '../zg-storage/zg-storage';
 export declare class FineTuningBroker {
     private signer;
     private fineTuningCA;
     private ledger;
     private modelProcessor;
     private serviceProcessor;
+    private zgClient;
+    private serviceProvider;
     constructor(signer: JsonRpcSigner | Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<import("../contract").ServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
-    uploadDataset: () => Promise<string>;
-    createTask: () => Promise<void>;
-    getTaskProgress: () => Promise<string>;
-    acknowledgeModel: () => Promise<void>;
+    uploadDataset: (args: UploadArgs) => Promise<string>;
+    createTask: (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, trainingParams: string) => Promise<void>;
+    getTaskProgress: (providerAddress: string, serviceName: string) => Promise<string>;
+    acknowledgeModel: (providerAddress: string, serviceName: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
 }
 /**

@@ -19,14 +19,10 @@ export class FineTuningBroker {
         signer: JsonRpcSigner | Wallet,
         fineTuningCA: string,
         ledger: LedgerBroker,
-        zgClient: ZGStorage,
-        serviceProvider: Provider
     ) {
         this.signer = signer
         this.fineTuningCA = fineTuningCA
         this.ledger = ledger
-        this.zgClient = zgClient
-        this.serviceProvider = serviceProvider
     }
 
     async initialize() {
@@ -44,6 +40,8 @@ export class FineTuningBroker {
 
         this.modelProcessor = new ModelProcessor(contract, this.ledger, this.zgClient, this.serviceProvider)
         this.serviceProcessor = new ServiceProcessor(contract, this.ledger, this.zgClient, this.serviceProvider)
+        this.serviceProvider = new Provider(contract)
+        this.zgClient = new ZGStorage()
     }
 
     public listService = async () => {
@@ -70,25 +68,25 @@ export class FineTuningBroker {
         }
     }
 
-    public createTask = async (): Promise<void> => {
+    public createTask = async (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, trainingParams: string): Promise<void> => {
         try {
-            return await this.serviceProcessor.createTask()
+            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, trainingParams)
         } catch (error) {
             throw error
         }
     }
 
-    public getTaskProgress = async (): Promise<string> => {
+    public getTaskProgress = async (providerAddress: string, serviceName: string): Promise<string> => {
         try {
-            return await this.serviceProcessor.getTaskProgress()
+            return await this.serviceProcessor.getTaskProgress(providerAddress, serviceName, await this.signer.getAddress())
         } catch (error) {
             throw error
         }
     }
 
-    public acknowledgeModel = async (): Promise<void> => {
+    public acknowledgeModel = async (providerAddress: string, serviceName: string, dataPath: string): Promise<void> => {
         try {
-            return await this.modelProcessor.acknowledgeModel()
+            return await this.modelProcessor.acknowledgeModel(providerAddress, serviceName, dataPath, await this.signer.getAddress())
         } catch (error) {
             throw error
         }
@@ -116,11 +114,9 @@ export class FineTuningBroker {
 export async function createFineTuningBroker(
     signer: JsonRpcSigner | Wallet,
     contractAddress = '',
-    ledger: LedgerBroker,
-    zgClient: ZGStorage,
-    serviceProvider: Provider
+    ledger: LedgerBroker
 ): Promise<FineTuningBroker> {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger, zgClient, serviceProvider)
+    const broker = new FineTuningBroker(signer, contractAddress, ledger)
     try {
         await broker.initialize()
         return broker

@@ -93,10 +93,10 @@ export class LedgerProcessor {
     async transferFund(
         to: AddressLike,
         serviceTypeStr: 'inference' | 'fine-tuning',
-        balance: number
+        balance: bigint
     ) {
         try {
-            const amount = this.a0giToNeuron(balance).toString()
+            const amount = balance.toString()
             await this.ledgerContract.transferFund(to, serviceTypeStr, amount)
         } catch (error) {
             throw error

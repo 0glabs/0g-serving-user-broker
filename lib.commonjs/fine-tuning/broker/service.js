@@ -25,12 +25,15 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask() {
-        return;
+    async createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, trainingParams) {
+        const service = await this.contract.getService(providerAddress, pretrainedModelName);
+        const fee = service.pricePerToken * BigInt(dataSize);
+        await this.ledger.transferFund(providerAddress, "fine-tuning", fee);
+        await this.servingProvider.createTask(pretrainedModelName, rootHash, isTurbo, providerAddress, fee.toString(), trainingParams);
     }
     // 8. [`call provider url/v1/task-progress`] call provider task progress api to get task progress
-    async getTaskProgress() {
-        return '';
+    async getTaskProgress(providerAddress, serviceName, customerAddress) {
+        return await this.servingProvider.getTaskProgress(providerAddress, serviceName, customerAddress);
     }
 }
 exports.ServiceProcessor = ServiceProcessor;

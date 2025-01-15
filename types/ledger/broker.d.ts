@@ -53,7 +53,7 @@ export declare class LedgerBroker {
      * @returns A promise that resolves with the result of the fund transfer operation.
      * @throws Will throw an error if the fund transfer operation fails.
      */
-    transferFund: (provider: AddressLike, serviceTypeStr: "inference" | "fine-tuning", amount: number) => Promise<void>;
+    transferFund: (provider: AddressLike, serviceTypeStr: "inference" | "fine-tuning", amount: bigint) => Promise<void>;
     /**
      * Retrieves funds from the ledger for the specified providers and service type.
      *

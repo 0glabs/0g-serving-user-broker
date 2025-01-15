@@ -29,6 +29,7 @@
     "author": "0G Labs",
     "license": "ISC",
     "devDependencies": {
+        "@rollup/plugin-json": "^6.1.0",
         "@types/chai": "^4.3.7",
         "@types/mocha": "^10.0.1",
         "chai": "^4.3.7",
@@ -58,6 +59,7 @@
         "@types/crypto-js": "^4.2.2",
         "@types/jest": "^29.5.4",
         "@types/node": "^20.5.9",
+        "axios": "^1.7.9",
         "brotli": "^1.3.3",
         "buffer": "^6.0.3",
         "circomlibjs": "^0.1.6",

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
+exports.INDEXER_URL_TURBO = exports.INDEXER_URL_STANDARD = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *
@@ -19,4 +19,6 @@ exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 exports.MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
+exports.INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
+exports.INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 //# sourceMappingURL=const.js.map

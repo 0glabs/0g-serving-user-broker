@@ -108,7 +108,7 @@ export class LedgerBroker {
     public transferFund = async (
         provider: AddressLike,
         serviceTypeStr: 'inference' | 'fine-tuning',
-        amount: number
+        amount: bigint
     ) => {
         try {
             return await this.ledger.transferFund(
