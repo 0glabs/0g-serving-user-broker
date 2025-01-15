@@ -1,9 +1,10 @@
+import { UploadArgs } from '../zg-storage/zg-storage'
 import { BrokerBase } from './base'
 
 export class ModelProcessor extends BrokerBase {
     // 6. [`use 0g storage sdk`] upload dataset, get dataset root hash
-    async uploadDataset(): Promise<string> {
-        return ''
+    async uploadDataset(args: UploadArgs): Promise<string> {
+        return this.zgClient.upload(args)
     }
 
     // 9. acknowledge encrypted model with root hash

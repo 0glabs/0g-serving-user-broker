@@ -46,6 +46,7 @@
         "uglify-js": "^3.17.4"
     },
     "dependencies": {
+        "@0glabs/0g-serving-broker": "^0.1.0",
         "@ethersproject/bytes": "^5.7.0",
         "@ethersproject/keccak256": "^5.7.0",
         "@rollup/plugin-commonjs": "^28.0.1",

@@ -3,6 +3,8 @@ import { JsonRpcSigner, Wallet } from 'ethers'
 import { ModelProcessor } from './model'
 import { ServiceProcessor } from './service'
 import { LedgerBroker } from '../../ledger'
+import { UploadArgs, ZGStorage } from '../zg-storage/zg-storage'
+import { Provider } from '../provider/provider'
 
 export class FineTuningBroker {
     private signer: JsonRpcSigner | Wallet
@@ -10,15 +12,21 @@ export class FineTuningBroker {
     private ledger!: LedgerBroker
     private modelProcessor!: ModelProcessor
     private serviceProcessor!: ServiceProcessor
+    private zgClient!: ZGStorage
+    private serviceProvider!: Provider
 
     constructor(
         signer: JsonRpcSigner | Wallet,
         fineTuningCA: string,
-        ledger: LedgerBroker
+        ledger: LedgerBroker,
+        zgClient: ZGStorage,
+        serviceProvider: Provider
     ) {
         this.signer = signer
         this.fineTuningCA = fineTuningCA
         this.ledger = ledger
+        this.zgClient = zgClient
+        this.serviceProvider = serviceProvider
     }
 
     async initialize() {
@@ -34,8 +42,8 @@ export class FineTuningBroker {
             userAddress
         )
 
-        this.modelProcessor = new ModelProcessor(contract, this.ledger)
-        this.serviceProcessor = new ServiceProcessor(contract, this.ledger)
+        this.modelProcessor = new ModelProcessor(contract, this.ledger, this.zgClient, this.serviceProvider)
+        this.serviceProcessor = new ServiceProcessor(contract, this.ledger, this.zgClient, this.serviceProvider)
     }
 
     public listService = async () => {
@@ -54,9 +62,9 @@ export class FineTuningBroker {
         }
     }
 
-    public uploadDataset = async (): Promise<string> => {
+    public uploadDataset = async (args: UploadArgs): Promise<string> => {
         try {
-            return await this.modelProcessor.uploadDataset()
+            return await this.modelProcessor.uploadDataset(args)
         } catch (error) {
             throw error
         }
@@ -108,9 +116,11 @@ export class FineTuningBroker {
 export async function createFineTuningBroker(
     signer: JsonRpcSigner | Wallet,
     contractAddress = '',
-    ledger: LedgerBroker
+    ledger: LedgerBroker,
+    zgClient: ZGStorage,
+    serviceProvider: Provider
 ): Promise<FineTuningBroker> {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger)
+    const broker = new FineTuningBroker(signer, contractAddress, ledger, zgClient, serviceProvider)
     try {
         await broker.initialize()
         return broker
