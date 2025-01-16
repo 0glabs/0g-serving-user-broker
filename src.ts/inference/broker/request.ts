@@ -1,4 +1,8 @@
-import { ZGServingUserBrokerBase } from './base'
+import {ZGServingUserBrokerBase} from './base'
+import {Cache, CacheValueTypeEnum} from "../storage";
+import {InferenceServingContract, ServiceStructOutput} from "../contract";
+import {LedgerBroker} from "../../ledger";
+import {Metadata} from "../../common/storage";
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -47,6 +51,19 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export class RequestProcessor extends ZGServingUserBrokerBase {
+    private checkAccountThreshold = BigInt(1000)
+    private topupAccountThreshold = BigInt(5000)
+    private ledger: LedgerBroker
+
+    constructor(
+        contract: InferenceServingContract,
+        metadata: Metadata,
+        cache: Cache,
+        ledger: LedgerBroker) {
+        super(contract, metadata, cache)
+        this.ledger = ledger
+    }
+
     async getServiceMetadata(
         providerAddress: string,
         svcName: string
@@ -66,23 +83,60 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         svcName: string,
         content: string
     ): Promise<ServingRequestHeaders> {
-
-        const headers = await this.getHeader(
-            providerAddress,
-            svcName,
-            content,
-            BigInt(0)
-        )
-        return headers
+        try {
+            await this.topUpAccountIfNeeded(providerAddress, svcName, content);
+            return await this.getHeader(
+                providerAddress,
+                svcName,
+                content,
+                BigInt(0)
+            )
+        } catch (error) {
+            throw error
+        }
     }
 
-    async calculateInputFee(
-        providerAddress: string,
-        svcName: string,
-        content: string
-    ): Promise<bigint> {
-        const extractor = await this.getExtractor(providerAddress, svcName)
-        const inputFee = await this.calculateInputFees(extractor, content)
-        return inputFee
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    async checkCachedFee(provider: string, svc: ServiceStructOutput) {
+        try {
+            let used_fund = await this.cache.getItem(provider)
+            if (used_fund == null) {
+                used_fund = 0
+            }
+            return used_fund > this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice)
+        } catch (error) {
+            throw error
+        }
+    }
+
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svcName
+     */
+    async topUpAccountIfNeeded(provider: string, svcName: string, content: string) {
+        try {
+            const svc = await this.contract.getService(provider, svcName)
+            const need_check = await this.checkCachedFee(provider, svc)
+            // update cache for current content
+            const extractor = await this.getExtractor(provider, svcName)
+            const newFee = await this.calculateInputFees(extractor, content)
+            await this.updateCachedFee(provider, newFee)
+            if (!need_check) {
+                return
+            }
+            // check fund in account
+            const acc = await this.contract.getAccount(provider)
+            const threshold = this.topupAccountThreshold * (svc.inputPrice + svc.outputPrice)
+            if (acc.balance < threshold) {
+                await this.ledger.transferFund(provider, "inference", Number(threshold))
+            }
+        } catch (error) {
+            throw error
+        }
     }
 }

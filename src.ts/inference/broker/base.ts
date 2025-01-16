@@ -6,6 +6,7 @@ import { ServingRequestHeaders } from './request'
 import { decryptData, getNonce, strToPrivateKey } from '../../common/utils'
 import { PackedPrivkey, Request, signData } from '../../common/settle-signer'
 import { Cache, CacheValueTypeEnum } from '../storage'
+import {LedgerBroker} from "../../ledger";
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract
@@ -172,10 +173,21 @@ export abstract class ZGServingUserBrokerBase {
         }
     }
 
-    protected async calculateInputFees(extractor: Extractor, content: string) {
+    async calculateInputFees(extractor: Extractor, content: string) {
         const svc = await extractor.getSvcInfo()
         const inputCount = await extractor.getInputCount(content)
         const inputFee = BigInt(inputCount) * svc.inputPrice
         return inputFee
     }
+
+    async updateCachedFee(provide: string, fee: bigint) {
+        try {
+            const curFee = await this.cache.getItemOr(provide, BigInt(0))
+            await this.cache.setItem(provide, BigInt(curFee) + fee,
+                1 * 60 * 1000, CacheValueTypeEnum.Service)
+        } catch (error) {
+            throw error
+        }
+    }
+
 }

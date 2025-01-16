@@ -1,5 +1,5 @@
 import {AccountStructOutput, InferenceServingContract, ServiceStructOutput} from '../contract'
-import {AddressLike, JsonRpcSigner, toNumber, Wallet} from 'ethers'
+import {AddressLike, JsonRpcSigner, Wallet} from 'ethers'
 import {RequestProcessor} from './request'
 import {ResponseProcessor} from './response'
 import {Verifier} from './verifier'
@@ -40,12 +40,8 @@ export class InferenceBroker {
         )
         const metadata = new Metadata()
         const cache = new Cache()
-        this.requestProcessor = new RequestProcessor(contract, metadata, cache)
-        this.responseProcessor = new ResponseProcessor(
-            contract,
-            metadata,
-            cache
-        )
+        this.requestProcessor = new RequestProcessor(contract, metadata, cache, this.ledger)
+        this.responseProcessor = new ResponseProcessor(contract, metadata, cache, this.ledger)
         this.accountProcessor = new AccountProcessor(contract, metadata, cache)
         this.modelProcessor = new ModelProcessor(contract, metadata, cache)
         this.verifier = new Verifier(contract, metadata, cache)
@@ -67,37 +63,7 @@ export class InferenceBroker {
 
     public getService = async (svcName: string): Promise<ServiceStructOutput> => {
         try {
-            const services = await this.listService()
-            const service = services.find(
-                (service: any) => service.name === svcName
-            )
-            if (!service) {
-                console.error('Service not found.')
-                return
-            }
-            return service
-        } catch (error) {
-            throw error
-        }
-    }
-
-    /**
-     * Adds a new account to the contract.
-     *
-     * @param {string} providerAddress - The address of the provider for whom the account is being created.
-     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
-     *
-     * @throws  An error if the account creation fails.
-     *
-     * @remarks
-     * When creating an account, a key pair is also created to sign the request.
-     */
-    public addAccount = async (providerAddress: string, balance: number) => {
-        try {
-            return await this.accountProcessor.addAccount(
-                providerAddress,
-                balance
-            )
+            return await this.modelProcessor.getService(svcName)
         } catch (error) {
             throw error
         }
@@ -117,21 +83,6 @@ export class InferenceBroker {
     ): Promise<AccountStructOutput> => {
         try {
             return await this.accountProcessor.getAccount(providerAddress)
-        } catch (error) {
-            throw error
-        }
-    }
-
-    /**
-     * Deposits a specified amount of funds into the given account.
-     *
-     * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
-     * @throws  An error if the deposit fails.
-     */
-    public depositFund = async (account: string, amount: number) => {
-        try {
-            return await this.accountProcessor.depositFund(account, amount)
         } catch (error) {
             throw error
         }
@@ -164,27 +115,6 @@ export class InferenceBroker {
             )
         } catch (error) {
             throw error
-        }
-    }
-
-    /**
-     * Check if the inference account has enough fund, if not, then transfer the difference.
-     * @param amount
-     * @param provider
-     */
-    private transferFundIfNeeded = async (amount: bigint, provider: string) => {
-        const ledger_out = await this.ledger.getLedger()
-        // available amount in ledger
-        const avail_amount = ledger_out.availableBalance
-        const diff = amount - avail_amount
-        if (diff > 0) {
-            // not enough money, transfer more from ledger
-            try {
-                // todo: do we need to check the total amount here? or just let it fail if not enough
-                this.ledger.transferFund(provider, "inference", Number(diff))
-            } catch (error) {
-                throw error
-            }
         }
     }
 
@@ -238,11 +168,6 @@ export class InferenceBroker {
         content: string
     ) => {
         try {
-            // transfer fund from ledger to account if needed
-            await this.addAccount(providerAddress, 0)
-            const amount = await this.requestProcessor.calculateInputFee(providerAddress, svcName, content)
-            await this.transferFundIfNeeded(amount, providerAddress)
-
             return await this.requestProcessor.getRequestHeaders(
                 providerAddress,
                 svcName,
@@ -280,11 +205,6 @@ export class InferenceBroker {
         chatID?: string
     ): Promise<boolean | null> => {
         try {
-            // transfer fund from ledger to account if needed
-            await this.addAccount(providerAddress, 0)
-            const amount = await this.responseProcessor.calculateOutputFees(providerAddress, svcName, content)
-            await this.transferFundIfNeeded(amount, providerAddress)
-
             return await this.responseProcessor.processResponse(
                 providerAddress,
                 svcName,
@@ -408,12 +328,19 @@ export class InferenceBroker {
     }
 
     /**
-     * retrive fund from inference account back to ledger
-     * @param provider
+     * retrive fund from all inference account back to ledger
      */
-    public closeService = async (provider: AddressLike) => {
+    public retrieveFund = async () => {
         try {
-            await this.ledger.retrieveFund([provider], "inference")
+            const ledger = await this.ledger.getLedger()
+            let retrieveProviders = []
+            for (const provider of ledger.inferenceProviders) {
+                const acc = await this.getAccount(provider)
+                if (acc.balance > 0) {
+                    retrieveProviders.push(provider)
+                }
+            }
+            await this.ledger.retrieveFund(retrieveProviders, "inference")
         } catch (error) {
             throw error
         }

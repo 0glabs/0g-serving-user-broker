@@ -43,6 +43,11 @@ export class Cache {
         return Cache.decodeValue(item.value, item.type)
     }
 
+    public async getItemOr(key : string, value: any): Promise<any> {
+        const item = await this.getItem(key)
+        return item == null ? value : item
+    }
+
     private async initialize() {
         if (this.initialized) {
             return

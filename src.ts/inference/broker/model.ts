@@ -1,5 +1,5 @@
-import { ServiceStructOutput } from '../contract'
-import { ZGServingUserBrokerBase } from './base'
+import {ServiceStructOutput} from '../contract'
+import {ZGServingUserBrokerBase} from './base'
 
 export enum VerifiabilityEnum {
     OpML = 'OpML',
@@ -21,7 +21,23 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
             throw error
         }
     }
+
+    async getService(svcName: string): Promise<ServiceStructOutput> {
+        try {
+            const services = await this.listService()
+            const service = services.find(
+                (service: any) => service.name === svcName
+            )
+            if (!service) {
+                throw new Error("Unknown service " + svcName)
+            }
+            return service
+        } catch (error) {
+            throw error
+        }
+    }
 }
+
 
 export function isVerifiability(value: string): value is Verifiability {
     return Object.values(VerifiabilityEnum).includes(value as VerifiabilityEnum)

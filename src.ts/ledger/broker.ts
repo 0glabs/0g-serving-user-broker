@@ -64,6 +64,14 @@ export class LedgerBroker {
         }
     }
 
+    public getAllLedgers = async () => {
+        try {
+            return await this.ledger.listLedger()
+        } catch (error) {
+            throw error
+        }
+    }
+
     /**
      * Deposits a specified amount of funds into Ledger corresponding to the current wallet address.
      *

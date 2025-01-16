@@ -14,9 +14,9 @@ async function main() {
     try {
         const broker = await createZGComputeNetworkBroker(
             wallet,
-            '',
+            '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318',
             '0x0165878A594ca255338adfa4d48449f69242Eb8F',
-            ''
+            '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
         )
 
         // List available services
@@ -32,19 +32,19 @@ async function main() {
         const service = await broker.inference.getService("test")
 
         const providerAddress = service.provider;
-
+        console.log("provider address is ", providerAddress)
         // create ledger
-        await broker.ledger.addLedger(0.1)
-        console.log('Creating ledger successfully.')
+        // await broker.ledger.addLedger(0.001)
+        // console.log('Creating ledger successfully.')
 
         // deposit fund
-        const depositAmount = 0.01
-        await broker.ledger.depositFund(depositAmount)
-        console.log('Depositing funds...')
+        // const depositAmount = 0.01
+        // await broker.ledger.depositFund(depositAmount)
+        // console.log('Depositing funds...')
 
         // get ledger
-        const ledger = await broker.ledger.getLedger()
-        console.log('Get ledger with fund ', ledger.totalBalance)
+        const ledger = await broker.ledger.getAllLedgers()
+        console.log('Get ledger with fund ', ledger[0].totalBalance)
 
         // Step 5: Use the Provider's Services
         console.log('Processing a request...')
@@ -107,8 +107,8 @@ async function main() {
         )
         console.log(`Response validity: ${isValid ? 'Valid' : 'Invalid'}`)
 
-        // close service
-        await broker.inference.closeService(providerAddress)
+        // retrieve fund from all inference accounts.
+        await broker.inference.retrieveFund()
         console.log("Closing the service...")
     } catch (error) {
         console.error('Error during execution:', error)

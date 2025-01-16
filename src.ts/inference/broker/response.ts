@@ -1,10 +1,11 @@
-import { InferenceServingContract } from '../contract'
-import { Extractor } from '../extractor'
-import { Metadata } from '../../common/storage'
-import { ZGServingUserBrokerBase } from './base'
-import { isVerifiability, VerifiabilityEnum } from './model'
-import { Verifier } from './verifier'
-import { Cache } from '../storage'
+import {InferenceServingContract} from '../contract'
+import {Extractor} from '../extractor'
+import {Metadata} from '../../common/storage'
+import {ZGServingUserBrokerBase} from './base'
+import {isVerifiability, VerifiabilityEnum} from './model'
+import {Verifier} from './verifier'
+import {Cache, CacheValueTypeEnum} from '../storage'
+import {LedgerBroker} from "../../ledger";
 
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
@@ -13,16 +14,17 @@ import { Cache } from '../storage'
  */
 export class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier: Verifier
+    private ledger: LedgerBroker
 
     constructor(
         contract: InferenceServingContract,
         metadata: Metadata,
-        cache: Cache
+        cache: Cache,
+        ledger: LedgerBroker
     ) {
         super(contract, metadata, cache)
-        this.contract = contract
-        this.metadata = metadata
         this.verifier = new Verifier(contract, metadata, cache)
+        this.ledger = ledger
     }
 
     async settleFeeWithA0gi(
@@ -60,7 +62,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
                 throw new Error('Service is not available')
             }
 
-            const { provider, name, url } = service
+            const {provider, name, url} = service
             const headers = await this.getHeader(provider, name, '', fee)
 
             const response = await fetch(`${url}/v1/proxy/${name}/settle-fee`, {
@@ -87,9 +89,9 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         chatID?: string
     ): Promise<boolean | null> {
         try {
-            let extractor: Extractor
-            extractor = await this.getExtractor(providerAddress, svcName)
-            const outputFee = await this._calculateOutputFees(extractor, content)
+            const extractor = await this.getExtractor(providerAddress, svcName)
+            const outputFee = await this.calculateOutputFees(extractor, content)
+            await this.updateCachedFee(providerAddress, outputFee)
 
             await this.settleFee(providerAddress, svcName, outputFee)
 
@@ -139,21 +141,10 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         }
     }
 
-    private async _calculateOutputFees(
+    private async calculateOutputFees(
         extractor: Extractor,
         content: string
     ): Promise<bigint> {
-        const svc = await extractor.getSvcInfo()
-        const outputCount = await extractor.getOutputCount(content)
-        return BigInt(outputCount) * svc.outputPrice
-    }
-
-    public async calculateOutputFees(
-        providerAddress: string,
-        svcName: string,
-        content: string
-    ): Promise<bigint> {
-        const extractor = await this.getExtractor(providerAddress, svcName)
         const svc = await extractor.getSvcInfo()
         const outputCount = await extractor.getOutputCount(content)
         return BigInt(outputCount) * svc.outputPrice
