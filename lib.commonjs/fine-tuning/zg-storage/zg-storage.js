@@ -3,13 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZGStorage = void 0;
 const child_process_1 = require("child_process");
 const util_1 = require("util");
+const const_1 = require("../const");
 // Promisify exec for async/await support
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 class ZGStorage {
-    async upload(uploadArgs) {
-        const { url, privateKey, indexerUrl, dataPath } = uploadArgs;
+    getInderUrl(isTurbo) {
+        return isTurbo ? const_1.INDEXER_URL_TURBO : const_1.INDEXER_URL_STANDARD;
+    }
+    async upload(privateKey, dataPath, isTurbo) {
+        const indexerUrl = this.getInderUrl(isTurbo);
         // Construct the command
-        const command = `./0g-storage-client upload --url ${url} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
+        const command = `./0g-storage-client upload --url ${const_1.ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
         // Execute the command
         const { stdout, stderr } = await execAsync(command);
         // Check if there's an error in stderr
@@ -23,8 +27,8 @@ class ZGStorage {
         // Return the root hash(s)
         return root;
     }
-    async download(downloadArgs) {
-        const { dataPath, indexerUrl, dataRoot } = downloadArgs;
+    async download(dataPath, dataRoot, isTurbo) {
+        const indexerUrl = const_1.INDEXER_URL_STANDARD;
         // Construct the command
         const command = `./0g-storage-client download --file ${dataPath} --indexer ${indexerUrl} --root ${dataRoot}`;
         // Execute the command

@@ -1,6 +1,7 @@
 import { ethers, ContractFactory, Interface, Contract } from 'ethers';
 import CryptoJS from 'crypto-js';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
+import * as fs from 'fs/promises';
 import { exec } from 'child_process';
 import require$$1, { promisify } from 'util';
 import stream, { Readable } from 'stream';
@@ -3371,6 +3372,31 @@ class FineTuningServingContract {
     }
 }
 
+class ModelProcessor extends BrokerBase {
+    // 6. [`use 0g storage sdk`] upload dataset, get dataset root hash
+    async uploadDataset(privateKey, dataPath, isTurbo) {
+        return this.zgClient.upload(privateKey, dataPath, isTurbo);
+    }
+    // 9. acknowledge encrypted model with root hash
+    //     1. [`call contract`] get deliverable with root hash
+    //     2. [`use 0g storage sdk`] download model, calculate root hash, compare with provided root hash
+    //     3. [`call contract`] acknowledge the model in contract
+    async acknowledgeModel(providerAddress, serviceName, dataPath, customerAddress) {
+        const account = await this.contract.getAccount(providerAddress);
+        const latestDeliverable = account.deliverables[-1];
+        const task = await this.servingProvider.getLatestTask(providerAddress, serviceName, customerAddress);
+        await this.zgClient.download(dataPath, latestDeliverable.modelRootHash, task.isTurbo);
+        await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
+    }
+    // 10. decrypt model
+    //     1. [`call contract`] get deliverable with encryptedSecret
+    //     2. decrypt the encryptedSecret
+    //     3. decrypt model with secret [TODO: Discuss LiuYuan]
+    async decryptModel() {
+        return;
+    }
+}
+
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *
@@ -3388,37 +3414,15 @@ class FineTuningServingContract {
  *   on the key derivation and encryption process.
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
+const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
 const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
-
-class ModelProcessor extends BrokerBase {
-    // 6. [`use 0g storage sdk`] upload dataset, get dataset root hash
-    async uploadDataset(args) {
-        return this.zgClient.upload(args);
-    }
-    // 9. acknowledge encrypted model with root hash
-    //     1. [`call contract`] get deliverable with root hash
-    //     2. [`use 0g storage sdk`] download model, calculate root hash, compare with provided root hash
-    //     3. [`call contract`] acknowledge the model in contract
-    async acknowledgeModel(providerAddress, serviceName, dataPath, customerAddress) {
-        const account = await this.contract.getAccount(providerAddress);
-        const latestDeliverable = account.deliverables[-1];
-        const task = await this.servingProvider.getLatestTask(providerAddress, serviceName, customerAddress);
-        await this.zgClient.download({
-            dataPath: dataPath,
-            indexerUrl: task.isTurbo ? INDEXER_URL_TURBO : INDEXER_URL_STANDARD,
-            dataRoot: latestDeliverable.modelRootHash
-        });
-        await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
-    }
-    // 10. decrypt model
-    //     1. [`call contract`] get deliverable with encryptedSecret
-    //     2. decrypt the encryptedSecret
-    //     3. decrypt model with secret [TODO: Discuss LiuYuan]
-    async decryptModel() {
-        return;
-    }
-}
+const MODEL_HASH_MAP = {
+    'distilbert-base-uncased': {
+        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7', // turbo
+        standard: '', // standard
+    },
+};
 
 class ServiceProcessor extends BrokerBase {
     // 4. list services
@@ -3443,11 +3447,27 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, trainingParams) {
-        const service = await this.contract.getService(providerAddress, pretrainedModelName);
+    async createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) {
+        const service = await this.contract.getService(providerAddress, serviceName);
         const fee = service.pricePerToken * BigInt(dataSize);
         await this.ledger.transferFund(providerAddress, "fine-tuning", fee);
-        await this.servingProvider.createTask(pretrainedModelName, rootHash, isTurbo, providerAddress, fee.toString(), trainingParams);
+        // Read the JSON file
+        const trainingPathContent = await fs.readFile(trainingPath, "utf-8");
+        // Parse it to ensure it's valid JSON, then stringify it again if needed
+        try {
+            JSON.parse(trainingPathContent); // Validate JSON
+        }
+        catch (err) {
+            if (err instanceof Error) {
+                throw new Error(`Invalid JSON in trainingPath file: ${err.message}`);
+            }
+            else {
+                throw new Error("Invalid JSON in trainingPath file: An unknown error occurred");
+            }
+        }
+        // Get model hash
+        const modelHash = MODEL_HASH_MAP[pretrainedModelName][isTurbo ? "turbo" : "standard"];
+        await this.servingProvider.createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee.toString(), trainingPathContent);
     }
     // 8. [`call provider url/v1/task-progress`] call provider task progress api to get task progress
     async getTaskProgress(providerAddress, serviceName, customerAddress) {
@@ -3458,10 +3478,13 @@ class ServiceProcessor extends BrokerBase {
 // Promisify exec for async/await support
 const execAsync = promisify(exec);
 class ZGStorage {
-    async upload(uploadArgs) {
-        const { url, privateKey, indexerUrl, dataPath } = uploadArgs;
+    getInderUrl(isTurbo) {
+        return isTurbo ? INDEXER_URL_TURBO : INDEXER_URL_STANDARD;
+    }
+    async upload(privateKey, dataPath, isTurbo) {
+        const indexerUrl = this.getInderUrl(isTurbo);
         // Construct the command
-        const command = `./0g-storage-client upload --url ${url} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
+        const command = `./0g-storage-client upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
         // Execute the command
         const { stdout, stderr } = await execAsync(command);
         // Check if there's an error in stderr
@@ -3475,8 +3498,8 @@ class ZGStorage {
         // Return the root hash(s)
         return root;
     }
-    async download(downloadArgs) {
-        const { dataPath, indexerUrl, dataRoot } = downloadArgs;
+    async download(dataPath, dataRoot, isTurbo) {
+        const indexerUrl = INDEXER_URL_STANDARD;
         // Construct the command
         const command = `./0g-storage-client download --file ${dataPath} --indexer ${indexerUrl} --root ${dataRoot}`;
         // Execute the command
@@ -22393,15 +22416,15 @@ class Provider {
     constructor(contract) {
         this.contract = contract;
     }
-    async createTask(pretrainedModelName, rootHash, isTurbo, providerAddress, fee, trainingParams) {
+    async createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee, trainingParams) {
         // Fetch the provider URL
-        const url = await this.getProviderUrl(providerAddress, pretrainedModelName);
+        const url = await this.getProviderUrl(providerAddress, serviceName);
         // Construct the API endpoint
         const endpoint = `${url}/v1/task`;
         // Prepare the request payload
         const payload = {
             customerAddress: providerAddress,
-            preTrainedModelHash: pretrainedModelName,
+            preTrainedModelHash: modelHash,
             datasetHash: rootHash,
             trainingParams,
             isTurbo,
@@ -22501,17 +22524,17 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (args) => {
+    uploadDataset = async (dataPath, isTurbo) => {
         try {
-            return await this.modelProcessor.uploadDataset(args);
+            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, isTurbo);
         }
         catch (error) {
             throw error;
         }
     };
-    createTask = async (pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, trainingParams) => {
+    createTask = async (pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) => {
         try {
-            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, trainingParams);
+            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath);
         }
         catch (error) {
             throw error;

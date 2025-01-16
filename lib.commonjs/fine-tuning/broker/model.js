@@ -2,11 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelProcessor = void 0;
 const base_1 = require("./base");
-const const_1 = require("../const");
 class ModelProcessor extends base_1.BrokerBase {
     // 6. [`use 0g storage sdk`] upload dataset, get dataset root hash
-    async uploadDataset(args) {
-        return this.zgClient.upload(args);
+    async uploadDataset(privateKey, dataPath, isTurbo) {
+        return this.zgClient.upload(privateKey, dataPath, isTurbo);
     }
     // 9. acknowledge encrypted model with root hash
     //     1. [`call contract`] get deliverable with root hash
@@ -16,11 +15,7 @@ class ModelProcessor extends base_1.BrokerBase {
         const account = await this.contract.getAccount(providerAddress);
         const latestDeliverable = account.deliverables[-1];
         const task = await this.servingProvider.getLatestTask(providerAddress, serviceName, customerAddress);
-        await this.zgClient.download({
-            dataPath: dataPath,
-            indexerUrl: task.isTurbo ? const_1.INDEXER_URL_TURBO : const_1.INDEXER_URL_STANDARD,
-            dataRoot: latestDeliverable.modelRootHash
-        });
+        await this.zgClient.download(dataPath, latestDeliverable.modelRootHash, task.isTurbo);
         await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
     }
     // 10. decrypt model

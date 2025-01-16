@@ -1,31 +1,20 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import { INDEXER_URL_STANDARD, INDEXER_URL_TURBO, ZG_RPC_ENDPOINT_TESTNET } from "../const";
 
 // Promisify exec for async/await support
 const execAsync = promisify(exec);
 
-// Define the UploadArgs type
-export interface UploadArgs {
-    url: string; // hardcode
-    privateKey: string;
-    indexerUrl: string; // change to isturbo
-    dataPath: string;
-}
-
-// Define the DownloadArgs type
-export interface DownloadArgs {
-    dataPath: string;
-    indexerUrl: string;
-    dataRoot: string;
-}
-
 export class ZGStorage {
+    getInderUrl(isTurbo: boolean): string {
+        return isTurbo ? INDEXER_URL_TURBO : INDEXER_URL_STANDARD;
+    }
 
-    async upload(uploadArgs: UploadArgs): Promise<string> {
-        const { url, privateKey, indexerUrl, dataPath } = uploadArgs;
+    async upload(privateKey: string, dataPath: string, isTurbo: boolean): Promise<string> {
+        const indexerUrl = this.getInderUrl(isTurbo);
 
         // Construct the command
-        const command = `./0g-storage-client upload --url ${url} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
+        const command = `./0g-storage-client upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
 
         // Execute the command
         const { stdout, stderr } = await execAsync(command);
@@ -46,8 +35,8 @@ export class ZGStorage {
     
     }
 
-    async download(downloadArgs: DownloadArgs): Promise<void> {
-        const { dataPath, indexerUrl, dataRoot } = downloadArgs;
+    async download(dataPath: string, dataRoot: string, isTurbo: boolean): Promise<void> {
+        const indexerUrl = INDEXER_URL_STANDARD;
 
         // Construct the command
         const command = `./0g-storage-client download --file ${dataPath} --indexer ${indexerUrl} --root ${dataRoot}`;

@@ -1,11 +1,9 @@
-import { UploadArgs } from '../zg-storage/zg-storage'
 import { BrokerBase } from './base'
-import { INDEXER_URL_STANDARD, INDEXER_URL_TURBO } from '../const'
 
 export class ModelProcessor extends BrokerBase {
     // 6. [`use 0g storage sdk`] upload dataset, get dataset root hash
-    async uploadDataset(args: UploadArgs): Promise<string> {
-        return this.zgClient.upload(args)
+    async uploadDataset(privateKey: string, dataPath: string, isTurbo: boolean): Promise<string> {
+        return this.zgClient.upload(privateKey, dataPath, isTurbo)
     }
 
     // 9. acknowledge encrypted model with root hash
@@ -18,11 +16,11 @@ export class ModelProcessor extends BrokerBase {
 
         const task = await this.servingProvider.getLatestTask(providerAddress, serviceName, customerAddress)
 
-        await this.zgClient.download({
-            dataPath: dataPath,
-            indexerUrl: task.isTurbo ? INDEXER_URL_TURBO : INDEXER_URL_STANDARD,
-            dataRoot: latestDeliverable.modelRootHash
-        })
+        await this.zgClient.download(
+            dataPath,
+            latestDeliverable.modelRootHash,
+            task.isTurbo
+        )
 
         await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1)
     }

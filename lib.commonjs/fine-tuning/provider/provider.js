@@ -8,15 +8,15 @@ class Provider {
     constructor(contract) {
         this.contract = contract;
     }
-    async createTask(pretrainedModelName, rootHash, isTurbo, providerAddress, fee, trainingParams) {
+    async createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee, trainingParams) {
         // Fetch the provider URL
-        const url = await this.getProviderUrl(providerAddress, pretrainedModelName);
+        const url = await this.getProviderUrl(providerAddress, serviceName);
         // Construct the API endpoint
         const endpoint = `${url}/v1/task`;
         // Prepare the request payload
         const payload = {
             customerAddress: providerAddress,
-            preTrainedModelHash: pretrainedModelName,
+            preTrainedModelHash: modelHash,
             datasetHash: rootHash,
             trainingParams,
             isTurbo,

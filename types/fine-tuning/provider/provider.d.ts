@@ -20,7 +20,7 @@ export interface Task {
 export declare class Provider {
     private contract;
     constructor(contract: FineTuningServingContract);
-    createTask(pretrainedModelName: string, rootHash: string, isTurbo: boolean, providerAddress: string, fee: string, trainingParams: string): Promise<void>;
+    createTask(modelHash: string, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, fee: string, trainingParams: string): Promise<void>;
     getProviderUrl(providerAddress: string, serviceName: string): Promise<string>;
     getTaskProgress(providerAddress: string, serviceName: string, customerAddress: string): Promise<string>;
     getLatestTask(providerAddress: string, serviceName: string, customerAddress: string): Promise<Task>;

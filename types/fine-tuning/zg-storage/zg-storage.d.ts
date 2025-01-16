@@ -1,17 +1,7 @@
-export interface UploadArgs {
-    url: string;
-    privateKey: string;
-    indexerUrl: string;
-    dataPath: string;
-}
-export interface DownloadArgs {
-    dataPath: string;
-    indexerUrl: string;
-    dataRoot: string;
-}
 export declare class ZGStorage {
-    upload(uploadArgs: UploadArgs): Promise<string>;
-    download(downloadArgs: DownloadArgs): Promise<void>;
+    getInderUrl(isTurbo: boolean): string;
+    upload(privateKey: string, dataPath: string, isTurbo: boolean): Promise<string>;
+    download(dataPath: string, dataRoot: string, isTurbo: boolean): Promise<void>;
     extractRootFromOutput(output: string): string | null;
 }
 //# sourceMappingURL=zg-storage.d.ts.map

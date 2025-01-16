@@ -28,15 +28,16 @@ export class Provider {
     }
 
     async createTask(
-        pretrainedModelName: string,
+        modelHash: string,
         rootHash: string,
         isTurbo: boolean,
         providerAddress: string,
+        serviceName: string,
         fee: string,
         trainingParams: string,
     ): Promise<void> {
         // Fetch the provider URL
-        const url = await this.getProviderUrl(providerAddress, pretrainedModelName);
+        const url = await this.getProviderUrl(providerAddress, serviceName);
     
         // Construct the API endpoint
         const endpoint = `${url}/v1/task`;
@@ -44,7 +45,7 @@ export class Provider {
         // Prepare the request payload
         const payload = {
             customerAddress: providerAddress,
-            preTrainedModelHash: pretrainedModelName,
+            preTrainedModelHash: modelHash,
             datasetHash: rootHash,
             trainingParams,
             isTurbo,

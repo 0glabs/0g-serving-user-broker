@@ -17,6 +17,17 @@
  */
 export const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY'
 
+export const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai'
+
 export const INDEXER_URL_STANDARD =
     'https://indexer-storage-testnet-standard.0g.ai'
 export const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai'
+
+export const MODEL_HASH_MAP: {
+    [key: string]: { [key: string]: string }
+} = {
+    'distilbert-base-uncased': {
+        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7', // turbo
+        standard: '', // standard
+    },
+}

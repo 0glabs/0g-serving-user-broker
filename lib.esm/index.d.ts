@@ -1285,13 +1285,6 @@ declare class LedgerBroker {
  */
 declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<LedgerBroker>;
 
-interface UploadArgs {
-    url: string;
-    privateKey: string;
-    indexerUrl: string;
-    dataPath: string;
-}
-
 declare class FineTuningBroker {
     private signer;
     private fineTuningCA;
@@ -1300,12 +1293,12 @@ declare class FineTuningBroker {
     private serviceProcessor;
     private zgClient;
     private serviceProvider;
-    constructor(signer: JsonRpcSigner | Wallet, fineTuningCA: string, ledger: LedgerBroker);
+    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
-    uploadDataset: (args: UploadArgs) => Promise<string>;
-    createTask: (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, trainingParams: string) => Promise<void>;
+    uploadDataset: (dataPath: string, isTurbo: boolean) => Promise<string>;
+    createTask: (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string) => Promise<void>;
     getTaskProgress: (providerAddress: string, serviceName: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, serviceName: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
@@ -1320,6 +1313,6 @@ declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createFineTuningBroker(signer: JsonRpcSigner | Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
+declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
 
 export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker };
