@@ -7,7 +7,7 @@
         "types",
         "lib.commonjs",
         "lib.esm",
-        "wasm"
+        "library"
     ],
     "exports": {
         "require": "./lib.commonjs/index.js",
