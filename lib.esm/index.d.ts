@@ -1297,10 +1297,10 @@ declare class FineTuningBroker {
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
-    uploadDataset: (dataPath: string, isTurbo: boolean) => Promise<string>;
-    createTask: (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string) => Promise<void>;
+    uploadDataset: (dataPath: string) => Promise<string>;
+    createTask: (preTrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string) => Promise<void>;
     getTaskProgress: (providerAddress: string, serviceName: string) => Promise<string>;
-    acknowledgeModel: (providerAddress: string, serviceName: string, dataPath: string) => Promise<void>;
+    acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
 }
 /**

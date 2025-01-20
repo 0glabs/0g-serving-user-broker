@@ -50,17 +50,17 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, isTurbo) => {
+    uploadDataset = async (dataPath) => {
         try {
-            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, isTurbo);
+            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
         }
         catch (error) {
             throw error;
         }
     };
-    createTask = async (pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) => {
+    createTask = async (preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) => {
         try {
-            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath);
+            return await this.serviceProcessor.createTask(preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath);
         }
         catch (error) {
             throw error;
@@ -74,9 +74,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeModel = async (providerAddress, serviceName, dataPath) => {
+    acknowledgeModel = async (providerAddress, dataPath) => {
         try {
-            return await this.modelProcessor.acknowledgeModel(providerAddress, serviceName, dataPath, await this.signer.getAddress());
+            return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath);
         }
         catch (error) {
             throw error;

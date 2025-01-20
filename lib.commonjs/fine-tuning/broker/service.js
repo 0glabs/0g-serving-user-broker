@@ -28,12 +28,12 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) {
+    async createTask(preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) {
         const service = await this.contract.getService(providerAddress, serviceName);
         const fee = service.pricePerToken * BigInt(dataSize);
-        await this.ledger.transferFund(providerAddress, "fine-tuning", fee);
+        await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
         // Read the JSON file
-        const trainingPathContent = await fs.readFile(trainingPath, "utf-8");
+        const trainingPathContent = await fs.readFile(trainingPath, 'utf-8');
         // Parse it to ensure it's valid JSON, then stringify it again if needed
         try {
             JSON.parse(trainingPathContent); // Validate JSON
@@ -43,11 +43,11 @@ class ServiceProcessor extends base_1.BrokerBase {
                 throw new Error(`Invalid JSON in trainingPath file: ${err.message}`);
             }
             else {
-                throw new Error("Invalid JSON in trainingPath file: An unknown error occurred");
+                throw new Error('Invalid JSON in trainingPath file: An unknown error occurred');
             }
         }
         // Get model hash
-        const modelHash = const_1.MODEL_HASH_MAP[pretrainedModelName][isTurbo ? "turbo" : "standard"];
+        const modelHash = const_1.MODEL_HASH_MAP[preTrainedModelName][isTurbo ? 'turbo' : 'standard'];
         await this.servingProvider.createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee.toString(), trainingPathContent);
     }
     // 8. [`call provider url/v1/task-progress`] call provider task progress api to get task progress

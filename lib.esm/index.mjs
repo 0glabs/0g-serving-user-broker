@@ -3373,20 +3373,22 @@ class FineTuningServingContract {
 }
 
 class ModelProcessor extends BrokerBase {
-    // 6. [`use 0g storage sdk`] upload dataset, get dataset root hash
-    async uploadDataset(privateKey, dataPath, isTurbo) {
-        return this.zgClient.upload(privateKey, dataPath, isTurbo);
+    async uploadDataset(privateKey, dataPath) {
+        return this.zgClient.upload(privateKey, dataPath);
     }
-    // 9. acknowledge encrypted model with root hash
-    //     1. [`call contract`] get deliverable with root hash
-    //     2. [`use 0g storage sdk`] download model, calculate root hash, compare with provided root hash
-    //     3. [`call contract`] acknowledge the model in contract
-    async acknowledgeModel(providerAddress, serviceName, dataPath, customerAddress) {
-        const account = await this.contract.getAccount(providerAddress);
-        const latestDeliverable = account.deliverables[-1];
-        const task = await this.servingProvider.getLatestTask(providerAddress, serviceName, customerAddress);
-        await this.zgClient.download(dataPath, latestDeliverable.modelRootHash, task.isTurbo);
-        await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
+    async acknowledgeModel(providerAddress, dataPath) {
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            const latestDeliverable = account.deliverables[-1];
+            if (!latestDeliverable) {
+                throw new Error('No deliverable found');
+            }
+            await this.zgClient.download(dataPath, latestDeliverable.modelRootHash);
+            await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     // 10. decrypt model
     //     1. [`call contract`] get deliverable with encryptedSecret
@@ -3416,7 +3418,6 @@ class ModelProcessor extends BrokerBase {
  */
 const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
-const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7', // turbo
@@ -3447,12 +3448,12 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) {
+    async createTask(preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) {
         const service = await this.contract.getService(providerAddress, serviceName);
         const fee = service.pricePerToken * BigInt(dataSize);
-        await this.ledger.transferFund(providerAddress, "fine-tuning", fee);
+        await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
         // Read the JSON file
-        const trainingPathContent = await fs.readFile(trainingPath, "utf-8");
+        const trainingPathContent = await fs.readFile(trainingPath, 'utf-8');
         // Parse it to ensure it's valid JSON, then stringify it again if needed
         try {
             JSON.parse(trainingPathContent); // Validate JSON
@@ -3462,11 +3463,11 @@ class ServiceProcessor extends BrokerBase {
                 throw new Error(`Invalid JSON in trainingPath file: ${err.message}`);
             }
             else {
-                throw new Error("Invalid JSON in trainingPath file: An unknown error occurred");
+                throw new Error('Invalid JSON in trainingPath file: An unknown error occurred');
             }
         }
         // Get model hash
-        const modelHash = MODEL_HASH_MAP[pretrainedModelName][isTurbo ? "turbo" : "standard"];
+        const modelHash = MODEL_HASH_MAP[preTrainedModelName][isTurbo ? 'turbo' : 'standard'];
         await this.servingProvider.createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee.toString(), trainingPathContent);
     }
     // 8. [`call provider url/v1/task-progress`] call provider task progress api to get task progress
@@ -3475,19 +3476,11 @@ class ServiceProcessor extends BrokerBase {
     }
 }
 
-// Promisify exec for async/await support
 const execAsync = promisify(exec);
 class ZGStorage {
-    getIndexUrl(isTurbo) {
-        return isTurbo ? INDEXER_URL_TURBO : INDEXER_URL_STANDARD;
-    }
-    async upload(privateKey, dataPath, isTurbo) {
-        const indexerUrl = this.getIndexUrl(isTurbo);
-        // Construct the command
-        const command = `./0g-storage-client upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
-        // Execute the command
+    async upload(privateKey, dataPath) {
+        const command = `./0g-storage-client upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${INDEXER_URL_STANDARD} --file ${dataPath}`;
         const { stdout, stderr } = await execAsync(command);
-        // Check if there's an error in stderr
         if (stderr) {
             throw new Error(`Error executing command: ${stderr}`);
         }
@@ -3495,30 +3488,21 @@ class ZGStorage {
         if (!root) {
             throw new Error(`Failed to extract root from output: ${stdout}`);
         }
-        // Return the root hash(s)
         return root;
     }
-    async download(dataPath, dataRoot, isTurbo) {
-        const indexerUrl = INDEXER_URL_STANDARD;
-        // Construct the command
-        const command = `./0g-storage-client download --file ${dataPath} --indexer ${indexerUrl} --root ${dataRoot}`;
-        // Execute the command
+    async download(dataPath, dataRoot) {
+        const command = `./0g-storage-client download --file ${dataPath} --indexer ${INDEXER_URL_STANDARD} --root ${dataRoot}`;
         const { stdout, stderr } = await execAsync(command);
-        // Check if there's an error in stderr
         if (stderr) {
             throw new Error(`Error executing download command: ${stderr}`);
         }
-        // Return the output of the command
         if (!stdout.trim().endsWith('Succeeded to validate the downloaded file')) {
             throw new Error(`Failed to download the file: ${stdout}`);
         }
     }
     extractRootFromOutput(output) {
-        // Regular expression to match "root = <value>"
         const regex = /root = ([a-fA-F0-9x,]+)/;
-        // Execute the regex and extract the value
         const match = output.match(regex);
-        // Return the extracted value or null if no match is found
         return match ? match[1] : null;
     }
 }
@@ -22543,17 +22527,17 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, isTurbo) => {
+    uploadDataset = async (dataPath) => {
         try {
-            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, isTurbo);
+            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
         }
         catch (error) {
             throw error;
         }
     };
-    createTask = async (pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) => {
+    createTask = async (preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) => {
         try {
-            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath);
+            return await this.serviceProcessor.createTask(preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath);
         }
         catch (error) {
             throw error;
@@ -22567,9 +22551,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeModel = async (providerAddress, serviceName, dataPath) => {
+    acknowledgeModel = async (providerAddress, dataPath) => {
         try {
-            return await this.modelProcessor.acknowledgeModel(providerAddress, serviceName, dataPath, await this.signer.getAddress());
+            return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath);
         }
         catch (error) {
             throw error;
