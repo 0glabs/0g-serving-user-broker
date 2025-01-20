@@ -1315,4 +1315,24 @@ declare class FineTuningBroker {
  */
 declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
 
-export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker };
+declare class ZGComputeNetworkBroker {
+    ledger: LedgerBroker;
+    inference: InferenceBroker;
+    fineTuning?: FineTuningBroker;
+    constructor(ledger: LedgerBroker, inferenceBroker: InferenceBroker, fineTuningBroker?: FineTuningBroker);
+}
+/**
+ * createZGComputeNetworkBroker is used to initialize ZGComputeNetworkBroker
+ *
+ * @param signer - Signer from ethers.js.
+ * @param ledgerCA - 0G Compute Network Ledger Contact address, use default address if not provided.
+ * @param inferenceCA - 0G Compute Network Inference Serving contract address, use default address if not provided.
+ * @param fineTuningCA - 0G Compute Network Fine Tuning Serving contract address, use default address if not provided.
+ *
+ * @returns broker instance.
+ *
+ * @throws An error if the broker cannot be initialized.
+ */
+declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string): Promise<ZGComputeNetworkBroker>;
+
+export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };

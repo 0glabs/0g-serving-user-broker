@@ -1,4 +1,4 @@
-import { ethers, ContractFactory, Interface, Contract } from 'ethers';
+import { ethers, ContractFactory, Interface, Contract, Wallet } from 'ethers';
 import CryptoJS from 'crypto-js';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
 import { exec } from 'child_process';
@@ -4535,5 +4535,44 @@ async function createLedgerBroker(signer, contractAddress = '') {
     }
 }
 
-export { FineTuningBroker, AccountProcessor as InferenceAccountProcessor, InferenceBroker, ModelProcessor$1 as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, Verifier as InferenceVerifier, LedgerBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker };
+class ZGComputeNetworkBroker {
+    ledger;
+    inference;
+    fineTuning;
+    constructor(ledger, inferenceBroker, fineTuningBroker) {
+        this.ledger = ledger;
+        this.inference = inferenceBroker;
+        this.fineTuning = fineTuningBroker;
+    }
+}
+/**
+ * createZGComputeNetworkBroker is used to initialize ZGComputeNetworkBroker
+ *
+ * @param signer - Signer from ethers.js.
+ * @param ledgerCA - 0G Compute Network Ledger Contact address, use default address if not provided.
+ * @param inferenceCA - 0G Compute Network Inference Serving contract address, use default address if not provided.
+ * @param fineTuningCA - 0G Compute Network Fine Tuning Serving contract address, use default address if not provided.
+ *
+ * @returns broker instance.
+ *
+ * @throws An error if the broker cannot be initialized.
+ */
+async function createZGComputeNetworkBroker(signer, ledgerCA = '', inferenceCA = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435', fineTuningCA = '') {
+    try {
+        const ledger = await createLedgerBroker(signer, ledgerCA);
+        // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
+        const inferenceBroker = await createInferenceBroker(signer, inferenceCA);
+        let fineTuningBroker;
+        if (signer instanceof Wallet) {
+            fineTuningBroker = await createFineTuningBroker(signer, fineTuningCA, ledger);
+        }
+        const broker = new ZGComputeNetworkBroker(ledger, inferenceBroker, fineTuningBroker);
+        return broker;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+
+export { FineTuningBroker, AccountProcessor as InferenceAccountProcessor, InferenceBroker, ModelProcessor$1 as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };
 //# sourceMappingURL=index.mjs.map

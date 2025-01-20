@@ -1,0 +1,31 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MODEL_HASH_MAP = exports.INDEXER_URL_TURBO = exports.INDEXER_URL_STANDARD = exports.ZG_RPC_ENDPOINT_TESTNET = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
+/**
+ * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
+ *
+ * Background:
+ * To ensure a consistent and unique encryption key can be generated from a user's Ethereum wallet,
+ * we utilize a fixed message combined with a signing mechanism.
+ *
+ * Purpose:
+ * - This string is provided to the Ethereum signing function to generate a digital signature based on the user's private key.
+ * - The produced signature is then hashed (using SHA-256) to create a consistent 256-bit encryption key from the same wallet.
+ * - This process offers a way to protect data without storing additional keys.
+ *
+ * Note:
+ * - The uniqueness and stability of this message are crucial; do not change it unless you fully understand the impact
+ *   on the key derivation and encryption process.
+ * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
+ */
+exports.MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
+exports.ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
+exports.INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
+exports.INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
+exports.MODEL_HASH_MAP = {
+    'distilbert-base-uncased': {
+        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7', // turbo
+        standard: '', // standard
+    },
+};
+//# sourceMappingURL=const.js.map

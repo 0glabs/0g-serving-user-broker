@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src.ts/common/settle-signer/index.ts"],"names":[],"mappings":"AAAA,cAAc,iBAAiB,CAAA;AAC/B,cAAc,WAAW,CAAA"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src.ts/sdk/common/settle-signer/index.ts"],"names":[],"mappings":"AAAA,cAAc,iBAAiB,CAAA;AAC/B,cAAc,WAAW,CAAA"}

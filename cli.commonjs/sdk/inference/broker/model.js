@@ -1,0 +1,27 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ModelProcessor = exports.VerifiabilityEnum = void 0;
+exports.isVerifiability = isVerifiability;
+const base_1 = require("./base");
+var VerifiabilityEnum;
+(function (VerifiabilityEnum) {
+    VerifiabilityEnum["OpML"] = "OpML";
+    VerifiabilityEnum["TeeML"] = "TeeML";
+    VerifiabilityEnum["ZKML"] = "ZKML";
+})(VerifiabilityEnum || (exports.VerifiabilityEnum = VerifiabilityEnum = {}));
+class ModelProcessor extends base_1.ZGServingUserBrokerBase {
+    async listService() {
+        try {
+            const services = await this.contract.listService();
+            return services;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+}
+exports.ModelProcessor = ModelProcessor;
+function isVerifiability(value) {
+    return Object.values(VerifiabilityEnum).includes(value);
+}
+//# sourceMappingURL=model.js.map

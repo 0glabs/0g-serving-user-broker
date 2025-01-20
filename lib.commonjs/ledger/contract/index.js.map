@@ -1,1 +1,1 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src.ts/ledger/contract/index.ts"],"names":[],"mappings":";;;AAAA,mDAAwB;AACxB,oEAAyC"}
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src.ts/sdk/ledger/contract/index.ts"],"names":[],"mappings":";;;AAAA,mDAAwB;AACxB,oEAAyC"}

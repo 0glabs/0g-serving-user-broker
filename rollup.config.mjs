@@ -2,11 +2,11 @@ import typescript from '@rollup/plugin-typescript'
 import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import dts from 'rollup-plugin-dts'
-import json from '@rollup/plugin-json';
+import json from '@rollup/plugin-json'
 
 export default [
     {
-        input: 'src.ts/index.ts',
+        input: 'src.ts/sdk/index.ts',
         output: {
             file: 'lib.esm/index.mjs',
             format: 'esm',
