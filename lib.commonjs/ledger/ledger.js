@@ -81,7 +81,7 @@ class LedgerProcessor {
     }
     async transferFund(to, serviceTypeStr, balance) {
         try {
-            const amount = this.a0giToNeuron(balance).toString();
+            const amount = balance.toString();
             await this.ledgerContract.transferFund(to, serviceTypeStr, amount);
         }
         catch (error) {

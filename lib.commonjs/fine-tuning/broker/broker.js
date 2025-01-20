@@ -5,12 +5,16 @@ exports.createFineTuningBroker = createFineTuningBroker;
 const contract_1 = require("../contract");
 const model_1 = require("./model");
 const service_1 = require("./service");
+const zg_storage_1 = require("../zg-storage/zg-storage");
+const provider_1 = require("../provider/provider");
 class FineTuningBroker {
     signer;
     fineTuningCA;
     ledger;
     modelProcessor;
     serviceProcessor;
+    zgClient;
+    serviceProvider;
     constructor(signer, fineTuningCA, ledger) {
         this.signer = signer;
         this.fineTuningCA = fineTuningCA;
@@ -25,8 +29,10 @@ class FineTuningBroker {
             throw error;
         }
         const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
-        this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger);
-        this.serviceProcessor = new service_1.ServiceProcessor(contract, this.ledger);
+        this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger, this.zgClient, this.serviceProvider);
+        this.serviceProcessor = new service_1.ServiceProcessor(contract, this.ledger, this.zgClient, this.serviceProvider);
+        this.serviceProvider = new provider_1.Provider(contract);
+        this.zgClient = new zg_storage_1.ZGStorage();
     }
     listService = async () => {
         try {
@@ -44,33 +50,33 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async () => {
+    uploadDataset = async (dataPath, isTurbo) => {
         try {
-            return await this.modelProcessor.uploadDataset();
+            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, isTurbo);
         }
         catch (error) {
             throw error;
         }
     };
-    createTask = async () => {
+    createTask = async (pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) => {
         try {
-            return await this.serviceProcessor.createTask();
+            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath);
         }
         catch (error) {
             throw error;
         }
     };
-    getTaskProgress = async () => {
+    getTaskProgress = async (providerAddress, serviceName) => {
         try {
-            return await this.serviceProcessor.getTaskProgress();
+            return await this.serviceProcessor.getTaskProgress(providerAddress, serviceName, await this.signer.getAddress());
         }
         catch (error) {
             throw error;
         }
     };
-    acknowledgeModel = async () => {
+    acknowledgeModel = async (providerAddress, serviceName, dataPath) => {
         try {
-            return await this.modelProcessor.acknowledgeModel();
+            return await this.modelProcessor.acknowledgeModel(providerAddress, serviceName, dataPath, await this.signer.getAddress());
         }
         catch (error) {
             throw error;

@@ -14,7 +14,7 @@ export declare class LedgerProcessor {
     deleteLedger(): Promise<void>;
     depositFund(balance: number): Promise<void>;
     refund(balance: number): Promise<void>;
-    transferFund(to: AddressLike, serviceTypeStr: 'inference' | 'fine-tuning', balance: number): Promise<void>;
+    transferFund(to: AddressLike, serviceTypeStr: 'inference' | 'fine-tuning', balance: bigint): Promise<void>;
     retrieveFund(providers: AddressLike[], serviceTypeStr: 'inference' | 'fine-tuning'): Promise<void>;
     private createSettleSignerKey;
     protected a0giToNeuron(value: number): bigint;

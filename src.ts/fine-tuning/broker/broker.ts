@@ -1,20 +1,24 @@
 import { FineTuningServingContract } from '../contract'
-import { JsonRpcSigner, Wallet } from 'ethers'
+import { Wallet } from 'ethers'
 import { ModelProcessor } from './model'
 import { ServiceProcessor } from './service'
 import { LedgerBroker } from '../../ledger'
+import { ZGStorage } from '../zg-storage/zg-storage'
+import { Provider } from '../provider/provider'
 
 export class FineTuningBroker {
-    private signer: JsonRpcSigner | Wallet
+    private signer: Wallet
     private fineTuningCA: string
     private ledger!: LedgerBroker
     private modelProcessor!: ModelProcessor
     private serviceProcessor!: ServiceProcessor
+    private zgClient!: ZGStorage
+    private serviceProvider!: Provider
 
     constructor(
-        signer: JsonRpcSigner | Wallet,
+        signer: Wallet,
         fineTuningCA: string,
-        ledger: LedgerBroker
+        ledger: LedgerBroker,
     ) {
         this.signer = signer
         this.fineTuningCA = fineTuningCA
@@ -34,8 +38,10 @@ export class FineTuningBroker {
             userAddress
         )
 
-        this.modelProcessor = new ModelProcessor(contract, this.ledger)
-        this.serviceProcessor = new ServiceProcessor(contract, this.ledger)
+        this.modelProcessor = new ModelProcessor(contract, this.ledger, this.zgClient, this.serviceProvider)
+        this.serviceProcessor = new ServiceProcessor(contract, this.ledger, this.zgClient, this.serviceProvider)
+        this.serviceProvider = new Provider(contract)
+        this.zgClient = new ZGStorage()
     }
 
     public listService = async () => {
@@ -54,33 +60,33 @@ export class FineTuningBroker {
         }
     }
 
-    public uploadDataset = async (): Promise<string> => {
+    public uploadDataset = async (dataPath: string, isTurbo: boolean): Promise<string> => {
         try {
-            return await this.modelProcessor.uploadDataset()
+            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, isTurbo)
         } catch (error) {
             throw error
         }
     }
 
-    public createTask = async (): Promise<void> => {
+    public createTask = async (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string): Promise<void> => {
         try {
-            return await this.serviceProcessor.createTask()
+            return await this.serviceProcessor.createTask(pretrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath)
         } catch (error) {
             throw error
         }
     }
 
-    public getTaskProgress = async (): Promise<string> => {
+    public getTaskProgress = async (providerAddress: string, serviceName: string): Promise<string> => {
         try {
-            return await this.serviceProcessor.getTaskProgress()
+            return await this.serviceProcessor.getTaskProgress(providerAddress, serviceName, await this.signer.getAddress())
         } catch (error) {
             throw error
         }
     }
 
-    public acknowledgeModel = async (): Promise<void> => {
+    public acknowledgeModel = async (providerAddress: string, serviceName: string, dataPath: string): Promise<void> => {
         try {
-            return await this.modelProcessor.acknowledgeModel()
+            return await this.modelProcessor.acknowledgeModel(providerAddress, serviceName, dataPath, await this.signer.getAddress())
         } catch (error) {
             throw error
         }
@@ -106,7 +112,7 @@ export class FineTuningBroker {
  * @throws An error if the broker cannot be initialized.
  */
 export async function createFineTuningBroker(
-    signer: JsonRpcSigner | Wallet,
+    signer: Wallet,
     contractAddress = '',
     ledger: LedgerBroker
 ): Promise<FineTuningBroker> {

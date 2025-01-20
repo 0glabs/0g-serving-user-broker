@@ -1196,7 +1196,7 @@ declare class LedgerProcessor {
     deleteLedger(): Promise<void>;
     depositFund(balance: number): Promise<void>;
     refund(balance: number): Promise<void>;
-    transferFund(to: AddressLike, serviceTypeStr: 'inference' | 'fine-tuning', balance: number): Promise<void>;
+    transferFund(to: AddressLike, serviceTypeStr: 'inference' | 'fine-tuning', balance: bigint): Promise<void>;
     retrieveFund(providers: AddressLike[], serviceTypeStr: 'inference' | 'fine-tuning'): Promise<void>;
     private createSettleSignerKey;
     protected a0giToNeuron(value: number): bigint;
@@ -1255,7 +1255,7 @@ declare class LedgerBroker {
      * @returns A promise that resolves with the result of the fund transfer operation.
      * @throws Will throw an error if the fund transfer operation fails.
      */
-    transferFund: (provider: AddressLike, serviceTypeStr: "inference" | "fine-tuning", amount: number) => Promise<void>;
+    transferFund: (provider: AddressLike, serviceTypeStr: "inference" | "fine-tuning", amount: bigint) => Promise<void>;
     /**
      * Retrieves funds from the ledger for the specified providers and service type.
      *
@@ -1291,14 +1291,16 @@ declare class FineTuningBroker {
     private ledger;
     private modelProcessor;
     private serviceProcessor;
-    constructor(signer: JsonRpcSigner | Wallet, fineTuningCA: string, ledger: LedgerBroker);
+    private zgClient;
+    private serviceProvider;
+    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
-    uploadDataset: () => Promise<string>;
-    createTask: () => Promise<void>;
-    getTaskProgress: () => Promise<string>;
-    acknowledgeModel: () => Promise<void>;
+    uploadDataset: (dataPath: string, isTurbo: boolean) => Promise<string>;
+    createTask: (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string) => Promise<void>;
+    getTaskProgress: (providerAddress: string, serviceName: string) => Promise<string>;
+    acknowledgeModel: (providerAddress: string, serviceName: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
 }
 /**
@@ -1311,26 +1313,6 @@ declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createFineTuningBroker(signer: JsonRpcSigner | Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
+declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
 
-declare class ZGComputeNetworkBroker {
-    ledger: LedgerBroker;
-    inference: InferenceBroker;
-    fineTuning: FineTuningBroker;
-    constructor(ledger: LedgerBroker, inferenceBroker: InferenceBroker, fineTuningBroker: FineTuningBroker);
-}
-/**
- * createZGComputeNetworkBroker is used to initialize ZGComputeNetworkBroker
- *
- * @param signer - Signer from ethers.js.
- * @param ledgerCA - 0G Compute Network Ledger Contact address, use default address if not provided.
- * @param inferenceCA - 0G Compute Network Inference Serving contract address, use default address if not provided.
- * @param fineTuningCA - 0G Compute Network Fine Tuning Serving contract address, use default address if not provided.
- *
- * @returns broker instance.
- *
- * @throws An error if the broker cannot be initialized.
- */
-declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string): Promise<ZGComputeNetworkBroker>;
-
-export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };
+export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker };

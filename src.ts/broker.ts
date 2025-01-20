@@ -1,4 +1,4 @@
-import { JsonRpcSigner, Wallet } from 'ethers'
+import { Wallet } from 'ethers'
 import { createLedgerBroker, LedgerBroker } from './ledger'
 import { createFineTuningBroker, FineTuningBroker } from './fine-tuning/broker'
 import {
@@ -35,7 +35,7 @@ export class ZGComputeNetworkBroker {
  * @throws An error if the broker cannot be initialized.
  */
 export async function createZGComputeNetworkBroker(
-    signer: JsonRpcSigner | Wallet,
+    signer: Wallet,
     ledgerCA = '',
     inferenceCA = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435',
     fineTuningCA = ''

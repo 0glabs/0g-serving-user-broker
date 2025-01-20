@@ -4,4 +4,5 @@ const tslib_1 = require("tslib");
 tslib_1.__exportStar(require("./base"), exports);
 tslib_1.__exportStar(require("./broker"), exports);
 tslib_1.__exportStar(require("./model"), exports);
+tslib_1.__exportStar(require("./service"), exports);
 //# sourceMappingURL=index.js.map

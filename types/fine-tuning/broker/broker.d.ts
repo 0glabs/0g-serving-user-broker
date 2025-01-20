@@ -1,4 +1,4 @@
-import { JsonRpcSigner, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 import { LedgerBroker } from '../../ledger';
 export declare class FineTuningBroker {
     private signer;
@@ -6,14 +6,16 @@ export declare class FineTuningBroker {
     private ledger;
     private modelProcessor;
     private serviceProcessor;
-    constructor(signer: JsonRpcSigner | Wallet, fineTuningCA: string, ledger: LedgerBroker);
+    private zgClient;
+    private serviceProvider;
+    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<import("../contract").ServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
-    uploadDataset: () => Promise<string>;
-    createTask: () => Promise<void>;
-    getTaskProgress: () => Promise<string>;
-    acknowledgeModel: () => Promise<void>;
+    uploadDataset: (dataPath: string, isTurbo: boolean) => Promise<string>;
+    createTask: (pretrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string) => Promise<void>;
+    getTaskProgress: (providerAddress: string, serviceName: string) => Promise<string>;
+    acknowledgeModel: (providerAddress: string, serviceName: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
 }
 /**
@@ -26,5 +28,5 @@ export declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createFineTuningBroker(signer: JsonRpcSigner | Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
+export declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
 //# sourceMappingURL=broker.d.ts.map

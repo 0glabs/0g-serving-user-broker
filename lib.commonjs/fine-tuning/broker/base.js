@@ -4,9 +4,13 @@ exports.BrokerBase = void 0;
 class BrokerBase {
     contract;
     ledger;
-    constructor(contract, ledger) {
+    zgClient;
+    servingProvider;
+    constructor(contract, ledger, zgClient, servingProvider) {
         this.contract = contract;
         this.ledger = ledger;
+        this.zgClient = zgClient;
+        this.servingProvider = servingProvider;
     }
 }
 exports.BrokerBase = BrokerBase;
