@@ -6,12 +6,12 @@ import { INDEXER_URL_STANDARD, INDEXER_URL_TURBO, ZG_RPC_ENDPOINT_TESTNET } from
 const execAsync = promisify(exec);
 
 export class ZGStorage {
-    getInderUrl(isTurbo: boolean): string {
+    getIndexUrl(isTurbo: boolean): string {
         return isTurbo ? INDEXER_URL_TURBO : INDEXER_URL_STANDARD;
     }
 
     async upload(privateKey: string, dataPath: string, isTurbo: boolean): Promise<string> {
-        const indexerUrl = this.getInderUrl(isTurbo);
+        const indexerUrl = this.getIndexUrl(isTurbo);
 
         // Construct the command
         const command = `./0g-storage-client upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;

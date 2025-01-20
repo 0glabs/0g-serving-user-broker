@@ -7,11 +7,11 @@ const const_1 = require("../const");
 // Promisify exec for async/await support
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 class ZGStorage {
-    getInderUrl(isTurbo) {
+    getIndexUrl(isTurbo) {
         return isTurbo ? const_1.INDEXER_URL_TURBO : const_1.INDEXER_URL_STANDARD;
     }
     async upload(privateKey, dataPath, isTurbo) {
-        const indexerUrl = this.getInderUrl(isTurbo);
+        const indexerUrl = this.getIndexUrl(isTurbo);
         // Construct the command
         const command = `./0g-storage-client upload --url ${const_1.ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${indexerUrl} --file ${dataPath}`;
         // Execute the command

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZGComputeNetworkBroker = void 0;
 exports.createZGComputeNetworkBroker = createZGComputeNetworkBroker;
+const ethers_1 = require("ethers");
 const ledger_1 = require("./ledger");
 const broker_1 = require("./fine-tuning/broker");
 const broker_2 = require("./inference/broker/broker");
@@ -33,7 +34,10 @@ async function createZGComputeNetworkBroker(signer, ledgerCA = '', inferenceCA =
         const ledger = await (0, ledger_1.createLedgerBroker)(signer, ledgerCA);
         // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
         const inferenceBroker = await (0, broker_2.createInferenceBroker)(signer, inferenceCA);
-        const fineTuningBroker = await (0, broker_1.createFineTuningBroker)(signer, fineTuningCA, ledger);
+        let fineTuningBroker;
+        if (signer instanceof ethers_1.Wallet) {
+            fineTuningBroker = await (0, broker_1.createFineTuningBroker)(signer, fineTuningCA, ledger);
+        }
         const broker = new ZGComputeNetworkBroker(ledger, inferenceBroker, fineTuningBroker);
         return broker;
     }

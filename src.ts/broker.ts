@@ -1,4 +1,4 @@
-import { Wallet } from 'ethers'
+import { JsonRpcSigner, Wallet } from 'ethers'
 import { createLedgerBroker, LedgerBroker } from './ledger'
 import { createFineTuningBroker, FineTuningBroker } from './fine-tuning/broker'
 import {
@@ -9,12 +9,12 @@ import {
 export class ZGComputeNetworkBroker {
     public ledger!: LedgerBroker
     public inference!: InferenceBroker
-    public fineTuning!: FineTuningBroker
+    public fineTuning?: FineTuningBroker
 
     constructor(
         ledger: LedgerBroker,
         inferenceBroker: InferenceBroker,
-        fineTuningBroker: FineTuningBroker
+        fineTuningBroker?: FineTuningBroker
     ) {
         this.ledger = ledger
         this.inference = inferenceBroker
@@ -35,7 +35,7 @@ export class ZGComputeNetworkBroker {
  * @throws An error if the broker cannot be initialized.
  */
 export async function createZGComputeNetworkBroker(
-    signer: Wallet,
+    signer: JsonRpcSigner | Wallet,
     ledgerCA = '',
     inferenceCA = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435',
     fineTuningCA = ''
@@ -44,11 +44,15 @@ export async function createZGComputeNetworkBroker(
         const ledger = await createLedgerBroker(signer, ledgerCA)
         // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
         const inferenceBroker = await createInferenceBroker(signer, inferenceCA)
-        const fineTuningBroker = await createFineTuningBroker(
-            signer,
-            fineTuningCA,
-            ledger
-        )
+
+        let fineTuningBroker: FineTuningBroker | undefined
+        if (signer instanceof Wallet) {
+            fineTuningBroker = await createFineTuningBroker(
+                signer,
+                fineTuningCA,
+                ledger
+            )
+        }
 
         const broker = new ZGComputeNetworkBroker(
             ledger,
