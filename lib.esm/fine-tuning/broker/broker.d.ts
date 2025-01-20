@@ -6,15 +6,15 @@ export declare class FineTuningBroker {
     private ledger;
     private modelProcessor;
     private serviceProcessor;
-    private zgClient;
     private serviceProvider;
     constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<import("..").FineTuningServiceStructOutput[]>;
     acknowledgeProviderSigner: () => Promise<void>;
+    listModel: () => string[];
     uploadDataset: (dataPath: string) => Promise<string>;
-    createTask: (preTrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string) => Promise<void>;
-    getTaskProgress: (providerAddress: string, serviceName: string) => Promise<string>;
+    createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
+    getLog: (providerAddress: string, serviceName: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
 }

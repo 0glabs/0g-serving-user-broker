@@ -1,8 +1,14 @@
+import { MODEL_HASH_MAP } from '../const'
+import { download, upload } from '../zg-storage'
 import { BrokerBase } from './base'
 
 export class ModelProcessor extends BrokerBase {
+    listModel(): string[] {
+        return Object.keys(MODEL_HASH_MAP)
+    }
+
     async uploadDataset(privateKey: string, dataPath: string): Promise<string> {
-        return this.zgClient.upload(privateKey, dataPath)
+        return upload(privateKey, dataPath)
     }
 
     async acknowledgeModel(
@@ -17,10 +23,7 @@ export class ModelProcessor extends BrokerBase {
                 throw new Error('No deliverable found')
             }
 
-            await this.zgClient.download(
-                dataPath,
-                latestDeliverable.modelRootHash
-            )
+            await download(dataPath, latestDeliverable.modelRootHash)
 
             await this.contract.acknowledgeDeliverable(
                 providerAddress,

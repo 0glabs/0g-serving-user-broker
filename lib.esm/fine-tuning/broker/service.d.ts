@@ -1,16 +1,10 @@
 import { ServiceStructOutput } from '../contract';
 import { BrokerBase } from './base';
-export interface CreateTaskArgs {
-    preTrainedModelName: string;
-    datasetRootHash: string;
-    isTurbo: boolean;
-    providerAddress: string;
-    dataSize: number;
-}
 export declare class ServiceProcessor extends BrokerBase {
     listService(): Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner(): Promise<void>;
-    createTask(preTrainedModelName: string, dataSize: number, rootHash: string, isTurbo: boolean, providerAddress: string, serviceName: string, trainingPath: string): Promise<void>;
-    getTaskProgress(providerAddress: string, serviceName: string, customerAddress: string): Promise<string>;
+    createTask(providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string): Promise<string>;
+    getLog(providerAddress: string, serviceName: string, userAddress: string, taskID?: string): Promise<string>;
+    private verifyTrainingParams;
 }
 //# sourceMappingURL=service.d.ts.map

@@ -6,7 +6,6 @@ const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 class ServiceProcessor extends base_1.BrokerBase {
-    // 4. list services
     async listService() {
         try {
             const services = await this.contract.listService();
@@ -28,31 +27,48 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(preTrainedModelName, dataSize, rootHash, isTurbo, providerAddress, serviceName, trainingPath) {
-        const service = await this.contract.getService(providerAddress, serviceName);
-        const fee = service.pricePerToken * BigInt(dataSize);
-        await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
-        // Read the JSON file
-        const trainingPathContent = await fs.readFile(trainingPath, 'utf-8');
-        // Parse it to ensure it's valid JSON, then stringify it again if needed
+    async createTask(providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath) {
         try {
-            JSON.parse(trainingPathContent); // Validate JSON
+            const service = await this.contract.getService(providerAddress, serviceName);
+            const fee = service.pricePerToken * BigInt(dataSize);
+            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
+            const trainingParams = await fs.readFile(trainingPath, 'utf-8');
+            this.verifyTrainingParams(trainingParams);
+            const task = {
+                userAddress: this.contract.getUserAddress(),
+                serviceName,
+                datasetHash,
+                trainingParams,
+                preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].hash,
+                fee: fee.toString(),
+                nonce: '0',
+                signature: '',
+            };
+            return await this.servingProvider.createTask(providerAddress, task);
+        }
+        catch (error) {
+            throw new Error(`Failed to create task`);
+        }
+    }
+    // 8. [`call provider`] call provider task progress api to get task progress
+    async getLog(providerAddress, serviceName, userAddress, taskID) {
+        if (!taskID) {
+            const tasks = await this.servingProvider.listTask(providerAddress, serviceName, userAddress, true);
+            taskID = tasks[0].id;
+            if (tasks.length === 0 || !taskID) {
+                throw new Error('No task found');
+            }
+        }
+        return this.servingProvider.getLog(providerAddress, serviceName, userAddress, taskID);
+    }
+    verifyTrainingParams(trainingParams) {
+        try {
+            JSON.parse(trainingParams);
         }
         catch (err) {
-            if (err instanceof Error) {
-                throw new Error(`Invalid JSON in trainingPath file: ${err.message}`);
-            }
-            else {
-                throw new Error('Invalid JSON in trainingPath file: An unknown error occurred');
-            }
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+            throw new Error(`Invalid JSON in trainingPath file: ${errorMessage}`);
         }
-        // Get model hash
-        const modelHash = const_1.MODEL_HASH_MAP[preTrainedModelName][isTurbo ? 'turbo' : 'standard'];
-        await this.servingProvider.createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee.toString(), trainingPathContent);
-    }
-    // 8. [`call provider url/v1/task-progress`] call provider task progress api to get task progress
-    async getTaskProgress(providerAddress, serviceName, customerAddress) {
-        return await this.servingProvider.getTaskProgress(providerAddress, serviceName, customerAddress);
     }
 }
 exports.ServiceProcessor = ServiceProcessor;

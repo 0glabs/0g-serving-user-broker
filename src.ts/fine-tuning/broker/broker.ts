@@ -3,7 +3,6 @@ import { Wallet } from 'ethers'
 import { ModelProcessor } from './model'
 import { ServiceProcessor } from './service'
 import { LedgerBroker } from '../../ledger'
-import { ZGStorage } from '../zg-storage/zg-storage'
 import { Provider } from '../provider/provider'
 
 export class FineTuningBroker {
@@ -12,7 +11,6 @@ export class FineTuningBroker {
     private ledger!: LedgerBroker
     private modelProcessor!: ModelProcessor
     private serviceProcessor!: ServiceProcessor
-    private zgClient!: ZGStorage
     private serviceProvider!: Provider
 
     constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker) {
@@ -37,17 +35,14 @@ export class FineTuningBroker {
         this.modelProcessor = new ModelProcessor(
             contract,
             this.ledger,
-            this.zgClient,
             this.serviceProvider
         )
         this.serviceProcessor = new ServiceProcessor(
             contract,
             this.ledger,
-            this.zgClient,
             this.serviceProvider
         )
         this.serviceProvider = new Provider(contract)
-        this.zgClient = new ZGStorage()
     }
 
     public listService = async () => {
@@ -66,6 +61,14 @@ export class FineTuningBroker {
         }
     }
 
+    public listModel = () => {
+        try {
+            return this.modelProcessor.listModel()
+        } catch (error) {
+            throw error
+        }
+    }
+
     public uploadDataset = async (dataPath: string): Promise<string> => {
         try {
             return await this.modelProcessor.uploadDataset(
@@ -78,22 +81,20 @@ export class FineTuningBroker {
     }
 
     public createTask = async (
-        preTrainedModelName: string,
-        dataSize: number,
-        rootHash: string,
-        isTurbo: boolean,
         providerAddress: string,
         serviceName: string,
+        preTrainedModelName: string,
+        dataSize: number,
+        datasetHash: string,
         trainingPath: string
-    ): Promise<void> => {
+    ): Promise<string> => {
         try {
             return await this.serviceProcessor.createTask(
-                preTrainedModelName,
-                dataSize,
-                rootHash,
-                isTurbo,
                 providerAddress,
                 serviceName,
+                preTrainedModelName,
+                dataSize,
+                datasetHash,
                 trainingPath
             )
         } catch (error) {
@@ -101,12 +102,12 @@ export class FineTuningBroker {
         }
     }
 
-    public getTaskProgress = async (
+    public getLog = async (
         providerAddress: string,
         serviceName: string
     ): Promise<string> => {
         try {
-            return await this.serviceProcessor.getTaskProgress(
+            return await this.serviceProcessor.getLog(
                 providerAddress,
                 serviceName,
                 await this.signer.getAddress()

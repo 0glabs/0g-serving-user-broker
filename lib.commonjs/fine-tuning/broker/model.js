@@ -1,10 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelProcessor = void 0;
+const const_1 = require("../const");
+const zg_storage_1 = require("../zg-storage");
 const base_1 = require("./base");
 class ModelProcessor extends base_1.BrokerBase {
+    listModel() {
+        return Object.keys(const_1.MODEL_HASH_MAP);
+    }
     async uploadDataset(privateKey, dataPath) {
-        return this.zgClient.upload(privateKey, dataPath);
+        return (0, zg_storage_1.upload)(privateKey, dataPath);
     }
     async acknowledgeModel(providerAddress, dataPath) {
         try {
@@ -13,7 +18,7 @@ class ModelProcessor extends base_1.BrokerBase {
             if (!latestDeliverable) {
                 throw new Error('No deliverable found');
             }
-            await this.zgClient.download(dataPath, latestDeliverable.modelRootHash);
+            await (0, zg_storage_1.download)(dataPath, latestDeliverable.modelRootHash);
             await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
         }
         catch (error) {

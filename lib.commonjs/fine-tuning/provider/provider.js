@@ -1,75 +1,88 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Provider = void 0;
-const tslib_1 = require("tslib");
-const axios_1 = tslib_1.__importDefault(require("axios"));
 class Provider {
     contract;
     constructor(contract) {
         this.contract = contract;
     }
-    async createTask(modelHash, rootHash, isTurbo, providerAddress, serviceName, fee, trainingParams) {
-        // Fetch the provider URL
-        const url = await this.getProviderUrl(providerAddress, serviceName);
-        // Construct the API endpoint
-        const endpoint = `${url}/v1/task`;
-        // Prepare the request payload
-        const payload = {
-            customerAddress: providerAddress,
-            preTrainedModelHash: modelHash,
-            datasetHash: rootHash,
-            trainingParams,
-            isTurbo,
-            fee,
-            nonce: "nonce-value",
-            signature: "signature-value",
-        };
-        // Make the POST request
-        const response = await axios_1.default.post(endpoint, payload, {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-        if (response.status === 200) {
-            console.log("Task created successfully");
+    async fetchJSON(endpoint, options) {
+        try {
+            const response = await fetch(endpoint, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
         }
-        else {
-            console.error("Unexpected response status:", response.status);
-            throw new Error(`Failed to create task: ${response.statusText}`);
+        catch (error) {
+            throw error;
+        }
+    }
+    async fetchText(endpoint, options) {
+        try {
+            const response = await fetch(endpoint, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const buffer = await response.arrayBuffer();
+            return Buffer.from(buffer).toString('utf-8');
+        }
+        catch (error) {
+            throw error;
         }
     }
     async getProviderUrl(providerAddress, serviceName) {
-        const service = await this.contract.getService(providerAddress, serviceName);
-        return service.url;
-    }
-    async getTaskProgress(providerAddress, serviceName, customerAddress) {
-        const url = await this.getProviderUrl(providerAddress, serviceName);
-        // Construct the API endpoint
-        const endpoint = `${url}/v1/latest-task-progress/${encodeURIComponent(customerAddress)}`;
-        // Make the GET request to fetch the file
-        const response = await axios_1.default.get(endpoint, { responseType: "arraybuffer" });
-        // Check if the response contains the file data
-        if (response.status === 200) {
-            // Convert the buffer to a string assuming UTF-8 encoding
-            const fileContents = Buffer.from(response.data).toString("utf-8");
-            // Return the file contents
-            return fileContents;
+        try {
+            const service = await this.contract.getService(providerAddress, serviceName);
+            return service.url;
         }
-        throw new Error("Invalid response status or format");
-    }
-    async getLatestTask(providerAddress, serviceName, customerAddress) {
-        const url = await this.getProviderUrl(providerAddress, serviceName);
-        // Construct the API endpoint with customerAddress as a path parameter
-        const endpoint = `${url}/v1/latest-task/${encodeURIComponent(customerAddress)}`;
-        // Make the GET request to fetch the file
-        const response = await axios_1.default.get(endpoint, { responseType: "arraybuffer" });
-        // Validate and map the response to the Task interface
-        const task = response.data;
-        // Optional: Add validation logic if needed
-        if (!task.id) {
-            throw new Error("Invalid task data");
+        catch (error) {
+            throw error;
         }
-        return task;
+    }
+    async createTask(providerAddress, task) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, task.serviceName);
+            const endpoint = `${url}/v1/task`;
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(task),
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to create task: ${response.statusText}`);
+            }
+            const responseData = await response.json();
+            return responseData.id;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async listTask(providerAddress, serviceName, userAddress, latest = false) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName);
+            let endpoint = `${url}/v1/user/${encodeURIComponent(userAddress)}/task`;
+            if (latest) {
+                endpoint += '?latest=true';
+            }
+            return this.fetchJSON(endpoint, { method: 'GET' });
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getLog(providerAddress, serviceName, userAddress, taskID) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/log`;
+            return this.fetchText(endpoint, { method: 'GET' });
+        }
+        catch (error) {
+            throw error;
+        }
     }
 }
 exports.Provider = Provider;
