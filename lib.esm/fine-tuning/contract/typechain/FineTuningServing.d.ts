@@ -139,7 +139,7 @@ export type VerifierInputStructOutput = [
     user: string;
 };
 export interface FineTuningServingInterface extends Interface {
-    getFunction(nameOrSignature: "accountExists" | "acknowledgeDeliverable" | "acknowledgeProviderSigner" | "addAccount" | "addDeliverable" | "addOrUpdateService" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateLockTime"): FunctionFragment;
+    getFunction(nameOrSignature: "accountExists" | "acknowledgeDeliverable" | "acknowledgeProviderSigner" | "addAccount" | "addDeliverable" | "addOrUpdateService" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getDeliverable" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateLockTime"): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "acknowledgeDeliverable", values: [AddressLike, BigNumberish]): string;
@@ -152,6 +152,7 @@ export interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
+    encodeFunctionData(functionFragment: "getDeliverable", values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: "getService", values: [AddressLike, string]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
@@ -176,6 +177,7 @@ export interface FineTuningServingInterface extends Interface {
     decodeFunctionResult(functionFragment: "getAccount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAllAccounts", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAllServices", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getDeliverable", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "initialized", data: BytesLike): Result;
@@ -369,6 +371,13 @@ export interface FineTuningServing extends BaseContract {
     ], "view">;
     getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], "view">;
     getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], "view">;
+    getDeliverable: TypedContractMethod<[
+        user: AddressLike,
+        provider: AddressLike,
+        index: BigNumberish
+    ], [
+        DeliverableStructOutput
+    ], "view">;
     getService: TypedContractMethod<[
         provider: AddressLike,
         name: string
@@ -485,6 +494,13 @@ export interface FineTuningServing extends BaseContract {
     ], "view">;
     getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod<[], [AccountStructOutput[]], "view">;
     getFunction(nameOrSignature: "getAllServices"): TypedContractMethod<[], [ServiceStructOutput[]], "view">;
+    getFunction(nameOrSignature: "getDeliverable"): TypedContractMethod<[
+        user: AddressLike,
+        provider: AddressLike,
+        index: BigNumberish
+    ], [
+        DeliverableStructOutput
+    ], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod<[
         provider: AddressLike,
         name: string

@@ -76,6 +76,15 @@ class FineTuningServingContract {
             throw error;
         }
     }
+    async getDeliverable(providerAddress, index) {
+        try {
+            const user = this.getUserAddress();
+            return this.serving.getDeliverable(user, providerAddress, index);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     getUserAddress() {
         return this._userAddress;
     }

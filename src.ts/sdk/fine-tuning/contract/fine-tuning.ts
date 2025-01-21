@@ -1,6 +1,6 @@
 import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers'
 import { FineTuningServing, FineTuningServing__factory } from './typechain'
-import { ServiceStructOutput } from './typechain/FineTuningServing'
+import { ServiceStructOutput, DeliverableStructOutput } from './typechain/FineTuningServing'
 
 export class FineTuningServingContract {
     public serving: FineTuningServing
@@ -101,6 +101,18 @@ export class FineTuningServingContract {
     ): Promise<ServiceStructOutput> {
         try {
             return this.serving.getService(providerAddress, svcName)
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getDeliverable(
+        providerAddress: AddressLike,
+        index: BigNumberish
+    ): Promise<DeliverableStructOutput> {
+        try {
+            const user = this.getUserAddress()
+            return this.serving.getDeliverable(user, providerAddress, index)
         } catch (error) {
             throw error
         }
