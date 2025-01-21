@@ -13,6 +13,7 @@ export declare class FineTuningServingContract {
     acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: AddressLike): Promise<void>;
     acknowledgeDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<void>;
     getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
+    getDeliverable(providerAddress: string, index: BigNumberish): Promise<import("./typechain/FineTuningServing").DeliverableStructOutput>;
     getUserAddress(): string;
 }
 //# sourceMappingURL=fine-tuning.d.ts.map

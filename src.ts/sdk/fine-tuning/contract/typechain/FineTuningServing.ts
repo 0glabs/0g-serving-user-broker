@@ -178,6 +178,7 @@ export interface FineTuningServingInterface extends Interface {
       | "getAccount"
       | "getAllAccounts"
       | "getAllServices"
+      | "getDeliverable"
       | "getService"
       | "initialize"
       | "initialized"
@@ -245,6 +246,10 @@ export interface FineTuningServingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getAllServices",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDeliverable",
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getService",
@@ -329,6 +334,10 @@ export interface FineTuningServingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getAllServices",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDeliverable",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
@@ -588,6 +597,12 @@ export interface FineTuningServing extends BaseContract {
 
   getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], "view">;
 
+  getDeliverable: TypedContractMethod<
+    [user: AddressLike, provider: AddressLike, index: BigNumberish],
+    [DeliverableStructOutput],
+    "view"
+  >;
+
   getService: TypedContractMethod<
     [provider: AddressLike, name: string],
     [ServiceStructOutput],
@@ -728,6 +743,13 @@ export interface FineTuningServing extends BaseContract {
   getFunction(
     nameOrSignature: "getAllServices"
   ): TypedContractMethod<[], [ServiceStructOutput[]], "view">;
+  getFunction(
+    nameOrSignature: "getDeliverable"
+  ): TypedContractMethod<
+    [user: AddressLike, provider: AddressLike, index: BigNumberish],
+    [DeliverableStructOutput],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "getService"
   ): TypedContractMethod<

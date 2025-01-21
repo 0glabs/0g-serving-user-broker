@@ -106,6 +106,15 @@ export class FineTuningServingContract {
         }
     }
 
+    async getDeliverable(providerAddress: string, index: BigNumberish) {
+        try {
+            const user = this.getUserAddress()
+            return this.serving.getDeliverable(user, providerAddress, index)
+        } catch (error) {
+            throw error
+        }
+    }
+
     getUserAddress(): string {
         return this._userAddress
     }
