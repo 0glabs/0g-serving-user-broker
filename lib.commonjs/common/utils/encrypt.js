@@ -7,6 +7,7 @@ exports.aesGCMDecrypt = aesGCMDecrypt;
 const tslib_1 = require("tslib");
 const ethers_1 = require("ethers");
 const const_1 = require("./const");
+const crypto_js_1 = tslib_1.__importDefault(require("crypto-js"));
 const eciesjs_1 = require("eciesjs");
 const crypto = tslib_1.__importStar(require("crypto"));
 const ivLength = 12;
@@ -19,13 +20,13 @@ async function deriveEncryptionKey(signer) {
 }
 async function encryptData(signer, data) {
     const key = await deriveEncryptionKey(signer);
-    const encrypted = CryptoJS.AES.encrypt(data, key).toString();
+    const encrypted = crypto_js_1.default.AES.encrypt(data, key).toString();
     return encrypted;
 }
 async function decryptData(signer, encryptedData) {
     const key = await deriveEncryptionKey(signer);
-    const bytes = CryptoJS.AES.decrypt(encryptedData, key);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    const bytes = crypto_js_1.default.AES.decrypt(encryptedData, key);
+    const decrypted = bytes.toString(crypto_js_1.default.enc.Utf8);
     return decrypted;
 }
 async function eciesDecrypt(signer, encryptedData) {

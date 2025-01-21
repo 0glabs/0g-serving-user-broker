@@ -1,5 +1,6 @@
 import { JsonRpcSigner, Wallet, ethers } from 'ethers'
 import { MESSAGE_FOR_ENCRYPTION_KEY } from './const'
+import CryptoJS from 'crypto-js'
 import { PrivateKey, decrypt } from 'eciesjs'
 import * as crypto from 'crypto'
 

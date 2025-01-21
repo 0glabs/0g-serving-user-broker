@@ -1,4 +1,5 @@
 import { ethers, ContractFactory, Interface, Contract, Wallet } from 'ethers';
+import CryptoJS from 'crypto-js';
 import require$$1 from 'node:crypto';
 import 'crypto';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
