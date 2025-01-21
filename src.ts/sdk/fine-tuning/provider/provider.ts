@@ -15,6 +15,12 @@ export interface Task {
     readonly progress?: string
     readonly deliverIndex?: string
 }
+
+export interface QuoteResponse {
+    quote: string
+    provider_signer: string
+}
+
 export class Provider {
     private contract: FineTuningServingContract
 
@@ -68,13 +74,31 @@ export class Provider {
         }
     }
 
+    async getQuote(
+        providerAddress: string,
+        serviceName: string
+    ): Promise<QuoteResponse> {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName)
+            const endpoint = `${url}/v1/quote`
+
+            const quoteString = await this.fetchText(endpoint, {
+                method: 'GET',
+            })
+            const ret = JSON.parse(quoteString)
+            return ret
+        } catch (error) {
+            throw error
+        }
+    }
+
     async createTask(providerAddress: string, task: Task): Promise<string> {
         try {
             const url = await this.getProviderUrl(
                 providerAddress,
                 task.serviceName
             )
-            const endpoint = `${url}/v1/task`
+            const endpoint = `${url}/v1/user/${this.contract.getUserAddress()}/task`
 
             const response = await fetch(endpoint, {
                 method: 'POST',

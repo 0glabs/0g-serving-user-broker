@@ -9,7 +9,7 @@ class ModelProcessor extends base_1.BrokerBase {
         return Object.keys(const_1.MODEL_HASH_MAP);
     }
     async uploadDataset(privateKey, dataPath) {
-        return (0, zg_storage_1.upload)(privateKey, dataPath);
+        (0, zg_storage_1.upload)(privateKey, dataPath);
     }
     async acknowledgeModel(providerAddress, dataPath) {
         try {

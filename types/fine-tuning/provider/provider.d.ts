@@ -14,12 +14,17 @@ export interface Task {
     readonly progress?: string;
     readonly deliverIndex?: string;
 }
+export interface QuoteResponse {
+    quote: string;
+    provider_signer: string;
+}
 export declare class Provider {
     private contract;
     constructor(contract: FineTuningServingContract);
     private fetchJSON;
     private fetchText;
     getProviderUrl(providerAddress: string, serviceName: string): Promise<string>;
+    getQuote(providerAddress: string, serviceName: string): Promise<QuoteResponse>;
     createTask(providerAddress: string, task: Task): Promise<string>;
     listTask(providerAddress: string, serviceName: string, userAddress: string, latest?: boolean): Promise<Task[]>;
     getLog(providerAddress: string, serviceName: string, userAddress: string, taskID: string): Promise<string>;

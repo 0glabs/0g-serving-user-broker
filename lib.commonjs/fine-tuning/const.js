@@ -24,8 +24,13 @@ exports.INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
 exports.INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 exports.MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
-        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7', // turbo
-        standard: '', // standard
+        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
+        standard: '',
+    },
+    // TODO: remove
+    'mock-model': {
+        turbo: '0xf463fe8c26e7dbca20716eb3c81ac1f3ea23a6c5dbe002bf46507db403c71578',
+        standard: '',
     },
 };
 //# sourceMappingURL=const.js.map

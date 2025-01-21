@@ -3,48 +3,106 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.upload = upload;
 exports.download = download;
 const tslib_1 = require("tslib");
-const child_process_1 = require("child_process");
-const util_1 = require("util");
 const const_1 = require("../const");
+const child_process_1 = require("child_process");
 const path_1 = tslib_1.__importDefault(require("path"));
-const execAsync = (0, util_1.promisify)(child_process_1.exec);
+const fs = tslib_1.__importStar(require("fs/promises"));
 async function upload(privateKey, dataPath) {
     try {
-        const command = path_1.default.join(__dirname, '..', 'binary', '0g-storage-client');
-        const fullCommand = `${command} upload --url ${const_1.ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${const_1.INDEXER_URL_STANDARD} --file ${dataPath}`;
-        const { stdout, stderr } = await execAsync(fullCommand);
-        if (stderr) {
-            throw new Error(`Error executing command: ${stderr}`);
-        }
-        const root = extractRootFromOutput(stdout);
-        if (!root) {
-            throw new Error(`Failed to extract root from output: ${stdout}`);
-        }
-        return root;
+        const fileSize = await getFileContentSize(dataPath);
+        return new Promise((resolve, reject) => {
+            const command = path_1.default.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
+            const args = [
+                'upload',
+                '--url',
+                const_1.ZG_RPC_ENDPOINT_TESTNET,
+                '--key',
+                privateKey,
+                '--indexer',
+                const_1.INDEXER_URL_TURBO,
+                '--file',
+                dataPath,
+            ];
+            const process = (0, child_process_1.spawn)(command, args);
+            process.stdout.on('data', (data) => {
+                console.log(`${data}`);
+            });
+            process.stderr.on('data', (data) => {
+                console.error(`${data}`);
+            });
+            process.on('close', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`Process exited with code ${code}`));
+                }
+                else {
+                    console.log(`File size: ${fileSize} bytes`);
+                    resolve();
+                }
+            });
+            process.on('error', (err) => {
+                reject(err);
+            });
+        });
     }
-    catch (error) {
-        throw error;
+    catch (err) {
+        console.error(err);
+        throw err;
     }
 }
 async function download(dataPath, dataRoot) {
-    try {
+    return new Promise((resolve, reject) => {
         const command = path_1.default.join(__dirname, '..', 'binary', '0g-storage-client');
-        const fullCommand = `${command} download --file ${dataPath} --indexer ${const_1.INDEXER_URL_STANDARD} --root ${dataRoot}`;
-        const { stdout, stderr } = await execAsync(fullCommand);
-        if (stderr) {
-            throw new Error(`Error executing download command: ${stderr}`);
-        }
-        if (!stdout.trim().endsWith('Succeeded to validate the downloaded file')) {
-            throw new Error(`Failed to download the file: ${stdout}`);
-        }
-    }
-    catch (error) {
-        throw error;
-    }
+        const args = [
+            'download',
+            '--file',
+            dataPath,
+            '--indexer',
+            const_1.INDEXER_URL_TURBO,
+            '--root',
+            dataRoot,
+        ];
+        const process = (0, child_process_1.spawn)(command, args);
+        let stdoutData = '';
+        let stderrData = '';
+        process.stdout.on('data', (data) => {
+            const output = data.toString();
+            stdoutData += output;
+            console.log(`stdout: ${output}`);
+        });
+        process.stderr.on('data', (data) => {
+            const errorOutput = data.toString();
+            stderrData += errorOutput;
+            console.error(`stderr: ${errorOutput}`);
+        });
+        process.on('close', (code) => {
+            if (code !== 0) {
+                return reject(new Error(`Process exited with code ${code}`));
+            }
+            if (!stdoutData
+                .trim()
+                .endsWith('Succeeded to validate the downloaded file')) {
+                return reject(new Error(`Failed to download the file: ${stdoutData}`));
+            }
+            resolve();
+        });
+        process.on('error', (err) => {
+            reject(err);
+        });
+    });
 }
-function extractRootFromOutput(output) {
-    const regex = /root = ([a-fA-F0-9x,]+)/;
-    const match = output.match(regex);
-    return match ? match[1] : null;
+async function getFileContentSize(filePath) {
+    try {
+        const fileHandle = await fs.open(filePath, 'r');
+        try {
+            const stats = await fileHandle.stat();
+            return stats.size;
+        }
+        finally {
+            await fileHandle.close();
+        }
+    }
+    catch (err) {
+        throw new Error(`Error processing file: ${err instanceof Error ? err.message : String(err)}`);
+    }
 }
 //# sourceMappingURL=zg-storage.js.map

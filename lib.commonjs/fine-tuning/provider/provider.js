@@ -40,10 +40,24 @@ class Provider {
             throw error;
         }
     }
+    async getQuote(providerAddress, serviceName) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const endpoint = `${url}/v1/quote`;
+            const quoteString = await this.fetchText(endpoint, {
+                method: 'GET',
+            });
+            const ret = JSON.parse(quoteString);
+            return ret;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async createTask(providerAddress, task) {
         try {
             const url = await this.getProviderUrl(providerAddress, task.serviceName);
-            const endpoint = `${url}/v1/task`;
+            const endpoint = `${url}/v1/user/${this.contract.getUserAddress()}/task`;
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {

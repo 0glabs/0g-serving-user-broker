@@ -3,8 +3,7 @@ import CryptoJS from 'crypto-js';
 import require$$1 from 'node:crypto';
 import 'crypto';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import path from 'path';
 import * as fs from 'fs/promises';
 
@@ -9964,53 +9963,114 @@ class FineTuningServingContract {
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
-const INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
+const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
-        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7', // turbo
-        standard: '', // standard
+        turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
+        standard: '',
+    },
+    // TODO: remove
+    'mock-model': {
+        turbo: '0xf463fe8c26e7dbca20716eb3c81ac1f3ea23a6c5dbe002bf46507db403c71578',
+        standard: '',
     },
 };
 
-const execAsync = promisify(exec);
 async function upload(privateKey, dataPath) {
     try {
-        const command = path.join(__dirname, '..', 'binary', '0g-storage-client');
-        const fullCommand = `${command} upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${INDEXER_URL_STANDARD} --file ${dataPath}`;
-        const { stdout, stderr } = await execAsync(fullCommand);
-        if (stderr) {
-            throw new Error(`Error executing command: ${stderr}`);
-        }
-        const root = extractRootFromOutput(stdout);
-        if (!root) {
-            throw new Error(`Failed to extract root from output: ${stdout}`);
-        }
-        return root;
+        const fileSize = await getFileContentSize(dataPath);
+        return new Promise((resolve, reject) => {
+            const command = path.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
+            const args = [
+                'upload',
+                '--url',
+                ZG_RPC_ENDPOINT_TESTNET,
+                '--key',
+                privateKey,
+                '--indexer',
+                INDEXER_URL_TURBO,
+                '--file',
+                dataPath,
+            ];
+            const process = spawn(command, args);
+            process.stdout.on('data', (data) => {
+                console.log(`${data}`);
+            });
+            process.stderr.on('data', (data) => {
+                console.error(`${data}`);
+            });
+            process.on('close', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`Process exited with code ${code}`));
+                }
+                else {
+                    console.log(`File size: ${fileSize} bytes`);
+                    resolve();
+                }
+            });
+            process.on('error', (err) => {
+                reject(err);
+            });
+        });
     }
-    catch (error) {
-        throw error;
+    catch (err) {
+        console.error(err);
+        throw err;
     }
 }
 async function download(dataPath, dataRoot) {
-    try {
+    return new Promise((resolve, reject) => {
         const command = path.join(__dirname, '..', 'binary', '0g-storage-client');
-        const fullCommand = `${command} download --file ${dataPath} --indexer ${INDEXER_URL_STANDARD} --root ${dataRoot}`;
-        const { stdout, stderr } = await execAsync(fullCommand);
-        if (stderr) {
-            throw new Error(`Error executing download command: ${stderr}`);
-        }
-        if (!stdout.trim().endsWith('Succeeded to validate the downloaded file')) {
-            throw new Error(`Failed to download the file: ${stdout}`);
-        }
-    }
-    catch (error) {
-        throw error;
-    }
+        const args = [
+            'download',
+            '--file',
+            dataPath,
+            '--indexer',
+            INDEXER_URL_TURBO,
+            '--root',
+            dataRoot,
+        ];
+        const process = spawn(command, args);
+        let stdoutData = '';
+        process.stdout.on('data', (data) => {
+            const output = data.toString();
+            stdoutData += output;
+            console.log(`stdout: ${output}`);
+        });
+        process.stderr.on('data', (data) => {
+            const errorOutput = data.toString();
+            console.error(`stderr: ${errorOutput}`);
+        });
+        process.on('close', (code) => {
+            if (code !== 0) {
+                return reject(new Error(`Process exited with code ${code}`));
+            }
+            if (!stdoutData
+                .trim()
+                .endsWith('Succeeded to validate the downloaded file')) {
+                return reject(new Error(`Failed to download the file: ${stdoutData}`));
+            }
+            resolve();
+        });
+        process.on('error', (err) => {
+            reject(err);
+        });
+    });
 }
-function extractRootFromOutput(output) {
-    const regex = /root = ([a-fA-F0-9x,]+)/;
-    const match = output.match(regex);
-    return match ? match[1] : null;
+async function getFileContentSize(filePath) {
+    try {
+        const fileHandle = await fs.open(filePath, 'r');
+        try {
+            const stats = await fileHandle.stat();
+            return stats.size;
+        }
+        finally {
+            await fileHandle.close();
+        }
+    }
+    catch (err) {
+        throw new Error(`Error processing file: ${err instanceof Error ? err.message : String(err)}`);
+    }
 }
 
 class ModelProcessor extends BrokerBase {
@@ -10018,7 +10078,7 @@ class ModelProcessor extends BrokerBase {
         return Object.keys(MODEL_HASH_MAP);
     }
     async uploadDataset(privateKey, dataPath) {
-        return upload(privateKey, dataPath);
+        upload(privateKey, dataPath);
     }
     async acknowledgeModel(providerAddress, dataPath) {
         try {
@@ -10055,10 +10115,28 @@ class ServiceProcessor extends BrokerBase {
     }
     // 5. acknowledge provider signer
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
-    //     2. [`TBD`] verify the quote using third party service (TODO: Jiahao discuss with Phala)
+    //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner() {
-        return;
+    async acknowledgeProviderSigner(providerAddress, svcName) {
+        try {
+            try {
+                await this.contract.getAccount(providerAddress);
+            }
+            catch (error) {
+                if (!error.message.includes('AccountNotExists')) {
+                    throw error;
+                }
+                else {
+                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0));
+                }
+            }
+            const res = await this.servingProvider.getQuote(providerAddress, svcName);
+            // TODO: verify the quote
+            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     // 7. create task
     //     1. get preTrained model root hash based on the model
@@ -10077,15 +10155,15 @@ class ServiceProcessor extends BrokerBase {
                 serviceName,
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].hash,
+                preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
                 fee: fee.toString(),
                 nonce: '0',
-                signature: '',
+                signature: '0x',
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
         catch (error) {
-            throw new Error(`Failed to create task`);
+            throw error;
         }
     }
     // 8. [`call provider`] call provider task progress api to get task progress
@@ -10149,10 +10227,24 @@ class Provider {
             throw error;
         }
     }
+    async getQuote(providerAddress, serviceName) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const endpoint = `${url}/v1/quote`;
+            const quoteString = await this.fetchText(endpoint, {
+                method: 'GET',
+            });
+            const ret = JSON.parse(quoteString);
+            return ret;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async createTask(providerAddress, task) {
         try {
             const url = await this.getProviderUrl(providerAddress, task.serviceName);
-            const endpoint = `${url}/v1/task`;
+            const endpoint = `${url}/v1/user/${this.contract.getUserAddress()}/task`;
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -10216,9 +10308,9 @@ class FineTuningBroker {
             throw error;
         }
         const contract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        this.serviceProvider = new Provider(contract);
         this.modelProcessor = new ModelProcessor(contract, this.ledger, this.serviceProvider);
         this.serviceProcessor = new ServiceProcessor(contract, this.ledger, this.serviceProvider);
-        this.serviceProvider = new Provider(contract);
     }
     listService = async () => {
         try {
@@ -10228,9 +10320,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeProviderSigner = async () => {
+    acknowledgeProviderSigner = async (providerAddress, serviceName) => {
         try {
-            return await this.serviceProcessor.acknowledgeProviderSigner();
+            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, serviceName);
         }
         catch (error) {
             throw error;
@@ -10246,7 +10338,7 @@ class FineTuningBroker {
     };
     uploadDataset = async (dataPath) => {
         try {
-            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
         }
         catch (error) {
             throw error;
@@ -11142,7 +11234,7 @@ class ZGComputeNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGComputeNetworkBroker(signer, ledgerCA = '', inferenceCA = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435', fineTuningCA = '') {
+async function createZGComputeNetworkBroker(signer, ledgerCA = '0xB57857B6E892b0aDACd627e74cEFa6D39c7BdD13', inferenceCA = '0x3dF34461017f22eA871d7FFD4e98191794F8053d', fineTuningCA = '0x3A018CDD9DC4401375653cde0aa517ffeb1E27c4') {
     try {
         const ledger = await createLedgerBroker(signer, ledgerCA);
         // TODO: Adapts the usage of the ledger broker to initialize the inference broker.

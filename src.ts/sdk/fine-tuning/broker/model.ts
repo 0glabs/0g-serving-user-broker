@@ -7,8 +7,8 @@ export class ModelProcessor extends BrokerBase {
         return Object.keys(MODEL_HASH_MAP)
     }
 
-    async uploadDataset(privateKey: string, dataPath: string): Promise<string> {
-        return upload(privateKey, dataPath)
+    async uploadDataset(privateKey: string, dataPath: string): Promise<void> {
+        upload(privateKey, dataPath)
     }
 
     async acknowledgeModel(

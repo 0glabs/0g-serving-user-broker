@@ -4,13 +4,14 @@
     "description": "TS SDK for 0G Compute Network",
     "main": "./lib.commonjs/index.js",
     "bin": {
-        "0g-compute-cli": "cli.commonjs/cli.js"
+        "0g-compute-cli": "./cli.commonjs/cli.js"
     },
     "files": [
         "types",
         "lib.commonjs",
         "lib.esm",
-        "library"
+        "library",
+        "binary"
     ],
     "exports": {
         "require": "./lib.commonjs/index.js",
@@ -22,7 +23,7 @@
     "browser": {},
     "scripts": {
         "format": "prettier --write src.ts/**/*.ts src.ts/*.ts example/**/*.ts",
-        "clean": "rm -rf dist lib.esm lib.commonjs types",
+        "clean": "rm -rf dist lib.esm lib.commonjs types cli.commonjs",
         "build": "npm run clean && tsc -b tsconfig.commonjs.json tsconfig.types.json tsconfig.cli.json && npx rollup -c rollup.config.mjs",
         "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/sdk/inference/contract/typechain '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/inference/InferenceServing.sol/InferenceServing.json' && typechain --target ethers-v6 --node16-modules --out-dir src.ts/sdk/fine-tuning/contract/typechain '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/fine-tuning/FineTuningServing.sol/FineTuningServing.json' && typechain --target ethers-v6 --node16-modules --out-dir src.ts/sdk/ledger/contract/typechain '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/ledger/LedgerManager.sol/LedgerManager.json'",
         "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json",

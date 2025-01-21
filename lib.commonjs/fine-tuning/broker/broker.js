@@ -27,9 +27,9 @@ class FineTuningBroker {
             throw error;
         }
         const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        this.serviceProvider = new provider_1.Provider(contract);
         this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger, this.serviceProvider);
         this.serviceProcessor = new service_1.ServiceProcessor(contract, this.ledger, this.serviceProvider);
-        this.serviceProvider = new provider_1.Provider(contract);
     }
     listService = async () => {
         try {
@@ -39,9 +39,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeProviderSigner = async () => {
+    acknowledgeProviderSigner = async (providerAddress, serviceName) => {
         try {
-            return await this.serviceProcessor.acknowledgeProviderSigner();
+            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, serviceName);
         }
         catch (error) {
             throw error;
@@ -57,7 +57,7 @@ class FineTuningBroker {
     };
     uploadDataset = async (dataPath) => {
         try {
-            return await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
         }
         catch (error) {
             throw error;

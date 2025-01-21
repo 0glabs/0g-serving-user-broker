@@ -26,12 +26,14 @@ export class FineTuningBroker {
         } catch (error) {
             throw error
         }
+
         const contract = new FineTuningServingContract(
             this.signer,
             this.fineTuningCA,
             userAddress
         )
 
+        this.serviceProvider = new Provider(contract)
         this.modelProcessor = new ModelProcessor(
             contract,
             this.ledger,
@@ -42,7 +44,6 @@ export class FineTuningBroker {
             this.ledger,
             this.serviceProvider
         )
-        this.serviceProvider = new Provider(contract)
     }
 
     public listService = async () => {
@@ -53,9 +54,15 @@ export class FineTuningBroker {
         }
     }
 
-    public acknowledgeProviderSigner = async () => {
+    public acknowledgeProviderSigner = async (
+        providerAddress: string,
+        serviceName: string
+    ) => {
         try {
-            return await this.serviceProcessor.acknowledgeProviderSigner()
+            return await this.serviceProcessor.acknowledgeProviderSigner(
+                providerAddress,
+                serviceName
+            )
         } catch (error) {
             throw error
         }
@@ -69,9 +76,9 @@ export class FineTuningBroker {
         }
     }
 
-    public uploadDataset = async (dataPath: string): Promise<string> => {
+    public uploadDataset = async (dataPath: string): Promise<void> => {
         try {
-            return await this.modelProcessor.uploadDataset(
+            await this.modelProcessor.uploadDataset(
                 this.signer.privateKey,
                 dataPath
             )

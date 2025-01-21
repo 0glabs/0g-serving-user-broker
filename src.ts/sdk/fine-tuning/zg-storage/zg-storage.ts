@@ -1,38 +1,64 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { INDEXER_URL_STANDARD, ZG_RPC_ENDPOINT_TESTNET } from '../const'
+import { INDEXER_URL_TURBO, ZG_RPC_ENDPOINT_TESTNET } from '../const'
+import { spawn } from 'child_process'
 import path from 'path'
-
-const execAsync = promisify(exec)
+import * as fs from 'fs/promises'
 
 export async function upload(
     privateKey: string,
     dataPath: string
-): Promise<string> {
+): Promise<void> {
     try {
-        const command = path.join(
-            __dirname,
-            '..',
-            'binary',
-            '0g-storage-client'
-        )
+        const fileSize = await getFileContentSize(dataPath)
 
-        const fullCommand = `${command} upload --url ${ZG_RPC_ENDPOINT_TESTNET} --key ${privateKey} --indexer ${INDEXER_URL_STANDARD} --file ${dataPath}`
+        return new Promise((resolve, reject) => {
+            const command = path.join(
+                __dirname,
+                '..',
+                '..',
+                '..',
+                '..',
+                'binary',
+                '0g-storage-client'
+            )
 
-        const { stdout, stderr } = await execAsync(fullCommand)
+            const args = [
+                'upload',
+                '--url',
+                ZG_RPC_ENDPOINT_TESTNET,
+                '--key',
+                privateKey,
+                '--indexer',
+                INDEXER_URL_TURBO,
+                '--file',
+                dataPath,
+            ]
 
-        if (stderr) {
-            throw new Error(`Error executing command: ${stderr}`)
-        }
+            const process = spawn(command, args)
 
-        const root = extractRootFromOutput(stdout)
-        if (!root) {
-            throw new Error(`Failed to extract root from output: ${stdout}`)
-        }
+            process.stdout.on('data', (data) => {
+                console.log(`${data}`)
+            })
 
-        return root
-    } catch (error) {
-        throw error
+            process.stderr.on('data', (data) => {
+                console.error(`${data}`)
+            })
+
+            process.on('close', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`Process exited with code ${code}`))
+                } else {
+                    console.log(`File size: ${fileSize} bytes`)
+                    resolve()
+                }
+            })
+
+            process.on('error', (err) => {
+                reject(err)
+            })
+        })
+    } catch (err) {
+        console.error(err)
+        throw err
     }
 }
 
@@ -40,7 +66,7 @@ export async function download(
     dataPath: string,
     dataRoot: string
 ): Promise<void> {
-    try {
+    return new Promise((resolve, reject) => {
         const command = path.join(
             __dirname,
             '..',
@@ -48,26 +74,71 @@ export async function download(
             '0g-storage-client'
         )
 
-        const fullCommand = `${command} download --file ${dataPath} --indexer ${INDEXER_URL_STANDARD} --root ${dataRoot}`
+        const args = [
+            'download',
+            '--file',
+            dataPath,
+            '--indexer',
+            INDEXER_URL_TURBO,
+            '--root',
+            dataRoot,
+        ]
 
-        const { stdout, stderr } = await execAsync(fullCommand)
+        const process = spawn(command, args)
 
-        if (stderr) {
-            throw new Error(`Error executing download command: ${stderr}`)
-        }
+        let stdoutData = ''
+        let stderrData = ''
 
-        if (
-            !stdout.trim().endsWith('Succeeded to validate the downloaded file')
-        ) {
-            throw new Error(`Failed to download the file: ${stdout}`)
-        }
-    } catch (error) {
-        throw error
-    }
+        process.stdout.on('data', (data) => {
+            const output = data.toString()
+            stdoutData += output
+            console.log(`stdout: ${output}`)
+        })
+
+        process.stderr.on('data', (data) => {
+            const errorOutput = data.toString()
+            stderrData += errorOutput
+            console.error(`stderr: ${errorOutput}`)
+        })
+
+        process.on('close', (code) => {
+            if (code !== 0) {
+                return reject(new Error(`Process exited with code ${code}`))
+            }
+
+            if (
+                !stdoutData
+                    .trim()
+                    .endsWith('Succeeded to validate the downloaded file')
+            ) {
+                return reject(
+                    new Error(`Failed to download the file: ${stdoutData}`)
+                )
+            }
+
+            resolve()
+        })
+
+        process.on('error', (err) => {
+            reject(err)
+        })
+    })
 }
 
-function extractRootFromOutput(output: string): string | null {
-    const regex = /root = ([a-fA-F0-9x,]+)/
-    const match = output.match(regex)
-    return match ? match[1] : null
+async function getFileContentSize(filePath: string): Promise<number> {
+    try {
+        const fileHandle = await fs.open(filePath, 'r')
+        try {
+            const stats = await fileHandle.stat()
+            return stats.size
+        } finally {
+            await fileHandle.close()
+        }
+    } catch (err) {
+        throw new Error(
+            `Error processing file: ${
+                err instanceof Error ? err.message : String(err)
+            }`
+        )
+    }
 }

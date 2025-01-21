@@ -10,9 +10,9 @@ export declare class FineTuningBroker {
     constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<import("..").FineTuningServiceStructOutput[]>;
-    acknowledgeProviderSigner: () => Promise<void>;
+    acknowledgeProviderSigner: (providerAddress: string, serviceName: string) => Promise<void>;
     listModel: () => string[];
-    uploadDataset: (dataPath: string) => Promise<string>;
+    uploadDataset: (dataPath: string) => Promise<void>;
     createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
     getLog: (providerAddress: string, serviceName: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;

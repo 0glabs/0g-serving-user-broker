@@ -17,10 +17,28 @@ class ServiceProcessor extends base_1.BrokerBase {
     }
     // 5. acknowledge provider signer
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
-    //     2. [`TBD`] verify the quote using third party service (TODO: Jiahao discuss with Phala)
+    //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner() {
-        return;
+    async acknowledgeProviderSigner(providerAddress, svcName) {
+        try {
+            try {
+                await this.contract.getAccount(providerAddress);
+            }
+            catch (error) {
+                if (!error.message.includes('AccountNotExists')) {
+                    throw error;
+                }
+                else {
+                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0));
+                }
+            }
+            const res = await this.servingProvider.getQuote(providerAddress, svcName);
+            // TODO: verify the quote
+            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     // 7. create task
     //     1. get preTrained model root hash based on the model
@@ -39,15 +57,15 @@ class ServiceProcessor extends base_1.BrokerBase {
                 serviceName,
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].hash,
+                preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].turbo,
                 fee: fee.toString(),
                 nonce: '0',
-                signature: '',
+                signature: '0x',
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
         catch (error) {
-            throw new Error(`Failed to create task`);
+            throw error;
         }
     }
     // 8. [`call provider`] call provider task progress api to get task progress
