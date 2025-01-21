@@ -1,6 +1,6 @@
 import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers';
 import { FineTuningServing } from './typechain';
-import { ServiceStructOutput } from './typechain/FineTuningServing';
+import { ServiceStructOutput, DeliverableStructOutput } from './typechain/FineTuningServing';
 export declare class FineTuningServingContract {
     serving: FineTuningServing;
     signer: JsonRpcSigner | Wallet;
@@ -13,7 +13,7 @@ export declare class FineTuningServingContract {
     acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: AddressLike): Promise<void>;
     acknowledgeDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<void>;
     getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
-    getDeliverable(providerAddress: string, index: BigNumberish): Promise<import(".").DeliverableStructOutput>;
+    getDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<DeliverableStructOutput>;
     getUserAddress(): string;
 }
 //# sourceMappingURL=fine-tuning.d.ts.map
