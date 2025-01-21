@@ -36,9 +36,9 @@ export class ZGComputeNetworkBroker {
  */
 export async function createZGComputeNetworkBroker(
     signer: JsonRpcSigner | Wallet,
-    ledgerCA = '',
-    inferenceCA = '0xE7F0998C83a81f04871BEdfD89aB5f2DAcDBf435',
-    fineTuningCA = ''
+    ledgerCA = '0xB57857B6E892b0aDACd627e74cEFa6D39c7BdD13',
+    inferenceCA = '0x3dF34461017f22eA871d7FFD4e98191794F8053d',
+    fineTuningCA = '0x3A018CDD9DC4401375653cde0aa517ffeb1E27c4'
 ): Promise<ZGComputeNetworkBroker> {
     try {
         const ledger = await createLedgerBroker(signer, ledgerCA)
