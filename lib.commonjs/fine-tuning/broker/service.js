@@ -2,10 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceProcessor = void 0;
 const tslib_1 = require("tslib");
+const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 class ServiceProcessor extends base_1.BrokerBase {
+    async getAccount(provider) {
+        try {
+            const account = await this.contract.getAccount(provider);
+            return account;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async listService() {
         try {
             const services = await this.contract.listService();
@@ -52,6 +62,8 @@ class ServiceProcessor extends base_1.BrokerBase {
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             this.verifyTrainingParams(trainingParams);
+            const nonce = (0, utils_1.getNonce)();
+            const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
             const task = {
                 userAddress: this.contract.getUserAddress(),
                 serviceName,
@@ -59,8 +71,8 @@ class ServiceProcessor extends base_1.BrokerBase {
                 trainingParams,
                 preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].turbo,
                 fee: fee.toString(),
-                nonce: '0',
-                signature: '0x',
+                nonce: nonce.toString(),
+                signature,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
@@ -69,15 +81,15 @@ class ServiceProcessor extends base_1.BrokerBase {
         }
     }
     // 8. [`call provider`] call provider task progress api to get task progress
-    async getLog(providerAddress, serviceName, userAddress, taskID) {
+    async getLog(providerAddress, serviceName, taskID) {
         if (!taskID) {
-            const tasks = await this.servingProvider.listTask(providerAddress, serviceName, userAddress, true);
+            const tasks = await this.servingProvider.listTask(providerAddress, serviceName, this.contract.getUserAddress(), true);
             taskID = tasks[0].id;
             if (tasks.length === 0 || !taskID) {
                 throw new Error('No task found');
             }
         }
-        return this.servingProvider.getLog(providerAddress, serviceName, userAddress, taskID);
+        return this.servingProvider.getLog(providerAddress, serviceName, this.contract.getUserAddress(), taskID);
     }
     verifyTrainingParams(trainingParams) {
         try {

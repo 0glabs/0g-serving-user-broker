@@ -1,4 +1,10 @@
-import { JsonRpcSigner, Wallet, ethers } from 'ethers'
+import {
+    AddressLike,
+    BigNumberish,
+    JsonRpcSigner,
+    Wallet,
+    ethers,
+} from 'ethers'
 import { MESSAGE_FOR_ENCRYPTION_KEY } from './const'
 import CryptoJS from 'crypto-js'
 import { PrivateKey, decrypt } from 'eciesjs'
@@ -8,6 +14,7 @@ const ivLength: number = 12
 const tagLength: number = 16
 const sigLength: number = 65
 
+// Inference
 async function deriveEncryptionKey(
     signer: JsonRpcSigner | Wallet
 ): Promise<string> {
@@ -33,6 +40,28 @@ export async function decryptData(
     const bytes = CryptoJS.AES.decrypt(encryptedData, key)
     const decrypted = bytes.toString(CryptoJS.enc.Utf8)
     return decrypted
+}
+
+// Fine-tuning
+
+export async function signRequest(
+    signer: Wallet,
+    userAddress: AddressLike,
+    nonce: BigNumberish,
+    datasetRootHash: string,
+    fee: BigNumberish
+): Promise<string> {
+    const hash = ethers.solidityPackedKeccak256(
+        ['address', 'uint256', 'string', 'uint256'],
+        [userAddress, nonce, datasetRootHash, fee]
+    )
+    console.log('userAddress', userAddress)
+    console.log('nonce', nonce)
+    console.log('datasetRootHash', datasetRootHash)
+    console.log('fee', fee)
+    console.log('hash', hash)
+
+    return await signer.signMessage(ethers.toBeArray(hash))
 }
 
 export async function eciesDecrypt(

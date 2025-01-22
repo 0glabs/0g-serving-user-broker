@@ -1,11 +1,11 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers';
+import { BigNumberish, AddressLike, Wallet } from 'ethers';
 import { FineTuningServing } from './typechain';
 import { ServiceStructOutput, DeliverableStructOutput } from './typechain/FineTuningServing';
 export declare class FineTuningServingContract {
     serving: FineTuningServing;
-    signer: JsonRpcSigner | Wallet;
+    signer: Wallet;
     private _userAddress;
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string);
+    constructor(signer: Wallet, contractAddress: string, userAddress: string);
     lockTime(): Promise<bigint>;
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<import("./typechain/FineTuningServing").AccountStructOutput[]>;

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.encryptData = encryptData;
 exports.decryptData = decryptData;
+exports.signRequest = signRequest;
 exports.eciesDecrypt = eciesDecrypt;
 exports.aesGCMDecrypt = aesGCMDecrypt;
 const tslib_1 = require("tslib");
@@ -13,6 +14,7 @@ const crypto = tslib_1.__importStar(require("crypto"));
 const ivLength = 12;
 const tagLength = 16;
 const sigLength = 65;
+// Inference
 async function deriveEncryptionKey(signer) {
     const signature = await signer.signMessage(const_1.MESSAGE_FOR_ENCRYPTION_KEY);
     const hash = ethers_1.ethers.sha256(ethers_1.ethers.toUtf8Bytes(signature));
@@ -28,6 +30,16 @@ async function decryptData(signer, encryptedData) {
     const bytes = crypto_js_1.default.AES.decrypt(encryptedData, key);
     const decrypted = bytes.toString(crypto_js_1.default.enc.Utf8);
     return decrypted;
+}
+// Fine-tuning
+async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
+    const hash = ethers_1.ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
+    console.log('userAddress', userAddress);
+    console.log('nonce', nonce);
+    console.log('datasetRootHash', datasetRootHash);
+    console.log('fee', fee);
+    console.log('hash', hash);
+    return await signer.signMessage(ethers_1.ethers.toBeArray(hash));
 }
 async function eciesDecrypt(signer, encryptedData) {
     const privateKey = eciesjs_1.PrivateKey.fromHex(signer.privateKey);

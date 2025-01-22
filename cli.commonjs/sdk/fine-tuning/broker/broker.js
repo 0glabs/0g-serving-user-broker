@@ -39,6 +39,14 @@ class FineTuningBroker {
             throw error;
         }
     };
+    getAccount = async (providerAddress) => {
+        try {
+            return await this.serviceProcessor.getAccount(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     acknowledgeProviderSigner = async (providerAddress, serviceName) => {
         try {
             return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, serviceName);
@@ -63,6 +71,14 @@ class FineTuningBroker {
             throw error;
         }
     };
+    downloadDataset = async (dataPath, dataRoot) => {
+        try {
+            await this.modelProcessor.downloadDataset(dataPath, dataRoot);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     createTask = async (providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
         try {
             return await this.serviceProcessor.createTask(providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath);
@@ -71,9 +87,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    getLog = async (providerAddress, serviceName) => {
+    getLog = async (providerAddress, serviceName, taskID) => {
         try {
-            return await this.serviceProcessor.getLog(providerAddress, serviceName, await this.signer.getAddress());
+            return await this.serviceProcessor.getLog(providerAddress, serviceName, taskID);
         }
         catch (error) {
             throw error;

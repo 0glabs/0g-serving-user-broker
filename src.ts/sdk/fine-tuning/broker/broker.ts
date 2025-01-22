@@ -54,6 +54,14 @@ export class FineTuningBroker {
         }
     }
 
+    public getAccount = async (providerAddress: string) => {
+        try {
+            return await this.serviceProcessor.getAccount(providerAddress)
+        } catch (error) {
+            throw error
+        }
+    }
+
     public acknowledgeProviderSigner = async (
         providerAddress: string,
         serviceName: string
@@ -87,6 +95,17 @@ export class FineTuningBroker {
         }
     }
 
+    public downloadDataset = async (
+        dataPath: string,
+        dataRoot: string
+    ): Promise<void> => {
+        try {
+            await this.modelProcessor.downloadDataset(dataPath, dataRoot)
+        } catch (error) {
+            throw error
+        }
+    }
+
     public createTask = async (
         providerAddress: string,
         serviceName: string,
@@ -111,13 +130,14 @@ export class FineTuningBroker {
 
     public getLog = async (
         providerAddress: string,
-        serviceName: string
+        serviceName: string,
+        taskID?: string
     ): Promise<string> => {
         try {
             return await this.serviceProcessor.getLog(
                 providerAddress,
                 serviceName,
-                await this.signer.getAddress()
+                taskID
             )
         } catch (error) {
             throw error

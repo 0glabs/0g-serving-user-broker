@@ -70,6 +70,9 @@ export async function download(
         const command = path.join(
             __dirname,
             '..',
+            '..',
+            '..',
+            '..',
             'binary',
             '0g-storage-client'
         )
@@ -86,19 +89,18 @@ export async function download(
 
         const process = spawn(command, args)
 
-        let stdoutData = ''
-        let stderrData = ''
+        let log = ''
 
         process.stdout.on('data', (data) => {
             const output = data.toString()
-            stdoutData += output
-            console.log(`stdout: ${output}`)
+            log += output
+            console.log(output)
         })
 
         process.stderr.on('data', (data) => {
             const errorOutput = data.toString()
-            stderrData += errorOutput
-            console.error(`stderr: ${errorOutput}`)
+            log += errorOutput
+            console.error(errorOutput)
         })
 
         process.on('close', (code) => {
@@ -107,13 +109,11 @@ export async function download(
             }
 
             if (
-                !stdoutData
+                !log
                     .trim()
                     .endsWith('Succeeded to validate the downloaded file')
             ) {
-                return reject(
-                    new Error(`Failed to download the file: ${stdoutData}`)
-                )
+                return reject(new Error('Failed to download the file'))
             }
 
             resolve()

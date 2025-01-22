@@ -1,3 +1,5 @@
+import { AddressLike } from 'ethers'
+import { getNonce, signRequest } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import { ServiceStructOutput } from '../contract'
 import { Task } from '../provider/provider'
@@ -5,6 +7,15 @@ import { BrokerBase } from './base'
 import * as fs from 'fs/promises'
 
 export class ServiceProcessor extends BrokerBase {
+    async getAccount(provider: AddressLike) {
+        try {
+            const account = await this.contract.getAccount(provider)
+            return account
+        } catch (error) {
+            throw error
+        }
+    }
+
     async listService(): Promise<ServiceStructOutput[]> {
         try {
             const services = await this.contract.listService()
@@ -75,6 +86,15 @@ export class ServiceProcessor extends BrokerBase {
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             this.verifyTrainingParams(trainingParams)
 
+            const nonce = getNonce()
+            const signature = await signRequest(
+                this.contract.signer,
+                this.contract.getUserAddress(),
+                BigInt(nonce),
+                datasetHash,
+                fee
+            )
+
             const task: Task = {
                 userAddress: this.contract.getUserAddress(),
                 serviceName,
@@ -82,8 +102,8 @@ export class ServiceProcessor extends BrokerBase {
                 trainingParams,
                 preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
                 fee: fee.toString(),
-                nonce: '0',
-                signature: '0x',
+                nonce: nonce.toString(),
+                signature,
             }
 
             return await this.servingProvider.createTask(providerAddress, task)
@@ -96,14 +116,13 @@ export class ServiceProcessor extends BrokerBase {
     async getLog(
         providerAddress: string,
         serviceName: string,
-        userAddress: string,
         taskID?: string
     ): Promise<string> {
         if (!taskID) {
             const tasks = await this.servingProvider.listTask(
                 providerAddress,
                 serviceName,
-                userAddress,
+                this.contract.getUserAddress(),
                 true
             )
             taskID = tasks[0].id
@@ -114,7 +133,7 @@ export class ServiceProcessor extends BrokerBase {
         return this.servingProvider.getLog(
             providerAddress,
             serviceName,
-            userAddress,
+            this.contract.getUserAddress(),
             taskID
         )
     }

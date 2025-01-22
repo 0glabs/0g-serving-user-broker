@@ -44,7 +44,7 @@ interface TypedContractMethod$1<A extends Array<any> = Array<any>, R = any, S ex
     staticCallResult(...args: ContractMethodArgs$1<A, "view">): Promise<R>;
 }
 
-type RefundStructOutput = [
+type RefundStructOutput$1 = [
     index: bigint,
     amount: bigint,
     createdAt: bigint,
@@ -55,14 +55,14 @@ type RefundStructOutput = [
     createdAt: bigint;
     processed: boolean;
 };
-type AccountStructOutput = [
+type AccountStructOutput$1 = [
     user: string,
     provider: string,
     nonce: bigint,
     balance: bigint,
     pendingRefund: bigint,
     signer: [bigint, bigint],
-    refunds: RefundStructOutput[],
+    refunds: RefundStructOutput$1[],
     additionalInfo: string
 ] & {
     user: string;
@@ -71,7 +71,7 @@ type AccountStructOutput = [
     balance: bigint;
     pendingRefund: bigint;
     signer: [bigint, bigint];
-    refunds: RefundStructOutput[];
+    refunds: RefundStructOutput$1[];
     additionalInfo: string;
 };
 type ServiceStructOutput$1 = [
@@ -317,9 +317,9 @@ interface InferenceServing extends BaseContract {
         user: AddressLike,
         provider: AddressLike
     ], [
-        AccountStructOutput
+        AccountStructOutput$1
     ], "view">;
-    getAllAccounts: TypedContractMethod$1<[], [AccountStructOutput[]], "view">;
+    getAllAccounts: TypedContractMethod$1<[], [AccountStructOutput$1[]], "view">;
     getAllServices: TypedContractMethod$1<[], [ServiceStructOutput$1[]], "view">;
     getService: TypedContractMethod$1<[
         provider: AddressLike,
@@ -424,9 +424,9 @@ interface InferenceServing extends BaseContract {
         user: AddressLike,
         provider: AddressLike
     ], [
-        AccountStructOutput
+        AccountStructOutput$1
     ], "view">;
-    getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$1<[], [AccountStructOutput[]], "view">;
+    getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$1<[], [AccountStructOutput$1[]], "view">;
     getFunction(nameOrSignature: "getAllServices"): TypedContractMethod$1<[], [ServiceStructOutput$1[]], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod$1<[
         provider: AddressLike,
@@ -506,8 +506,8 @@ declare class InferenceServingContract {
     constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string);
     lockTime(): Promise<bigint>;
     listService(): Promise<ServiceStructOutput$1[]>;
-    listAccount(): Promise<AccountStructOutput[]>;
-    getAccount(provider: AddressLike): Promise<AccountStructOutput>;
+    listAccount(): Promise<AccountStructOutput$1[]>;
+    getAccount(provider: AddressLike): Promise<AccountStructOutput$1>;
     deleteAccount(provider: AddressLike): Promise<void>;
     addOrUpdateService(name: string, serviceType: string, url: string, model: string, verifiability: string, inputPrice: BigNumberish, outputPrice: BigNumberish): Promise<void>;
     addAccount(providerAddress: AddressLike, signer: [BigNumberish, BigNumberish], balance: bigint, settleSignerEncryptedPrivateKey: string): Promise<void>;
@@ -635,8 +635,8 @@ declare abstract class ZGServingUserBrokerBase {
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
 declare class AccountProcessor extends ZGServingUserBrokerBase {
-    getAccount(provider: AddressLike): Promise<AccountStructOutput>;
-    listAccount(): Promise<AccountStructOutput[]>;
+    getAccount(provider: AddressLike): Promise<AccountStructOutput$1>;
+    listAccount(): Promise<AccountStructOutput$1[]>;
     addAccount(providerAddress: string, balance: number): Promise<void>;
     deleteAccount(provider: AddressLike): Promise<void>;
     depositFund(providerAddress: string, balance: number): Promise<void>;
@@ -749,7 +749,7 @@ declare class InferenceBroker {
      *
      * @throws Will throw an error if the account retrieval process fails.
      */
-    getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
+    getAccount: (providerAddress: string) => Promise<AccountStructOutput$1>;
     /**
      * Deposits a specified amount of funds into the given account.
      *
@@ -924,6 +924,47 @@ type QuotaStructOutput = [
     gpuCount: bigint;
     nodeStorage: bigint;
     gpuType: string;
+};
+type RefundStructOutput = [
+    index: bigint,
+    amount: bigint,
+    createdAt: bigint,
+    processed: boolean
+] & {
+    index: bigint;
+    amount: bigint;
+    createdAt: bigint;
+    processed: boolean;
+};
+type DeliverableStructOutput = [
+    modelRootHash: string,
+    encryptedSecret: string,
+    acknowledged: boolean
+] & {
+    modelRootHash: string;
+    encryptedSecret: string;
+    acknowledged: boolean;
+};
+type AccountStructOutput = [
+    user: string,
+    provider: string,
+    nonce: bigint,
+    balance: bigint,
+    pendingRefund: bigint,
+    refunds: RefundStructOutput[],
+    additionalInfo: string,
+    providerSigner: string,
+    deliverables: DeliverableStructOutput[]
+] & {
+    user: string;
+    provider: string;
+    nonce: bigint;
+    balance: bigint;
+    pendingRefund: bigint;
+    refunds: RefundStructOutput[];
+    additionalInfo: string;
+    providerSigner: string;
+    deliverables: DeliverableStructOutput[];
 };
 type ServiceStructOutput = [
     provider: string,
@@ -1295,11 +1336,13 @@ declare class FineTuningBroker {
     constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
+    getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
     acknowledgeProviderSigner: (providerAddress: string, serviceName: string) => Promise<void>;
     listModel: () => string[];
     uploadDataset: (dataPath: string) => Promise<void>;
+    downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
     createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
-    getLog: (providerAddress: string, serviceName: string) => Promise<string>;
+    getLog: (providerAddress: string, serviceName: string, taskID?: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
     decryptModel: () => Promise<void>;
 }
@@ -1335,4 +1378,4 @@ declare class ZGComputeNetworkBroker {
  */
 declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string): Promise<ZGComputeNetworkBroker>;
 
-export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };
+export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput$1 as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };

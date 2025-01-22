@@ -11,6 +11,10 @@ export class ModelProcessor extends BrokerBase {
         upload(privateKey, dataPath)
     }
 
+    async downloadDataset(dataPath: string, dataRoot: string): Promise<void> {
+        download(dataPath, dataRoot)
+    }
+
     async acknowledgeModel(
         providerAddress: string,
         dataPath: string

@@ -35,7 +35,8 @@ export class Provider {
         try {
             const response = await fetch(endpoint, options)
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`)
+                const errorData = await response.json()
+                throw new Error(errorData.error)
             }
             return response.json()
         } catch (error) {
@@ -98,24 +99,22 @@ export class Provider {
                 providerAddress,
                 task.serviceName
             )
-            const endpoint = `${url}/v1/user/${this.contract.getUserAddress()}/task`
+            const userAddress = this.contract.getUserAddress()
+            const endpoint = `${url}/v1/user/${userAddress}/task`
 
-            const response = await fetch(endpoint, {
+            const response = await this.fetchJSON(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(task),
             })
-
-            if (!response.ok) {
-                throw new Error(`Failed to create task: ${response.statusText}`)
-            }
-
-            const responseData = await response.json()
-            return responseData.id
+            return response.id
         } catch (error) {
-            throw error
+            if (error instanceof Error) {
+                throw new Error(`Failed to create task: ${error.message}`)
+            }
+            throw new Error('Failed to create task')
         }
     }
 

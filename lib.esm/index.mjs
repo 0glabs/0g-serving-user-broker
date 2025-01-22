@@ -6580,6 +6580,7 @@ function requireDist () {
 
 requireDist();
 
+// Inference
 async function deriveEncryptionKey(signer) {
     const signature = await signer.signMessage(MESSAGE_FOR_ENCRYPTION_KEY);
     const hash = ethers.sha256(ethers.toUtf8Bytes(signature));
@@ -6595,6 +6596,16 @@ async function decryptData(signer, encryptedData) {
     const bytes = CryptoJS.AES.decrypt(encryptedData, key);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
     return decrypted;
+}
+// Fine-tuning
+async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
+    const hash = ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
+    console.log('userAddress', userAddress);
+    console.log('nonce', nonce);
+    console.log('datasetRootHash', datasetRootHash);
+    console.log('fee', fee);
+    console.log('hash', hash);
+    return await signer.signMessage(ethers.toBeArray(hash));
 }
 
 function strToPrivateKey(str) {
@@ -10020,7 +10031,7 @@ async function upload(privateKey, dataPath) {
 }
 async function download(dataPath, dataRoot) {
     return new Promise((resolve, reject) => {
-        const command = path.join(__dirname, '..', 'binary', '0g-storage-client');
+        const command = path.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
         const args = [
             'download',
             '--file',
@@ -10031,24 +10042,25 @@ async function download(dataPath, dataRoot) {
             dataRoot,
         ];
         const process = spawn(command, args);
-        let stdoutData = '';
+        let log = '';
         process.stdout.on('data', (data) => {
             const output = data.toString();
-            stdoutData += output;
-            console.log(`stdout: ${output}`);
+            log += output;
+            console.log(output);
         });
         process.stderr.on('data', (data) => {
             const errorOutput = data.toString();
-            console.error(`stderr: ${errorOutput}`);
+            log += errorOutput;
+            console.error(errorOutput);
         });
         process.on('close', (code) => {
             if (code !== 0) {
                 return reject(new Error(`Process exited with code ${code}`));
             }
-            if (!stdoutData
+            if (!log
                 .trim()
                 .endsWith('Succeeded to validate the downloaded file')) {
-                return reject(new Error(`Failed to download the file: ${stdoutData}`));
+                return reject(new Error('Failed to download the file'));
             }
             resolve();
         });
@@ -10080,6 +10092,9 @@ class ModelProcessor extends BrokerBase {
     async uploadDataset(privateKey, dataPath) {
         upload(privateKey, dataPath);
     }
+    async downloadDataset(dataPath, dataRoot) {
+        download(dataPath, dataRoot);
+    }
     async acknowledgeModel(providerAddress, dataPath) {
         try {
             const account = await this.contract.getAccount(providerAddress);
@@ -10104,6 +10119,15 @@ class ModelProcessor extends BrokerBase {
 }
 
 class ServiceProcessor extends BrokerBase {
+    async getAccount(provider) {
+        try {
+            const account = await this.contract.getAccount(provider);
+            return account;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async listService() {
         try {
             const services = await this.contract.listService();
@@ -10150,6 +10174,8 @@ class ServiceProcessor extends BrokerBase {
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             this.verifyTrainingParams(trainingParams);
+            const nonce = getNonce();
+            const signature = await signRequest(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
             const task = {
                 userAddress: this.contract.getUserAddress(),
                 serviceName,
@@ -10157,8 +10183,8 @@ class ServiceProcessor extends BrokerBase {
                 trainingParams,
                 preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
                 fee: fee.toString(),
-                nonce: '0',
-                signature: '0x',
+                nonce: nonce.toString(),
+                signature,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
@@ -10167,15 +10193,15 @@ class ServiceProcessor extends BrokerBase {
         }
     }
     // 8. [`call provider`] call provider task progress api to get task progress
-    async getLog(providerAddress, serviceName, userAddress, taskID) {
+    async getLog(providerAddress, serviceName, taskID) {
         if (!taskID) {
-            const tasks = await this.servingProvider.listTask(providerAddress, serviceName, userAddress, true);
+            const tasks = await this.servingProvider.listTask(providerAddress, serviceName, this.contract.getUserAddress(), true);
             taskID = tasks[0].id;
             if (tasks.length === 0 || !taskID) {
                 throw new Error('No task found');
             }
         }
-        return this.servingProvider.getLog(providerAddress, serviceName, userAddress, taskID);
+        return this.servingProvider.getLog(providerAddress, serviceName, this.contract.getUserAddress(), taskID);
     }
     verifyTrainingParams(trainingParams) {
         try {
@@ -10197,7 +10223,8 @@ class Provider {
         try {
             const response = await fetch(endpoint, options);
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error);
             }
             return response.json();
         }
@@ -10244,22 +10271,22 @@ class Provider {
     async createTask(providerAddress, task) {
         try {
             const url = await this.getProviderUrl(providerAddress, task.serviceName);
-            const endpoint = `${url}/v1/user/${this.contract.getUserAddress()}/task`;
-            const response = await fetch(endpoint, {
+            const userAddress = this.contract.getUserAddress();
+            const endpoint = `${url}/v1/user/${userAddress}/task`;
+            const response = await this.fetchJSON(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(task),
             });
-            if (!response.ok) {
-                throw new Error(`Failed to create task: ${response.statusText}`);
-            }
-            const responseData = await response.json();
-            return responseData.id;
+            return response.id;
         }
         catch (error) {
-            throw error;
+            if (error instanceof Error) {
+                throw new Error(`Failed to create task: ${error.message}`);
+            }
+            throw new Error('Failed to create task');
         }
     }
     async listTask(providerAddress, serviceName, userAddress, latest = false) {
@@ -10320,6 +10347,14 @@ class FineTuningBroker {
             throw error;
         }
     };
+    getAccount = async (providerAddress) => {
+        try {
+            return await this.serviceProcessor.getAccount(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     acknowledgeProviderSigner = async (providerAddress, serviceName) => {
         try {
             return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, serviceName);
@@ -10344,6 +10379,14 @@ class FineTuningBroker {
             throw error;
         }
     };
+    downloadDataset = async (dataPath, dataRoot) => {
+        try {
+            await this.modelProcessor.downloadDataset(dataPath, dataRoot);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     createTask = async (providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
         try {
             return await this.serviceProcessor.createTask(providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath);
@@ -10352,9 +10395,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    getLog = async (providerAddress, serviceName) => {
+    getLog = async (providerAddress, serviceName, taskID) => {
         try {
-            return await this.serviceProcessor.getLog(providerAddress, serviceName, await this.signer.getAddress());
+            return await this.serviceProcessor.getLog(providerAddress, serviceName, taskID);
         }
         catch (error) {
             throw error;

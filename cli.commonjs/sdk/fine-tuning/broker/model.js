@@ -11,6 +11,9 @@ class ModelProcessor extends base_1.BrokerBase {
     async uploadDataset(privateKey, dataPath) {
         (0, zg_storage_1.upload)(privateKey, dataPath);
     }
+    async downloadDataset(dataPath, dataRoot) {
+        (0, zg_storage_1.download)(dataPath, dataRoot);
+    }
     async acknowledgeModel(providerAddress, dataPath) {
         try {
             const account = await this.contract.getAccount(providerAddress);

@@ -51,7 +51,7 @@ async function upload(privateKey, dataPath) {
 }
 async function download(dataPath, dataRoot) {
     return new Promise((resolve, reject) => {
-        const command = path_1.default.join(__dirname, '..', 'binary', '0g-storage-client');
+        const command = path_1.default.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
         const args = [
             'download',
             '--file',
@@ -62,26 +62,25 @@ async function download(dataPath, dataRoot) {
             dataRoot,
         ];
         const process = (0, child_process_1.spawn)(command, args);
-        let stdoutData = '';
-        let stderrData = '';
+        let log = '';
         process.stdout.on('data', (data) => {
             const output = data.toString();
-            stdoutData += output;
-            console.log(`stdout: ${output}`);
+            log += output;
+            console.log(output);
         });
         process.stderr.on('data', (data) => {
             const errorOutput = data.toString();
-            stderrData += errorOutput;
-            console.error(`stderr: ${errorOutput}`);
+            log += errorOutput;
+            console.error(errorOutput);
         });
         process.on('close', (code) => {
             if (code !== 0) {
                 return reject(new Error(`Process exited with code ${code}`));
             }
-            if (!stdoutData
+            if (!log
                 .trim()
                 .endsWith('Succeeded to validate the downloaded file')) {
-                return reject(new Error(`Failed to download the file: ${stdoutData}`));
+                return reject(new Error('Failed to download the file'));
             }
             resolve();
         });

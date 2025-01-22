@@ -1,18 +1,17 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers'
+import { BigNumberish, AddressLike, Wallet } from 'ethers'
 import { FineTuningServing, FineTuningServing__factory } from './typechain'
-import { ServiceStructOutput, DeliverableStructOutput } from './typechain/FineTuningServing'
+import {
+    ServiceStructOutput,
+    DeliverableStructOutput,
+} from './typechain/FineTuningServing'
 
 export class FineTuningServingContract {
     public serving: FineTuningServing
-    public signer: JsonRpcSigner | Wallet
+    public signer: Wallet
 
     private _userAddress: string
 
-    constructor(
-        signer: JsonRpcSigner | Wallet,
-        contractAddress: string,
-        userAddress: string
-    ) {
+    constructor(signer: Wallet, contractAddress: string, userAddress: string) {
         this.serving = FineTuningServing__factory.connect(
             contractAddress,
             signer
