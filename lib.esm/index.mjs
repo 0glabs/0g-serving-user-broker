@@ -6608,10 +6608,7 @@ async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
 }
 async function eciesDecrypt(signer, encryptedData) {
     const privateKey = distExports.PrivateKey.fromHex(signer.privateKey);
-    console.log('privateKey', privateKey);
-    console.log('encryptedData', encryptedData);
     const data = Buffer.from(encryptedData, 'hex');
-    console.log('data', data);
     const decrypted = distExports.decrypt(privateKey.secret, data);
     return decrypted.toString('hex');
 }
@@ -6621,16 +6618,16 @@ async function aesGCMDecrypt(key, encryptedData, providerAddress) {
     const encryptedText = data.subarray(ivLength, data.length - tagLength - sigLength);
     const authTag = data.subarray(data.length - tagLength - sigLength, data.length - sigLength);
     const tagSig = data.subarray(data.length - sigLength, data.length);
-    const recoveredAddress = ethers.recoverAddress(ethers.keccak256(authTag), tagSig.toString('hex'));
+    const recoveredAddress = ethers.recoverAddress(ethers.keccak256(authTag), '0x' + tagSig.toString('hex'));
     if (recoveredAddress.toLowerCase() !== providerAddress.toLowerCase()) {
         throw new Error('Invalid tag signature');
     }
     const privateKey = Buffer.from(key, 'hex');
     const decipher = crypto$2.createDecipheriv('aes-256-gcm', privateKey, iv);
     decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'hex');
+    decrypted += decipher.final('hex');
+    return Buffer.from(decrypted, 'hex');
 }
 
 function strToPrivateKey(str) {

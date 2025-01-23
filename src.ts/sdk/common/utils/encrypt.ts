@@ -73,7 +73,7 @@ export async function aesGCMDecrypt(
     key: string,
     encryptedData: string,
     providerAddress: string
-): Promise<string> {
+): Promise<Buffer<ArrayBuffer>> {
     const data = Buffer.from(encryptedData, 'hex')
     const iv = data.subarray(0, ivLength)
     const encryptedText = data.subarray(
@@ -87,7 +87,7 @@ export async function aesGCMDecrypt(
     const tagSig = data.subarray(data.length - sigLength, data.length)
     const recoveredAddress = ethers.recoverAddress(
         ethers.keccak256(authTag),
-        tagSig.toString('hex')
+        '0x' + tagSig.toString('hex')
     )
     if (recoveredAddress.toLowerCase() !== providerAddress.toLowerCase()) {
         throw new Error('Invalid tag signature')
@@ -100,8 +100,8 @@ export async function aesGCMDecrypt(
     let decrypted = decipher.update(
         encryptedText.toString('hex'),
         'hex',
-        'utf8'
+        'hex'
     )
-    decrypted += decipher.final('utf8')
-    return decrypted
+    decrypted += decipher.final('hex')
+    return Buffer.from(decrypted, 'hex')
 }
