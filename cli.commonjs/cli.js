@@ -212,7 +212,6 @@ program
     .action((options) => {
     withFineTuningBroker(options, async (broker) => {
         const task = await broker.fineTuning.getTask(options.provider, options.service, options.task);
-        console.log(task);
         console.log('Task ID:', task.id, 'Progress:', task.progress);
     });
 });

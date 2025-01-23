@@ -66,7 +66,7 @@ export class ModelProcessor extends BrokerBase {
 
             const model = await aesGCMDecrypt(
                 secret,
-                encryptedData.toString('hex'),
+                encryptedData,
                 account.providerSigner
             )
             await fs.writeFile(decryptedModelPath, model)

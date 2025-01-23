@@ -6615,8 +6615,7 @@ async function eciesDecrypt(signer, encryptedData) {
     const decrypted = distExports.decrypt(privateKey.secret, data);
     return decrypted.toString('hex');
 }
-async function aesGCMDecrypt(key, encryptedData, providerSigner) {
-    const data = Buffer.from(encryptedData, 'hex');
+async function aesGCMDecrypt(key, data, providerSigner) {
     const iv = data.subarray(0, ivLength);
     const encryptedText = data.subarray(ivLength, data.length - tagLength - sigLength);
     const authTag = data.subarray(data.length - tagLength - sigLength, data.length - sigLength);
@@ -6628,9 +6627,11 @@ async function aesGCMDecrypt(key, encryptedData, providerSigner) {
     const privateKey = Buffer.from(key, 'hex');
     const decipher = crypto$2.createDecipheriv('aes-256-gcm', privateKey, iv);
     decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'hex');
-    decrypted += decipher.final('hex');
-    return Buffer.from(decrypted, 'hex');
+    let decrypted = Buffer.concat([
+        decipher.update(encryptedText),
+        decipher.final(),
+    ]);
+    return decrypted;
 }
 
 function strToPrivateKey(str) {
@@ -10143,7 +10144,7 @@ class ModelProcessor extends BrokerBase {
             }
             const secret = await eciesDecrypt(this.contract.signer, latestDeliverable.encryptedSecret);
             const encryptedData = await promises.readFile(encryptedModelPath);
-            const model = await aesGCMDecrypt(secret, encryptedData.toString('hex'), account.providerSigner);
+            const model = await aesGCMDecrypt(secret, encryptedData, account.providerSigner);
             await promises.writeFile(decryptedModelPath, model);
         }
         catch (error) {

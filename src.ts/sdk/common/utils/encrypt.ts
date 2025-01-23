@@ -75,10 +75,9 @@ export async function eciesDecrypt(
 
 export async function aesGCMDecrypt(
     key: string,
-    encryptedData: string,
+    data: Buffer<ArrayBufferLike>,
     providerSigner: string
 ): Promise<Buffer<ArrayBuffer>> {
-    const data = Buffer.from(encryptedData, 'hex')
     const iv = data.subarray(0, ivLength)
     const encryptedText = data.subarray(
         ivLength,
@@ -98,10 +97,13 @@ export async function aesGCMDecrypt(
     }
 
     const privateKey = Buffer.from(key, 'hex')
-
     const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv)
     decipher.setAuthTag(authTag)
-    let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'hex')
-    decrypted += decipher.final('hex')
-    return Buffer.from(decrypted, 'hex')
+
+    let decrypted = Buffer.concat([
+        decipher.update(encryptedText),
+        decipher.final(),
+    ])
+
+    return decrypted
 }
