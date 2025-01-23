@@ -1344,7 +1344,7 @@ declare class FineTuningBroker {
     createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
     getLog: (providerAddress: string, serviceName: string, taskID?: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
-    decryptModel: () => Promise<void>;
+    decryptModel: (providerAddress: string, encryptedModelPath: string, decryptedModelPath: string) => Promise<void>;
 }
 /**
  * createFineTuningBroker is used to initialize ZGServingUserBroker

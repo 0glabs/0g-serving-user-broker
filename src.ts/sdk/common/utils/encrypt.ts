@@ -55,11 +55,6 @@ export async function signRequest(
         ['address', 'uint256', 'string', 'uint256'],
         [userAddress, nonce, datasetRootHash, fee]
     )
-    console.log('userAddress', userAddress)
-    console.log('nonce', nonce)
-    console.log('datasetRootHash', datasetRootHash)
-    console.log('fee', fee)
-    console.log('hash', hash)
 
     return await signer.signMessage(ethers.toBeArray(hash))
 }

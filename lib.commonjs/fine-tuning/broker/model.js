@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelProcessor = void 0;
+const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const zg_storage_1 = require("../zg-storage");
 const base_1 = require("./base");
+const fs_1 = require("fs");
 class ModelProcessor extends base_1.BrokerBase {
     listModel() {
         return Object.keys(const_1.MODEL_HASH_MAP);
@@ -17,7 +19,7 @@ class ModelProcessor extends base_1.BrokerBase {
     async acknowledgeModel(providerAddress, dataPath) {
         try {
             const account = await this.contract.getAccount(providerAddress);
-            const latestDeliverable = account.deliverables[-1];
+            const latestDeliverable = account.deliverables[account.deliverables.length - 1];
             if (!latestDeliverable) {
                 throw new Error('No deliverable found');
             }
@@ -28,11 +30,21 @@ class ModelProcessor extends base_1.BrokerBase {
             throw error;
         }
     }
-    // 10. decrypt model
-    //     1. [`call contract`] get deliverable with encryptedSecret
-    //     2. decrypt the encryptedSecret
-    //     3. decrypt model with secret [TODO: Discuss LiuYuan]
-    async decryptModel() {
+    async decryptModel(providerAddress, encryptedModelPath, decryptedModelPath) {
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            const latestDeliverable = account.deliverables[account.deliverables.length - 1];
+            if (!latestDeliverable) {
+                throw new Error('No deliverable found');
+            }
+            const secret = await (0, utils_1.eciesDecrypt)(this.contract.signer, latestDeliverable.encryptedSecret);
+            const encryptedData = await fs_1.promises.readFile(encryptedModelPath);
+            const model = await (0, utils_1.aesGCMDecrypt)(secret, encryptedData.toString('hex'), providerAddress);
+            await fs_1.promises.writeFile(decryptedModelPath, model);
+        }
+        catch (error) {
+            throw error;
+        }
         return;
     }
 }

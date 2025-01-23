@@ -34,16 +34,14 @@ async function decryptData(signer, encryptedData) {
 // Fine-tuning
 async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     const hash = ethers_1.ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
-    console.log('userAddress', userAddress);
-    console.log('nonce', nonce);
-    console.log('datasetRootHash', datasetRootHash);
-    console.log('fee', fee);
-    console.log('hash', hash);
     return await signer.signMessage(ethers_1.ethers.toBeArray(hash));
 }
 async function eciesDecrypt(signer, encryptedData) {
     const privateKey = eciesjs_1.PrivateKey.fromHex(signer.privateKey);
+    console.log('privateKey', privateKey);
+    console.log('encryptedData', encryptedData);
     const data = Buffer.from(encryptedData, 'hex');
+    console.log('data', data);
     const decrypted = (0, eciesjs_1.decrypt)(privateKey.secret, data);
     return decrypted.toString('hex');
 }

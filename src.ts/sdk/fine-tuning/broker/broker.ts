@@ -158,9 +158,17 @@ export class FineTuningBroker {
         }
     }
 
-    public decryptModel = async (): Promise<void> => {
+    public decryptModel = async (
+        providerAddress: string,
+        encryptedModelPath: string,
+        decryptedModelPath: string
+    ): Promise<void> => {
         try {
-            return await this.modelProcessor.decryptModel()
+            return await this.modelProcessor.decryptModel(
+                providerAddress,
+                encryptedModelPath,
+                decryptedModelPath
+            )
         } catch (error) {
             throw error
         }

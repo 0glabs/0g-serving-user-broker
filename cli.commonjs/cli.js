@@ -93,55 +93,6 @@ program
         console.log('Refunded amount:', options.amount);
     });
 });
-// program
-//     .command('transfer-fund')
-//     .description('Transfer funds to a provider')
-//     .requiredOption('-k, --private-key <key>', 'Wallet private key')
-//     .requiredOption('-p, --provider <address>', 'Provider address')
-//     .requiredOption('-t, --type <inference|fine-tuning>', 'Service type')
-//     .requiredOption('-a, --amount <bigint>', 'Amount to transfer')
-//     .option('-r, --rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-//     .option('-l, --ledger-ca <address>', 'Ledger contract address', LEDGER_CA)
-//     .action((options) => {
-//         withLedgerBroker(options, async (broker) => {
-//             await broker.ledger.transferFund(
-//                 options.provider,
-//                 options.type,
-//                 BigInt(options.amount)
-//             )
-//             console.log('Transferred fund:', options.amount)
-//         })
-//     })
-// program
-//     .command('retrieve-fund')
-//     .description('Retrieve funds from providers')
-//     .requiredOption('-k, --private-key <key>', 'Wallet private key')
-//     .requiredOption(
-//         '-p, --providers <addresses>',
-//         'Comma-separated list of provider addresses'
-//     )
-//     .requiredOption('-t, --type <inference|fine-tuning>', 'Service type')
-//     .option('-r, --rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-//     .option('-l, --ledger-ca <address>', 'Ledger contract address', LEDGER_CA)
-//     .action((options) => {
-//         withLedgerBroker(options, async (broker) => {
-//             const providers = options.providers.split(',')
-//             await broker.ledger.retrieveFund(providers, options.type)
-//             console.log('Retrieved funds for providers:', providers)
-//         })
-//     })
-// program
-//     .command('delete-ledger')
-//     .description('Delete ledger')
-//     .requiredOption('-k, --private-key <key>', 'Wallet private key')
-//     .option('-r, --rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-//     .option('-l, --ledger-ca <address>', 'Ledger contract address', LEDGER_CA)
-//     .action((options) => {
-//         withLedgerBroker(options, async (broker) => {
-//             await broker.ledger.deleteLedger()
-//             console.log('Ledger deleted.')
-//         })
-//     })
 // Fine-tuning commands
 program
     .command('get-fine-tuning-account')
@@ -154,7 +105,11 @@ program
     .action((options) => {
     withFineTuningBroker(options, async (broker) => {
         const account = await broker.fineTuning.getAccount(options.provider);
-        console.log(`balance: ${account.balance.toString()} pending refund: ${account.pendingRefund.toString()}, provider signer: ${account.providerSigner}`);
+        const deliverables = account.deliverables.map((d) => ({
+            modelRootHash: d.modelRootHash,
+            encryptedSecret: d.encryptedSecret,
+        }));
+        console.log(`Balance: ${account.balance.toString()}, Pending refund: ${account.pendingRefund.toString()}, Provider signer: ${account.providerSigner}, Deliverables: ${JSON.stringify(deliverables)}`);
     });
 });
 program
@@ -258,6 +213,37 @@ program
     withFineTuningBroker(options, async (broker) => {
         const log = await broker.fineTuning.getLog(options.provider, options.service, options.task);
         console.log(log);
+    });
+});
+program
+    .command('acknowledge-model')
+    .description('Acknowledge the availability of a model')
+    .requiredOption('-k, --private-key <key>', 'Wallet private key')
+    .requiredOption('--provider <address>', 'Provider address')
+    .requiredOption('--data-path <path>', 'Path to store the model')
+    .option('-r, --rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+    .option('-l, --ledger-ca <address>', 'Ledger contract address', LEDGER_CA)
+    .option('-f, --fine-tuning-ca <address>', 'Fine Tuning contract address', FINE_TUNING_CA)
+    .action((options) => {
+    withFineTuningBroker(options, async (broker) => {
+        await broker.fineTuning.acknowledgeModel(options.provider, options.dataPath);
+        console.log('Acknowledged model');
+    });
+});
+program
+    .command('decrypt-model')
+    .description('Decrypt a model')
+    .requiredOption('-k, --private-key <key>', 'Wallet private key')
+    .requiredOption('--provider <address>', 'Provider address')
+    .requiredOption('--encrypted-model <path>', 'Path to the encrypted model')
+    .requiredOption('--output <path>', 'Path to the decrypted model')
+    .option('-r, --rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+    .option('-l, --ledger-ca <address>', 'Ledger contract address', LEDGER_CA)
+    .option('-f, --fine-tuning-ca <address>', 'Fine Tuning contract address', FINE_TUNING_CA)
+    .action((options) => {
+    withFineTuningBroker(options, async (broker) => {
+        await broker.fineTuning.decryptModel(options.provider, options.encryptedModel, options.output);
+        console.log('Decrypted model');
     });
 });
 program.parse(process.argv);

@@ -1,11 +1,12 @@
 import { ethers, ContractFactory, Interface, Contract, Wallet } from 'ethers';
 import CryptoJS from 'crypto-js';
 import require$$1 from 'node:crypto';
-import 'crypto';
+import * as crypto$2 from 'crypto';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
 import { spawn } from 'child_process';
 import path from 'path';
 import * as fs from 'fs/promises';
+import { promises } from 'fs';
 
 class Extractor {
 }
@@ -6578,8 +6579,11 @@ function requireDist () {
 	return dist;
 }
 
-requireDist();
+var distExports = requireDist();
 
+const ivLength = 12;
+const tagLength = 16;
+const sigLength = 65;
 // Inference
 async function deriveEncryptionKey(signer) {
     const signature = await signer.signMessage(MESSAGE_FOR_ENCRYPTION_KEY);
@@ -6600,12 +6604,33 @@ async function decryptData(signer, encryptedData) {
 // Fine-tuning
 async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     const hash = ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
-    console.log('userAddress', userAddress);
-    console.log('nonce', nonce);
-    console.log('datasetRootHash', datasetRootHash);
-    console.log('fee', fee);
-    console.log('hash', hash);
     return await signer.signMessage(ethers.toBeArray(hash));
+}
+async function eciesDecrypt(signer, encryptedData) {
+    const privateKey = distExports.PrivateKey.fromHex(signer.privateKey);
+    console.log('privateKey', privateKey);
+    console.log('encryptedData', encryptedData);
+    const data = Buffer.from(encryptedData, 'hex');
+    console.log('data', data);
+    const decrypted = distExports.decrypt(privateKey.secret, data);
+    return decrypted.toString('hex');
+}
+async function aesGCMDecrypt(key, encryptedData, providerAddress) {
+    const data = Buffer.from(encryptedData, 'hex');
+    const iv = data.subarray(0, ivLength);
+    const encryptedText = data.subarray(ivLength, data.length - tagLength - sigLength);
+    const authTag = data.subarray(data.length - tagLength - sigLength, data.length - sigLength);
+    const tagSig = data.subarray(data.length - sigLength, data.length);
+    const recoveredAddress = ethers.recoverAddress(ethers.keccak256(authTag), tagSig.toString('hex'));
+    if (recoveredAddress.toLowerCase() !== providerAddress.toLowerCase()) {
+        throw new Error('Invalid tag signature');
+    }
+    const privateKey = Buffer.from(key, 'hex');
+    const decipher = crypto$2.createDecipheriv('aes-256-gcm', privateKey, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
 }
 
 function strToPrivateKey(str) {
@@ -10098,7 +10123,7 @@ class ModelProcessor extends BrokerBase {
     async acknowledgeModel(providerAddress, dataPath) {
         try {
             const account = await this.contract.getAccount(providerAddress);
-            const latestDeliverable = account.deliverables[-1];
+            const latestDeliverable = account.deliverables[account.deliverables.length - 1];
             if (!latestDeliverable) {
                 throw new Error('No deliverable found');
             }
@@ -10109,11 +10134,21 @@ class ModelProcessor extends BrokerBase {
             throw error;
         }
     }
-    // 10. decrypt model
-    //     1. [`call contract`] get deliverable with encryptedSecret
-    //     2. decrypt the encryptedSecret
-    //     3. decrypt model with secret [TODO: Discuss LiuYuan]
-    async decryptModel() {
+    async decryptModel(providerAddress, encryptedModelPath, decryptedModelPath) {
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            const latestDeliverable = account.deliverables[account.deliverables.length - 1];
+            if (!latestDeliverable) {
+                throw new Error('No deliverable found');
+            }
+            const secret = await eciesDecrypt(this.contract.signer, latestDeliverable.encryptedSecret);
+            const encryptedData = await promises.readFile(encryptedModelPath);
+            const model = await aesGCMDecrypt(secret, encryptedData.toString('hex'), providerAddress);
+            await promises.writeFile(decryptedModelPath, model);
+        }
+        catch (error) {
+            throw error;
+        }
         return;
     }
 }
@@ -10411,9 +10446,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    decryptModel = async () => {
+    decryptModel = async (providerAddress, encryptedModelPath, decryptedModelPath) => {
         try {
-            return await this.modelProcessor.decryptModel();
+            return await this.modelProcessor.decryptModel(providerAddress, encryptedModelPath, decryptedModelPath);
         }
         catch (error) {
             throw error;

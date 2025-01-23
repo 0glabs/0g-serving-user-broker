@@ -103,9 +103,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    decryptModel = async () => {
+    decryptModel = async (providerAddress, encryptedModelPath, decryptedModelPath) => {
         try {
-            return await this.modelProcessor.decryptModel();
+            return await this.modelProcessor.decryptModel(providerAddress, encryptedModelPath, decryptedModelPath);
         }
         catch (error) {
             throw error;

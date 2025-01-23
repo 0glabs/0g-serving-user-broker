@@ -1,6 +1,8 @@
+import { aesGCMDecrypt, eciesDecrypt } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import { download, upload } from '../zg-storage'
 import { BrokerBase } from './base'
+import { promises as fs } from 'fs'
 
 export class ModelProcessor extends BrokerBase {
     listModel(): string[] {
@@ -21,7 +23,9 @@ export class ModelProcessor extends BrokerBase {
     ): Promise<void> {
         try {
             const account = await this.contract.getAccount(providerAddress)
-            const latestDeliverable = account.deliverables[-1]
+
+            const latestDeliverable =
+                account.deliverables[account.deliverables.length - 1]
 
             if (!latestDeliverable) {
                 throw new Error('No deliverable found')
@@ -38,11 +42,37 @@ export class ModelProcessor extends BrokerBase {
         }
     }
 
-    // 10. decrypt model
-    //     1. [`call contract`] get deliverable with encryptedSecret
-    //     2. decrypt the encryptedSecret
-    //     3. decrypt model with secret [TODO: Discuss LiuYuan]
-    async decryptModel(): Promise<void> {
+    async decryptModel(
+        providerAddress: string,
+        encryptedModelPath: string,
+        decryptedModelPath: string
+    ): Promise<void> {
+        try {
+            const account = await this.contract.getAccount(providerAddress)
+
+            const latestDeliverable =
+                account.deliverables[account.deliverables.length - 1]
+
+            if (!latestDeliverable) {
+                throw new Error('No deliverable found')
+            }
+
+            const secret = await eciesDecrypt(
+                this.contract.signer,
+                latestDeliverable.encryptedSecret
+            )
+
+            const encryptedData = await fs.readFile(encryptedModelPath)
+
+            const model = await aesGCMDecrypt(
+                secret,
+                encryptedData.toString('hex'),
+                providerAddress
+            )
+            await fs.writeFile(decryptedModelPath, model)
+        } catch (error) {
+            throw error
+        }
         return
     }
 }
