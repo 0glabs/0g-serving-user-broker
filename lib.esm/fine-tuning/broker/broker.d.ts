@@ -1,5 +1,6 @@
 import { Wallet } from 'ethers';
 import { LedgerBroker } from '../../ledger';
+import { Task } from '../provider/provider';
 export declare class FineTuningBroker {
     private signer;
     private fineTuningCA;
@@ -16,6 +17,7 @@ export declare class FineTuningBroker {
     uploadDataset: (dataPath: string) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
     createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
+    getTask: (providerAddress: string, serviceName: string, taskID?: string) => Promise<Task>;
     getLog: (providerAddress: string, serviceName: string, taskID?: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
     decryptModel: (providerAddress: string, encryptedModelPath: string, decryptedModelPath: string) => Promise<void>;

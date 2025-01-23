@@ -76,6 +76,16 @@ class Provider {
             throw new Error('Failed to create task');
         }
     }
+    async getTask(providerAddress, serviceName, taskID) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const endpoint = `${url}/v1/task/${taskID}`;
+            return this.fetchJSON(endpoint, { method: 'GET' });
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async listTask(providerAddress, serviceName, userAddress, latest = false) {
         try {
             const url = await this.getProviderUrl(providerAddress, serviceName);

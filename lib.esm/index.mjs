@@ -10227,6 +10227,21 @@ class ServiceProcessor extends BrokerBase {
             throw error;
         }
     }
+    async getTask(providerAddress, serviceName, taskID) {
+        try {
+            if (!taskID) {
+                const tasks = await this.servingProvider.listTask(providerAddress, serviceName, this.contract.getUserAddress(), true);
+                if (tasks.length === 0) {
+                    throw new Error('No task found');
+                }
+                return tasks[0];
+            }
+            return await this.servingProvider.getTask(providerAddress, serviceName, taskID);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     // 8. [`call provider`] call provider task progress api to get task progress
     async getLog(providerAddress, serviceName, taskID) {
         if (!taskID) {
@@ -10322,6 +10337,16 @@ class Provider {
                 throw new Error(`Failed to create task: ${error.message}`);
             }
             throw new Error('Failed to create task');
+        }
+    }
+    async getTask(providerAddress, serviceName, taskID) {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const endpoint = `${url}/v1/task/${taskID}`;
+            return this.fetchJSON(endpoint, { method: 'GET' });
+        }
+        catch (error) {
+            throw error;
         }
     }
     async listTask(providerAddress, serviceName, userAddress, latest = false) {
@@ -10425,6 +10450,15 @@ class FineTuningBroker {
     createTask = async (providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
         try {
             return await this.serviceProcessor.createTask(providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    getTask = async (providerAddress, serviceName, taskID) => {
+        try {
+            const task = await this.serviceProcessor.getTask(providerAddress, serviceName, taskID);
+            return task;
         }
         catch (error) {
             throw error;

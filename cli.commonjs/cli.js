@@ -200,6 +200,23 @@ program
     });
 });
 program
+    .command('get-task')
+    .description('Retrieve fine-tuning task information')
+    .requiredOption('-k, --private-key <key>', 'Wallet private key')
+    .requiredOption('--provider <address>', 'Provider address')
+    .requiredOption('--service <name>', 'Service name')
+    .option('--task <id>', 'Task ID')
+    .option('-r, --rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+    .option('-l, --ledger-ca <address>', 'Ledger contract address', LEDGER_CA)
+    .option('-f, --fine-tuning-ca <address>', 'Fine Tuning contract address', FINE_TUNING_CA)
+    .action((options) => {
+    withFineTuningBroker(options, async (broker) => {
+        const task = await broker.fineTuning.getTask(options.provider, options.service, options.task);
+        console.log(task);
+        console.log('Task ID:', task.id, 'Progress:', task.progress);
+    });
+});
+program
     .command('get-log')
     .description('Retrieve fine-tuning task log')
     .requiredOption('-k, --private-key <key>', 'Wallet private key')

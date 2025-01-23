@@ -112,6 +112,35 @@ export class ServiceProcessor extends BrokerBase {
         }
     }
 
+    async getTask(
+        providerAddress: string,
+        serviceName: string,
+        taskID?: string
+    ): Promise<Task> {
+        try {
+            if (!taskID) {
+                const tasks = await this.servingProvider.listTask(
+                    providerAddress,
+                    serviceName,
+                    this.contract.getUserAddress(),
+                    true
+                )
+                if (tasks.length === 0) {
+                    throw new Error('No task found')
+                }
+                return tasks[0]
+            }
+
+            return await this.servingProvider.getTask(
+                providerAddress,
+                serviceName,
+                taskID
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     // 8. [`call provider`] call provider task progress api to get task progress
     async getLog(
         providerAddress: string,

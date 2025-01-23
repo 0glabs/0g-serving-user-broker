@@ -1326,6 +1326,22 @@ declare class LedgerBroker {
  */
 declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<LedgerBroker>;
 
+interface Task {
+    readonly id?: string;
+    readonly createdAt?: string;
+    readonly updatedAt?: string;
+    userAddress: string;
+    serviceName: string;
+    preTrainedModelHash: string;
+    datasetHash: string;
+    trainingParams: string;
+    fee: string;
+    nonce: string;
+    signature: string;
+    readonly progress?: string;
+    readonly deliverIndex?: string;
+}
+
 declare class FineTuningBroker {
     private signer;
     private fineTuningCA;
@@ -1342,6 +1358,7 @@ declare class FineTuningBroker {
     uploadDataset: (dataPath: string) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
     createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
+    getTask: (providerAddress: string, serviceName: string, taskID?: string) => Promise<Task>;
     getLog: (providerAddress: string, serviceName: string, taskID?: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
     decryptModel: (providerAddress: string, encryptedModelPath: string, decryptedModelPath: string) => Promise<void>;

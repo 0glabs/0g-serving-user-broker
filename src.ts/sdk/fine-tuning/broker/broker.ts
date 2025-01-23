@@ -3,7 +3,7 @@ import { Wallet } from 'ethers'
 import { ModelProcessor } from './model'
 import { ServiceProcessor } from './service'
 import { LedgerBroker } from '../../ledger'
-import { Provider } from '../provider/provider'
+import { Provider, Task } from '../provider/provider'
 
 export class FineTuningBroker {
     private signer: Wallet
@@ -123,6 +123,23 @@ export class FineTuningBroker {
                 datasetHash,
                 trainingPath
             )
+        } catch (error) {
+            throw error
+        }
+    }
+
+    public getTask = async (
+        providerAddress: string,
+        serviceName: string,
+        taskID?: string
+    ): Promise<Task> => {
+        try {
+            const task = await this.serviceProcessor.getTask(
+                providerAddress,
+                serviceName,
+                taskID
+            )
+            return task
         } catch (error) {
             throw error
         }

@@ -118,6 +118,21 @@ export class Provider {
         }
     }
 
+    async getTask(
+        providerAddress: string,
+        serviceName: string,
+        taskID: string
+    ): Promise<Task> {
+        try {
+            const url = await this.getProviderUrl(providerAddress, serviceName)
+            const endpoint = `${url}/v1/task/${taskID}`
+
+            return this.fetchJSON(endpoint, { method: 'GET' }) as Promise<Task>
+        } catch (error) {
+            throw error
+        }
+    }
+
     async listTask(
         providerAddress: string,
         serviceName: string,

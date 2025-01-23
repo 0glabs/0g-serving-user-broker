@@ -87,6 +87,15 @@ class FineTuningBroker {
             throw error;
         }
     };
+    getTask = async (providerAddress, serviceName, taskID) => {
+        try {
+            const task = await this.serviceProcessor.getTask(providerAddress, serviceName, taskID);
+            return task;
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     getLog = async (providerAddress, serviceName, taskID) => {
         try {
             return await this.serviceProcessor.getLog(providerAddress, serviceName, taskID);
