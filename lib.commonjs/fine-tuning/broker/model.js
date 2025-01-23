@@ -39,7 +39,7 @@ class ModelProcessor extends base_1.BrokerBase {
             }
             const secret = await (0, utils_1.eciesDecrypt)(this.contract.signer, latestDeliverable.encryptedSecret);
             const encryptedData = await fs_1.promises.readFile(encryptedModelPath);
-            const model = await (0, utils_1.aesGCMDecrypt)(secret, encryptedData.toString('hex'), providerAddress);
+            const model = await (0, utils_1.aesGCMDecrypt)(secret, encryptedData.toString('hex'), account.providerSigner);
             await fs_1.promises.writeFile(decryptedModelPath, model);
         }
         catch (error) {

@@ -37,19 +37,22 @@ async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     return await signer.signMessage(ethers_1.ethers.toBeArray(hash));
 }
 async function eciesDecrypt(signer, encryptedData) {
+    encryptedData = encryptedData.startsWith('0x')
+        ? encryptedData.slice(2)
+        : encryptedData;
     const privateKey = eciesjs_1.PrivateKey.fromHex(signer.privateKey);
     const data = Buffer.from(encryptedData, 'hex');
     const decrypted = (0, eciesjs_1.decrypt)(privateKey.secret, data);
     return decrypted.toString('hex');
 }
-async function aesGCMDecrypt(key, encryptedData, providerAddress) {
+async function aesGCMDecrypt(key, encryptedData, providerSigner) {
     const data = Buffer.from(encryptedData, 'hex');
     const iv = data.subarray(0, ivLength);
     const encryptedText = data.subarray(ivLength, data.length - tagLength - sigLength);
     const authTag = data.subarray(data.length - tagLength - sigLength, data.length - sigLength);
     const tagSig = data.subarray(data.length - sigLength, data.length);
     const recoveredAddress = ethers_1.ethers.recoverAddress(ethers_1.ethers.keccak256(authTag), '0x' + tagSig.toString('hex'));
-    if (recoveredAddress.toLowerCase() !== providerAddress.toLowerCase()) {
+    if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
         throw new Error('Invalid tag signature');
     }
     const privateKey = Buffer.from(key, 'hex');

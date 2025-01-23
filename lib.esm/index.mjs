@@ -6607,19 +6607,22 @@ async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     return await signer.signMessage(ethers.toBeArray(hash));
 }
 async function eciesDecrypt(signer, encryptedData) {
+    encryptedData = encryptedData.startsWith('0x')
+        ? encryptedData.slice(2)
+        : encryptedData;
     const privateKey = distExports.PrivateKey.fromHex(signer.privateKey);
     const data = Buffer.from(encryptedData, 'hex');
     const decrypted = distExports.decrypt(privateKey.secret, data);
     return decrypted.toString('hex');
 }
-async function aesGCMDecrypt(key, encryptedData, providerAddress) {
+async function aesGCMDecrypt(key, encryptedData, providerSigner) {
     const data = Buffer.from(encryptedData, 'hex');
     const iv = data.subarray(0, ivLength);
     const encryptedText = data.subarray(ivLength, data.length - tagLength - sigLength);
     const authTag = data.subarray(data.length - tagLength - sigLength, data.length - sigLength);
     const tagSig = data.subarray(data.length - sigLength, data.length);
     const recoveredAddress = ethers.recoverAddress(ethers.keccak256(authTag), '0x' + tagSig.toString('hex'));
-    if (recoveredAddress.toLowerCase() !== providerAddress.toLowerCase()) {
+    if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
         throw new Error('Invalid tag signature');
     }
     const privateKey = Buffer.from(key, 'hex');
@@ -10140,7 +10143,7 @@ class ModelProcessor extends BrokerBase {
             }
             const secret = await eciesDecrypt(this.contract.signer, latestDeliverable.encryptedSecret);
             const encryptedData = await promises.readFile(encryptedModelPath);
-            const model = await aesGCMDecrypt(secret, encryptedData.toString('hex'), providerAddress);
+            const model = await aesGCMDecrypt(secret, encryptedData.toString('hex'), account.providerSigner);
             await promises.writeFile(decryptedModelPath, model);
         }
         catch (error) {

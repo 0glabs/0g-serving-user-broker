@@ -63,6 +63,10 @@ export async function eciesDecrypt(
     signer: Wallet,
     encryptedData: string
 ): Promise<string> {
+    encryptedData = encryptedData.startsWith('0x')
+        ? encryptedData.slice(2)
+        : encryptedData
+
     const privateKey = PrivateKey.fromHex(signer.privateKey)
     const data = Buffer.from(encryptedData, 'hex')
     const decrypted = decrypt(privateKey.secret, data)
@@ -72,7 +76,7 @@ export async function eciesDecrypt(
 export async function aesGCMDecrypt(
     key: string,
     encryptedData: string,
-    providerAddress: string
+    providerSigner: string
 ): Promise<Buffer<ArrayBuffer>> {
     const data = Buffer.from(encryptedData, 'hex')
     const iv = data.subarray(0, ivLength)
@@ -89,7 +93,7 @@ export async function aesGCMDecrypt(
         ethers.keccak256(authTag),
         '0x' + tagSig.toString('hex')
     )
-    if (recoveredAddress.toLowerCase() !== providerAddress.toLowerCase()) {
+    if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
         throw new Error('Invalid tag signature')
     }
 
@@ -97,11 +101,7 @@ export async function aesGCMDecrypt(
 
     const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv)
     decipher.setAuthTag(authTag)
-    let decrypted = decipher.update(
-        encryptedText.toString('hex'),
-        'hex',
-        'hex'
-    )
+    let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'hex')
     decrypted += decipher.final('hex')
     return Buffer.from(decrypted, 'hex')
 }
