@@ -1,17 +1,28 @@
 import { AddressLike, JsonRpcSigner, Wallet } from 'ethers'
-import { LedgerProcessor } from './ledger'
-import { LedgerManagerContract, LedgerStructOutput } from './contract'
+import { LedgerDetailStructOutput, LedgerProcessor } from './ledger'
+import { LedgerManagerContract } from './contract'
 import { Metadata } from '../common/storage'
+import { InferenceServingContract } from '../inference/contract'
+import { FineTuningServingContract } from '../fine-tuning/contract'
 
 export class LedgerBroker {
     public ledger!: LedgerProcessor
 
     private signer: JsonRpcSigner | Wallet
     private ledgerCA: string
+    private inferenceCA: string
+    private fineTuningCA: string
 
-    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string) {
+    constructor(
+        signer: JsonRpcSigner | Wallet,
+        ledgerCA: string,
+        inferenceCA: string,
+        fineTuningCA: string
+    ) {
         this.signer = signer
         this.ledgerCA = ledgerCA
+        this.inferenceCA = inferenceCA
+        this.fineTuningCA = fineTuningCA
     }
 
     async initialize() {
@@ -21,14 +32,33 @@ export class LedgerBroker {
         } catch (error) {
             throw error
         }
-        const contract = new LedgerManagerContract(
+        const ledgerContract = new LedgerManagerContract(
             this.signer,
             this.ledgerCA,
             userAddress
         )
+        const inferenceContract = new InferenceServingContract(
+            this.signer,
+            this.inferenceCA,
+            userAddress
+        )
+
+        let fineTuningContract: FineTuningServingContract | undefined
+        if (this.signer instanceof Wallet) {
+            fineTuningContract = new FineTuningServingContract(
+                this.signer,
+                this.fineTuningCA,
+                userAddress
+            )
+        }
         const metadata = new Metadata()
 
-        this.ledger = new LedgerProcessor(contract, metadata)
+        this.ledger = new LedgerProcessor(
+            metadata,
+            ledgerContract,
+            inferenceContract,
+            fineTuningContract
+        )
     }
 
     /**
@@ -56,9 +86,9 @@ export class LedgerBroker {
      *
      * @throws Will throw an error if the ledger retrieval process fails.
      */
-    public getLedger = async (): Promise<LedgerStructOutput> => {
+    public getLedger = async (): Promise<LedgerDetailStructOutput> => {
         try {
-            return await this.ledger.getLedger()
+            return await this.ledger.getLedgerWithDetail()
         } catch (error) {
             throw error
         }
@@ -167,9 +197,11 @@ export class LedgerBroker {
  */
 export async function createLedgerBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress = ''
+    ledgerCA: string,
+    inferenceCA: string,
+    fineTuningCA: string
 ): Promise<LedgerBroker> {
-    const broker = new LedgerBroker(signer, contractAddress)
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA)
     try {
         await broker.initialize()
         return broker

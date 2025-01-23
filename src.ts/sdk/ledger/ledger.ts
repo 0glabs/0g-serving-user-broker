@@ -3,23 +3,80 @@ import { genKeyPair } from '../common/settle-signer'
 import { encryptData, privateKeyToStr } from '../common/utils'
 import { Metadata } from '../common/storage'
 import { LedgerManagerContract } from './contract'
+import { InferenceServingContract } from '../inference/contract'
+import { FineTuningServingContract } from '../fine-tuning/contract'
 
+export interface LedgerDetailStructOutput {
+    ledgerInfo: number[]
+    infers: (string | number)[][]
+    fines: (string | number)[][] | null
+}
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
  */
 export class LedgerProcessor {
-    protected ledgerContract: LedgerManagerContract
     protected metadata: Metadata
+    protected ledgerContract: LedgerManagerContract
+    protected inferenceContract: InferenceServingContract
+    protected fineTuningContract: FineTuningServingContract | undefined
 
-    constructor(ledgerContract: LedgerManagerContract, metadata: Metadata) {
-        this.ledgerContract = ledgerContract
+    constructor(
+        metadata: Metadata,
+        ledgerContract: LedgerManagerContract,
+        inferenceContract: InferenceServingContract,
+        fineTuningContract?: FineTuningServingContract
+    ) {
         this.metadata = metadata
+        this.ledgerContract = ledgerContract
+        this.inferenceContract = inferenceContract
+        this.fineTuningContract = fineTuningContract
     }
 
     async getLedger() {
         try {
             const ledger = await this.ledgerContract.getLedger()
             return ledger
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getLedgerWithDetail(): Promise<LedgerDetailStructOutput> {
+        try {
+            const ledger = await this.ledgerContract.getLedger()
+            const ledgerInfo = [
+                this.neuronToA0gi(ledger.totalBalance),
+                this.neuronToA0gi(ledger.availableBalance),
+            ]
+            const infers = await Promise.all(
+                ledger.inferenceProviders.map(async (provider) => {
+                    const account = await this.inferenceContract.getAccount(
+                        provider
+                    )
+                    return [
+                        provider,
+                        this.neuronToA0gi(account.balance),
+                        this.neuronToA0gi(account.pendingRefund),
+                    ]
+                })
+            )
+
+            let fines: (string | number)[][] | null = []
+            if (typeof ledger.fineTuningProviders !== 'undefined') {
+                fines = await Promise.all(
+                    ledger.fineTuningProviders.map(async (provider) => {
+                        const account =
+                            await this.fineTuningContract?.getAccount(provider)
+                        return [
+                            provider,
+                            this.neuronToA0gi(account!.balance),
+                            this.neuronToA0gi(account!.pendingRefund),
+                        ]
+                    })
+                )
+            }
+
+            return { ledgerInfo, infers, fines }
         } catch (error) {
             throw error
         }

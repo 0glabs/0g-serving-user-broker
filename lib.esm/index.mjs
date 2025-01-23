@@ -10515,16 +10515,52 @@ async function createFineTuningBroker(signer, contractAddress = '', ledger) {
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
  */
 class LedgerProcessor {
-    ledgerContract;
     metadata;
-    constructor(ledgerContract, metadata) {
-        this.ledgerContract = ledgerContract;
+    ledgerContract;
+    inferenceContract;
+    fineTuningContract;
+    constructor(metadata, ledgerContract, inferenceContract, fineTuningContract) {
         this.metadata = metadata;
+        this.ledgerContract = ledgerContract;
+        this.inferenceContract = inferenceContract;
+        this.fineTuningContract = fineTuningContract;
     }
     async getLedger() {
         try {
             const ledger = await this.ledgerContract.getLedger();
             return ledger;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getLedgerWithDetail() {
+        try {
+            const ledger = await this.ledgerContract.getLedger();
+            const ledgerInfo = [
+                this.neuronToA0gi(ledger.totalBalance),
+                this.neuronToA0gi(ledger.availableBalance),
+            ];
+            const infers = await Promise.all(ledger.inferenceProviders.map(async (provider) => {
+                const account = await this.inferenceContract.getAccount(provider);
+                return [
+                    provider,
+                    this.neuronToA0gi(account.balance),
+                    this.neuronToA0gi(account.pendingRefund),
+                ];
+            }));
+            let fines = [];
+            if (typeof ledger.fineTuningProviders !== 'undefined') {
+                fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {
+                    const account = await this.fineTuningContract?.getAccount(provider);
+                    return [
+                        provider,
+                        this.neuronToA0gi(account.balance),
+                        this.neuronToA0gi(account.pendingRefund),
+                    ];
+                }));
+            }
+            return { ledgerInfo, infers, fines };
         }
         catch (error) {
             throw error;
@@ -11175,9 +11211,13 @@ class LedgerBroker {
     ledger;
     signer;
     ledgerCA;
-    constructor(signer, ledgerCA) {
+    inferenceCA;
+    fineTuningCA;
+    constructor(signer, ledgerCA, inferenceCA, fineTuningCA) {
         this.signer = signer;
         this.ledgerCA = ledgerCA;
+        this.inferenceCA = inferenceCA;
+        this.fineTuningCA = fineTuningCA;
     }
     async initialize() {
         let userAddress;
@@ -11187,9 +11227,14 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const contract = new LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const ledgerContract = new LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const inferenceContract = new InferenceServingContract(this.signer, this.inferenceCA, userAddress);
+        let fineTuningContract;
+        if (this.signer instanceof Wallet) {
+            fineTuningContract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        }
         const metadata = new Metadata();
-        this.ledger = new LedgerProcessor(contract, metadata);
+        this.ledger = new LedgerProcessor(metadata, ledgerContract, inferenceContract, fineTuningContract);
     }
     /**
      * Adds a new ledger to the contract.
@@ -11218,7 +11263,7 @@ class LedgerBroker {
      */
     getLedger = async () => {
         try {
-            return await this.ledger.getLedger();
+            return await this.ledger.getLedgerWithDetail();
         }
         catch (error) {
             throw error;
@@ -11314,8 +11359,8 @@ class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createLedgerBroker(signer, contractAddress = '') {
-    const broker = new LedgerBroker(signer, contractAddress);
+async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA) {
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
     try {
         await broker.initialize();
         return broker;
@@ -11349,7 +11394,7 @@ class ZGComputeNetworkBroker {
  */
 async function createZGComputeNetworkBroker(signer, ledgerCA = '0xB57857B6E892b0aDACd627e74cEFa6D39c7BdD13', inferenceCA = '0x3dF34461017f22eA871d7FFD4e98191794F8053d', fineTuningCA = '0x3A018CDD9DC4401375653cde0aa517ffeb1E27c4') {
     try {
-        const ledger = await createLedgerBroker(signer, ledgerCA);
+        const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
         // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
         const inferenceBroker = await createInferenceBroker(signer, inferenceCA);
         let fineTuningBroker;

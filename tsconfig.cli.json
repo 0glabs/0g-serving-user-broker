@@ -26,5 +26,5 @@
         "outDir": "./cli.commonjs"
     },
     "exclude": [],
-    "include": ["./src.ts/cli.ts"]
+    "include": ["./src.ts/cli/**/*.ts"]
 }

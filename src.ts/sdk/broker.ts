@@ -41,7 +41,12 @@ export async function createZGComputeNetworkBroker(
     fineTuningCA = '0x3A018CDD9DC4401375653cde0aa517ffeb1E27c4'
 ): Promise<ZGComputeNetworkBroker> {
     try {
-        const ledger = await createLedgerBroker(signer, ledgerCA)
+        const ledger = await createLedgerBroker(
+            signer,
+            ledgerCA,
+            inferenceCA,
+            fineTuningCA
+        )
         // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
         const inferenceBroker = await createInferenceBroker(signer, inferenceCA)
 

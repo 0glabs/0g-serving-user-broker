@@ -1,14 +1,24 @@
 import { AddressLike } from 'ethers';
 import { Metadata } from '../common/storage';
 import { LedgerManagerContract } from './contract';
+import { InferenceServingContract } from '../inference/contract';
+import { FineTuningServingContract } from '../fine-tuning/contract';
+export interface LedgerDetailStructOutput {
+    ledgerInfo: number[];
+    infers: (string | number)[][];
+    fines: (string | number)[][] | null;
+}
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
  */
 export declare class LedgerProcessor {
-    protected ledgerContract: LedgerManagerContract;
     protected metadata: Metadata;
-    constructor(ledgerContract: LedgerManagerContract, metadata: Metadata);
+    protected ledgerContract: LedgerManagerContract;
+    protected inferenceContract: InferenceServingContract;
+    protected fineTuningContract: FineTuningServingContract | undefined;
+    constructor(metadata: Metadata, ledgerContract: LedgerManagerContract, inferenceContract: InferenceServingContract, fineTuningContract?: FineTuningServingContract);
     getLedger(): Promise<import("./contract").LedgerStructOutput>;
+    getLedgerWithDetail(): Promise<LedgerDetailStructOutput>;
     listLedger(): Promise<import("./contract").LedgerStructOutput[]>;
     addLedger(balance: number): Promise<void>;
     deleteLedger(): Promise<void>;

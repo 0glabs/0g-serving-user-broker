@@ -7,16 +7,52 @@ const utils_1 = require("../common/utils");
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
  */
 class LedgerProcessor {
-    ledgerContract;
     metadata;
-    constructor(ledgerContract, metadata) {
-        this.ledgerContract = ledgerContract;
+    ledgerContract;
+    inferenceContract;
+    fineTuningContract;
+    constructor(metadata, ledgerContract, inferenceContract, fineTuningContract) {
         this.metadata = metadata;
+        this.ledgerContract = ledgerContract;
+        this.inferenceContract = inferenceContract;
+        this.fineTuningContract = fineTuningContract;
     }
     async getLedger() {
         try {
             const ledger = await this.ledgerContract.getLedger();
             return ledger;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getLedgerWithDetail() {
+        try {
+            const ledger = await this.ledgerContract.getLedger();
+            const ledgerInfo = [
+                this.neuronToA0gi(ledger.totalBalance),
+                this.neuronToA0gi(ledger.availableBalance),
+            ];
+            const infers = await Promise.all(ledger.inferenceProviders.map(async (provider) => {
+                const account = await this.inferenceContract.getAccount(provider);
+                return [
+                    provider,
+                    this.neuronToA0gi(account.balance),
+                    this.neuronToA0gi(account.pendingRefund),
+                ];
+            }));
+            let fines = [];
+            if (typeof ledger.fineTuningProviders !== 'undefined') {
+                fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {
+                    const account = await this.fineTuningContract?.getAccount(provider);
+                    return [
+                        provider,
+                        this.neuronToA0gi(account.balance),
+                        this.neuronToA0gi(account.pendingRefund),
+                    ];
+                }));
+            }
+            return { ledgerInfo, infers, fines };
         }
         catch (error) {
             throw error;

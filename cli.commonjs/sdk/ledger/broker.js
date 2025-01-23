@@ -2,16 +2,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LedgerBroker = void 0;
 exports.createLedgerBroker = createLedgerBroker;
+const ethers_1 = require("ethers");
 const ledger_1 = require("./ledger");
 const contract_1 = require("./contract");
 const storage_1 = require("../common/storage");
+const contract_2 = require("../inference/contract");
+const contract_3 = require("../fine-tuning/contract");
 class LedgerBroker {
     ledger;
     signer;
     ledgerCA;
-    constructor(signer, ledgerCA) {
+    inferenceCA;
+    fineTuningCA;
+    constructor(signer, ledgerCA, inferenceCA, fineTuningCA) {
         this.signer = signer;
         this.ledgerCA = ledgerCA;
+        this.inferenceCA = inferenceCA;
+        this.fineTuningCA = fineTuningCA;
     }
     async initialize() {
         let userAddress;
@@ -21,9 +28,14 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const contract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const ledgerContract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const inferenceContract = new contract_2.InferenceServingContract(this.signer, this.inferenceCA, userAddress);
+        let fineTuningContract;
+        if (this.signer instanceof ethers_1.Wallet) {
+            fineTuningContract = new contract_3.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        }
         const metadata = new storage_1.Metadata();
-        this.ledger = new ledger_1.LedgerProcessor(contract, metadata);
+        this.ledger = new ledger_1.LedgerProcessor(metadata, ledgerContract, inferenceContract, fineTuningContract);
     }
     /**
      * Adds a new ledger to the contract.
@@ -52,7 +64,7 @@ class LedgerBroker {
      */
     getLedger = async () => {
         try {
-            return await this.ledger.getLedger();
+            return await this.ledger.getLedgerWithDetail();
         }
         catch (error) {
             throw error;
@@ -149,8 +161,8 @@ exports.LedgerBroker = LedgerBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createLedgerBroker(signer, contractAddress = '') {
-    const broker = new LedgerBroker(signer, contractAddress);
+async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA) {
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
     try {
         await broker.initialize();
         return broker;

@@ -4,7 +4,7 @@
     "description": "TS SDK for 0G Compute Network",
     "main": "./lib.commonjs/index.js",
     "bin": {
-        "0g-compute-cli": "./cli.commonjs/cli.js"
+        "0g-compute-cli": "./cli.commonjs/cli/index.js"
     },
     "files": [
         "types",
@@ -66,7 +66,9 @@
         "axios": "^1.7.9",
         "brotli": "^1.3.3",
         "buffer": "^6.0.3",
+        "chalk": "^5.4.1",
         "circomlibjs": "^0.1.6",
+        "cli-table3": "^0.6.5",
         "commander": "^13.0.0",
         "crypto-js": "^4.2.0",
         "eciesjs": "^0.4.13",

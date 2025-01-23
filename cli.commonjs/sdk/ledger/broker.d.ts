@@ -1,11 +1,12 @@
 import { AddressLike, JsonRpcSigner, Wallet } from 'ethers';
-import { LedgerProcessor } from './ledger';
-import { LedgerStructOutput } from './contract';
+import { LedgerDetailStructOutput, LedgerProcessor } from './ledger';
 export declare class LedgerBroker {
     ledger: LedgerProcessor;
     private signer;
     private ledgerCA;
-    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string);
+    private inferenceCA;
+    private fineTuningCA;
+    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string);
     initialize(): Promise<void>;
     /**
      * Adds a new ledger to the contract.
@@ -25,7 +26,7 @@ export declare class LedgerBroker {
      *
      * @throws Will throw an error if the ledger retrieval process fails.
      */
-    getLedger: () => Promise<LedgerStructOutput>;
+    getLedger: () => Promise<LedgerDetailStructOutput>;
     /**
      * Deposits a specified amount of funds into Ledger corresponding to the current wallet address.
      *
@@ -81,5 +82,5 @@ export declare class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<LedgerBroker>;
+export declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string): Promise<LedgerBroker>;
 //# sourceMappingURL=broker.d.ts.map

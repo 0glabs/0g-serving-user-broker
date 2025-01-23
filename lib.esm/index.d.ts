@@ -1,47 +1,47 @@
 import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet } from 'ethers';
 
-interface TypedDeferredTopicFilter$1<_TCEvent extends TypedContractEvent$1> extends DeferredTopicFilter {
+interface TypedDeferredTopicFilter$2<_TCEvent extends TypedContractEvent$2> extends DeferredTopicFilter {
 }
-interface TypedContractEvent$1<InputTuple extends Array<any> = any, OutputTuple extends Array<any> = any, OutputObject = any> {
-    (...args: Partial<InputTuple>): TypedDeferredTopicFilter$1<TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>>;
+interface TypedContractEvent$2<InputTuple extends Array<any> = any, OutputTuple extends Array<any> = any, OutputObject = any> {
+    (...args: Partial<InputTuple>): TypedDeferredTopicFilter$2<TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>>;
     name: string;
     fragment: EventFragment;
     getFragment(...args: Partial<InputTuple>): EventFragment;
 }
-type __TypechainAOutputTuple$1<T> = T extends TypedContractEvent$1<infer _U, infer W> ? W : never;
-type __TypechainOutputObject$1<T> = T extends TypedContractEvent$1<infer _U, infer _W, infer V> ? V : never;
-interface TypedEventLog$1<TCEvent extends TypedContractEvent$1> extends Omit<EventLog, "args"> {
-    args: __TypechainAOutputTuple$1<TCEvent> & __TypechainOutputObject$1<TCEvent>;
+type __TypechainAOutputTuple$2<T> = T extends TypedContractEvent$2<infer _U, infer W> ? W : never;
+type __TypechainOutputObject$2<T> = T extends TypedContractEvent$2<infer _U, infer _W, infer V> ? V : never;
+interface TypedEventLog$2<TCEvent extends TypedContractEvent$2> extends Omit<EventLog, "args"> {
+    args: __TypechainAOutputTuple$2<TCEvent> & __TypechainOutputObject$2<TCEvent>;
 }
-interface TypedLogDescription$1<TCEvent extends TypedContractEvent$1> extends Omit<LogDescription, "args"> {
-    args: __TypechainAOutputTuple$1<TCEvent> & __TypechainOutputObject$1<TCEvent>;
+interface TypedLogDescription$2<TCEvent extends TypedContractEvent$2> extends Omit<LogDescription, "args"> {
+    args: __TypechainAOutputTuple$2<TCEvent> & __TypechainOutputObject$2<TCEvent>;
 }
-type TypedListener$1<TCEvent extends TypedContractEvent$1> = (...listenerArg: [
-    ...__TypechainAOutputTuple$1<TCEvent>,
-    TypedEventLog$1<TCEvent>,
+type TypedListener$2<TCEvent extends TypedContractEvent$2> = (...listenerArg: [
+    ...__TypechainAOutputTuple$2<TCEvent>,
+    TypedEventLog$2<TCEvent>,
     ...undefined[]
 ]) => void;
-type StateMutability$1 = "nonpayable" | "payable" | "view";
-type BaseOverrides$1 = Omit<TransactionRequest, "to" | "data">;
-type NonPayableOverrides$1 = Omit<BaseOverrides$1, "value" | "blockTag" | "enableCcipRead">;
-type PayableOverrides$1 = Omit<BaseOverrides$1, "blockTag" | "enableCcipRead">;
-type ViewOverrides$1 = Omit<TransactionRequest, "to" | "data">;
-type Overrides$1<S extends StateMutability$1> = S extends "nonpayable" ? NonPayableOverrides$1 : S extends "payable" ? PayableOverrides$1 : ViewOverrides$1;
-type PostfixOverrides$1<A extends Array<any>, S extends StateMutability$1> = A | [...A, Overrides$1<S>];
-type ContractMethodArgs$1<A extends Array<any>, S extends StateMutability$1> = PostfixOverrides$1<{
+type StateMutability$2 = "nonpayable" | "payable" | "view";
+type BaseOverrides$2 = Omit<TransactionRequest, "to" | "data">;
+type NonPayableOverrides$2 = Omit<BaseOverrides$2, "value" | "blockTag" | "enableCcipRead">;
+type PayableOverrides$2 = Omit<BaseOverrides$2, "blockTag" | "enableCcipRead">;
+type ViewOverrides$2 = Omit<TransactionRequest, "to" | "data">;
+type Overrides$2<S extends StateMutability$2> = S extends "nonpayable" ? NonPayableOverrides$2 : S extends "payable" ? PayableOverrides$2 : ViewOverrides$2;
+type PostfixOverrides$2<A extends Array<any>, S extends StateMutability$2> = A | [...A, Overrides$2<S>];
+type ContractMethodArgs$2<A extends Array<any>, S extends StateMutability$2> = PostfixOverrides$2<{
     [I in keyof A]-?: A[I] | Typed;
 }, S>;
-type DefaultReturnType$1<R> = R extends Array<any> ? R[0] : R;
-interface TypedContractMethod$1<A extends Array<any> = Array<any>, R = any, S extends StateMutability$1 = "payable"> {
-    (...args: ContractMethodArgs$1<A, S>): S extends "view" ? Promise<DefaultReturnType$1<R>> : Promise<ContractTransactionResponse>;
+type DefaultReturnType$2<R> = R extends Array<any> ? R[0] : R;
+interface TypedContractMethod$2<A extends Array<any> = Array<any>, R = any, S extends StateMutability$2 = "payable"> {
+    (...args: ContractMethodArgs$2<A, S>): S extends "view" ? Promise<DefaultReturnType$2<R>> : Promise<ContractTransactionResponse>;
     name: string;
     fragment: FunctionFragment;
-    getFragment(...args: ContractMethodArgs$1<A, S>): FunctionFragment;
-    populateTransaction(...args: ContractMethodArgs$1<A, S>): Promise<ContractTransaction>;
-    staticCall(...args: ContractMethodArgs$1<A, "view">): Promise<DefaultReturnType$1<R>>;
-    send(...args: ContractMethodArgs$1<A, S>): Promise<ContractTransactionResponse>;
-    estimateGas(...args: ContractMethodArgs$1<A, S>): Promise<bigint>;
-    staticCallResult(...args: ContractMethodArgs$1<A, "view">): Promise<R>;
+    getFragment(...args: ContractMethodArgs$2<A, S>): FunctionFragment;
+    populateTransaction(...args: ContractMethodArgs$2<A, S>): Promise<ContractTransaction>;
+    staticCall(...args: ContractMethodArgs$2<A, "view">): Promise<DefaultReturnType$2<R>>;
+    send(...args: ContractMethodArgs$2<A, S>): Promise<ContractTransactionResponse>;
+    estimateGas(...args: ContractMethodArgs$2<A, S>): Promise<bigint>;
+    staticCallResult(...args: ContractMethodArgs$2<A, "view">): Promise<R>;
 }
 
 type RefundStructOutput$1 = [
@@ -95,7 +95,7 @@ type ServiceStructOutput$1 = [
     model: string;
     verifiability: string;
 };
-type VerifierInputStruct = {
+type VerifierInputStruct$1 = {
     inProof: BigNumberish[];
     proofInputs: BigNumberish[];
     numChunks: BigNumberish;
@@ -123,7 +123,7 @@ interface InferenceServingInterface extends Interface {
     encodeFunctionData(functionFragment: "removeService", values: [string]): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct]): string;
+    encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct$1]): string;
     encodeFunctionData(functionFragment: "transferOwnership", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "updateBatchVerifierAddress", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "updateLockTime", values: [BigNumberish]): string;
@@ -151,7 +151,7 @@ interface InferenceServingInterface extends Interface {
     decodeFunctionResult(functionFragment: "updateBatchVerifierAddress", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "updateLockTime", data: BytesLike): Result;
 }
-declare namespace BalanceUpdatedEvent {
+declare namespace BalanceUpdatedEvent$1 {
     type InputTuple = [
         user: AddressLike,
         provider: AddressLike,
@@ -170,24 +170,24 @@ declare namespace BalanceUpdatedEvent {
         amount: bigint;
         pendingRefund: bigint;
     }
-    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
-    type Filter = TypedDeferredTopicFilter$1<Event>;
-    type Log = TypedEventLog$1<Event>;
-    type LogDescription = TypedLogDescription$1<Event>;
+    type Event = TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$2<Event>;
+    type Log = TypedEventLog$2<Event>;
+    type LogDescription = TypedLogDescription$2<Event>;
 }
-declare namespace OwnershipTransferredEvent$1 {
+declare namespace OwnershipTransferredEvent$2 {
     type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
     type OutputTuple = [previousOwner: string, newOwner: string];
     interface OutputObject {
         previousOwner: string;
         newOwner: string;
     }
-    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
-    type Filter = TypedDeferredTopicFilter$1<Event>;
-    type Log = TypedEventLog$1<Event>;
-    type LogDescription = TypedLogDescription$1<Event>;
+    type Event = TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$2<Event>;
+    type Log = TypedEventLog$2<Event>;
+    type LogDescription = TypedLogDescription$2<Event>;
 }
-declare namespace RefundRequestedEvent {
+declare namespace RefundRequestedEvent$1 {
     type InputTuple = [
         user: AddressLike,
         provider: AddressLike,
@@ -206,24 +206,24 @@ declare namespace RefundRequestedEvent {
         index: bigint;
         timestamp: bigint;
     }
-    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
-    type Filter = TypedDeferredTopicFilter$1<Event>;
-    type Log = TypedEventLog$1<Event>;
-    type LogDescription = TypedLogDescription$1<Event>;
+    type Event = TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$2<Event>;
+    type Log = TypedEventLog$2<Event>;
+    type LogDescription = TypedLogDescription$2<Event>;
 }
-declare namespace ServiceRemovedEvent {
+declare namespace ServiceRemovedEvent$1 {
     type InputTuple = [service: AddressLike, name: string];
     type OutputTuple = [service: string, name: string];
     interface OutputObject {
         service: string;
         name: string;
     }
-    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
-    type Filter = TypedDeferredTopicFilter$1<Event>;
-    type Log = TypedEventLog$1<Event>;
-    type LogDescription = TypedLogDescription$1<Event>;
+    type Event = TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$2<Event>;
+    type Log = TypedEventLog$2<Event>;
+    type LogDescription = TypedLogDescription$2<Event>;
 }
-declare namespace ServiceUpdatedEvent {
+declare namespace ServiceUpdatedEvent$1 {
     type InputTuple = [
         service: AddressLike,
         name: string,
@@ -257,31 +257,31 @@ declare namespace ServiceUpdatedEvent {
         model: string;
         verifiability: string;
     }
-    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
-    type Filter = TypedDeferredTopicFilter$1<Event>;
-    type Log = TypedEventLog$1<Event>;
-    type LogDescription = TypedLogDescription$1<Event>;
+    type Event = TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$2<Event>;
+    type Log = TypedEventLog$2<Event>;
+    type LogDescription = TypedLogDescription$2<Event>;
 }
 interface InferenceServing extends BaseContract {
     connect(runner?: ContractRunner | null): InferenceServing;
     waitForDeployment(): Promise<this>;
     interface: InferenceServingInterface;
-    queryFilter<TCEvent extends TypedContractEvent$1>(event: TCEvent, fromBlockOrBlockhash?: string | number | undefined, toBlock?: string | number | undefined): Promise<Array<TypedEventLog$1<TCEvent>>>;
-    queryFilter<TCEvent extends TypedContractEvent$1>(filter: TypedDeferredTopicFilter$1<TCEvent>, fromBlockOrBlockhash?: string | number | undefined, toBlock?: string | number | undefined): Promise<Array<TypedEventLog$1<TCEvent>>>;
-    on<TCEvent extends TypedContractEvent$1>(event: TCEvent, listener: TypedListener$1<TCEvent>): Promise<this>;
-    on<TCEvent extends TypedContractEvent$1>(filter: TypedDeferredTopicFilter$1<TCEvent>, listener: TypedListener$1<TCEvent>): Promise<this>;
-    once<TCEvent extends TypedContractEvent$1>(event: TCEvent, listener: TypedListener$1<TCEvent>): Promise<this>;
-    once<TCEvent extends TypedContractEvent$1>(filter: TypedDeferredTopicFilter$1<TCEvent>, listener: TypedListener$1<TCEvent>): Promise<this>;
-    listeners<TCEvent extends TypedContractEvent$1>(event: TCEvent): Promise<Array<TypedListener$1<TCEvent>>>;
+    queryFilter<TCEvent extends TypedContractEvent$2>(event: TCEvent, fromBlockOrBlockhash?: string | number | undefined, toBlock?: string | number | undefined): Promise<Array<TypedEventLog$2<TCEvent>>>;
+    queryFilter<TCEvent extends TypedContractEvent$2>(filter: TypedDeferredTopicFilter$2<TCEvent>, fromBlockOrBlockhash?: string | number | undefined, toBlock?: string | number | undefined): Promise<Array<TypedEventLog$2<TCEvent>>>;
+    on<TCEvent extends TypedContractEvent$2>(event: TCEvent, listener: TypedListener$2<TCEvent>): Promise<this>;
+    on<TCEvent extends TypedContractEvent$2>(filter: TypedDeferredTopicFilter$2<TCEvent>, listener: TypedListener$2<TCEvent>): Promise<this>;
+    once<TCEvent extends TypedContractEvent$2>(event: TCEvent, listener: TypedListener$2<TCEvent>): Promise<this>;
+    once<TCEvent extends TypedContractEvent$2>(filter: TypedDeferredTopicFilter$2<TCEvent>, listener: TypedListener$2<TCEvent>): Promise<this>;
+    listeners<TCEvent extends TypedContractEvent$2>(event: TCEvent): Promise<Array<TypedListener$2<TCEvent>>>;
     listeners(eventName?: string): Promise<Array<Listener>>;
-    removeAllListeners<TCEvent extends TypedContractEvent$1>(event?: TCEvent): Promise<this>;
-    accountExists: TypedContractMethod$1<[
+    removeAllListeners<TCEvent extends TypedContractEvent$2>(event?: TCEvent): Promise<this>;
+    accountExists: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         boolean
     ], "view">;
-    addAccount: TypedContractMethod$1<[
+    addAccount: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike,
         signer: [BigNumberish, BigNumberish],
@@ -289,7 +289,7 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], "payable">;
-    addOrUpdateService: TypedContractMethod$1<[
+    addOrUpdateService: TypedContractMethod$2<[
         name: string,
         serviceType: string,
         url: string,
@@ -300,34 +300,34 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], "nonpayable">;
-    batchVerifierAddress: TypedContractMethod$1<[], [string], "view">;
-    deleteAccount: TypedContractMethod$1<[
+    batchVerifierAddress: TypedContractMethod$2<[], [string], "view">;
+    deleteAccount: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
     ], "nonpayable">;
-    depositFund: TypedContractMethod$1<[
+    depositFund: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
     ], "payable">;
-    getAccount: TypedContractMethod$1<[
+    getAccount: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         AccountStructOutput$1
     ], "view">;
-    getAllAccounts: TypedContractMethod$1<[], [AccountStructOutput$1[]], "view">;
-    getAllServices: TypedContractMethod$1<[], [ServiceStructOutput$1[]], "view">;
-    getService: TypedContractMethod$1<[
+    getAllAccounts: TypedContractMethod$2<[], [AccountStructOutput$1[]], "view">;
+    getAllServices: TypedContractMethod$2<[], [ServiceStructOutput$1[]], "view">;
+    getService: TypedContractMethod$2<[
         provider: AddressLike,
         name: string
     ], [
         ServiceStructOutput$1
     ], "view">;
-    initialize: TypedContractMethod$1<[
+    initialize: TypedContractMethod$2<[
         _locktime: BigNumberish,
         _batchVerifierAddress: AddressLike,
         _ledgerAddress: AddressLike,
@@ -335,11 +335,11 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], "nonpayable">;
-    initialized: TypedContractMethod$1<[], [boolean], "view">;
-    ledgerAddress: TypedContractMethod$1<[], [string], "view">;
-    lockTime: TypedContractMethod$1<[], [bigint], "view">;
-    owner: TypedContractMethod$1<[], [string], "view">;
-    processRefund: TypedContractMethod$1<[
+    initialized: TypedContractMethod$2<[], [boolean], "view">;
+    ledgerAddress: TypedContractMethod$2<[], [string], "view">;
+    lockTime: TypedContractMethod$2<[], [bigint], "view">;
+    owner: TypedContractMethod$2<[], [string], "view">;
+    processRefund: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
@@ -353,42 +353,42 @@ interface InferenceServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    removeService: TypedContractMethod$1<[name: string], [void], "nonpayable">;
-    renounceOwnership: TypedContractMethod$1<[], [void], "nonpayable">;
-    requestRefundAll: TypedContractMethod$1<[
+    removeService: TypedContractMethod$2<[name: string], [void], "nonpayable">;
+    renounceOwnership: TypedContractMethod$2<[], [void], "nonpayable">;
+    requestRefundAll: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
     ], "nonpayable">;
-    settleFees: TypedContractMethod$1<[
-        verifierInput: VerifierInputStruct
+    settleFees: TypedContractMethod$2<[
+        verifierInput: VerifierInputStruct$1
     ], [
         void
     ], "nonpayable">;
-    transferOwnership: TypedContractMethod$1<[
+    transferOwnership: TypedContractMethod$2<[
         newOwner: AddressLike
     ], [
         void
     ], "nonpayable">;
-    updateBatchVerifierAddress: TypedContractMethod$1<[
+    updateBatchVerifierAddress: TypedContractMethod$2<[
         _batchVerifierAddress: AddressLike
     ], [
         void
     ], "nonpayable">;
-    updateLockTime: TypedContractMethod$1<[
+    updateLockTime: TypedContractMethod$2<[
         _locktime: BigNumberish
     ], [
         void
     ], "nonpayable">;
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
-    getFunction(nameOrSignature: "accountExists"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "accountExists"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         boolean
     ], "view">;
-    getFunction(nameOrSignature: "addAccount"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "addAccount"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike,
         signer: [BigNumberish, BigNumberish],
@@ -396,7 +396,7 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], "payable">;
-    getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod$2<[
         name: string,
         serviceType: string,
         url: string,
@@ -407,34 +407,34 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], "nonpayable">;
-    getFunction(nameOrSignature: "batchVerifierAddress"): TypedContractMethod$1<[], [string], "view">;
-    getFunction(nameOrSignature: "deleteAccount"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "batchVerifierAddress"): TypedContractMethod$2<[], [string], "view">;
+    getFunction(nameOrSignature: "deleteAccount"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
     ], "nonpayable">;
-    getFunction(nameOrSignature: "depositFund"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "depositFund"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
     ], "payable">;
-    getFunction(nameOrSignature: "getAccount"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "getAccount"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         AccountStructOutput$1
     ], "view">;
-    getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$1<[], [AccountStructOutput$1[]], "view">;
-    getFunction(nameOrSignature: "getAllServices"): TypedContractMethod$1<[], [ServiceStructOutput$1[]], "view">;
-    getFunction(nameOrSignature: "getService"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$2<[], [AccountStructOutput$1[]], "view">;
+    getFunction(nameOrSignature: "getAllServices"): TypedContractMethod$2<[], [ServiceStructOutput$1[]], "view">;
+    getFunction(nameOrSignature: "getService"): TypedContractMethod$2<[
         provider: AddressLike,
         name: string
     ], [
         ServiceStructOutput$1
     ], "view">;
-    getFunction(nameOrSignature: "initialize"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "initialize"): TypedContractMethod$2<[
         _locktime: BigNumberish,
         _batchVerifierAddress: AddressLike,
         _ledgerAddress: AddressLike,
@@ -442,11 +442,11 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], "nonpayable">;
-    getFunction(nameOrSignature: "initialized"): TypedContractMethod$1<[], [boolean], "view">;
-    getFunction(nameOrSignature: "ledgerAddress"): TypedContractMethod$1<[], [string], "view">;
-    getFunction(nameOrSignature: "lockTime"): TypedContractMethod$1<[], [bigint], "view">;
-    getFunction(nameOrSignature: "owner"): TypedContractMethod$1<[], [string], "view">;
-    getFunction(nameOrSignature: "processRefund"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "initialized"): TypedContractMethod$2<[], [boolean], "view">;
+    getFunction(nameOrSignature: "ledgerAddress"): TypedContractMethod$2<[], [string], "view">;
+    getFunction(nameOrSignature: "lockTime"): TypedContractMethod$2<[], [bigint], "view">;
+    getFunction(nameOrSignature: "owner"): TypedContractMethod$2<[], [string], "view">;
+    getFunction(nameOrSignature: "processRefund"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
@@ -460,42 +460,42 @@ interface InferenceServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    getFunction(nameOrSignature: "removeService"): TypedContractMethod$1<[name: string], [void], "nonpayable">;
-    getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod$1<[], [void], "nonpayable">;
-    getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "removeService"): TypedContractMethod$2<[name: string], [void], "nonpayable">;
+    getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod$2<[], [void], "nonpayable">;
+    getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
     ], "nonpayable">;
-    getFunction(nameOrSignature: "settleFees"): TypedContractMethod$1<[
-        verifierInput: VerifierInputStruct
+    getFunction(nameOrSignature: "settleFees"): TypedContractMethod$2<[
+        verifierInput: VerifierInputStruct$1
     ], [
         void
     ], "nonpayable">;
-    getFunction(nameOrSignature: "transferOwnership"): TypedContractMethod$1<[newOwner: AddressLike], [void], "nonpayable">;
-    getFunction(nameOrSignature: "updateBatchVerifierAddress"): TypedContractMethod$1<[
+    getFunction(nameOrSignature: "transferOwnership"): TypedContractMethod$2<[newOwner: AddressLike], [void], "nonpayable">;
+    getFunction(nameOrSignature: "updateBatchVerifierAddress"): TypedContractMethod$2<[
         _batchVerifierAddress: AddressLike
     ], [
         void
     ], "nonpayable">;
-    getFunction(nameOrSignature: "updateLockTime"): TypedContractMethod$1<[_locktime: BigNumberish], [void], "nonpayable">;
-    getEvent(key: "BalanceUpdated"): TypedContractEvent$1<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
-    getEvent(key: "OwnershipTransferred"): TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
-    getEvent(key: "RefundRequested"): TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-    getEvent(key: "ServiceRemoved"): TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-    getEvent(key: "ServiceUpdated"): TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+    getFunction(nameOrSignature: "updateLockTime"): TypedContractMethod$2<[_locktime: BigNumberish], [void], "nonpayable">;
+    getEvent(key: "BalanceUpdated"): TypedContractEvent$2<BalanceUpdatedEvent$1.InputTuple, BalanceUpdatedEvent$1.OutputTuple, BalanceUpdatedEvent$1.OutputObject>;
+    getEvent(key: "OwnershipTransferred"): TypedContractEvent$2<OwnershipTransferredEvent$2.InputTuple, OwnershipTransferredEvent$2.OutputTuple, OwnershipTransferredEvent$2.OutputObject>;
+    getEvent(key: "RefundRequested"): TypedContractEvent$2<RefundRequestedEvent$1.InputTuple, RefundRequestedEvent$1.OutputTuple, RefundRequestedEvent$1.OutputObject>;
+    getEvent(key: "ServiceRemoved"): TypedContractEvent$2<ServiceRemovedEvent$1.InputTuple, ServiceRemovedEvent$1.OutputTuple, ServiceRemovedEvent$1.OutputObject>;
+    getEvent(key: "ServiceUpdated"): TypedContractEvent$2<ServiceUpdatedEvent$1.InputTuple, ServiceUpdatedEvent$1.OutputTuple, ServiceUpdatedEvent$1.OutputObject>;
     filters: {
-        "BalanceUpdated(address,address,uint256,uint256)": TypedContractEvent$1<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
-        BalanceUpdated: TypedContractEvent$1<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
-        "OwnershipTransferred(address,address)": TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
-        OwnershipTransferred: TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
-        "RefundRequested(address,address,uint256,uint256)": TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-        RefundRequested: TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-        "ServiceRemoved(address,string)": TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        ServiceRemoved: TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
-        ServiceUpdated: TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        "BalanceUpdated(address,address,uint256,uint256)": TypedContractEvent$2<BalanceUpdatedEvent$1.InputTuple, BalanceUpdatedEvent$1.OutputTuple, BalanceUpdatedEvent$1.OutputObject>;
+        BalanceUpdated: TypedContractEvent$2<BalanceUpdatedEvent$1.InputTuple, BalanceUpdatedEvent$1.OutputTuple, BalanceUpdatedEvent$1.OutputObject>;
+        "OwnershipTransferred(address,address)": TypedContractEvent$2<OwnershipTransferredEvent$2.InputTuple, OwnershipTransferredEvent$2.OutputTuple, OwnershipTransferredEvent$2.OutputObject>;
+        OwnershipTransferred: TypedContractEvent$2<OwnershipTransferredEvent$2.InputTuple, OwnershipTransferredEvent$2.OutputTuple, OwnershipTransferredEvent$2.OutputObject>;
+        "RefundRequested(address,address,uint256,uint256)": TypedContractEvent$2<RefundRequestedEvent$1.InputTuple, RefundRequestedEvent$1.OutputTuple, RefundRequestedEvent$1.OutputObject>;
+        RefundRequested: TypedContractEvent$2<RefundRequestedEvent$1.InputTuple, RefundRequestedEvent$1.OutputTuple, RefundRequestedEvent$1.OutputObject>;
+        "ServiceRemoved(address,string)": TypedContractEvent$2<ServiceRemovedEvent$1.InputTuple, ServiceRemovedEvent$1.OutputTuple, ServiceRemovedEvent$1.OutputObject>;
+        ServiceRemoved: TypedContractEvent$2<ServiceRemovedEvent$1.InputTuple, ServiceRemovedEvent$1.OutputTuple, ServiceRemovedEvent$1.OutputObject>;
+        "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent$2<ServiceUpdatedEvent$1.InputTuple, ServiceUpdatedEvent$1.OutputTuple, ServiceUpdatedEvent$1.OutputObject>;
+        ServiceUpdated: TypedContractEvent$2<ServiceUpdatedEvent$1.InputTuple, ServiceUpdatedEvent$1.OutputTuple, ServiceUpdatedEvent$1.OutputObject>;
     };
 }
 
@@ -912,6 +912,57 @@ declare class InferenceBroker {
  */
 declare function createInferenceBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<InferenceBroker>;
 
+interface TypedDeferredTopicFilter$1<_TCEvent extends TypedContractEvent$1> extends DeferredTopicFilter {
+}
+interface TypedContractEvent$1<InputTuple extends Array<any> = any, OutputTuple extends Array<any> = any, OutputObject = any> {
+    (...args: Partial<InputTuple>): TypedDeferredTopicFilter$1<TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>>;
+    name: string;
+    fragment: EventFragment;
+    getFragment(...args: Partial<InputTuple>): EventFragment;
+}
+type __TypechainAOutputTuple$1<T> = T extends TypedContractEvent$1<infer _U, infer W> ? W : never;
+type __TypechainOutputObject$1<T> = T extends TypedContractEvent$1<infer _U, infer _W, infer V> ? V : never;
+interface TypedEventLog$1<TCEvent extends TypedContractEvent$1> extends Omit<EventLog, "args"> {
+    args: __TypechainAOutputTuple$1<TCEvent> & __TypechainOutputObject$1<TCEvent>;
+}
+interface TypedLogDescription$1<TCEvent extends TypedContractEvent$1> extends Omit<LogDescription, "args"> {
+    args: __TypechainAOutputTuple$1<TCEvent> & __TypechainOutputObject$1<TCEvent>;
+}
+type TypedListener$1<TCEvent extends TypedContractEvent$1> = (...listenerArg: [
+    ...__TypechainAOutputTuple$1<TCEvent>,
+    TypedEventLog$1<TCEvent>,
+    ...undefined[]
+]) => void;
+type StateMutability$1 = "nonpayable" | "payable" | "view";
+type BaseOverrides$1 = Omit<TransactionRequest, "to" | "data">;
+type NonPayableOverrides$1 = Omit<BaseOverrides$1, "value" | "blockTag" | "enableCcipRead">;
+type PayableOverrides$1 = Omit<BaseOverrides$1, "blockTag" | "enableCcipRead">;
+type ViewOverrides$1 = Omit<TransactionRequest, "to" | "data">;
+type Overrides$1<S extends StateMutability$1> = S extends "nonpayable" ? NonPayableOverrides$1 : S extends "payable" ? PayableOverrides$1 : ViewOverrides$1;
+type PostfixOverrides$1<A extends Array<any>, S extends StateMutability$1> = A | [...A, Overrides$1<S>];
+type ContractMethodArgs$1<A extends Array<any>, S extends StateMutability$1> = PostfixOverrides$1<{
+    [I in keyof A]-?: A[I] | Typed;
+}, S>;
+type DefaultReturnType$1<R> = R extends Array<any> ? R[0] : R;
+interface TypedContractMethod$1<A extends Array<any> = Array<any>, R = any, S extends StateMutability$1 = "payable"> {
+    (...args: ContractMethodArgs$1<A, S>): S extends "view" ? Promise<DefaultReturnType$1<R>> : Promise<ContractTransactionResponse>;
+    name: string;
+    fragment: FunctionFragment;
+    getFragment(...args: ContractMethodArgs$1<A, S>): FunctionFragment;
+    populateTransaction(...args: ContractMethodArgs$1<A, S>): Promise<ContractTransaction>;
+    staticCall(...args: ContractMethodArgs$1<A, "view">): Promise<DefaultReturnType$1<R>>;
+    send(...args: ContractMethodArgs$1<A, S>): Promise<ContractTransactionResponse>;
+    estimateGas(...args: ContractMethodArgs$1<A, S>): Promise<bigint>;
+    staticCallResult(...args: ContractMethodArgs$1<A, "view">): Promise<R>;
+}
+
+type QuotaStruct = {
+    cpuCount: BigNumberish;
+    nodeMemory: BigNumberish;
+    gpuCount: BigNumberish;
+    nodeStorage: BigNumberish;
+    gpuType: string;
+};
 type QuotaStructOutput = [
     cpuCount: bigint,
     nodeMemory: bigint,
@@ -983,6 +1034,459 @@ type ServiceStructOutput = [
     providerSigner: string;
     occupied: boolean;
 };
+type VerifierInputStruct = {
+    index: BigNumberish;
+    encryptedSecret: BytesLike;
+    modelRootHash: BytesLike;
+    nonce: BigNumberish;
+    providerSigner: AddressLike;
+    signature: BytesLike;
+    taskFee: BigNumberish;
+    user: AddressLike;
+};
+interface FineTuningServingInterface extends Interface {
+    getFunction(nameOrSignature: "accountExists" | "acknowledgeDeliverable" | "acknowledgeProviderSigner" | "addAccount" | "addDeliverable" | "addOrUpdateService" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getDeliverable" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateLockTime"): FunctionFragment;
+    getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
+    encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "acknowledgeDeliverable", values: [AddressLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "acknowledgeProviderSigner", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, string]): string;
+    encodeFunctionData(functionFragment: "addDeliverable", values: [AddressLike, BytesLike]): string;
+    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
+    encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
+    encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
+    encodeFunctionData(functionFragment: "getDeliverable", values: [AddressLike, AddressLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "getService", values: [AddressLike, string]): string;
+    encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
+    encodeFunctionData(functionFragment: "ledgerAddress", values?: undefined): string;
+    encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
+    encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+    encodeFunctionData(functionFragment: "processRefund", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "removeService", values: [string]): string;
+    encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
+    encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct]): string;
+    encodeFunctionData(functionFragment: "transferOwnership", values: [AddressLike]): string;
+    encodeFunctionData(functionFragment: "updateLockTime", values: [BigNumberish]): string;
+    decodeFunctionResult(functionFragment: "accountExists", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "acknowledgeDeliverable", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "acknowledgeProviderSigner", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "addAccount", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "addDeliverable", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "addOrUpdateService", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "deleteAccount", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "depositFund", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getAccount", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getAllAccounts", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getAllServices", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getDeliverable", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "initialized", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "ledgerAddress", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "lockTime", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "processRefund", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "removeService", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "renounceOwnership", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "requestRefundAll", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "settleFees", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "transferOwnership", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "updateLockTime", data: BytesLike): Result;
+}
+declare namespace BalanceUpdatedEvent {
+    type InputTuple = [
+        user: AddressLike,
+        provider: AddressLike,
+        amount: BigNumberish,
+        pendingRefund: BigNumberish
+    ];
+    type OutputTuple = [
+        user: string,
+        provider: string,
+        amount: bigint,
+        pendingRefund: bigint
+    ];
+    interface OutputObject {
+        user: string;
+        provider: string;
+        amount: bigint;
+        pendingRefund: bigint;
+    }
+    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$1<Event>;
+    type Log = TypedEventLog$1<Event>;
+    type LogDescription = TypedLogDescription$1<Event>;
+}
+declare namespace OwnershipTransferredEvent$1 {
+    type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+    type OutputTuple = [previousOwner: string, newOwner: string];
+    interface OutputObject {
+        previousOwner: string;
+        newOwner: string;
+    }
+    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$1<Event>;
+    type Log = TypedEventLog$1<Event>;
+    type LogDescription = TypedLogDescription$1<Event>;
+}
+declare namespace RefundRequestedEvent {
+    type InputTuple = [
+        user: AddressLike,
+        provider: AddressLike,
+        index: BigNumberish,
+        timestamp: BigNumberish
+    ];
+    type OutputTuple = [
+        user: string,
+        provider: string,
+        index: bigint,
+        timestamp: bigint
+    ];
+    interface OutputObject {
+        user: string;
+        provider: string;
+        index: bigint;
+        timestamp: bigint;
+    }
+    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$1<Event>;
+    type Log = TypedEventLog$1<Event>;
+    type LogDescription = TypedLogDescription$1<Event>;
+}
+declare namespace ServiceRemovedEvent {
+    type InputTuple = [user: AddressLike, name: string];
+    type OutputTuple = [user: string, name: string];
+    interface OutputObject {
+        user: string;
+        name: string;
+    }
+    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$1<Event>;
+    type Log = TypedEventLog$1<Event>;
+    type LogDescription = TypedLogDescription$1<Event>;
+}
+declare namespace ServiceUpdatedEvent {
+    type InputTuple = [
+        user: AddressLike,
+        name: string,
+        url: string,
+        quota: QuotaStruct,
+        pricePerToken: BigNumberish,
+        providerSigner: AddressLike,
+        occupied: boolean
+    ];
+    type OutputTuple = [
+        user: string,
+        name: string,
+        url: string,
+        quota: QuotaStructOutput,
+        pricePerToken: bigint,
+        providerSigner: string,
+        occupied: boolean
+    ];
+    interface OutputObject {
+        user: string;
+        name: string;
+        url: string;
+        quota: QuotaStructOutput;
+        pricePerToken: bigint;
+        providerSigner: string;
+        occupied: boolean;
+    }
+    type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter$1<Event>;
+    type Log = TypedEventLog$1<Event>;
+    type LogDescription = TypedLogDescription$1<Event>;
+}
+interface FineTuningServing extends BaseContract {
+    connect(runner?: ContractRunner | null): FineTuningServing;
+    waitForDeployment(): Promise<this>;
+    interface: FineTuningServingInterface;
+    queryFilter<TCEvent extends TypedContractEvent$1>(event: TCEvent, fromBlockOrBlockhash?: string | number | undefined, toBlock?: string | number | undefined): Promise<Array<TypedEventLog$1<TCEvent>>>;
+    queryFilter<TCEvent extends TypedContractEvent$1>(filter: TypedDeferredTopicFilter$1<TCEvent>, fromBlockOrBlockhash?: string | number | undefined, toBlock?: string | number | undefined): Promise<Array<TypedEventLog$1<TCEvent>>>;
+    on<TCEvent extends TypedContractEvent$1>(event: TCEvent, listener: TypedListener$1<TCEvent>): Promise<this>;
+    on<TCEvent extends TypedContractEvent$1>(filter: TypedDeferredTopicFilter$1<TCEvent>, listener: TypedListener$1<TCEvent>): Promise<this>;
+    once<TCEvent extends TypedContractEvent$1>(event: TCEvent, listener: TypedListener$1<TCEvent>): Promise<this>;
+    once<TCEvent extends TypedContractEvent$1>(filter: TypedDeferredTopicFilter$1<TCEvent>, listener: TypedListener$1<TCEvent>): Promise<this>;
+    listeners<TCEvent extends TypedContractEvent$1>(event: TCEvent): Promise<Array<TypedListener$1<TCEvent>>>;
+    listeners(eventName?: string): Promise<Array<Listener>>;
+    removeAllListeners<TCEvent extends TypedContractEvent$1>(event?: TCEvent): Promise<this>;
+    accountExists: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        boolean
+    ], "view">;
+    acknowledgeDeliverable: TypedContractMethod$1<[
+        provider: AddressLike,
+        index: BigNumberish
+    ], [
+        void
+    ], "nonpayable">;
+    acknowledgeProviderSigner: TypedContractMethod$1<[
+        provider: AddressLike,
+        providerSigner: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    addAccount: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike,
+        additionalInfo: string
+    ], [
+        void
+    ], "payable">;
+    addDeliverable: TypedContractMethod$1<[
+        user: AddressLike,
+        modelRootHash: BytesLike
+    ], [
+        void
+    ], "nonpayable">;
+    addOrUpdateService: TypedContractMethod$1<[
+        name: string,
+        url: string,
+        quota: QuotaStruct,
+        pricePerToken: BigNumberish,
+        providerSigner: AddressLike,
+        occupied: boolean
+    ], [
+        void
+    ], "nonpayable">;
+    deleteAccount: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    depositFund: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        void
+    ], "payable">;
+    getAccount: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        AccountStructOutput
+    ], "view">;
+    getAllAccounts: TypedContractMethod$1<[], [AccountStructOutput[]], "view">;
+    getAllServices: TypedContractMethod$1<[], [ServiceStructOutput[]], "view">;
+    getDeliverable: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike,
+        index: BigNumberish
+    ], [
+        DeliverableStructOutput
+    ], "view">;
+    getService: TypedContractMethod$1<[
+        provider: AddressLike,
+        name: string
+    ], [
+        ServiceStructOutput
+    ], "view">;
+    initialize: TypedContractMethod$1<[
+        _locktime: BigNumberish,
+        _ledgerAddress: AddressLike,
+        owner: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    initialized: TypedContractMethod$1<[], [boolean], "view">;
+    ledgerAddress: TypedContractMethod$1<[], [string], "view">;
+    lockTime: TypedContractMethod$1<[], [bigint], "view">;
+    owner: TypedContractMethod$1<[], [string], "view">;
+    processRefund: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        [
+            bigint,
+            bigint,
+            bigint
+        ] & {
+            totalAmount: bigint;
+            balance: bigint;
+            pendingRefund: bigint;
+        }
+    ], "nonpayable">;
+    removeService: TypedContractMethod$1<[name: string], [void], "nonpayable">;
+    renounceOwnership: TypedContractMethod$1<[], [void], "nonpayable">;
+    requestRefundAll: TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    settleFees: TypedContractMethod$1<[
+        verifierInput: VerifierInputStruct
+    ], [
+        void
+    ], "nonpayable">;
+    transferOwnership: TypedContractMethod$1<[
+        newOwner: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    updateLockTime: TypedContractMethod$1<[
+        _locktime: BigNumberish
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
+    getFunction(nameOrSignature: "accountExists"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        boolean
+    ], "view">;
+    getFunction(nameOrSignature: "acknowledgeDeliverable"): TypedContractMethod$1<[
+        provider: AddressLike,
+        index: BigNumberish
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "acknowledgeProviderSigner"): TypedContractMethod$1<[
+        provider: AddressLike,
+        providerSigner: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "addAccount"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike,
+        additionalInfo: string
+    ], [
+        void
+    ], "payable">;
+    getFunction(nameOrSignature: "addDeliverable"): TypedContractMethod$1<[
+        user: AddressLike,
+        modelRootHash: BytesLike
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod$1<[
+        name: string,
+        url: string,
+        quota: QuotaStruct,
+        pricePerToken: BigNumberish,
+        providerSigner: AddressLike,
+        occupied: boolean
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "deleteAccount"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "depositFund"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        void
+    ], "payable">;
+    getFunction(nameOrSignature: "getAccount"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        AccountStructOutput
+    ], "view">;
+    getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$1<[], [AccountStructOutput[]], "view">;
+    getFunction(nameOrSignature: "getAllServices"): TypedContractMethod$1<[], [ServiceStructOutput[]], "view">;
+    getFunction(nameOrSignature: "getDeliverable"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike,
+        index: BigNumberish
+    ], [
+        DeliverableStructOutput
+    ], "view">;
+    getFunction(nameOrSignature: "getService"): TypedContractMethod$1<[
+        provider: AddressLike,
+        name: string
+    ], [
+        ServiceStructOutput
+    ], "view">;
+    getFunction(nameOrSignature: "initialize"): TypedContractMethod$1<[
+        _locktime: BigNumberish,
+        _ledgerAddress: AddressLike,
+        owner: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "initialized"): TypedContractMethod$1<[], [boolean], "view">;
+    getFunction(nameOrSignature: "ledgerAddress"): TypedContractMethod$1<[], [string], "view">;
+    getFunction(nameOrSignature: "lockTime"): TypedContractMethod$1<[], [bigint], "view">;
+    getFunction(nameOrSignature: "owner"): TypedContractMethod$1<[], [string], "view">;
+    getFunction(nameOrSignature: "processRefund"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        [
+            bigint,
+            bigint,
+            bigint
+        ] & {
+            totalAmount: bigint;
+            balance: bigint;
+            pendingRefund: bigint;
+        }
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "removeService"): TypedContractMethod$1<[name: string], [void], "nonpayable">;
+    getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod$1<[], [void], "nonpayable">;
+    getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod$1<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "settleFees"): TypedContractMethod$1<[
+        verifierInput: VerifierInputStruct
+    ], [
+        void
+    ], "nonpayable">;
+    getFunction(nameOrSignature: "transferOwnership"): TypedContractMethod$1<[newOwner: AddressLike], [void], "nonpayable">;
+    getFunction(nameOrSignature: "updateLockTime"): TypedContractMethod$1<[_locktime: BigNumberish], [void], "nonpayable">;
+    getEvent(key: "BalanceUpdated"): TypedContractEvent$1<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
+    getEvent(key: "OwnershipTransferred"): TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
+    getEvent(key: "RefundRequested"): TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
+    getEvent(key: "ServiceRemoved"): TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+    getEvent(key: "ServiceUpdated"): TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+    filters: {
+        "BalanceUpdated(address,address,uint256,uint256)": TypedContractEvent$1<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
+        BalanceUpdated: TypedContractEvent$1<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
+        "OwnershipTransferred(address,address)": TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
+        OwnershipTransferred: TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
+        "RefundRequested(address,address,uint256,uint256)": TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
+        RefundRequested: TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
+        "ServiceRemoved(address,string)": TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+        ServiceRemoved: TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+        "ServiceUpdated(address,string,string,tuple,uint256,address,bool)": TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        ServiceUpdated: TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+    };
+}
+
+declare class FineTuningServingContract {
+    serving: FineTuningServing;
+    signer: Wallet;
+    private _userAddress;
+    constructor(signer: Wallet, contractAddress: string, userAddress: string);
+    lockTime(): Promise<bigint>;
+    listService(): Promise<ServiceStructOutput[]>;
+    listAccount(): Promise<AccountStructOutput[]>;
+    getAccount(provider: AddressLike): Promise<AccountStructOutput>;
+    acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: AddressLike): Promise<void>;
+    acknowledgeDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<void>;
+    getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
+    getDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<DeliverableStructOutput>;
+    getUserAddress(): string;
+}
 
 interface TypedDeferredTopicFilter<_TCEvent extends TypedContractEvent> extends DeferredTopicFilter {
 }
@@ -1224,14 +1728,22 @@ declare class LedgerManagerContract {
     getUserAddress(): string;
 }
 
+interface LedgerDetailStructOutput {
+    ledgerInfo: number[];
+    infers: (string | number)[][];
+    fines: (string | number)[][] | null;
+}
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
  */
 declare class LedgerProcessor {
-    protected ledgerContract: LedgerManagerContract;
     protected metadata: Metadata;
-    constructor(ledgerContract: LedgerManagerContract, metadata: Metadata);
+    protected ledgerContract: LedgerManagerContract;
+    protected inferenceContract: InferenceServingContract;
+    protected fineTuningContract: FineTuningServingContract | undefined;
+    constructor(metadata: Metadata, ledgerContract: LedgerManagerContract, inferenceContract: InferenceServingContract, fineTuningContract?: FineTuningServingContract);
     getLedger(): Promise<LedgerStructOutput>;
+    getLedgerWithDetail(): Promise<LedgerDetailStructOutput>;
     listLedger(): Promise<LedgerStructOutput[]>;
     addLedger(balance: number): Promise<void>;
     deleteLedger(): Promise<void>;
@@ -1248,7 +1760,9 @@ declare class LedgerBroker {
     ledger: LedgerProcessor;
     private signer;
     private ledgerCA;
-    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string);
+    private inferenceCA;
+    private fineTuningCA;
+    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string);
     initialize(): Promise<void>;
     /**
      * Adds a new ledger to the contract.
@@ -1268,7 +1782,7 @@ declare class LedgerBroker {
      *
      * @throws Will throw an error if the ledger retrieval process fails.
      */
-    getLedger: () => Promise<LedgerStructOutput>;
+    getLedger: () => Promise<LedgerDetailStructOutput>;
     /**
      * Deposits a specified amount of funds into Ledger corresponding to the current wallet address.
      *
@@ -1324,7 +1838,7 @@ declare class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<LedgerBroker>;
+declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string): Promise<LedgerBroker>;
 
 interface Task {
     readonly id?: string;
