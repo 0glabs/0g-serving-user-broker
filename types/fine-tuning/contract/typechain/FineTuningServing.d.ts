@@ -85,7 +85,6 @@ export type AccountStructOutput = [
 };
 export type ServiceStruct = {
     provider: AddressLike;
-    name: string;
     url: string;
     quota: QuotaStruct;
     pricePerToken: BigNumberish;
@@ -94,7 +93,6 @@ export type ServiceStruct = {
 };
 export type ServiceStructOutput = [
     provider: string,
-    name: string,
     url: string,
     quota: QuotaStructOutput,
     pricePerToken: bigint,
@@ -102,7 +100,6 @@ export type ServiceStructOutput = [
     occupied: boolean
 ] & {
     provider: string;
-    name: string;
     url: string;
     quota: QuotaStructOutput;
     pricePerToken: bigint;
@@ -146,21 +143,21 @@ export interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: "acknowledgeProviderSigner", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, string]): string;
     encodeFunctionData(functionFragment: "addDeliverable", values: [AddressLike, BytesLike]): string;
-    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
+    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
     encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
     encodeFunctionData(functionFragment: "getDeliverable", values: [AddressLike, AddressLike, BigNumberish]): string;
-    encodeFunctionData(functionFragment: "getService", values: [AddressLike, string]): string;
+    encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
     encodeFunctionData(functionFragment: "ledgerAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(functionFragment: "processRefund", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "removeService", values: [string]): string;
+    encodeFunctionData(functionFragment: "removeService", values?: undefined): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct]): string;
@@ -253,11 +250,10 @@ export declare namespace RefundRequestedEvent {
     type LogDescription = TypedLogDescription<Event>;
 }
 export declare namespace ServiceRemovedEvent {
-    type InputTuple = [user: AddressLike, name: string];
-    type OutputTuple = [user: string, name: string];
+    type InputTuple = [user: AddressLike];
+    type OutputTuple = [user: string];
     interface OutputObject {
         user: string;
-        name: string;
     }
     type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
     type Filter = TypedDeferredTopicFilter<Event>;
@@ -267,7 +263,6 @@ export declare namespace ServiceRemovedEvent {
 export declare namespace ServiceUpdatedEvent {
     type InputTuple = [
         user: AddressLike,
-        name: string,
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -276,7 +271,6 @@ export declare namespace ServiceUpdatedEvent {
     ];
     type OutputTuple = [
         user: string,
-        name: string,
         url: string,
         quota: QuotaStructOutput,
         pricePerToken: bigint,
@@ -285,7 +279,6 @@ export declare namespace ServiceUpdatedEvent {
     ];
     interface OutputObject {
         user: string;
-        name: string;
         url: string;
         quota: QuotaStructOutput;
         pricePerToken: bigint;
@@ -342,7 +335,6 @@ export interface FineTuningServing extends BaseContract {
         void
     ], "nonpayable">;
     addOrUpdateService: TypedContractMethod<[
-        name: string,
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -379,8 +371,7 @@ export interface FineTuningServing extends BaseContract {
         DeliverableStructOutput
     ], "view">;
     getService: TypedContractMethod<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput
     ], "view">;
@@ -409,7 +400,7 @@ export interface FineTuningServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    removeService: TypedContractMethod<[name: string], [void], "nonpayable">;
+    removeService: TypedContractMethod<[], [void], "nonpayable">;
     renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
     requestRefundAll: TypedContractMethod<[
         user: AddressLike,
@@ -465,7 +456,6 @@ export interface FineTuningServing extends BaseContract {
         void
     ], "nonpayable">;
     getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod<[
-        name: string,
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -502,8 +492,7 @@ export interface FineTuningServing extends BaseContract {
         DeliverableStructOutput
     ], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput
     ], "view">;
@@ -532,7 +521,7 @@ export interface FineTuningServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    getFunction(nameOrSignature: "removeService"): TypedContractMethod<[name: string], [void], "nonpayable">;
+    getFunction(nameOrSignature: "removeService"): TypedContractMethod<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod<[
         user: AddressLike,
@@ -559,9 +548,9 @@ export interface FineTuningServing extends BaseContract {
         OwnershipTransferred: TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
         "RefundRequested(address,address,uint256,uint256)": TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
         RefundRequested: TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-        "ServiceRemoved(address,string)": TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+        "ServiceRemoved(address)": TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
         ServiceRemoved: TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        "ServiceUpdated(address,string,string,tuple,uint256,address,bool)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        "ServiceUpdated(address,string,tuple,uint256,address,bool)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
         ServiceUpdated: TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
     };
 }

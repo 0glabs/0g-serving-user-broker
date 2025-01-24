@@ -68,9 +68,9 @@ class FineTuningServingContract {
             throw error;
         }
     }
-    async getService(providerAddress, svcName) {
+    async getService(providerAddress) {
         try {
-            return this.serving.getService(providerAddress, svcName);
+            return this.serving.getService(providerAddress);
         }
         catch (error) {
             throw error;

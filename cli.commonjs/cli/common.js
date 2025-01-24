@@ -9,14 +9,14 @@ const cli_table3_1 = tslib_1.__importDefault(require("cli-table3"));
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 function default_1(program) {
     program
-        .command('get-account')
-        .description('Retrieve fine-tuning account information')
+        .command('get-sub-account')
+        .description('Retrieve sub account information')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
-        .option('--infer', 'get inference account information')
+        .option('--ledger-ca <address>', 'Main Account (ledger) contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--infer', 'get sub-account for inference, default is fine-tuning')
         .action((options) => {
         if (options.infer) {
             // withLedgerBroker(options, async (broker) => {
@@ -33,36 +33,44 @@ function default_1(program) {
         }
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const account = await broker.fineTuning.getAccount(options.provider);
-            const table = new cli_table3_1.default({
-                head: ['Field', 'Value'],
-                colWidths: [35, 85],
+            let table = new cli_table3_1.default({
+                head: [chalk_1.default.blue('Field'), chalk_1.default.blue('Value')],
+                colWidths: [50, 50],
             });
-            table.push(['Balance (A0GI)', (0, util_1.neuronToA0gi)(account.balance)]);
             table.push([
-                'Pending Refund (A0GI)',
+                'Balance (A0GI)',
+                (0, util_1.neuronToA0gi)(account.balance).toFixed(18),
+            ]);
+            table.push([
+                'Requested Return to Main Account (A0GI)',
                 (0, util_1.neuronToA0gi)(account.pendingRefund),
             ]);
-            table.push(['Provider Signer', account.providerSigner]);
-            account.deliverables.forEach((deliverable, index) => {
+            console.log('\nOverview\n' + table.toString());
+            table = new cli_table3_1.default({
+                head: [
+                    chalk_1.default.blue('Root Hash'),
+                    chalk_1.default.blue('Access Confirmed'),
+                ],
+                colWidths: [75, 25],
+            });
+            account.deliverables.forEach((deliverable) => {
                 table.push([
-                    `Model Root Hash ${index + 1}`,
                     deliverable.modelRootHash,
-                ]);
-                table.push([
-                    `Encrypted Secret ${index + 1}`,
-                    (0, util_1.splitIntoChunks)(deliverable.encryptedSecret, 80),
+                    deliverable.acknowledged
+                        ? chalk_1.default.greenBright.bold('\u2713')
+                        : '',
                 ]);
             });
-            console.log(table.toString());
+            console.log('\nDeliverables\n' + table.toString());
         });
     });
     program
-        .command('list-services')
-        .description('List fine-tuning services')
+        .command('list-providers')
+        .description('List fine-tuning providers')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Main Account (ledger) contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         if (options.infer) {
             return;
@@ -70,25 +78,27 @@ function default_1(program) {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const services = await broker.fineTuning.listService();
             const table = new cli_table3_1.default({
-                head: ['Field', 'Value'],
-                colWidths: [60, 50],
+                colWidths: [50, 50],
             });
             services.forEach((service, index) => {
                 table.push([
                     chalk_1.default.blue(`Provider ${index + 1}`),
                     chalk_1.default.blue(service.provider),
                 ]);
-                table.push(['Service Name', service.name]);
+                let available = !service.occupied ? '\u2713' : `\u2717`;
+                if (service.providerSigner) {
+                }
+                table.push(['Available', available]);
+                table.push([
+                    'Price Per Byte in Dataset (A0GI)',
+                    (0, util_1.neuronToA0gi)(service.pricePerToken).toFixed(18),
+                ]);
                 table.push(['URL', service.url]);
-                table.push([
-                    'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',
-                    service.quota.toString(),
-                ]);
-                table.push([
-                    'Price Per Byte in Dataset',
-                    service.pricePerToken.toString(),
-                ]);
-                table.push(['Occupied', service.occupied.toString()]);
+                // TODO: Show quota when backend ready
+                // table.push([
+                //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',
+                //     service.quota.toString(),
+                // ])
             });
             console.log(table.toString());
         });

@@ -1019,7 +1019,6 @@ type AccountStructOutput = [
 };
 type ServiceStructOutput = [
     provider: string,
-    name: string,
     url: string,
     quota: QuotaStructOutput,
     pricePerToken: bigint,
@@ -1027,7 +1026,6 @@ type ServiceStructOutput = [
     occupied: boolean
 ] & {
     provider: string;
-    name: string;
     url: string;
     quota: QuotaStructOutput;
     pricePerToken: bigint;
@@ -1052,21 +1050,21 @@ interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: "acknowledgeProviderSigner", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, string]): string;
     encodeFunctionData(functionFragment: "addDeliverable", values: [AddressLike, BytesLike]): string;
-    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
+    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
     encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
     encodeFunctionData(functionFragment: "getDeliverable", values: [AddressLike, AddressLike, BigNumberish]): string;
-    encodeFunctionData(functionFragment: "getService", values: [AddressLike, string]): string;
+    encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
     encodeFunctionData(functionFragment: "ledgerAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(functionFragment: "processRefund", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "removeService", values: [string]): string;
+    encodeFunctionData(functionFragment: "removeService", values?: undefined): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct]): string;
@@ -1159,11 +1157,10 @@ declare namespace RefundRequestedEvent {
     type LogDescription = TypedLogDescription$1<Event>;
 }
 declare namespace ServiceRemovedEvent {
-    type InputTuple = [user: AddressLike, name: string];
-    type OutputTuple = [user: string, name: string];
+    type InputTuple = [user: AddressLike];
+    type OutputTuple = [user: string];
     interface OutputObject {
         user: string;
-        name: string;
     }
     type Event = TypedContractEvent$1<InputTuple, OutputTuple, OutputObject>;
     type Filter = TypedDeferredTopicFilter$1<Event>;
@@ -1173,7 +1170,6 @@ declare namespace ServiceRemovedEvent {
 declare namespace ServiceUpdatedEvent {
     type InputTuple = [
         user: AddressLike,
-        name: string,
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -1182,7 +1178,6 @@ declare namespace ServiceUpdatedEvent {
     ];
     type OutputTuple = [
         user: string,
-        name: string,
         url: string,
         quota: QuotaStructOutput,
         pricePerToken: bigint,
@@ -1191,7 +1186,6 @@ declare namespace ServiceUpdatedEvent {
     ];
     interface OutputObject {
         user: string;
-        name: string;
         url: string;
         quota: QuotaStructOutput;
         pricePerToken: bigint;
@@ -1248,7 +1242,6 @@ interface FineTuningServing extends BaseContract {
         void
     ], "nonpayable">;
     addOrUpdateService: TypedContractMethod$1<[
-        name: string,
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -1285,8 +1278,7 @@ interface FineTuningServing extends BaseContract {
         DeliverableStructOutput
     ], "view">;
     getService: TypedContractMethod$1<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput
     ], "view">;
@@ -1315,7 +1307,7 @@ interface FineTuningServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    removeService: TypedContractMethod$1<[name: string], [void], "nonpayable">;
+    removeService: TypedContractMethod$1<[], [void], "nonpayable">;
     renounceOwnership: TypedContractMethod$1<[], [void], "nonpayable">;
     requestRefundAll: TypedContractMethod$1<[
         user: AddressLike,
@@ -1371,7 +1363,6 @@ interface FineTuningServing extends BaseContract {
         void
     ], "nonpayable">;
     getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod$1<[
-        name: string,
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -1408,8 +1399,7 @@ interface FineTuningServing extends BaseContract {
         DeliverableStructOutput
     ], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod$1<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput
     ], "view">;
@@ -1438,7 +1428,7 @@ interface FineTuningServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    getFunction(nameOrSignature: "removeService"): TypedContractMethod$1<[name: string], [void], "nonpayable">;
+    getFunction(nameOrSignature: "removeService"): TypedContractMethod$1<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod$1<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod$1<[
         user: AddressLike,
@@ -1465,9 +1455,9 @@ interface FineTuningServing extends BaseContract {
         OwnershipTransferred: TypedContractEvent$1<OwnershipTransferredEvent$1.InputTuple, OwnershipTransferredEvent$1.OutputTuple, OwnershipTransferredEvent$1.OutputObject>;
         "RefundRequested(address,address,uint256,uint256)": TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
         RefundRequested: TypedContractEvent$1<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-        "ServiceRemoved(address,string)": TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+        "ServiceRemoved(address)": TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
         ServiceRemoved: TypedContractEvent$1<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        "ServiceUpdated(address,string,string,tuple,uint256,address,bool)": TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        "ServiceUpdated(address,string,tuple,uint256,address,bool)": TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
         ServiceUpdated: TypedContractEvent$1<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
     };
 }
@@ -1483,7 +1473,7 @@ declare class FineTuningServingContract {
     getAccount(provider: AddressLike): Promise<AccountStructOutput>;
     acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: AddressLike): Promise<void>;
     acknowledgeDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<void>;
-    getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
+    getService(providerAddress: string): Promise<ServiceStructOutput>;
     getDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<DeliverableStructOutput>;
     getUserAddress(): string;
 }
@@ -1729,9 +1719,9 @@ declare class LedgerManagerContract {
 }
 
 interface LedgerDetailStructOutput {
-    ledgerInfo: number[];
-    infers: (string | number)[][];
-    fines: (string | number)[][] | null;
+    ledgerInfo: string[];
+    infers: string[][];
+    fines: string[][] | null;
 }
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
@@ -1845,7 +1835,6 @@ interface Task {
     readonly createdAt?: string;
     readonly updatedAt?: string;
     userAddress: string;
-    serviceName: string;
     preTrainedModelHash: string;
     datasetHash: string;
     trainingParams: string;
@@ -1867,13 +1856,15 @@ declare class FineTuningBroker {
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
     getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
-    acknowledgeProviderSigner: (providerAddress: string, serviceName: string) => Promise<void>;
-    listModel: () => string[];
+    acknowledgeProviderSigner: (providerAddress: string) => Promise<void>;
+    listModel: () => [string, {
+        [key: string]: string;
+    }][];
     uploadDataset: (dataPath: string) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
-    createTask: (providerAddress: string, serviceName: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
-    getTask: (providerAddress: string, serviceName: string, taskID?: string) => Promise<Task>;
-    getLog: (providerAddress: string, serviceName: string, taskID?: string) => Promise<string>;
+    createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
+    getTask: (providerAddress: string, taskID?: string) => Promise<Task>;
+    getLog: (providerAddress: string, taskID?: string) => Promise<string>;
     acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
     decryptModel: (providerAddress: string, encryptedModelPath: string, decryptedModelPath: string) => Promise<void>;
 }

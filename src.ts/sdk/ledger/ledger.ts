@@ -7,9 +7,9 @@ import { InferenceServingContract } from '../inference/contract'
 import { FineTuningServingContract } from '../fine-tuning/contract'
 
 export interface LedgerDetailStructOutput {
-    ledgerInfo: number[]
-    infers: (string | number)[][]
-    fines: (string | number)[][] | null
+    ledgerInfo: string[]
+    infers: string[][]
+    fines: string[][] | null
 }
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
@@ -45,8 +45,10 @@ export class LedgerProcessor {
         try {
             const ledger = await this.ledgerContract.getLedger()
             const ledgerInfo = [
-                this.neuronToA0gi(ledger.totalBalance),
-                this.neuronToA0gi(ledger.availableBalance),
+                this.neuronToA0gi(ledger.totalBalance).toFixed(18),
+                this.neuronToA0gi(
+                    ledger.totalBalance - ledger.availableBalance
+                ).toFixed(18),
             ]
             const infers = await Promise.all(
                 ledger.inferenceProviders.map(async (provider) => {
@@ -55,13 +57,13 @@ export class LedgerProcessor {
                     )
                     return [
                         provider,
-                        this.neuronToA0gi(account.balance),
-                        this.neuronToA0gi(account.pendingRefund),
+                        this.neuronToA0gi(account.balance).toFixed(18),
+                        this.neuronToA0gi(account.pendingRefund).toFixed(18),
                     ]
                 })
             )
 
-            let fines: (string | number)[][] | null = []
+            let fines: string[][] | null = []
             if (typeof ledger.fineTuningProviders !== 'undefined') {
                 fines = await Promise.all(
                     ledger.fineTuningProviders.map(async (provider) => {
@@ -69,8 +71,10 @@ export class LedgerProcessor {
                             await this.fineTuningContract?.getAccount(provider)
                         return [
                             provider,
-                            this.neuronToA0gi(account!.balance),
-                            this.neuronToA0gi(account!.pendingRefund),
+                            this.neuronToA0gi(account!.balance).toFixed(18),
+                            this.neuronToA0gi(account!.pendingRefund).toFixed(
+                                18
+                            ),
                         ]
                     })
                 )

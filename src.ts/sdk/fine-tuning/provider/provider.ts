@@ -5,7 +5,6 @@ export interface Task {
     readonly createdAt?: string
     readonly updatedAt?: string
     userAddress: string
-    serviceName: string
     preTrainedModelHash: string
     datasetHash: string
     trainingParams: string
@@ -60,27 +59,18 @@ export class Provider {
         }
     }
 
-    async getProviderUrl(
-        providerAddress: string,
-        serviceName: string
-    ): Promise<string> {
+    async getProviderUrl(providerAddress: string): Promise<string> {
         try {
-            const service = await this.contract.getService(
-                providerAddress,
-                serviceName
-            )
+            const service = await this.contract.getService(providerAddress)
             return service.url
         } catch (error) {
             throw error
         }
     }
 
-    async getQuote(
-        providerAddress: string,
-        serviceName: string
-    ): Promise<QuoteResponse> {
+    async getQuote(providerAddress: string): Promise<QuoteResponse> {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName)
+            const url = await this.getProviderUrl(providerAddress)
             const endpoint = `${url}/v1/quote`
 
             const quoteString = await this.fetchText(endpoint, {
@@ -95,10 +85,7 @@ export class Provider {
 
     async createTask(providerAddress: string, task: Task): Promise<string> {
         try {
-            const url = await this.getProviderUrl(
-                providerAddress,
-                task.serviceName
-            )
+            const url = await this.getProviderUrl(providerAddress)
             const userAddress = this.contract.getUserAddress()
             const endpoint = `${url}/v1/user/${userAddress}/task`
 
@@ -118,13 +105,9 @@ export class Provider {
         }
     }
 
-    async getTask(
-        providerAddress: string,
-        serviceName: string,
-        taskID: string
-    ): Promise<Task> {
+    async getTask(providerAddress: string, taskID: string): Promise<Task> {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName)
+            const url = await this.getProviderUrl(providerAddress)
             const endpoint = `${url}/v1/task/${taskID}`
 
             return this.fetchJSON(endpoint, { method: 'GET' }) as Promise<Task>
@@ -135,12 +118,11 @@ export class Provider {
 
     async listTask(
         providerAddress: string,
-        serviceName: string,
         userAddress: string,
         latest = false
     ): Promise<Task[]> {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName)
+            const url = await this.getProviderUrl(providerAddress)
             let endpoint = `${url}/v1/user/${encodeURIComponent(
                 userAddress
             )}/task`
@@ -159,14 +141,12 @@ export class Provider {
 
     async getLog(
         providerAddress: string,
-        serviceName: string,
         userAddress: string,
         taskID: string
     ): Promise<string> {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName)
+            const url = await this.getProviderUrl(providerAddress)
             const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/log`
-
             return this.fetchText(endpoint, { method: 'GET' })
         } catch (error) {
             throw error

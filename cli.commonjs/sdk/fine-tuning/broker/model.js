@@ -8,7 +8,7 @@ const base_1 = require("./base");
 const fs_1 = require("fs");
 class ModelProcessor extends base_1.BrokerBase {
     listModel() {
-        return Object.keys(const_1.MODEL_HASH_MAP);
+        return Object.entries(const_1.MODEL_HASH_MAP);
     }
     async uploadDataset(privateKey, dataPath) {
         (0, zg_storage_1.upload)(privateKey, dataPath);

@@ -5,8 +5,8 @@ import { BrokerBase } from './base'
 import { promises as fs } from 'fs'
 
 export class ModelProcessor extends BrokerBase {
-    listModel(): string[] {
-        return Object.keys(MODEL_HASH_MAP)
+    listModel(): [string, { [key: string]: string }][] {
+        return Object.entries(MODEL_HASH_MAP)
     }
 
     async uploadDataset(privateKey: string, dataPath: string): Promise<void> {

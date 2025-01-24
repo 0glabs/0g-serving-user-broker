@@ -4,9 +4,9 @@ import { LedgerManagerContract } from './contract';
 import { InferenceServingContract } from '../inference/contract';
 import { FineTuningServingContract } from '../fine-tuning/contract';
 export interface LedgerDetailStructOutput {
-    ledgerInfo: number[];
-    infers: (string | number)[][];
-    fines: (string | number)[][] | null;
+    ledgerInfo: string[];
+    infers: string[][];
+    fines: string[][] | null;
 }
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.

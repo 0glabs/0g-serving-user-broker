@@ -4,22 +4,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = fineTuning;
 const tslib_1 = require("tslib");
 const util_1 = require("./util");
-const const_1 = require("./const");
 const cli_table3_1 = tslib_1.__importDefault(require("cli-table3"));
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
+const const_1 = require("./const");
 function fineTuning(program) {
     program
-        .command('acknowledge-provider-signer')
-        .description('Acknowledge provider signer')
+        .command('verify')
+        .description('verify TEE remote attestation of service')
         .requiredOption('--provider <address>', 'Provider address')
-        .requiredOption('--service <name>', 'Service name')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.acknowledgeProviderSigner(options.provider, options.serviceName);
-            console.log('Acknowledged provider signer');
+            await broker.fineTuning.acknowledgeProviderSigner(options.provider);
+            console.log('Provider verified');
         });
     });
     program
@@ -27,12 +27,22 @@ function fineTuning(program) {
         .description('List available models')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const models = await broker.fineTuning.listModel();
-            console.log('Models:', models);
+            const table = new cli_table3_1.default({
+                head: [chalk_1.default.blue('Name'), chalk_1.default.blue('Description')],
+                colWidths: [30, 75],
+            });
+            models.forEach((model) => {
+                table.push([
+                    model[0],
+                    (0, util_1.splitIntoChunks)(model[1].description, 70),
+                ]);
+            });
+            console.log(table.toString());
         });
     });
     program
@@ -41,8 +51,8 @@ function fineTuning(program) {
         .requiredOption('--data-path <path>', 'Path to the dataset')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.uploadDataset(options.dataPath);
@@ -55,8 +65,8 @@ function fineTuning(program) {
         .requiredOption('--data-root <path>', 'Path to the dataset')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.downloadDataset(options.dataPath, options.dataRoot);
@@ -67,17 +77,20 @@ function fineTuning(program) {
         .description('Create a fine-tuning task')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address for the task')
-        .requiredOption('--service <name>', 'Service name for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
         .requiredOption('--data-size <size>', 'Size of the dataset')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption('--config-path <path>', 'Fine-tuning configuration path')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            const taskId = await broker.fineTuning.createTask(options.provider, options.service, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath);
+            console.log('Verify provider...');
+            await broker.fineTuning.acknowledgeProviderSigner(options.provider);
+            console.log('Provider verified');
+            console.log('Creating task...');
+            const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath);
             console.log('Created Task ID:', taskId);
         });
     });
@@ -85,23 +98,21 @@ function fineTuning(program) {
         .command('get-task')
         .description('Retrieve fine-tuning task information')
         .requiredOption('--provider <address>', 'Provider address')
-        .requiredOption('--service <name>', 'Service name')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--task <id>', 'Task ID, if not provided, the latest task will be retrieved')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            const task = await broker.fineTuning.getTask(options.provider, options.service, options.task);
+            const task = await broker.fineTuning.getTask(options.provider, options.task);
             const table = new cli_table3_1.default({
-                head: ['Field', 'Value'],
+                head: [chalk_1.default.blue('Field'), chalk_1.default.blue('Value')],
                 colWidths: [35, 85],
             });
             table.push(['ID', task.id]);
             table.push(['Created At', task.createdAt]);
             table.push(['User Address', task.userAddress]);
-            table.push(['Service Name', task.serviceName]);
             table.push(['Pre-trained Model Hash', task.preTrainedModelHash]);
             table.push(['Dataset Hash', task.datasetHash]);
             table.push(['Training Params', task.trainingParams]);
@@ -117,15 +128,14 @@ function fineTuning(program) {
         .command('get-log')
         .description('Retrieve fine-tuning task log')
         .requiredOption('--provider <address>', 'Provider address')
-        .requiredOption('--service <name>', 'Service name')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .option('--task <id>', 'Task ID')
+        .option('--task <id>', 'Task ID, if not provided, the latest task will be retrieved')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            const log = await broker.fineTuning.getLog(options.provider, options.service, options.task);
+            const log = await broker.fineTuning.getLog(options.provider, options.task);
             console.log(log);
         });
     });
@@ -136,8 +146,8 @@ function fineTuning(program) {
         .requiredOption('--data-path <path>', 'Path to store the model')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.acknowledgeModel(options.provider, options.dataPath);
@@ -152,8 +162,8 @@ function fineTuning(program) {
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--output <path>', 'Path to the decrypted model')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address', const_1.LEDGER_CA)
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address', const_1.FINE_TUNING_CA)
+        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.decryptModel(options.provider, options.encryptedModel, options.output);

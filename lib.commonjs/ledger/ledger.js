@@ -30,15 +30,15 @@ class LedgerProcessor {
         try {
             const ledger = await this.ledgerContract.getLedger();
             const ledgerInfo = [
-                this.neuronToA0gi(ledger.totalBalance),
-                this.neuronToA0gi(ledger.availableBalance),
+                this.neuronToA0gi(ledger.totalBalance).toFixed(18),
+                this.neuronToA0gi(ledger.totalBalance - ledger.availableBalance).toFixed(18),
             ];
             const infers = await Promise.all(ledger.inferenceProviders.map(async (provider) => {
                 const account = await this.inferenceContract.getAccount(provider);
                 return [
                     provider,
-                    this.neuronToA0gi(account.balance),
-                    this.neuronToA0gi(account.pendingRefund),
+                    this.neuronToA0gi(account.balance).toFixed(18),
+                    this.neuronToA0gi(account.pendingRefund).toFixed(18),
                 ];
             }));
             let fines = [];
@@ -47,8 +47,8 @@ class LedgerProcessor {
                     const account = await this.fineTuningContract?.getAccount(provider);
                     return [
                         provider,
-                        this.neuronToA0gi(account.balance),
-                        this.neuronToA0gi(account.pendingRefund),
+                        this.neuronToA0gi(account.balance).toFixed(18),
+                        this.neuronToA0gi(account.pendingRefund).toFixed(18),
                     ];
                 }));
             }

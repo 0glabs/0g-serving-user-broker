@@ -47,9 +47,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeProviderSigner = async (providerAddress, serviceName) => {
+    acknowledgeProviderSigner = async (providerAddress) => {
         try {
-            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, serviceName);
+            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress);
         }
         catch (error) {
             throw error;
@@ -79,26 +79,26 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath);
         }
         catch (error) {
             throw error;
         }
     };
-    getTask = async (providerAddress, serviceName, taskID) => {
+    getTask = async (providerAddress, taskID) => {
         try {
-            const task = await this.serviceProcessor.getTask(providerAddress, serviceName, taskID);
+            const task = await this.serviceProcessor.getTask(providerAddress, taskID);
             return task;
         }
         catch (error) {
             throw error;
         }
     };
-    getLog = async (providerAddress, serviceName, taskID) => {
+    getLog = async (providerAddress, taskID) => {
         try {
-            return await this.serviceProcessor.getLog(providerAddress, serviceName, taskID);
+            return await this.serviceProcessor.getLog(providerAddress, taskID);
         }
         catch (error) {
             throw error;

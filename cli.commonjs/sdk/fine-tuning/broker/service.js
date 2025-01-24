@@ -29,7 +29,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
     //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner(providerAddress, svcName) {
+    async acknowledgeProviderSigner(providerAddress) {
         try {
             try {
                 await this.contract.getAccount(providerAddress);
@@ -42,7 +42,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                     await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0));
                 }
             }
-            const res = await this.servingProvider.getQuote(providerAddress, svcName);
+            const res = await this.servingProvider.getQuote(providerAddress);
             // TODO: verify the quote
             await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer);
         }
@@ -55,9 +55,9 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, serviceName, preTrainedModelName, dataSize, datasetHash, trainingPath) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath) {
         try {
-            const service = await this.contract.getService(providerAddress, serviceName);
+            const service = await this.contract.getService(providerAddress);
             const fee = service.pricePerToken * BigInt(dataSize);
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
@@ -66,7 +66,6 @@ class ServiceProcessor extends base_1.BrokerBase {
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
             const task = {
                 userAddress: this.contract.getUserAddress(),
-                serviceName,
                 datasetHash,
                 trainingParams,
                 preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].turbo,
@@ -80,31 +79,31 @@ class ServiceProcessor extends base_1.BrokerBase {
             throw error;
         }
     }
-    async getTask(providerAddress, serviceName, taskID) {
+    async getTask(providerAddress, taskID) {
         try {
             if (!taskID) {
-                const tasks = await this.servingProvider.listTask(providerAddress, serviceName, this.contract.getUserAddress(), true);
+                const tasks = await this.servingProvider.listTask(providerAddress, this.contract.getUserAddress(), true);
                 if (tasks.length === 0) {
                     throw new Error('No task found');
                 }
                 return tasks[0];
             }
-            return await this.servingProvider.getTask(providerAddress, serviceName, taskID);
+            return await this.servingProvider.getTask(providerAddress, taskID);
         }
         catch (error) {
             throw error;
         }
     }
     // 8. [`call provider`] call provider task progress api to get task progress
-    async getLog(providerAddress, serviceName, taskID) {
+    async getLog(providerAddress, taskID) {
         if (!taskID) {
-            const tasks = await this.servingProvider.listTask(providerAddress, serviceName, this.contract.getUserAddress(), true);
+            const tasks = await this.servingProvider.listTask(providerAddress, this.contract.getUserAddress(), true);
             taskID = tasks[0].id;
             if (tasks.length === 0 || !taskID) {
                 throw new Error('No task found');
             }
         }
-        return this.servingProvider.getLog(providerAddress, serviceName, this.contract.getUserAddress(), taskID);
+        return this.servingProvider.getLog(providerAddress, this.contract.getUserAddress(), taskID);
     }
     verifyTrainingParams(trainingParams) {
         try {

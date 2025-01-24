@@ -29,10 +29,13 @@ export const MODEL_HASH_MAP: {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
         standard: '',
+        description:
+            'This model is a distilled version of the BERT base model. The code for the distillation process can be found here. This model is uncased: it does not make a difference between english and English. URL: https://huggingface.co/distilbert/distilbert-base-uncased',
     },
     // TODO: remove
     'mock-model': {
         turbo: '0xf463fe8c26e7dbca20716eb3c81ac1f3ea23a6c5dbe002bf46507db403c71578',
         standard: '',
+        description: '',
     },
 }

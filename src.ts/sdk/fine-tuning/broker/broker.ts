@@ -62,14 +62,10 @@ export class FineTuningBroker {
         }
     }
 
-    public acknowledgeProviderSigner = async (
-        providerAddress: string,
-        serviceName: string
-    ) => {
+    public acknowledgeProviderSigner = async (providerAddress: string) => {
         try {
             return await this.serviceProcessor.acknowledgeProviderSigner(
-                providerAddress,
-                serviceName
+                providerAddress
             )
         } catch (error) {
             throw error
@@ -108,7 +104,6 @@ export class FineTuningBroker {
 
     public createTask = async (
         providerAddress: string,
-        serviceName: string,
         preTrainedModelName: string,
         dataSize: number,
         datasetHash: string,
@@ -117,7 +112,6 @@ export class FineTuningBroker {
         try {
             return await this.serviceProcessor.createTask(
                 providerAddress,
-                serviceName,
                 preTrainedModelName,
                 dataSize,
                 datasetHash,
@@ -130,13 +124,11 @@ export class FineTuningBroker {
 
     public getTask = async (
         providerAddress: string,
-        serviceName: string,
         taskID?: string
     ): Promise<Task> => {
         try {
             const task = await this.serviceProcessor.getTask(
                 providerAddress,
-                serviceName,
                 taskID
             )
             return task
@@ -147,15 +139,10 @@ export class FineTuningBroker {
 
     public getLog = async (
         providerAddress: string,
-        serviceName: string,
         taskID?: string
     ): Promise<string> => {
         try {
-            return await this.serviceProcessor.getLog(
-                providerAddress,
-                serviceName,
-                taskID
-            )
+            return await this.serviceProcessor.getLog(providerAddress, taskID)
         } catch (error) {
             throw error
         }

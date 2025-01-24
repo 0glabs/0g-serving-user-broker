@@ -32,18 +32,18 @@ class Provider {
             throw error;
         }
     }
-    async getProviderUrl(providerAddress, serviceName) {
+    async getProviderUrl(providerAddress) {
         try {
-            const service = await this.contract.getService(providerAddress, serviceName);
+            const service = await this.contract.getService(providerAddress);
             return service.url;
         }
         catch (error) {
             throw error;
         }
     }
-    async getQuote(providerAddress, serviceName) {
+    async getQuote(providerAddress) {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const url = await this.getProviderUrl(providerAddress);
             const endpoint = `${url}/v1/quote`;
             const quoteString = await this.fetchText(endpoint, {
                 method: 'GET',
@@ -57,7 +57,7 @@ class Provider {
     }
     async createTask(providerAddress, task) {
         try {
-            const url = await this.getProviderUrl(providerAddress, task.serviceName);
+            const url = await this.getProviderUrl(providerAddress);
             const userAddress = this.contract.getUserAddress();
             const endpoint = `${url}/v1/user/${userAddress}/task`;
             const response = await this.fetchJSON(endpoint, {
@@ -76,9 +76,9 @@ class Provider {
             throw new Error('Failed to create task');
         }
     }
-    async getTask(providerAddress, serviceName, taskID) {
+    async getTask(providerAddress, taskID) {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const url = await this.getProviderUrl(providerAddress);
             const endpoint = `${url}/v1/task/${taskID}`;
             return this.fetchJSON(endpoint, { method: 'GET' });
         }
@@ -86,9 +86,9 @@ class Provider {
             throw error;
         }
     }
-    async listTask(providerAddress, serviceName, userAddress, latest = false) {
+    async listTask(providerAddress, userAddress, latest = false) {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const url = await this.getProviderUrl(providerAddress);
             let endpoint = `${url}/v1/user/${encodeURIComponent(userAddress)}/task`;
             if (latest) {
                 endpoint += '?latest=true';
@@ -99,9 +99,9 @@ class Provider {
             throw error;
         }
     }
-    async getLog(providerAddress, serviceName, userAddress, taskID) {
+    async getLog(providerAddress, userAddress, taskID) {
         try {
-            const url = await this.getProviderUrl(providerAddress, serviceName);
+            const url = await this.getProviderUrl(providerAddress);
             const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/log`;
             return this.fetchText(endpoint, { method: 'GET' });
         }

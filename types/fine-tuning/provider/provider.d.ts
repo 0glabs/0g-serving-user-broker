@@ -4,7 +4,6 @@ export interface Task {
     readonly createdAt?: string;
     readonly updatedAt?: string;
     userAddress: string;
-    serviceName: string;
     preTrainedModelHash: string;
     datasetHash: string;
     trainingParams: string;
@@ -23,11 +22,11 @@ export declare class Provider {
     constructor(contract: FineTuningServingContract);
     private fetchJSON;
     private fetchText;
-    getProviderUrl(providerAddress: string, serviceName: string): Promise<string>;
-    getQuote(providerAddress: string, serviceName: string): Promise<QuoteResponse>;
+    getProviderUrl(providerAddress: string): Promise<string>;
+    getQuote(providerAddress: string): Promise<QuoteResponse>;
     createTask(providerAddress: string, task: Task): Promise<string>;
-    getTask(providerAddress: string, serviceName: string, taskID: string): Promise<Task>;
-    listTask(providerAddress: string, serviceName: string, userAddress: string, latest?: boolean): Promise<Task[]>;
-    getLog(providerAddress: string, serviceName: string, userAddress: string, taskID: string): Promise<string>;
+    getTask(providerAddress: string, taskID: string): Promise<Task>;
+    listTask(providerAddress: string, userAddress: string, latest?: boolean): Promise<Task[]>;
+    getLog(providerAddress: string, userAddress: string, taskID: string): Promise<string>;
 }
 //# sourceMappingURL=provider.d.ts.map

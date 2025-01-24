@@ -12,7 +12,7 @@ export declare class FineTuningServingContract {
     getAccount(provider: AddressLike): Promise<import("./typechain/FineTuningServing").AccountStructOutput>;
     acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: AddressLike): Promise<void>;
     acknowledgeDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<void>;
-    getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
+    getService(providerAddress: string): Promise<ServiceStructOutput>;
     getDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<DeliverableStructOutput>;
     getUserAddress(): string;
 }

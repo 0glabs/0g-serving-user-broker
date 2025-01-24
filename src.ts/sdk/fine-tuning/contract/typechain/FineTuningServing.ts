@@ -107,7 +107,6 @@ export type AccountStructOutput = [
 
 export type ServiceStruct = {
   provider: AddressLike;
-  name: string;
   url: string;
   quota: QuotaStruct;
   pricePerToken: BigNumberish;
@@ -117,7 +116,6 @@ export type ServiceStruct = {
 
 export type ServiceStructOutput = [
   provider: string,
-  name: string,
   url: string,
   quota: QuotaStructOutput,
   pricePerToken: bigint,
@@ -125,7 +123,6 @@ export type ServiceStructOutput = [
   occupied: boolean
 ] & {
   provider: string;
-  name: string;
   url: string;
   quota: QuotaStructOutput;
   pricePerToken: bigint;
@@ -225,7 +222,7 @@ export interface FineTuningServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "addOrUpdateService",
-    values: [string, string, QuotaStruct, BigNumberish, AddressLike, boolean]
+    values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteAccount",
@@ -253,7 +250,7 @@ export interface FineTuningServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getService",
-    values: [AddressLike, string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -275,7 +272,7 @@ export interface FineTuningServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "removeService",
-    values: [string]
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -443,11 +440,10 @@ export namespace RefundRequestedEvent {
 }
 
 export namespace ServiceRemovedEvent {
-  export type InputTuple = [user: AddressLike, name: string];
-  export type OutputTuple = [user: string, name: string];
+  export type InputTuple = [user: AddressLike];
+  export type OutputTuple = [user: string];
   export interface OutputObject {
     user: string;
-    name: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -458,7 +454,6 @@ export namespace ServiceRemovedEvent {
 export namespace ServiceUpdatedEvent {
   export type InputTuple = [
     user: AddressLike,
-    name: string,
     url: string,
     quota: QuotaStruct,
     pricePerToken: BigNumberish,
@@ -467,7 +462,6 @@ export namespace ServiceUpdatedEvent {
   ];
   export type OutputTuple = [
     user: string,
-    name: string,
     url: string,
     quota: QuotaStructOutput,
     pricePerToken: bigint,
@@ -476,7 +470,6 @@ export namespace ServiceUpdatedEvent {
   ];
   export interface OutputObject {
     user: string;
-    name: string;
     url: string;
     quota: QuotaStructOutput;
     pricePerToken: bigint;
@@ -564,7 +557,6 @@ export interface FineTuningServing extends BaseContract {
 
   addOrUpdateService: TypedContractMethod<
     [
-      name: string,
       url: string,
       quota: QuotaStruct,
       pricePerToken: BigNumberish,
@@ -604,7 +596,7 @@ export interface FineTuningServing extends BaseContract {
   >;
 
   getService: TypedContractMethod<
-    [provider: AddressLike, name: string],
+    [provider: AddressLike],
     [ServiceStructOutput],
     "view"
   >;
@@ -635,7 +627,7 @@ export interface FineTuningServing extends BaseContract {
     "nonpayable"
   >;
 
-  removeService: TypedContractMethod<[name: string], [void], "nonpayable">;
+  removeService: TypedContractMethod<[], [void], "nonpayable">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -706,7 +698,6 @@ export interface FineTuningServing extends BaseContract {
     nameOrSignature: "addOrUpdateService"
   ): TypedContractMethod<
     [
-      name: string,
       url: string,
       quota: QuotaStruct,
       pricePerToken: BigNumberish,
@@ -753,7 +744,7 @@ export interface FineTuningServing extends BaseContract {
   getFunction(
     nameOrSignature: "getService"
   ): TypedContractMethod<
-    [provider: AddressLike, name: string],
+    [provider: AddressLike],
     [ServiceStructOutput],
     "view"
   >;
@@ -791,7 +782,7 @@ export interface FineTuningServing extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "removeService"
-  ): TypedContractMethod<[name: string], [void], "nonpayable">;
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -886,7 +877,7 @@ export interface FineTuningServing extends BaseContract {
       RefundRequestedEvent.OutputObject
     >;
 
-    "ServiceRemoved(address,string)": TypedContractEvent<
+    "ServiceRemoved(address)": TypedContractEvent<
       ServiceRemovedEvent.InputTuple,
       ServiceRemovedEvent.OutputTuple,
       ServiceRemovedEvent.OutputObject
@@ -897,7 +888,7 @@ export interface FineTuningServing extends BaseContract {
       ServiceRemovedEvent.OutputObject
     >;
 
-    "ServiceUpdated(address,string,string,tuple,uint256,address,bool)": TypedContractEvent<
+    "ServiceUpdated(address,string,tuple,uint256,address,bool)": TypedContractEvent<
       ServiceUpdatedEvent.InputTuple,
       ServiceUpdatedEvent.OutputTuple,
       ServiceUpdatedEvent.OutputObject

@@ -29,10 +29,7 @@ export class ServiceProcessor extends BrokerBase {
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
     //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner(
-        providerAddress: string,
-        svcName: string
-    ): Promise<void> {
+    async acknowledgeProviderSigner(providerAddress: string): Promise<void> {
         try {
             try {
                 await this.contract.getAccount(providerAddress)
@@ -48,10 +45,7 @@ export class ServiceProcessor extends BrokerBase {
                 }
             }
 
-            const res = await this.servingProvider.getQuote(
-                providerAddress,
-                svcName
-            )
+            const res = await this.servingProvider.getQuote(providerAddress)
             // TODO: verify the quote
             await this.contract.acknowledgeProviderSigner(
                 providerAddress,
@@ -69,17 +63,13 @@ export class ServiceProcessor extends BrokerBase {
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
     async createTask(
         providerAddress: string,
-        serviceName: string,
         preTrainedModelName: string,
         dataSize: number,
         datasetHash: string,
         trainingPath: string
     ): Promise<string> {
         try {
-            const service = await this.contract.getService(
-                providerAddress,
-                serviceName
-            )
+            const service = await this.contract.getService(providerAddress)
             const fee = service.pricePerToken * BigInt(dataSize)
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee)
 
@@ -97,7 +87,6 @@ export class ServiceProcessor extends BrokerBase {
 
             const task: Task = {
                 userAddress: this.contract.getUserAddress(),
-                serviceName,
                 datasetHash,
                 trainingParams,
                 preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
@@ -112,16 +101,11 @@ export class ServiceProcessor extends BrokerBase {
         }
     }
 
-    async getTask(
-        providerAddress: string,
-        serviceName: string,
-        taskID?: string
-    ): Promise<Task> {
+    async getTask(providerAddress: string, taskID?: string): Promise<Task> {
         try {
             if (!taskID) {
                 const tasks = await this.servingProvider.listTask(
                     providerAddress,
-                    serviceName,
                     this.contract.getUserAddress(),
                     true
                 )
@@ -131,26 +115,17 @@ export class ServiceProcessor extends BrokerBase {
                 return tasks[0]
             }
 
-            return await this.servingProvider.getTask(
-                providerAddress,
-                serviceName,
-                taskID
-            )
+            return await this.servingProvider.getTask(providerAddress, taskID)
         } catch (error) {
             throw error
         }
     }
 
     // 8. [`call provider`] call provider task progress api to get task progress
-    async getLog(
-        providerAddress: string,
-        serviceName: string,
-        taskID?: string
-    ): Promise<string> {
+    async getLog(providerAddress: string, taskID?: string): Promise<string> {
         if (!taskID) {
             const tasks = await this.servingProvider.listTask(
                 providerAddress,
-                serviceName,
                 this.contract.getUserAddress(),
                 true
             )
@@ -161,7 +136,6 @@ export class ServiceProcessor extends BrokerBase {
         }
         return this.servingProvider.getLog(
             providerAddress,
-            serviceName,
             this.contract.getUserAddress(),
             taskID
         )
