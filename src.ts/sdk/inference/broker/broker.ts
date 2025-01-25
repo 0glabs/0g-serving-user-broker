@@ -7,6 +7,7 @@ import { AccountProcessor } from './account'
 import { ModelProcessor } from './model'
 import { Metadata } from '../../common/storage'
 import { Cache } from '../storage'
+import { LedgerBroker } from '../../ledger'
 
 export class InferenceBroker {
     public requestProcessor!: RequestProcessor
@@ -17,10 +18,16 @@ export class InferenceBroker {
 
     private signer: JsonRpcSigner | Wallet
     private contractAddress: string
+    private ledger: LedgerBroker
 
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string) {
+    constructor(
+        signer: JsonRpcSigner | Wallet,
+        contractAddress: string,
+        ledger: LedgerBroker
+    ) {
         this.signer = signer
         this.contractAddress = contractAddress
+        this.ledger = ledger
     }
 
     async initialize() {
@@ -37,7 +44,12 @@ export class InferenceBroker {
         )
         const metadata = new Metadata()
         const cache = new Cache()
-        this.requestProcessor = new RequestProcessor(contract, metadata, cache)
+        this.requestProcessor = new RequestProcessor(
+            contract,
+            metadata,
+            cache,
+            this.ledger
+        )
         this.responseProcessor = new ResponseProcessor(
             contract,
             metadata,
@@ -63,28 +75,6 @@ export class InferenceBroker {
     }
 
     /**
-     * Adds a new account to the contract.
-     *
-     * @param {string} providerAddress - The address of the provider for whom the account is being created.
-     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
-     *
-     * @throws  An error if the account creation fails.
-     *
-     * @remarks
-     * When creating an account, a key pair is also created to sign the request.
-     */
-    public addAccount = async (providerAddress: string, balance: number) => {
-        try {
-            return await this.accountProcessor.addAccount(
-                providerAddress,
-                balance
-            )
-        } catch (error) {
-            throw error
-        }
-    }
-
-    /**
      * Retrieves the account information for a given provider address.
      *
      * @param {string} providerAddress - The address of the provider identifying the account.
@@ -98,21 +88,6 @@ export class InferenceBroker {
     ): Promise<AccountStructOutput> => {
         try {
             return await this.accountProcessor.getAccount(providerAddress)
-        } catch (error) {
-            throw error
-        }
-    }
-
-    /**
-     * Deposits a specified amount of funds into the given account.
-     *
-     * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
-     * @throws  An error if the deposit fails.
-     */
-    public depositFund = async (account: string, amount: number) => {
-        try {
-            return await this.accountProcessor.depositFund(account, amount)
         } catch (error) {
             throw error
         }
@@ -370,9 +345,10 @@ export class InferenceBroker {
  */
 export async function createInferenceBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress = ''
+    contractAddress,
+    ledger: LedgerBroker
 ): Promise<InferenceBroker> {
-    const broker = new InferenceBroker(signer, contractAddress)
+    const broker = new InferenceBroker(signer, contractAddress, ledger)
     try {
         await broker.initialize()
         return broker

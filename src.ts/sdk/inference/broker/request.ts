@@ -1,4 +1,8 @@
 import { ZGServingUserBrokerBase } from './base'
+import { Cache } from '../storage'
+import { InferenceServingContract, ServiceStructOutput } from '../contract'
+import { LedgerBroker } from '../../ledger'
+import { Metadata } from '../../common/storage'
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -47,6 +51,21 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export class RequestProcessor extends ZGServingUserBrokerBase {
+    private checkAccountThreshold = BigInt(1000)
+    private topUpTriggerThreshold = BigInt(5000)
+    private topUpTargetThreshold = BigInt(10000)
+    private ledger: LedgerBroker
+
+    constructor(
+        contract: InferenceServingContract,
+        metadata: Metadata,
+        cache: Cache,
+        ledger: LedgerBroker
+    ) {
+        super(contract, metadata, cache)
+        this.ledger = ledger
+    }
+
     async getServiceMetadata(
         providerAddress: string,
         svcName: string
@@ -66,12 +85,72 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         svcName: string,
         content: string
     ): Promise<ServingRequestHeaders> {
-        const headers = await this.getHeader(
-            providerAddress,
-            svcName,
-            content,
-            BigInt(0)
-        )
-        return headers
+        try {
+            await this.topUpAccountIfNeeded(providerAddress, svcName, content)
+            return await this.getHeader(
+                providerAddress,
+                svcName,
+                content,
+                BigInt(0)
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    async checkCachedFee(key: string, svc: ServiceStructOutput) {
+        try {
+            const usedFund = (await this.cache.getItem(key)) || BigInt(0)
+            return (
+                usedFund >
+                this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice)
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svcName
+     */
+    async topUpAccountIfNeeded(
+        provider: string,
+        svcName: string,
+        content: string
+    ) {
+        try {
+            const extractor = await this.getExtractor(provider, svcName)
+            const svc = await extractor.getSvcInfo()
+            const key = this.getCachedFeeKey(provider, svcName)
+            const needCheck = await this.checkCachedFee(key, svc)
+            // update cache for current content
+            const newFee = await this.calculateInputFees(extractor, content)
+            await this.updateCachedFee(provider, svcName, newFee)
+            if (!needCheck) {
+                return
+            }
+            // check fund in account
+            const acc = await this.contract.getAccount(provider)
+            if (
+                acc.balance <
+                this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice)
+            ) {
+                await this.ledger.transferFund(
+                    provider,
+                    'inference',
+                    this.topUpTargetThreshold *
+                        (svc.inputPrice + svc.outputPrice)
+                )
+            }
+        } catch (error) {
+            throw error
+        }
     }
 }
