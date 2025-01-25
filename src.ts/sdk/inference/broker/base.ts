@@ -112,7 +112,6 @@ export abstract class ZGServingUserBrokerBase {
         const integerPart = value / divisor
         const remainder = value % divisor
         const decimalPart = Number(remainder) / Number(divisor)
-
         return Number(integerPart) + decimalPart
     }
 
@@ -172,10 +171,31 @@ export abstract class ZGServingUserBrokerBase {
         }
     }
 
-    private async calculateInputFees(extractor: Extractor, content: string) {
+    async calculateInputFees(extractor: Extractor, content: string) {
         const svc = await extractor.getSvcInfo()
         const inputCount = await extractor.getInputCount(content)
         const inputFee = BigInt(inputCount) * svc.inputPrice
         return inputFee
+    }
+
+    getCachedFeeKey(provider: string, svcName: string) {
+        return provider + '_' + svcName + '_cachedFee'
+    }
+
+    async updateCachedFee(provider: string, svcName: string, fee: bigint) {
+        try {
+            const curFee =
+                (await this.cache.getItem(
+                    this.getCachedFeeKey(provider, svcName)
+                )) || BigInt(0)
+            await this.cache.setItem(
+                provider,
+                BigInt(curFee) + fee,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.Service
+            )
+        } catch (error) {
+            throw error
+        }
     }
 }

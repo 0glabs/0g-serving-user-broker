@@ -1,4 +1,4 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers'
+import { JsonRpcSigner, AddressLike, Wallet } from 'ethers'
 import { InferenceServing, InferenceServing__factory } from './typechain'
 import { ServiceStructOutput } from './typechain/InferenceServing'
 
@@ -48,100 +48,6 @@ export class InferenceServingContract {
             const user = this.getUserAddress()
             const account = await this.serving.getAccount(user, provider)
             return account
-        } catch (error) {
-            throw error
-        }
-    }
-
-    async deleteAccount(provider: AddressLike) {
-        try {
-            const user = this.getUserAddress()
-            const tx = await this.serving.deleteAccount(user, provider)
-
-            const receipt = await tx.wait()
-
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
-        } catch (error) {
-            throw error
-        }
-    }
-
-    async addOrUpdateService(
-        name: string,
-        serviceType: string,
-        url: string,
-        model: string,
-        verifiability: string,
-        inputPrice: BigNumberish,
-        outputPrice: BigNumberish
-    ) {
-        try {
-            const tx = await this.serving.addOrUpdateService(
-                name,
-                serviceType,
-                url,
-                model,
-                verifiability,
-                inputPrice,
-                outputPrice
-            )
-
-            const receipt = await tx.wait()
-
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
-        } catch (error) {
-            throw error
-        }
-    }
-
-    async addAccount(
-        providerAddress: AddressLike,
-        signer: [BigNumberish, BigNumberish],
-        balance: bigint,
-        settleSignerEncryptedPrivateKey: string
-    ) {
-        try {
-            const user = this.getUserAddress()
-            const tx = await this.serving.addAccount(
-                user,
-                providerAddress,
-                signer,
-                settleSignerEncryptedPrivateKey,
-                {
-                    value: balance,
-                }
-            )
-
-            const receipt = await tx.wait()
-
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
-        } catch (error) {
-            throw error
-        }
-    }
-
-    async depositFund(providerAddress: AddressLike, balance: string) {
-        try {
-            const user = this.getUserAddress()
-            const tx = await this.serving.depositFund(user, providerAddress, {
-                value: balance,
-            })
-
-            const receipt = await tx.wait()
-
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
         } catch (error) {
             throw error
         }
