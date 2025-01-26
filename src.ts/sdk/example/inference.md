@@ -49,9 +49,9 @@
         try {
             const broker = await createZGComputeNetworkBroker(
                 wallet,
-                '',
+                '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318',
                 '0x0165878A594ca255338adfa4d48449f69242Eb8F',
-                ''
+                '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
             )
 
             // Step 3: List available services
@@ -71,33 +71,22 @@
                 console.error('Service not found.')
                 return
             }
-            const providerAddress = console.log('Account created successfully.')
+            const providerAddress = service.provider
 
-            // Step 4.2: Deposit funds into the account
-            const depositAmount = 0.01
-            console.log('Depositing funds...')
-            await broker.inference.depositFund(providerAddress, depositAmount)
-            console.log('Funds deposited successfully.')
+            // Step 4.2: Create a account
+            const amount = 0.01
+            console.log('Creating an account...')
+            await broker.ledger.addLedger(amount)
+            console.log('Account created successfully.')
 
             // Step 4.3: Get the account
-            const accounts =
-                await broker.inference.accountProcessor.listAccount()
-            accounts.forEach((account: any) => {
-                console.log(
-                    `user: ${account.user}, provider: ${account.balance}`
-                )
-            })
+            const account = await broker.ledger.getLedger()
+            console.log('Account balance:', account.ledgerInfo[0])
 
             // Step 5: Use the Provider's Services
             console.log('Processing a request...')
             const serviceName = service.name
             const content = 'hello world'
-
-            await broker.inference.settleFee(
-                providerAddress,
-                serviceName,
-                0.0000000008
-            )
 
             // Step 5.1: Get the request metadata
             const { endpoint, model } =
@@ -113,6 +102,8 @@
                 content
             )
 
+            console.log('Headers:', headers)
+
             // Step 6: Send a request to the service
 
             const openai = new OpenAI({
@@ -123,8 +114,6 @@
                 {
                     messages: [{ role: 'system', content }],
                     model: model,
-                    // @ts-expect-error guided_json is not yet public
-                    guided_json: jsonSchema,
                 },
                 {
                     headers: {

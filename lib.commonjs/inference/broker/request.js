@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestProcessor = void 0;
 const base_1 = require("./base");
+const storage_1 = require("../storage");
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -23,6 +24,28 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             model: service.model,
         };
     }
+    /*
+     * 1. To Ensure No Insufficient Balance Occurs.
+     *
+     * The provider settles accounts regularly. In addition, we will add a rule to the provider's settlement logic:
+     * if the actual balance of the customer's account is less than 5000, settlement will be triggered immediately.
+     * The actual balance is defined as the customer's inference account balance minus any unsettled amounts.
+     *
+     * This way, if the customer checks their account and sees a balance greater than 5000, even if the provider settles
+     * immediately, the deduction will leave about 5000, ensuring that no insufficient balance situation occurs.
+     *
+     * 2. To Avoid Frequent Transfers
+     *
+     * On the customer's side, if the balance falls below 5000, it should be topped up to 10000. This is to avoid frequent
+     * transfers.
+     *
+     * 3. To Avoid Having to Check the Balance on Every Customer Request
+     *
+     * Record expenditures in processResponse and maintain a total consumption amount. Every time the total expenditure
+     * reaches 1000, recheck the balance and perform a transfer if necessary.
+     *
+     * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
+     */
     async getRequestHeaders(providerAddress, svcName, content) {
         try {
             await this.topUpAccountIfNeeded(providerAddress, svcName, content);
@@ -37,8 +60,9 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
      * @param provider
      * @param svc
      */
-    async checkCachedFee(key, svc) {
+    async shouldCheckAccount(svc) {
         try {
+            const key = this.getCachedFeeKey(svc.provider, svc.name);
             const usedFund = (await this.cache.getItem(key)) || BigInt(0);
             return (usedFund >
                 this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
@@ -56,11 +80,19 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(provider, svcName);
             const svc = await extractor.getSvcInfo();
-            const key = this.getCachedFeeKey(provider, svcName);
-            const needCheck = await this.checkCachedFee(key, svc);
-            // update cache for current content
+            // In first around, we top up the account to topUpTargetThreshold * (inputPrice + outputPrice).
+            // Then the account will be maintained by the checkAccountThreshold.
+            const firstRound = await this.cache.getItem('firstRound');
+            if (firstRound !== 'false') {
+                await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
+                    (svc.inputPrice + svc.outputPrice));
+                await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+                return;
+            }
             const newFee = await this.calculateInputFees(extractor, content);
             await this.updateCachedFee(provider, svcName, newFee);
+            const needCheck = await this.shouldCheckAccount(svc);
+            // update cache for current content
             if (!needCheck) {
                 return;
             }
@@ -71,6 +103,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
                 await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
                     (svc.inputPrice + svc.outputPrice));
             }
+            await this.clearCacheFee(provider, svcName, newFee);
         }
         catch (error) {
             throw error;

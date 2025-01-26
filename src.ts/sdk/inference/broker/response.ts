@@ -1,10 +1,10 @@
-import {InferenceServingContract} from '../contract'
-import {Extractor} from '../extractor'
-import {Metadata} from '../../common/storage'
-import {ZGServingUserBrokerBase} from './base'
-import {isVerifiability, VerifiabilityEnum} from './model'
-import {Verifier} from './verifier'
-import {Cache} from '../storage'
+import { InferenceServingContract } from '../contract'
+import { Extractor } from '../extractor'
+import { Metadata } from '../../common/storage'
+import { ZGServingUserBrokerBase } from './base'
+import { isVerifiability, VerifiabilityEnum } from './model'
+import { Verifier } from './verifier'
+import { Cache } from '../storage'
 
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
@@ -58,7 +58,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
                 throw new Error('Service is not available')
             }
 
-            const {provider, name, url} = service
+            const { provider, name, url } = service
             const headers = await this.getHeader(provider, name, '', fee)
 
             const response = await fetch(`${url}/v1/proxy/${name}/settle-fee`, {
@@ -145,4 +145,4 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         const outputCount = await extractor.getOutputCount(content)
         return BigInt(outputCount) * svc.outputPrice
     }
-}   
+}

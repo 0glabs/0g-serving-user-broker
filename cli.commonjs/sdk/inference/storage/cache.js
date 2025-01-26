@@ -4,6 +4,8 @@ exports.Cache = exports.CacheValueTypeEnum = void 0;
 var CacheValueTypeEnum;
 (function (CacheValueTypeEnum) {
     CacheValueTypeEnum["Service"] = "service";
+    CacheValueTypeEnum["BigInt"] = "bigint";
+    CacheValueTypeEnum["Other"] = "other";
 })(CacheValueTypeEnum || (exports.CacheValueTypeEnum = CacheValueTypeEnum = {}));
 class Cache {
     nodeStorage = {};

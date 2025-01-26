@@ -532,9 +532,11 @@ declare abstract class Extractor {
 }
 
 declare enum CacheValueTypeEnum {
-    Service = "service"
+    Service = "service",
+    BigInt = "bigint",
+    Other = "other"
 }
-type CacheValueType = CacheValueTypeEnum.Service;
+type CacheValueType = CacheValueTypeEnum.Service | CacheValueTypeEnum.BigInt | CacheValueTypeEnum.Other;
 declare class Cache {
     private nodeStorage;
     private initialized;
@@ -1535,7 +1537,7 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
      * @param provider
      * @param svc
      */
-    checkCachedFee(key: string, svc: ServiceStructOutput$1): Promise<boolean>;
+    shouldCheckAccount(svc: ServiceStructOutput$1): Promise<boolean>;
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      * @param provider
@@ -1561,6 +1563,7 @@ declare abstract class ZGServingUserBrokerBase {
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     getCachedFeeKey(provider: string, svcName: string): string;
     updateCachedFee(provider: string, svcName: string, fee: bigint): Promise<void>;
+    clearCacheFee(provider: string, svcName: string, fee: bigint): Promise<void>;
 }
 
 /**

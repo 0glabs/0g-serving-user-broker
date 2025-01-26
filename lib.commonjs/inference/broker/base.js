@@ -126,7 +126,16 @@ class ZGServingUserBrokerBase {
     async updateCachedFee(provider, svcName, fee) {
         try {
             const curFee = (await this.cache.getItem(this.getCachedFeeKey(provider, svcName))) || BigInt(0);
-            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
+            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async clearCacheFee(provider, svcName, fee) {
+        try {
+            const curFee = (await this.cache.getItem(this.getCachedFeeKey(provider, svcName))) || BigInt(0);
+            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
             throw error;

@@ -21,5 +21,6 @@ export declare abstract class ZGServingUserBrokerBase {
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     getCachedFeeKey(provider: string, svcName: string): string;
     updateCachedFee(provider: string, svcName: string, fee: bigint): Promise<void>;
+    clearCacheFee(provider: string, svcName: string, fee: bigint): Promise<void>;
 }
 //# sourceMappingURL=base.d.ts.map

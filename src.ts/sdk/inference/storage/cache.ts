@@ -2,9 +2,14 @@ import { ServiceStructOutput } from '../contract'
 
 export enum CacheValueTypeEnum {
     Service = 'service',
+    BigInt = 'bigint',
+    Other = 'other',
 }
 
-export type CacheValueType = CacheValueTypeEnum.Service
+export type CacheValueType =
+    | CacheValueTypeEnum.Service
+    | CacheValueTypeEnum.BigInt
+    | CacheValueTypeEnum.Other
 
 export class Cache {
     private nodeStorage: { [key: string]: string } = {}

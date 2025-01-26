@@ -192,7 +192,24 @@ export abstract class ZGServingUserBrokerBase {
                 provider,
                 BigInt(curFee) + fee,
                 1 * 60 * 1000,
-                CacheValueTypeEnum.Service
+                CacheValueTypeEnum.BigInt
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async clearCacheFee(provider: string, svcName: string, fee: bigint) {
+        try {
+            const curFee =
+                (await this.cache.getItem(
+                    this.getCachedFeeKey(provider, svcName)
+                )) || BigInt(0)
+            await this.cache.setItem(
+                provider,
+                BigInt(curFee) + fee,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.BigInt
             )
         } catch (error) {
             throw error

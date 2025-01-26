@@ -64,7 +64,7 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
      * @param provider
      * @param svc
      */
-    checkCachedFee(key: string, svc: ServiceStructOutput): Promise<boolean>;
+    shouldCheckAccount(svc: ServiceStructOutput): Promise<boolean>;
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      * @param provider
