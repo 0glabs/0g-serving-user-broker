@@ -56,15 +56,14 @@ export declare class LedgerBroker {
      */
     transferFund: (provider: AddressLike, serviceTypeStr: "inference" | "fine-tuning", amount: bigint) => Promise<void>;
     /**
-     * Retrieves funds from the ledger for the specified providers and service type.
+     * Retrieves funds from the all sub-accounts (for inference and fine-tuning) of the current wallet address.
      *
-     * @param providers - An array of addresses representing the providers.
      * @param serviceTypeStr - The type of service for which the funds are being retrieved.
      *                         It can be either 'inference' or 'fine-tuning'.
      * @returns A promise that resolves with the result of the fund retrieval operation.
      * @throws Will throw an error if the fund retrieval operation fails.
      */
-    retrieveFund: (providers: AddressLike[], serviceTypeStr: "inference" | "fine-tuning") => Promise<void>;
+    retrieveFund: (serviceTypeStr: "inference" | "fine-tuning") => Promise<void>;
     /**
      * Deletes the ledger corresponding to the current wallet address.
      *

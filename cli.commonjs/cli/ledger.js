@@ -14,6 +14,8 @@ function ledger(program) {
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withLedgerBroker)(options, async (broker) => {
             (0, exports.getLedgerTable)(broker);
@@ -26,8 +28,11 @@ function ledger(program) {
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withLedgerBroker)(options, async (broker) => {
+            console.log('Adding account...');
             await broker.ledger.addLedger(parseFloat(options.amount));
             console.log('Account Created!');
             (0, exports.getLedgerTable)(broker);
@@ -40,8 +45,11 @@ function ledger(program) {
         .requiredOption('--amount <A0GI>', 'Amount of funds to deposit')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withLedgerBroker)(options, async (broker) => {
+            console.log('Depositing...');
             await broker.ledger.depositFund(parseFloat(options.amount));
             console.log('Deposited funds:', options.amount, 'A0GI');
         });
@@ -53,8 +61,11 @@ function ledger(program) {
         .requiredOption('-a, --amount <A0GI>', 'Amount to refund')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         (0, util_1.withLedgerBroker)(options, async (broker) => {
+            console.log('Refunding...');
             await broker.ledger.refund(parseFloat(options.amount));
             console.log('Refunded amount:', options.amount, 'A0GI');
         });
@@ -67,8 +78,11 @@ const getLedgerTable = async (broker) => {
         head: [chalk_1.default.blue('Balance'), chalk_1.default.blue('Value (A0GI)')],
         colWidths: [50, 81],
     });
-    table.push(['Total', String(ledgerInfo[0])]);
-    table.push(['Locked (transferred to sub-accounts)', String(ledgerInfo[1])]);
+    table.push(['Total', (0, util_1.neuronToA0gi)(ledgerInfo[0]).toFixed(18)]);
+    table.push([
+        'Locked (transferred to sub-accounts)',
+        (0, util_1.neuronToA0gi)(ledgerInfo[1]).toFixed(18),
+    ]);
     console.log('\nOverview\n' + table.toString());
     // Inference information
     if (infers && infers.length !== 0) {
@@ -81,7 +95,11 @@ const getLedgerTable = async (broker) => {
             colWidths: [50, 30, 50],
         });
         for (const infer of infers) {
-            table.push([infer[0], infer[1], infer[2]]);
+            table.push([
+                infer[0],
+                (0, util_1.neuronToA0gi)(infer[1]).toFixed(18),
+                (0, util_1.neuronToA0gi)(infer[2]).toFixed(18),
+            ]);
         }
         console.log('\nInference sub-accounts (Dynamically Created per Used Provider)\n' +
             table.toString());
@@ -97,7 +115,11 @@ const getLedgerTable = async (broker) => {
             colWidths: [50, 30, 50],
         });
         for (const fine of fines) {
-            table.push([fine[0], fine[1], fine[2]]);
+            table.push([
+                fine[0],
+                (0, util_1.neuronToA0gi)(fine[1]).toFixed(18),
+                (0, util_1.neuronToA0gi)(fine[2]).toFixed(18),
+            ]);
         }
         console.log('\nFine-tuning sub-accounts (Dynamically Created per Used Provider)\n' +
             table.toString());

@@ -120,17 +120,16 @@ class LedgerBroker {
         }
     };
     /**
-     * Retrieves funds from the ledger for the specified providers and service type.
+     * Retrieves funds from the all sub-accounts (for inference and fine-tuning) of the current wallet address.
      *
-     * @param providers - An array of addresses representing the providers.
      * @param serviceTypeStr - The type of service for which the funds are being retrieved.
      *                         It can be either 'inference' or 'fine-tuning'.
      * @returns A promise that resolves with the result of the fund retrieval operation.
      * @throws Will throw an error if the fund retrieval operation fails.
      */
-    retrieveFund = async (providers, serviceTypeStr) => {
+    retrieveFund = async (serviceTypeStr) => {
         try {
-            return await this.ledger.retrieveFund(providers, serviceTypeStr);
+            return await this.ledger.retrieveFund(serviceTypeStr);
         }
         catch (error) {
             throw error;

@@ -10038,10 +10038,36 @@ class ModelProcessor extends BrokerBase {
 }
 
 class ServiceProcessor extends BrokerBase {
+    async getLockTime() {
+        try {
+            const lockTime = await this.contract.lockTime();
+            return lockTime;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getAccount(provider) {
         try {
             const account = await this.contract.getAccount(provider);
             return account;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getAccountWithDetail(provider) {
+        try {
+            const account = await this.contract.getAccount(provider);
+            const lockTime = await this.getLockTime();
+            const now = BigInt(Math.floor(Date.now() / 1000)); // Converts milliseconds to seconds
+            const refunds = account.refunds
+                .filter((refund) => !refund.processed)
+                .map((refund) => ({
+                amount: refund.amount,
+                remainTime: lockTime - (now - refund.createdAt),
+            }));
+            return { account, refunds };
         }
         catch (error) {
             throw error;
@@ -10290,9 +10316,25 @@ class FineTuningBroker {
             throw error;
         }
     };
+    getLockedTime = async () => {
+        try {
+            return await this.serviceProcessor.getLockTime();
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     getAccount = async (providerAddress) => {
         try {
             return await this.serviceProcessor.getAccount(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    getAccountWithDetail = async (providerAddress) => {
+        try {
+            return await this.serviceProcessor.getAccountWithDetail(providerAddress);
         }
         catch (error) {
             throw error;
@@ -10420,28 +10462,20 @@ class LedgerProcessor {
         try {
             const ledger = await this.ledgerContract.getLedger();
             const ledgerInfo = [
-                this.neuronToA0gi(ledger.totalBalance).toFixed(18),
-                this.neuronToA0gi(ledger.totalBalance - ledger.availableBalance).toFixed(18),
+                ledger.totalBalance,
+                ledger.totalBalance - ledger.availableBalance,
             ];
             const infers = await Promise.all(ledger.inferenceProviders.map(async (provider) => {
                 const account = await this.inferenceContract.getAccount(provider);
-                return [
-                    provider,
-                    this.neuronToA0gi(account.balance).toFixed(18),
-                    this.neuronToA0gi(account.pendingRefund).toFixed(18),
-                ];
+                return [provider, account.balance, account.pendingRefund];
             }));
-            let fines = [];
-            if (typeof ledger.fineTuningProviders !== 'undefined') {
-                fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {
-                    const account = await this.fineTuningContract?.getAccount(provider);
-                    return [
-                        provider,
-                        this.neuronToA0gi(account.balance).toFixed(18),
-                        this.neuronToA0gi(account.pendingRefund).toFixed(18),
-                    ];
-                }));
+            if (typeof ledger.fineTuningProviders == 'undefined') {
+                return { ledgerInfo, infers, fines: [] };
             }
+            const fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {
+                const account = await this.fineTuningContract?.getAccount(provider);
+                return [provider, account.balance, account.pendingRefund];
+            }));
             return { ledgerInfo, infers, fines };
         }
         catch (error) {
@@ -10514,9 +10548,17 @@ class LedgerProcessor {
             throw error;
         }
     }
-    async retrieveFund(providers, serviceTypeStr) {
+    async retrieveFund(serviceTypeStr) {
         try {
-            await this.ledgerContract.retrieveFund(providers, serviceTypeStr);
+            const ledger = await this.getLedgerWithDetail();
+            const providers = serviceTypeStr == 'inference' ? ledger.infers : ledger.fines;
+            if (!providers) {
+                throw new Error('No providers found, please ensure you are using Wallet instance to create the broker');
+            }
+            const providerAddresses = providers
+                .filter((x) => x[1] - x[2] > 0n)
+                .map((x) => x[0]);
+            await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr);
         }
         catch (error) {
             throw error;
@@ -11201,17 +11243,16 @@ class LedgerBroker {
         }
     };
     /**
-     * Retrieves funds from the ledger for the specified providers and service type.
+     * Retrieves funds from the all sub-accounts (for inference and fine-tuning) of the current wallet address.
      *
-     * @param providers - An array of addresses representing the providers.
      * @param serviceTypeStr - The type of service for which the funds are being retrieved.
      *                         It can be either 'inference' or 'fine-tuning'.
      * @returns A promise that resolves with the result of the fund retrieval operation.
      * @throws Will throw an error if the fund retrieval operation fails.
      */
-    retrieveFund = async (providers, serviceTypeStr) => {
+    retrieveFund = async (serviceTypeStr) => {
         try {
-            return await this.ledger.retrieveFund(providers, serviceTypeStr);
+            return await this.ledger.retrieveFund(serviceTypeStr);
         }
         catch (error) {
             throw error;

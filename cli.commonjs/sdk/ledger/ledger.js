@@ -30,28 +30,20 @@ class LedgerProcessor {
         try {
             const ledger = await this.ledgerContract.getLedger();
             const ledgerInfo = [
-                this.neuronToA0gi(ledger.totalBalance).toFixed(18),
-                this.neuronToA0gi(ledger.totalBalance - ledger.availableBalance).toFixed(18),
+                ledger.totalBalance,
+                ledger.totalBalance - ledger.availableBalance,
             ];
             const infers = await Promise.all(ledger.inferenceProviders.map(async (provider) => {
                 const account = await this.inferenceContract.getAccount(provider);
-                return [
-                    provider,
-                    this.neuronToA0gi(account.balance).toFixed(18),
-                    this.neuronToA0gi(account.pendingRefund).toFixed(18),
-                ];
+                return [provider, account.balance, account.pendingRefund];
             }));
-            let fines = [];
-            if (typeof ledger.fineTuningProviders !== 'undefined') {
-                fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {
-                    const account = await this.fineTuningContract?.getAccount(provider);
-                    return [
-                        provider,
-                        this.neuronToA0gi(account.balance).toFixed(18),
-                        this.neuronToA0gi(account.pendingRefund).toFixed(18),
-                    ];
-                }));
+            if (typeof ledger.fineTuningProviders == 'undefined') {
+                return { ledgerInfo, infers, fines: [] };
             }
+            const fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {
+                const account = await this.fineTuningContract?.getAccount(provider);
+                return [provider, account.balance, account.pendingRefund];
+            }));
             return { ledgerInfo, infers, fines };
         }
         catch (error) {
@@ -124,9 +116,17 @@ class LedgerProcessor {
             throw error;
         }
     }
-    async retrieveFund(providers, serviceTypeStr) {
+    async retrieveFund(serviceTypeStr) {
         try {
-            await this.ledgerContract.retrieveFund(providers, serviceTypeStr);
+            const ledger = await this.getLedgerWithDetail();
+            const providers = serviceTypeStr == 'inference' ? ledger.infers : ledger.fines;
+            if (!providers) {
+                throw new Error('No providers found, please ensure you are using Wallet instance to create the broker');
+            }
+            const providerAddresses = providers
+                .filter((x) => x[1] - x[2] > 0n)
+                .map((x) => x[0]);
+            await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr);
         }
         catch (error) {
             throw error;

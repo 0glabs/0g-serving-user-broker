@@ -13,26 +13,27 @@
 
 ## FineTuning
 
-1. add ledger
-2. deposit fund (optional)
-3. refund fund (optional)
-4. list services
-5. acknowledge provider signer
+1. add ledger: 0g-compute-cli add-account
+2. get ledger: 0g-compute-cli get-account
+3. deposit fund (optional) 0g-compute-cli deposit -a <>
+4. refund fund (optional) 0g-compute-cli refund -a <>
+5. list services 
+6. acknowledge provider signer
     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
     2. [`TBD`] verify the quote using third party service (TODO: Jiahao discuss with Phala)
     3. [`call contract`] acknowledge the provider signer in contract
-6. [`use 0g storage sdk`] upload dataset, get dataset root hash
-7. create task
+7. [`use 0g storage sdk`] upload dataset, get dataset root hash
+8. create task 
     1. get preTrained model root hash based on the model
     2. [`call contract`] calculate fee
     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     4. [`call provider url/v1/task`]call provider task creation api to create task
-8. [`call provider url/v1/task-progress`] call provider task progress api to get task progress
-9. acknowledge encrypted model with root hash
+9. [`call provider url/v1/task-progress`] call provider task progress api to get task progress
+10. acknowledge encrypted model with root hash
     1. [`call contract`] get deliverable with root hash
     2. [`use 0g storage sdk`] download model, calculate root hash, compare with provided root hash
     3. [`call contract`] acknowledge the model in contract
-10. decrypt model
+11. decrypt model
     1. [`call contract`] get deliverable with encryptedSecret
     2. decrypt the encryptedSecret
     3. decrypt model with secret [TODO: Discuss LiuYuan]

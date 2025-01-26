@@ -1,9 +1,18 @@
 import { AddressLike } from 'ethers';
-import { ServiceStructOutput } from '../contract';
+import { AccountStructOutput, ServiceStructOutput } from '../contract';
 import { Task } from '../provider/provider';
 import { BrokerBase } from './base';
+export interface FineTuningAccountDetail {
+    account: AccountStructOutput;
+    refunds: {
+        amount: bigint;
+        remainTime: bigint;
+    }[];
+}
 export declare class ServiceProcessor extends BrokerBase {
-    getAccount(provider: AddressLike): Promise<import("../contract").AccountStructOutput>;
+    getLockTime(): Promise<bigint>;
+    getAccount(provider: AddressLike): Promise<AccountStructOutput>;
+    getAccountWithDetail(provider: AddressLike): Promise<FineTuningAccountDetail>;
     listService(): Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner(providerAddress: string): Promise<void>;
     createTask(providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string): Promise<string>;

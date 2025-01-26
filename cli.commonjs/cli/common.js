@@ -14,7 +14,8 @@ function default_1(program) {
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address')
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Main Account (ledger) contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--infer', 'get sub-account for inference, default is fine-tuning')
         .action((options) => {
@@ -32,20 +33,44 @@ function default_1(program) {
             return;
         }
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            const account = await broker.fineTuning.getAccount(options.provider);
+            if (!broker.fineTuning) {
+                console.log('Fine tuning broker is not available.');
+                return;
+            }
+            const { account, refunds } = await broker.fineTuning.getAccountWithDetail(options.provider);
             let table = new cli_table3_1.default({
                 head: [chalk_1.default.blue('Field'), chalk_1.default.blue('Value')],
                 colWidths: [50, 50],
             });
+            table.push(['Provider', account.provider]);
             table.push([
                 'Balance (A0GI)',
                 (0, util_1.neuronToA0gi)(account.balance).toFixed(18),
             ]);
             table.push([
-                'Requested Return to Main Account (A0GI)',
-                (0, util_1.neuronToA0gi)(account.pendingRefund),
+                'Funds Applied for Return to Main Account (A0GI)',
+                (0, util_1.neuronToA0gi)(account.pendingRefund).toFixed(18),
             ]);
             console.log('\nOverview\n' + table.toString());
+            table = new cli_table3_1.default({
+                head: [
+                    chalk_1.default.blue('Amount (A0GI)'),
+                    chalk_1.default.blue('Remaining Locked Time'),
+                ],
+                colWidths: [50, 50],
+            });
+            refunds.forEach((refund) => {
+                const totalSeconds = Number(refund.remainTime);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const secs = totalSeconds % 60;
+                table.push([
+                    (0, util_1.neuronToA0gi)(refund.amount).toFixed(18),
+                    `${hours}h ${minutes}min ${secs}s`,
+                ]);
+            });
+            console.log('\nDetails of Each Amount Applied for Return to Main Account\n' +
+                table.toString());
             table = new cli_table3_1.default({
                 head: [
                     chalk_1.default.blue('Root Hash'),
@@ -69,7 +94,8 @@ function default_1(program) {
         .description('List fine-tuning providers')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Main Account (ledger) contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
         if (options.infer) {
@@ -101,6 +127,22 @@ function default_1(program) {
                 // ])
             });
             console.log(table.toString());
+        });
+    });
+    program
+        .command('retrieve-fund')
+        .description('Retrieve fund from sub account')
+        .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
+        .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--infer', 'Retrieve fund from sub accounts for inference, default is fine-tuning')
+        .action((options) => {
+        (0, util_1.withFineTuningBroker)(options, async (broker) => {
+            console.log('Retrieving funds from sub accounts...');
+            await broker.ledger.retrieveFund(options.infer ? 'inference' : 'fine-tuning');
+            console.log('Funds retrieved from sub accounts');
         });
     });
 }

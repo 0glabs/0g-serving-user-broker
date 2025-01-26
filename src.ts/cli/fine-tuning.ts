@@ -13,7 +13,7 @@ export default function fineTuning(program: Command) {
         .requiredOption('--provider <address>', 'Provider address')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -29,7 +29,7 @@ export default function fineTuning(program: Command) {
         .description('List available models')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -56,7 +56,7 @@ export default function fineTuning(program: Command) {
         .requiredOption('--data-path <path>', 'Path to the dataset')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -71,7 +71,7 @@ export default function fineTuning(program: Command) {
         .requiredOption('--data-root <path>', 'Path to the dataset')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -95,7 +95,7 @@ export default function fineTuning(program: Command) {
             'Fine-tuning configuration path'
         )
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -128,7 +128,7 @@ export default function fineTuning(program: Command) {
             'Task ID, if not provided, the latest task will be retrieved'
         )
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -165,7 +165,7 @@ export default function fineTuning(program: Command) {
             'Task ID, if not provided, the latest task will be retrieved'
         )
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
@@ -184,7 +184,7 @@ export default function fineTuning(program: Command) {
         .requiredOption('--data-path <path>', 'Path to store the model')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
-        .option('--ledger-ca <address>', 'Ledger contract address')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {

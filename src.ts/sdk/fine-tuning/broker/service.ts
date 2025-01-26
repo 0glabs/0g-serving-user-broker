@@ -1,16 +1,49 @@
 import { AddressLike } from 'ethers'
 import { getNonce, signRequest } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
-import { ServiceStructOutput } from '../contract'
+import { AccountStructOutput, ServiceStructOutput } from '../contract'
 import { Task } from '../provider/provider'
 import { BrokerBase } from './base'
 import * as fs from 'fs/promises'
 
+export interface FineTuningAccountDetail {
+    account: AccountStructOutput
+    refunds: { amount: bigint; remainTime: bigint }[]
+}
 export class ServiceProcessor extends BrokerBase {
+    async getLockTime() {
+        try {
+            const lockTime = await this.contract.lockTime()
+            return lockTime
+        } catch (error) {
+            throw error
+        }
+    }
+
     async getAccount(provider: AddressLike) {
         try {
             const account = await this.contract.getAccount(provider)
             return account
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getAccountWithDetail(
+        provider: AddressLike
+    ): Promise<FineTuningAccountDetail> {
+        try {
+            const account = await this.contract.getAccount(provider)
+            const lockTime = await this.getLockTime()
+            const now = BigInt(Math.floor(Date.now() / 1000)) // Converts milliseconds to seconds
+            const refunds = account.refunds
+                .filter((refund) => !refund.processed)
+                .map((refund) => ({
+                    amount: refund.amount,
+                    remainTime: lockTime - (now - refund.createdAt),
+                }))
+
+            return { account, refunds }
         } catch (error) {
             throw error
         }

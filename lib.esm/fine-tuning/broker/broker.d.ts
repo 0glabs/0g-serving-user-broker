@@ -1,4 +1,5 @@
 import { Wallet } from 'ethers';
+import { FineTuningAccountDetail } from './service';
 import { LedgerBroker } from '../../ledger';
 import { Task } from '../provider/provider';
 export declare class FineTuningBroker {
@@ -11,7 +12,9 @@ export declare class FineTuningBroker {
     constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<import("..").FineTuningServiceStructOutput[]>;
+    getLockedTime: () => Promise<bigint>;
     getAccount: (providerAddress: string) => Promise<import("../contract").AccountStructOutput>;
+    getAccountWithDetail: (providerAddress: string) => Promise<FineTuningAccountDetail>;
     acknowledgeProviderSigner: (providerAddress: string) => Promise<void>;
     listModel: () => [string, {
         [key: string]: string;

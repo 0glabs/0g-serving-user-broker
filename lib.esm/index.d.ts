@@ -1364,9 +1364,9 @@ declare class FineTuningServingContract {
 }
 
 interface LedgerDetailStructOutput {
-    ledgerInfo: string[];
-    infers: string[][];
-    fines: string[][] | null;
+    ledgerInfo: bigint[];
+    infers: [string, bigint, bigint][];
+    fines: [string, bigint, bigint][] | null;
 }
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
@@ -1385,7 +1385,7 @@ declare class LedgerProcessor {
     depositFund(balance: number): Promise<void>;
     refund(balance: number): Promise<void>;
     transferFund(to: AddressLike, serviceTypeStr: 'inference' | 'fine-tuning', balance: bigint): Promise<void>;
-    retrieveFund(providers: AddressLike[], serviceTypeStr: 'inference' | 'fine-tuning'): Promise<void>;
+    retrieveFund(serviceTypeStr: 'inference' | 'fine-tuning'): Promise<void>;
     private createSettleSignerKey;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
@@ -1447,15 +1447,14 @@ declare class LedgerBroker {
      */
     transferFund: (provider: AddressLike, serviceTypeStr: "inference" | "fine-tuning", amount: bigint) => Promise<void>;
     /**
-     * Retrieves funds from the ledger for the specified providers and service type.
+     * Retrieves funds from the all sub-accounts (for inference and fine-tuning) of the current wallet address.
      *
-     * @param providers - An array of addresses representing the providers.
      * @param serviceTypeStr - The type of service for which the funds are being retrieved.
      *                         It can be either 'inference' or 'fine-tuning'.
      * @returns A promise that resolves with the result of the fund retrieval operation.
      * @throws Will throw an error if the fund retrieval operation fails.
      */
-    retrieveFund: (providers: AddressLike[], serviceTypeStr: "inference" | "fine-tuning") => Promise<void>;
+    retrieveFund: (serviceTypeStr: "inference" | "fine-tuning") => Promise<void>;
     /**
      * Deletes the ledger corresponding to the current wallet address.
      *
@@ -1837,6 +1836,14 @@ interface Task {
     readonly deliverIndex?: string;
 }
 
+interface FineTuningAccountDetail {
+    account: AccountStructOutput;
+    refunds: {
+        amount: bigint;
+        remainTime: bigint;
+    }[];
+}
+
 declare class FineTuningBroker {
     private signer;
     private fineTuningCA;
@@ -1847,7 +1854,9 @@ declare class FineTuningBroker {
     constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
+    getLockedTime: () => Promise<bigint>;
     getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
+    getAccountWithDetail: (providerAddress: string) => Promise<FineTuningAccountDetail>;
     acknowledgeProviderSigner: (providerAddress: string) => Promise<void>;
     listModel: () => [string, {
         [key: string]: string;

@@ -39,9 +39,25 @@ class FineTuningBroker {
             throw error;
         }
     };
+    getLockedTime = async () => {
+        try {
+            return await this.serviceProcessor.getLockTime();
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     getAccount = async (providerAddress) => {
         try {
             return await this.serviceProcessor.getAccount(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    getAccountWithDetail = async (providerAddress) => {
+        try {
+            return await this.serviceProcessor.getAccountWithDetail(providerAddress);
         }
         catch (error) {
             throw error;

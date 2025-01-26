@@ -7,10 +7,36 @@ const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 class ServiceProcessor extends base_1.BrokerBase {
+    async getLockTime() {
+        try {
+            const lockTime = await this.contract.lockTime();
+            return lockTime;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getAccount(provider) {
         try {
             const account = await this.contract.getAccount(provider);
             return account;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getAccountWithDetail(provider) {
+        try {
+            const account = await this.contract.getAccount(provider);
+            const lockTime = await this.getLockTime();
+            const now = BigInt(Math.floor(Date.now() / 1000)); // Converts milliseconds to seconds
+            const refunds = account.refunds
+                .filter((refund) => !refund.processed)
+                .map((refund) => ({
+                amount: refund.amount,
+                remainTime: lockTime - (now - refund.createdAt),
+            }));
+            return { account, refunds };
         }
         catch (error) {
             throw error;

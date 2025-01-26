@@ -1,7 +1,7 @@
 import { FineTuningServingContract } from '../contract'
 import { Wallet } from 'ethers'
 import { ModelProcessor } from './model'
-import { ServiceProcessor } from './service'
+import { FineTuningAccountDetail, ServiceProcessor } from './service'
 import { LedgerBroker } from '../../ledger'
 import { Provider, Task } from '../provider/provider'
 
@@ -54,9 +54,29 @@ export class FineTuningBroker {
         }
     }
 
+    public getLockedTime = async () => {
+        try {
+            return await this.serviceProcessor.getLockTime()
+        } catch (error) {
+            throw error
+        }
+    }
+
     public getAccount = async (providerAddress: string) => {
         try {
             return await this.serviceProcessor.getAccount(providerAddress)
+        } catch (error) {
+            throw error
+        }
+    }
+
+    public getAccountWithDetail = async (
+        providerAddress: string
+    ): Promise<FineTuningAccountDetail> => {
+        try {
+            return await this.serviceProcessor.getAccountWithDetail(
+                providerAddress
+            )
         } catch (error) {
             throw error
         }
