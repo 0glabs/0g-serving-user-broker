@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.splitIntoChunks = exports.neuronToA0gi = void 0;
+exports.printTableWithTitle = exports.splitIntoChunks = exports.neuronToA0gi = void 0;
 exports.initBroker = initBroker;
 exports.withLedgerBroker = withLedgerBroker;
 exports.withFineTuningBroker = withFineTuningBroker;
+const tslib_1 = require("tslib");
 const sdk_1 = require("../sdk");
 const ethers_1 = require("ethers");
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
 async function initBroker(options) {
     const provider = new ethers_1.ethers.JsonRpcProvider(options.rpc);
     const wallet = new ethers_1.ethers.Wallet(options.key, provider);
@@ -50,4 +52,8 @@ const splitIntoChunks = (str, size) => {
     return chunks.join('\n');
 };
 exports.splitIntoChunks = splitIntoChunks;
+const printTableWithTitle = (title, table) => {
+    console.log(`\n${chalk_1.default.white(`  ${title}`)}\n` + table.toString());
+};
+exports.printTableWithTitle = printTableWithTitle;
 //# sourceMappingURL=util.js.map

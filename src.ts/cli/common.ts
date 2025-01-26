@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import { Command } from 'commander'
-import { neuronToA0gi, withFineTuningBroker } from './util'
+import { neuronToA0gi, printTableWithTitle, withFineTuningBroker } from './util'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
 import Table from 'cli-table3'
 import chalk from 'chalk'
@@ -57,7 +57,7 @@ export default function (program: Command) {
                     neuronToA0gi(account.pendingRefund).toFixed(18),
                 ])
 
-                console.log('\nOverview\n' + table.toString())
+                printTableWithTitle('Overview', table)
 
                 table = new Table({
                     head: [
@@ -79,9 +79,9 @@ export default function (program: Command) {
                     ])
                 })
 
-                console.log(
-                    '\nDetails of Each Amount Applied for Return to Main Account\n' +
-                        table.toString()
+                printTableWithTitle(
+                    'Details of Each Amount Applied for Return to Main Account',
+                    table
                 )
 
                 table = new Table({
@@ -101,7 +101,7 @@ export default function (program: Command) {
                     ])
                 })
 
-                console.log('\nDeliverables\n' + table.toString())
+                printTableWithTitle('nDeliverables', table)
             })
         })
 

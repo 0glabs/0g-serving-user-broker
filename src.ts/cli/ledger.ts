@@ -1,5 +1,5 @@
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
-import { neuronToA0gi, withLedgerBroker } from './util'
+import { neuronToA0gi, printTableWithTitle, withLedgerBroker } from './util'
 import { Command } from 'commander'
 import Table from 'cli-table3'
 import { ZGComputeNetworkBroker } from '../sdk'
@@ -87,8 +87,7 @@ export const getLedgerTable = async (broker: ZGComputeNetworkBroker) => {
         'Locked (transferred to sub-accounts)',
         neuronToA0gi(ledgerInfo[1]).toFixed(18),
     ])
-    console.log('\nOverview\n' + table.toString())
-
+    printTableWithTitle('Overview', table)
     // Inference information
     if (infers && infers.length !== 0) {
         let table = new Table({
@@ -106,9 +105,10 @@ export const getLedgerTable = async (broker: ZGComputeNetworkBroker) => {
                 neuronToA0gi(infer[2]).toFixed(18),
             ])
         }
-        console.log(
-            '\nInference sub-accounts (Dynamically Created per Used Provider)\n' +
-                table.toString()
+
+        printTableWithTitle(
+            'Inference sub-accounts (Dynamically Created per Used Provider)',
+            table
         )
     }
 
@@ -129,9 +129,10 @@ export const getLedgerTable = async (broker: ZGComputeNetworkBroker) => {
                 neuronToA0gi(fine[2]).toFixed(18),
             ])
         }
-        console.log(
-            '\nFine-tuning sub-accounts (Dynamically Created per Used Provider)\n' +
-                table.toString()
+
+        printTableWithTitle(
+            'Fine-tuning sub-accounts (Dynamically Created per Used Provider)',
+            table
         )
     }
 }

@@ -83,7 +83,7 @@ const getLedgerTable = async (broker) => {
         'Locked (transferred to sub-accounts)',
         (0, util_1.neuronToA0gi)(ledgerInfo[1]).toFixed(18),
     ]);
-    console.log('\nOverview\n' + table.toString());
+    (0, util_1.printTableWithTitle)('Overview', table);
     // Inference information
     if (infers && infers.length !== 0) {
         let table = new cli_table3_1.default({
@@ -101,8 +101,7 @@ const getLedgerTable = async (broker) => {
                 (0, util_1.neuronToA0gi)(infer[2]).toFixed(18),
             ]);
         }
-        console.log('\nInference sub-accounts (Dynamically Created per Used Provider)\n' +
-            table.toString());
+        (0, util_1.printTableWithTitle)('Inference sub-accounts (Dynamically Created per Used Provider)', table);
     }
     // Fine tuning information
     if (fines && fines.length !== 0) {
@@ -121,8 +120,7 @@ const getLedgerTable = async (broker) => {
                 (0, util_1.neuronToA0gi)(fine[2]).toFixed(18),
             ]);
         }
-        console.log('\nFine-tuning sub-accounts (Dynamically Created per Used Provider)\n' +
-            table.toString());
+        (0, util_1.printTableWithTitle)('Fine-tuning sub-accounts (Dynamically Created per Used Provider)', table);
     }
 };
 exports.getLedgerTable = getLedgerTable;

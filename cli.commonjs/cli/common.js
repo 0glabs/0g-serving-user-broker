@@ -51,7 +51,7 @@ function default_1(program) {
                 'Funds Applied for Return to Main Account (A0GI)',
                 (0, util_1.neuronToA0gi)(account.pendingRefund).toFixed(18),
             ]);
-            console.log('\nOverview\n' + table.toString());
+            (0, util_1.printTableWithTitle)('Overview', table);
             table = new cli_table3_1.default({
                 head: [
                     chalk_1.default.blue('Amount (A0GI)'),
@@ -69,8 +69,7 @@ function default_1(program) {
                     `${hours}h ${minutes}min ${secs}s`,
                 ]);
             });
-            console.log('\nDetails of Each Amount Applied for Return to Main Account\n' +
-                table.toString());
+            (0, util_1.printTableWithTitle)('Details of Each Amount Applied for Return to Main Account', table);
             table = new cli_table3_1.default({
                 head: [
                     chalk_1.default.blue('Root Hash'),
@@ -86,7 +85,7 @@ function default_1(program) {
                         : '',
                 ]);
             });
-            console.log('\nDeliverables\n' + table.toString());
+            (0, util_1.printTableWithTitle)('nDeliverables', table);
         });
     });
     program

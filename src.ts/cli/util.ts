@@ -1,5 +1,7 @@
 import { createZGComputeNetworkBroker, ZGComputeNetworkBroker } from '../sdk'
 import { ethers } from 'ethers'
+import chalk from 'chalk'
+import { Table } from 'cli-table3'
 
 export async function initBroker(
     options: any
@@ -58,4 +60,8 @@ export const splitIntoChunks = (str: string, size: number) => {
         chunks.push(str.slice(i, i + size))
     }
     return chunks.join('\n')
+}
+
+export const printTableWithTitle = (title: string, table: Table) => {
+    console.log(`\n${chalk.white(`  ${title}`)}\n` + table.toString())
 }
