@@ -42,65 +42,6 @@ class InferenceServingContract {
             throw error;
         }
     }
-    async deleteAccount(provider) {
-        try {
-            const user = this.getUserAddress();
-            const tx = await this.serving.deleteAccount(user, provider);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice) {
-        try {
-            const tx = await this.serving.addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async addAccount(providerAddress, signer, balance, settleSignerEncryptedPrivateKey) {
-        try {
-            const user = this.getUserAddress();
-            const tx = await this.serving.addAccount(user, providerAddress, signer, settleSignerEncryptedPrivateKey, {
-                value: balance,
-            });
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async depositFund(providerAddress, balance) {
-        try {
-            const user = this.getUserAddress();
-            const tx = await this.serving.depositFund(user, providerAddress, {
-                value: balance,
-            });
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
     async getService(providerAddress, svcName) {
         try {
             return this.serving.getService(providerAddress, svcName);

@@ -32,8 +32,7 @@ exports.ZGComputeNetworkBroker = ZGComputeNetworkBroker;
 async function createZGComputeNetworkBroker(signer, ledgerCA = '0x0854dB7b3607626608aB6A5f0208d14378b00e32', inferenceCA = '0xCa35028f675f7584C2BF7b57C39aE621b1a9E4A9', fineTuningCA = '0x38ae6632E63B61153A6FbCD163E79af1855EDa8B') {
     try {
         const ledger = await (0, ledger_1.createLedgerBroker)(signer, ledgerCA, inferenceCA, fineTuningCA);
-        // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
-        const inferenceBroker = await (0, broker_2.createInferenceBroker)(signer, inferenceCA);
+        const inferenceBroker = await (0, broker_2.createInferenceBroker)(signer, inferenceCA, ledger);
         let fineTuningBroker;
         if (signer instanceof ethers_1.Wallet) {
             fineTuningBroker = await (0, broker_1.createFineTuningBroker)(signer, fineTuningCA, ledger);

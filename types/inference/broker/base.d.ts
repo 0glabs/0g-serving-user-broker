@@ -18,6 +18,8 @@ export declare abstract class ZGServingUserBrokerBase {
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
     getHeader(providerAddress: string, svcName: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
-    private calculateInputFees;
+    calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
+    getCachedFeeKey(provider: string, svcName: string): string;
+    updateCachedFee(provider: string, svcName: string, fee: bigint): Promise<void>;
 }
 //# sourceMappingURL=base.d.ts.map

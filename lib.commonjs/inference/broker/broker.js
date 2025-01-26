@@ -18,9 +18,11 @@ class InferenceBroker {
     modelProcessor;
     signer;
     contractAddress;
-    constructor(signer, contractAddress) {
+    ledger;
+    constructor(signer, contractAddress, ledger) {
         this.signer = signer;
         this.contractAddress = contractAddress;
+        this.ledger = ledger;
     }
     async initialize() {
         let userAddress;
@@ -33,7 +35,7 @@ class InferenceBroker {
         const contract = new contract_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
         const metadata = new storage_1.Metadata();
         const cache = new storage_2.Cache();
-        this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache);
+        this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache, this.ledger);
         this.responseProcessor = new response_1.ResponseProcessor(contract, metadata, cache);
         this.accountProcessor = new account_1.AccountProcessor(contract, metadata, cache);
         this.modelProcessor = new model_1.ModelProcessor(contract, metadata, cache);
@@ -54,25 +56,6 @@ class InferenceBroker {
         }
     };
     /**
-     * Adds a new account to the contract.
-     *
-     * @param {string} providerAddress - The address of the provider for whom the account is being created.
-     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
-     *
-     * @throws  An error if the account creation fails.
-     *
-     * @remarks
-     * When creating an account, a key pair is also created to sign the request.
-     */
-    addAccount = async (providerAddress, balance) => {
-        try {
-            return await this.accountProcessor.addAccount(providerAddress, balance);
-        }
-        catch (error) {
-            throw error;
-        }
-    };
-    /**
      * Retrieves the account information for a given provider address.
      *
      * @param {string} providerAddress - The address of the provider identifying the account.
@@ -84,21 +67,6 @@ class InferenceBroker {
     getAccount = async (providerAddress) => {
         try {
             return await this.accountProcessor.getAccount(providerAddress);
-        }
-        catch (error) {
-            throw error;
-        }
-    };
-    /**
-     * Deposits a specified amount of funds into the given account.
-     *
-     * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
-     * @throws  An error if the deposit fails.
-     */
-    depositFund = async (account, amount) => {
-        try {
-            return await this.accountProcessor.depositFund(account, amount);
         }
         catch (error) {
             throw error;
@@ -303,8 +271,8 @@ exports.InferenceBroker = InferenceBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createInferenceBroker(signer, contractAddress = '') {
-    const broker = new InferenceBroker(signer, contractAddress);
+async function createInferenceBroker(signer, contractAddress, ledger) {
+    const broker = new InferenceBroker(signer, contractAddress, ledger);
     try {
         await broker.initialize();
         return broker;

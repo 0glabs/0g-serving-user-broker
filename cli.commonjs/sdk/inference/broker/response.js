@@ -13,8 +13,6 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
     verifier;
     constructor(contract, metadata, cache) {
         super(contract, metadata, cache);
-        this.contract = contract;
-        this.metadata = metadata;
         this.verifier = new verifier_1.Verifier(contract, metadata, cache);
     }
     async settleFeeWithA0gi(providerAddress, serviceName, fee) {
@@ -55,9 +53,9 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
     }
     async processResponse(providerAddress, svcName, content, chatID) {
         try {
-            let extractor;
-            extractor = await this.getExtractor(providerAddress, svcName);
+            const extractor = await this.getExtractor(providerAddress, svcName);
             const outputFee = await this.calculateOutputFees(extractor, content);
+            await this.updateCachedFee(providerAddress, svcName, outputFee);
             await this.settleFee(providerAddress, svcName, outputFee);
             const svc = await extractor.getSvcInfo();
             // TODO: Temporarily return true for non-TeeML verifiability.

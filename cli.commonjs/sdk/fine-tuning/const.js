@@ -26,7 +26,12 @@ exports.MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
         standard: '',
-        description: 'This model is a distilled version of the BERT base model. The code for the distillation process can be found here. This model is uncased: it does not make a difference between english and English. URL: https://huggingface.co/distilbert/distilbert-base-uncased',
+        description: 'DistilBERT is a transformers model, smaller and faster than BERT, which was pretrained on the same corpus in a self-supervised fashion, using the BERT base model as a teacher. More details can be found at: https://huggingface.co/distilbert/distilbert-base-uncased',
+    },
+    mobilenet_v2: {
+        turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
+        standard: '',
+        description: 'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
     },
     // TODO: remove
     'mock-model': {

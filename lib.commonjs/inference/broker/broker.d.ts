@@ -5,6 +5,7 @@ import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
 import { AccountProcessor } from './account';
 import { ModelProcessor } from './model';
+import { LedgerBroker } from '../../ledger';
 export declare class InferenceBroker {
     requestProcessor: RequestProcessor;
     responseProcessor: ResponseProcessor;
@@ -13,7 +14,8 @@ export declare class InferenceBroker {
     modelProcessor: ModelProcessor;
     private signer;
     private contractAddress;
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string);
+    private ledger;
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, ledger: LedgerBroker);
     initialize(): Promise<void>;
     /**
      * Retrieves a list of services from the contract.
@@ -22,18 +24,6 @@ export declare class InferenceBroker {
      * @throws An error if the service list cannot be retrieved.
      */
     listService: () => Promise<import("../contract").ServiceStructOutput[]>;
-    /**
-     * Adds a new account to the contract.
-     *
-     * @param {string} providerAddress - The address of the provider for whom the account is being created.
-     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
-     *
-     * @throws  An error if the account creation fails.
-     *
-     * @remarks
-     * When creating an account, a key pair is also created to sign the request.
-     */
-    addAccount: (providerAddress: string, balance: number) => Promise<void>;
     /**
      * Retrieves the account information for a given provider address.
      *
@@ -44,14 +34,6 @@ export declare class InferenceBroker {
      * @throws Will throw an error if the account retrieval process fails.
      */
     getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
-    /**
-     * Deposits a specified amount of funds into the given account.
-     *
-     * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
-     * @throws  An error if the deposit fails.
-     */
-    depositFund: (account: string, amount: number) => Promise<void>;
     /**
      * Generates request metadata for the provider service.
      * Includes:
@@ -204,5 +186,5 @@ export declare class InferenceBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createInferenceBroker(signer: JsonRpcSigner | Wallet, contractAddress?: string): Promise<InferenceBroker>;
+export declare function createInferenceBroker(signer: JsonRpcSigner | Wallet, contractAddress: string, ledger: LedgerBroker): Promise<InferenceBroker>;
 //# sourceMappingURL=broker.d.ts.map

@@ -120,6 +120,18 @@ class ZGServingUserBrokerBase {
         const inputFee = BigInt(inputCount) * svc.inputPrice;
         return inputFee;
     }
+    getCachedFeeKey(provider, svcName) {
+        return provider + '_' + svcName + '_cachedFee';
+    }
+    async updateCachedFee(provider, svcName, fee) {
+        try {
+            const curFee = (await this.cache.getItem(this.getCachedFeeKey(provider, svcName))) || BigInt(0);
+            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
 }
 exports.ZGServingUserBrokerBase = ZGServingUserBrokerBase;
 //# sourceMappingURL=base.js.map

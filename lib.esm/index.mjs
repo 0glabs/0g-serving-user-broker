@@ -7011,6 +7011,18 @@ class ZGServingUserBrokerBase {
         const inputFee = BigInt(inputCount) * svc.inputPrice;
         return inputFee;
     }
+    getCachedFeeKey(provider, svcName) {
+        return provider + '_' + svcName + '_cachedFee';
+    }
+    async updateCachedFee(provider, svcName, fee) {
+        try {
+            const curFee = (await this.cache.getItem(this.getCachedFeeKey(provider, svcName))) || BigInt(0);
+            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, CacheValueTypeEnum.Service);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
 }
 
 /**
@@ -7019,8 +7031,7 @@ class ZGServingUserBrokerBase {
 class AccountProcessor extends ZGServingUserBrokerBase {
     async getAccount(provider) {
         try {
-            const account = await this.contract.getAccount(provider);
-            return account;
+            return await this.contract.getAccount(provider);
         }
         catch (error) {
             throw error;
@@ -7028,63 +7039,7 @@ class AccountProcessor extends ZGServingUserBrokerBase {
     }
     async listAccount() {
         try {
-            const accounts = await this.contract.listAccount();
-            return accounts;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async addAccount(providerAddress, balance) {
-        try {
-            try {
-                const account = await this.getAccount(providerAddress);
-                if (account) {
-                    throw new Error('Account already exists, with balance: ' +
-                        this.neuronToA0gi(account.balance) +
-                        ' A0GI');
-                }
-            }
-            catch (error) {
-                if (!error.message.includes('AccountNotExists')) {
-                    throw error;
-                }
-            }
-            const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
-            await this.contract.addAccount(providerAddress, settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async deleteAccount(provider) {
-        try {
-            await this.contract.deleteAccount(provider);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async depositFund(providerAddress, balance) {
-        try {
-            const amount = this.a0giToNeuron(balance).toString();
-            await this.contract.depositFund(providerAddress, amount);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async createSettleSignerKey() {
-        try {
-            // [pri, pub]
-            const keyPair = await genKeyPair();
-            const key = this.contract.getUserAddress();
-            this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
-            const settleSignerEncryptedPrivateKey = await encryptData(this.contract.signer, privateKeyToStr(keyPair.packedPrivkey));
-            return {
-                settleSignerEncryptedPrivateKey,
-                settleSignerPublicKey: keyPair.doublePackedPubkey,
-            };
+            return await this.contract.listAccount();
         }
         catch (error) {
             throw error;
@@ -8053,65 +8008,6 @@ class InferenceServingContract {
             throw error;
         }
     }
-    async deleteAccount(provider) {
-        try {
-            const user = this.getUserAddress();
-            const tx = await this.serving.deleteAccount(user, provider);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice) {
-        try {
-            const tx = await this.serving.addOrUpdateService(name, serviceType, url, model, verifiability, inputPrice, outputPrice);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async addAccount(providerAddress, signer, balance, settleSignerEncryptedPrivateKey) {
-        try {
-            const user = this.getUserAddress();
-            const tx = await this.serving.addAccount(user, providerAddress, signer, settleSignerEncryptedPrivateKey, {
-                value: balance,
-            });
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async depositFund(providerAddress, balance) {
-        try {
-            const user = this.getUserAddress();
-            const tx = await this.serving.depositFund(user, providerAddress, {
-                value: balance,
-            });
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
     async getService(providerAddress, svcName) {
         try {
             return this.serving.getService(providerAddress, svcName);
@@ -8131,6 +8027,14 @@ class InferenceServingContract {
  * before use.
  */
 class RequestProcessor extends ZGServingUserBrokerBase {
+    checkAccountThreshold = BigInt(1000);
+    topUpTriggerThreshold = BigInt(5000);
+    topUpTargetThreshold = BigInt(10000);
+    ledger;
+    constructor(contract, metadata, cache, ledger) {
+        super(contract, metadata, cache);
+        this.ledger = ledger;
+    }
     async getServiceMetadata(providerAddress, svcName) {
         const service = await this.getService(providerAddress, svcName);
         return {
@@ -8139,8 +8043,57 @@ class RequestProcessor extends ZGServingUserBrokerBase {
         };
     }
     async getRequestHeaders(providerAddress, svcName, content) {
-        const headers = await this.getHeader(providerAddress, svcName, content, BigInt(0));
-        return headers;
+        try {
+            await this.topUpAccountIfNeeded(providerAddress, svcName, content);
+            return await this.getHeader(providerAddress, svcName, content, BigInt(0));
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    async checkCachedFee(key, svc) {
+        try {
+            const usedFund = (await this.cache.getItem(key)) || BigInt(0);
+            return (usedFund >
+                this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svcName
+     */
+    async topUpAccountIfNeeded(provider, svcName, content) {
+        try {
+            const extractor = await this.getExtractor(provider, svcName);
+            const svc = await extractor.getSvcInfo();
+            const key = this.getCachedFeeKey(provider, svcName);
+            const needCheck = await this.checkCachedFee(key, svc);
+            // update cache for current content
+            const newFee = await this.calculateInputFees(extractor, content);
+            await this.updateCachedFee(provider, svcName, newFee);
+            if (!needCheck) {
+                return;
+            }
+            // check fund in account
+            const acc = await this.contract.getAccount(provider);
+            if (acc.balance <
+                this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice)) {
+                await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
+                    (svc.inputPrice + svc.outputPrice));
+            }
+        }
+        catch (error) {
+            throw error;
+        }
     }
 }
 
@@ -8341,8 +8294,6 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
     verifier;
     constructor(contract, metadata, cache) {
         super(contract, metadata, cache);
-        this.contract = contract;
-        this.metadata = metadata;
         this.verifier = new Verifier(contract, metadata, cache);
     }
     async settleFeeWithA0gi(providerAddress, serviceName, fee) {
@@ -8383,9 +8334,9 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
     }
     async processResponse(providerAddress, svcName, content, chatID) {
         try {
-            let extractor;
-            extractor = await this.getExtractor(providerAddress, svcName);
+            const extractor = await this.getExtractor(providerAddress, svcName);
             const outputFee = await this.calculateOutputFees(extractor, content);
+            await this.updateCachedFee(providerAddress, svcName, outputFee);
             await this.settleFee(providerAddress, svcName, outputFee);
             const svc = await extractor.getSvcInfo();
             // TODO: Temporarily return true for non-TeeML verifiability.
@@ -8468,9 +8419,11 @@ class InferenceBroker {
     modelProcessor;
     signer;
     contractAddress;
-    constructor(signer, contractAddress) {
+    ledger;
+    constructor(signer, contractAddress, ledger) {
         this.signer = signer;
         this.contractAddress = contractAddress;
+        this.ledger = ledger;
     }
     async initialize() {
         let userAddress;
@@ -8483,7 +8436,7 @@ class InferenceBroker {
         const contract = new InferenceServingContract(this.signer, this.contractAddress, userAddress);
         const metadata = new Metadata();
         const cache = new Cache();
-        this.requestProcessor = new RequestProcessor(contract, metadata, cache);
+        this.requestProcessor = new RequestProcessor(contract, metadata, cache, this.ledger);
         this.responseProcessor = new ResponseProcessor(contract, metadata, cache);
         this.accountProcessor = new AccountProcessor(contract, metadata, cache);
         this.modelProcessor = new ModelProcessor$1(contract, metadata, cache);
@@ -8504,25 +8457,6 @@ class InferenceBroker {
         }
     };
     /**
-     * Adds a new account to the contract.
-     *
-     * @param {string} providerAddress - The address of the provider for whom the account is being created.
-     * @param {number} balance - The initial balance to be assigned to the new account. Units are in A0GI.
-     *
-     * @throws  An error if the account creation fails.
-     *
-     * @remarks
-     * When creating an account, a key pair is also created to sign the request.
-     */
-    addAccount = async (providerAddress, balance) => {
-        try {
-            return await this.accountProcessor.addAccount(providerAddress, balance);
-        }
-        catch (error) {
-            throw error;
-        }
-    };
-    /**
      * Retrieves the account information for a given provider address.
      *
      * @param {string} providerAddress - The address of the provider identifying the account.
@@ -8534,21 +8468,6 @@ class InferenceBroker {
     getAccount = async (providerAddress) => {
         try {
             return await this.accountProcessor.getAccount(providerAddress);
-        }
-        catch (error) {
-            throw error;
-        }
-    };
-    /**
-     * Deposits a specified amount of funds into the given account.
-     *
-     * @param {string} account - The account identifier where the funds will be deposited.
-     * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
-     * @throws  An error if the deposit fails.
-     */
-    depositFund = async (account, amount) => {
-        try {
-            return await this.accountProcessor.depositFund(account, amount);
         }
         catch (error) {
             throw error;
@@ -8752,8 +8671,8 @@ class InferenceBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createInferenceBroker(signer, contractAddress = '') {
-    const broker = new InferenceBroker(signer, contractAddress);
+async function createInferenceBroker(signer, contractAddress, ledger) {
+    const broker = new InferenceBroker(signer, contractAddress, ledger);
     try {
         await broker.initialize();
         return broker;
@@ -9962,7 +9881,12 @@ const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
         standard: '',
-        description: 'This model is a distilled version of the BERT base model. The code for the distillation process can be found here. This model is uncased: it does not make a difference between english and English. URL: https://huggingface.co/distilbert/distilbert-base-uncased',
+        description: 'DistilBERT is a transformers model, smaller and faster than BERT, which was pretrained on the same corpus in a self-supervised fashion, using the BERT base model as a teacher. More details can be found at: https://huggingface.co/distilbert/distilbert-base-uncased',
+    },
+    mobilenet_v2: {
+        turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
+        standard: '',
+        description: 'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
     },
     // TODO: remove
     'mock-model': {
@@ -11353,8 +11277,7 @@ class ZGComputeNetworkBroker {
 async function createZGComputeNetworkBroker(signer, ledgerCA = '0x0854dB7b3607626608aB6A5f0208d14378b00e32', inferenceCA = '0xCa35028f675f7584C2BF7b57C39aE621b1a9E4A9', fineTuningCA = '0x38ae6632E63B61153A6FbCD163E79af1855EDa8B') {
     try {
         const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
-        // TODO: Adapts the usage of the ledger broker to initialize the inference broker.
-        const inferenceBroker = await createInferenceBroker(signer, inferenceCA);
+        const inferenceBroker = await createInferenceBroker(signer, inferenceCA, ledger);
         let fineTuningBroker;
         if (signer instanceof Wallet) {
             fineTuningBroker = await createFineTuningBroker(signer, fineTuningCA, ledger);

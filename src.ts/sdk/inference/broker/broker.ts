@@ -345,7 +345,7 @@ export class InferenceBroker {
  */
 export async function createInferenceBroker(
     signer: JsonRpcSigner | Wallet,
-    contractAddress,
+    contractAddress: string,
     ledger: LedgerBroker
 ): Promise<InferenceBroker> {
     const broker = new InferenceBroker(signer, contractAddress, ledger)
