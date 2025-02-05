@@ -15,27 +15,27 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
         super(contract, metadata, cache);
         this.verifier = new verifier_1.Verifier(contract, metadata, cache);
     }
-    async settleFeeWithA0gi(providerAddress, serviceName, fee) {
+    async settleFeeWithA0gi(providerAddress, fee) {
         if (!fee) {
             return;
         }
-        await this.settleFee(providerAddress, serviceName, this.a0giToNeuron(fee));
+        await this.settleFee(providerAddress, this.a0giToNeuron(fee));
     }
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
-    async settleFee(providerAddress, serviceName, fee) {
+    async settleFee(providerAddress, fee) {
         try {
             if (!fee) {
                 return;
             }
-            const service = await this.contract.getService(providerAddress, serviceName);
+            const service = await this.contract.getService(providerAddress);
             if (!service) {
                 throw new Error('Service is not available');
             }
-            const { provider, name, url } = service;
-            const headers = await this.getHeader(provider, name, '', fee);
-            const response = await fetch(`${url}/v1/proxy/${name}/settle-fee`, {
+            const { provider, url } = service;
+            const headers = await this.getHeader(provider, '', fee);
+            const response = await fetch(`${url}/v1/proxy/settle-fee`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -51,12 +51,12 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
-    async processResponse(providerAddress, svcName, content, chatID) {
+    async processResponse(providerAddress, content, chatID) {
         try {
-            const extractor = await this.getExtractor(providerAddress, svcName);
+            const extractor = await this.getExtractor(providerAddress);
             const outputFee = await this.calculateOutputFees(extractor, content);
-            await this.updateCachedFee(providerAddress, svcName, outputFee);
-            await this.settleFee(providerAddress, svcName, outputFee);
+            await this.updateCachedFee(providerAddress, outputFee);
+            await this.settleFee(providerAddress, outputFee);
             const svc = await extractor.getSvcInfo();
             // TODO: Temporarily return true for non-TeeML verifiability.
             // these cases will be handled in the future.
@@ -67,15 +67,15 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             if (!chatID) {
                 throw new Error('Chat ID does not exist');
             }
-            let singerRAVerificationResult = await this.verifier.getSigningAddress(providerAddress, svcName);
+            let singerRAVerificationResult = await this.verifier.getSigningAddress(providerAddress);
             if (!singerRAVerificationResult.valid) {
                 singerRAVerificationResult =
-                    await this.verifier.getSigningAddress(providerAddress, svcName, true);
+                    await this.verifier.getSigningAddress(providerAddress, true);
             }
             if (!singerRAVerificationResult.valid) {
                 throw new Error('Signing address is invalid');
             }
-            const ResponseSignature = await verifier_1.Verifier.fetSignatureByChatID(svc.url, svcName, chatID);
+            const ResponseSignature = await verifier_1.Verifier.fetSignatureByChatID(svc.url, chatID);
             return verifier_1.Verifier.verifySignature(ResponseSignature.text, `0x${ResponseSignature.signature}`, singerRAVerificationResult.signingAddress);
         }
         catch (error) {

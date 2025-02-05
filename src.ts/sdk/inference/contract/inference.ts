@@ -53,12 +53,9 @@ export class InferenceServingContract {
         }
     }
 
-    async getService(
-        providerAddress: string,
-        svcName: string
-    ): Promise<ServiceStructOutput> {
+    async getService(providerAddress: string): Promise<ServiceStructOutput> {
         try {
-            return this.serving.getService(providerAddress, svcName)
+            return this.serving.getService(providerAddress)
         } catch (error) {
             throw error
         }

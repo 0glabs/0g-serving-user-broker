@@ -25,43 +25,31 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
 
     async settleFeeWithA0gi(
         providerAddress: string,
-        serviceName: string,
         fee: number
     ): Promise<void> {
         if (!fee) {
             return
         }
-        await this.settleFee(
-            providerAddress,
-            serviceName,
-            this.a0giToNeuron(fee)
-        )
+        await this.settleFee(providerAddress, this.a0giToNeuron(fee))
     }
 
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
-    async settleFee(
-        providerAddress: string,
-        serviceName: string,
-        fee: bigint
-    ): Promise<void> {
+    async settleFee(providerAddress: string, fee: bigint): Promise<void> {
         try {
             if (!fee) {
                 return
             }
-            const service = await this.contract.getService(
-                providerAddress,
-                serviceName
-            )
+            const service = await this.contract.getService(providerAddress)
             if (!service) {
                 throw new Error('Service is not available')
             }
 
-            const { provider, name, url } = service
-            const headers = await this.getHeader(provider, name, '', fee)
+            const { provider, url } = service
+            const headers = await this.getHeader(provider, '', fee)
 
-            const response = await fetch(`${url}/v1/proxy/${name}/settle-fee`, {
+            const response = await fetch(`${url}/v1/proxy/settle-fee`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,16 +68,15 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
 
     async processResponse(
         providerAddress: string,
-        svcName: string,
         content: string,
         chatID?: string
     ): Promise<boolean | null> {
         try {
-            const extractor = await this.getExtractor(providerAddress, svcName)
+            const extractor = await this.getExtractor(providerAddress)
             const outputFee = await this.calculateOutputFees(extractor, content)
-            await this.updateCachedFee(providerAddress, svcName, outputFee)
+            await this.updateCachedFee(providerAddress, outputFee)
 
-            await this.settleFee(providerAddress, svcName, outputFee)
+            await this.settleFee(providerAddress, outputFee)
 
             const svc = await extractor.getSvcInfo()
             // TODO: Temporarily return true for non-TeeML verifiability.
@@ -106,15 +93,11 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
             }
 
             let singerRAVerificationResult =
-                await this.verifier.getSigningAddress(providerAddress, svcName)
+                await this.verifier.getSigningAddress(providerAddress)
 
             if (!singerRAVerificationResult.valid) {
                 singerRAVerificationResult =
-                    await this.verifier.getSigningAddress(
-                        providerAddress,
-                        svcName,
-                        true
-                    )
+                    await this.verifier.getSigningAddress(providerAddress, true)
             }
 
             if (!singerRAVerificationResult.valid) {
@@ -123,7 +106,6 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
 
             const ResponseSignature = await Verifier.fetSignatureByChatID(
                 svc.url,
-                svcName,
                 chatID
             )
 

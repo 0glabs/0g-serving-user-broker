@@ -12,15 +12,14 @@ export declare abstract class ZGServingUserBrokerBase {
     protected getProviderData(providerAddress: string): Promise<{
         settleSignerPrivateKey: bigint[] | null;
     }>;
-    protected getService(providerAddress: string, svcName: string, useCache?: boolean): Promise<ServiceStructOutput>;
-    protected getExtractor(providerAddress: string, svcName: string, useCache?: boolean): Promise<Extractor>;
+    protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput>;
+    protected getExtractor(providerAddress: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput): Extractor;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
-    getHeader(providerAddress: string, svcName: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
+    getHeader(providerAddress: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
-    getCachedFeeKey(provider: string, svcName: string): string;
-    updateCachedFee(provider: string, svcName: string, fee: bigint): Promise<void>;
-    clearCacheFee(provider: string, svcName: string, fee: bigint): Promise<void>;
+    updateCachedFee(provider: string, fee: bigint): Promise<void>;
+    clearCacheFee(provider: string, fee: bigint): Promise<void>;
 }
 //# sourceMappingURL=base.d.ts.map

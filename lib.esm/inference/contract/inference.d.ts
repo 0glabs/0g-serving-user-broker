@@ -10,7 +10,7 @@ export declare class InferenceServingContract {
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<import(".").AccountStructOutput[]>;
     getAccount(provider: AddressLike): Promise<import(".").AccountStructOutput>;
-    getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput>;
+    getService(providerAddress: string): Promise<ServiceStructOutput>;
     getUserAddress(): string;
 }
 //# sourceMappingURL=inference.d.ts.map

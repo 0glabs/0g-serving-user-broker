@@ -28,14 +28,10 @@ export interface SingerRAVerificationResult {
  * The Verifier class contains methods for verifying service reliability.
  */
 export class Verifier extends ZGServingUserBrokerBase {
-    async verifyService(
-        providerAddress: string,
-        svcName: string
-    ): Promise<boolean | null> {
+    async verifyService(providerAddress: string): Promise<boolean | null> {
         try {
             const { valid } = await this.getSigningAddress(
                 providerAddress,
-                svcName,
                 true
             )
             return valid
@@ -52,17 +48,15 @@ export class Verifier extends ZGServingUserBrokerBase {
      * localStorage and returns it.
      *
      * @param providerAddress - provider address.
-     * @param svcName - service name.
      * @param verifyRA - whether to verify the RA， default is false.
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
     async getSigningAddress(
         providerAddress: string,
-        svcName: string,
         verifyRA = false
     ): Promise<SingerRAVerificationResult> {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`
         let signingKey = await this.metadata.getSigningKey(key)
         if (!verifyRA && signingKey) {
             return {
@@ -72,19 +66,15 @@ export class Verifier extends ZGServingUserBrokerBase {
         }
 
         try {
-            const extractor = await this.getExtractor(
-                providerAddress,
-                svcName,
-                false
-            )
+            const extractor = await this.getExtractor(providerAddress, false)
             const svc = await extractor.getSvcInfo()
 
-            const signerRA = await Verifier.fetSignerRA(svc.url, svc.name)
+            const signerRA = await Verifier.fetSignerRA(svc.url)
             if (!signerRA?.signing_address) {
                 throw new Error('signing address does not exist')
             }
 
-            signingKey = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`
+            signingKey = `${this.contract.getUserAddress()}_${providerAddress}`
             await this.metadata.storeSigningKey(
                 signingKey,
                 signerRA.signing_address
@@ -102,13 +92,10 @@ export class Verifier extends ZGServingUserBrokerBase {
         }
     }
 
-    async getSignerRaDownloadLink(
-        providerAddress: string,
-        svcName: string
-    ): Promise<string> {
+    async getSignerRaDownloadLink(providerAddress: string): Promise<string> {
         try {
-            const svc = await this.getService(providerAddress, svcName)
-            return `${svc.url}/v1/proxy/${svcName}/attestation/report`
+            const svc = await this.getService(providerAddress)
+            return `${svc.url}/v1/proxy/attestation/report`
         } catch (error) {
             throw error
         }
@@ -116,12 +103,11 @@ export class Verifier extends ZGServingUserBrokerBase {
 
     async getChatSignatureDownloadLink(
         providerAddress: string,
-        svcName: string,
         chatID: string
     ): Promise<string> {
         try {
-            const svc = await this.getService(providerAddress, svcName)
-            return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`
+            const svc = await this.getService(providerAddress)
+            return `${svc.url}/v1/proxy/signature/${chatID}`
         } catch (error) {
             throw error
         }
@@ -155,19 +141,13 @@ export class Verifier extends ZGServingUserBrokerBase {
             })
     }
 
-    static async fetSignerRA(
-        providerBrokerURL: string,
-        svcName: string
-    ): Promise<SignerRA> {
-        return fetch(
-            `${providerBrokerURL}/v1/proxy/${svcName}/attestation/report`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-        )
+    static async fetSignerRA(providerBrokerURL: string): Promise<SignerRA> {
+        return fetch(`${providerBrokerURL}/v1/proxy/attestation/report`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok')
@@ -202,18 +182,14 @@ export class Verifier extends ZGServingUserBrokerBase {
 
     static async fetSignatureByChatID(
         providerBrokerURL: string,
-        svcName: string,
         chatID: string
     ): Promise<ResponseSignature> {
-        return fetch(
-            `${providerBrokerURL}/v1/proxy/${svcName}/signature/${chatID}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-        )
+        return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('getting signature error')

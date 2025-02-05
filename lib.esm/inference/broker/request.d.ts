@@ -34,10 +34,6 @@ export interface ServingRequestHeaders {
      */
     'Previous-Output-Fee': string;
     /**
-     * Service name
-     */
-    'Service-Name': string;
-    /**
      * User's signature for the other headers.
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
@@ -54,11 +50,11 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
     private topUpTargetThreshold;
     private ledger;
     constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache, ledger: LedgerBroker);
-    getServiceMetadata(providerAddress: string, svcName: string): Promise<{
+    getServiceMetadata(providerAddress: string): Promise<{
         endpoint: string;
         model: string;
     }>;
-    getRequestHeaders(providerAddress: string, svcName: string, content: string): Promise<ServingRequestHeaders>;
+    getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
     /**
      * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
      * @param provider
@@ -68,8 +64,7 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      * @param provider
-     * @param svcName
      */
-    topUpAccountIfNeeded(provider: string, svcName: string, content: string): Promise<void>;
+    topUpAccountIfNeeded(provider: string, content: string): Promise<void>;
 }
 //# sourceMappingURL=request.d.ts.map

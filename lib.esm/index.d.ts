@@ -76,7 +76,6 @@ type AccountStructOutput$1 = [
 };
 type ServiceStructOutput$1 = [
     provider: string,
-    name: string,
     serviceType: string,
     url: string,
     inputPrice: bigint,
@@ -86,7 +85,6 @@ type ServiceStructOutput$1 = [
     verifiability: string
 ] & {
     provider: string;
-    name: string;
     serviceType: string;
     url: string;
     inputPrice: bigint;
@@ -106,21 +104,21 @@ interface InferenceServingInterface extends Interface {
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]): string;
-    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, string, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "batchVerifierAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
-    encodeFunctionData(functionFragment: "getService", values: [AddressLike, string]): string;
+    encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
     encodeFunctionData(functionFragment: "ledgerAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(functionFragment: "processRefund", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "removeService", values: [string]): string;
+    encodeFunctionData(functionFragment: "removeService", values?: undefined): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct$1]): string;
@@ -212,11 +210,10 @@ declare namespace RefundRequestedEvent$1 {
     type LogDescription = TypedLogDescription$2<Event>;
 }
 declare namespace ServiceRemovedEvent$1 {
-    type InputTuple = [service: AddressLike, name: string];
-    type OutputTuple = [service: string, name: string];
+    type InputTuple = [service: AddressLike];
+    type OutputTuple = [service: string];
     interface OutputObject {
         service: string;
-        name: string;
     }
     type Event = TypedContractEvent$2<InputTuple, OutputTuple, OutputObject>;
     type Filter = TypedDeferredTopicFilter$2<Event>;
@@ -226,7 +223,6 @@ declare namespace ServiceRemovedEvent$1 {
 declare namespace ServiceUpdatedEvent$1 {
     type InputTuple = [
         service: AddressLike,
-        name: string,
         serviceType: string,
         url: string,
         inputPrice: BigNumberish,
@@ -237,7 +233,6 @@ declare namespace ServiceUpdatedEvent$1 {
     ];
     type OutputTuple = [
         service: string,
-        name: string,
         serviceType: string,
         url: string,
         inputPrice: bigint,
@@ -248,7 +243,6 @@ declare namespace ServiceUpdatedEvent$1 {
     ];
     interface OutputObject {
         service: string;
-        name: string;
         serviceType: string;
         url: string;
         inputPrice: bigint;
@@ -290,7 +284,6 @@ interface InferenceServing extends BaseContract {
         void
     ], "payable">;
     addOrUpdateService: TypedContractMethod$2<[
-        name: string,
         serviceType: string,
         url: string,
         model: string,
@@ -322,8 +315,7 @@ interface InferenceServing extends BaseContract {
     getAllAccounts: TypedContractMethod$2<[], [AccountStructOutput$1[]], "view">;
     getAllServices: TypedContractMethod$2<[], [ServiceStructOutput$1[]], "view">;
     getService: TypedContractMethod$2<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput$1
     ], "view">;
@@ -353,7 +345,7 @@ interface InferenceServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    removeService: TypedContractMethod$2<[name: string], [void], "nonpayable">;
+    removeService: TypedContractMethod$2<[], [void], "nonpayable">;
     renounceOwnership: TypedContractMethod$2<[], [void], "nonpayable">;
     requestRefundAll: TypedContractMethod$2<[
         user: AddressLike,
@@ -397,7 +389,6 @@ interface InferenceServing extends BaseContract {
         void
     ], "payable">;
     getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod$2<[
-        name: string,
         serviceType: string,
         url: string,
         model: string,
@@ -429,8 +420,7 @@ interface InferenceServing extends BaseContract {
     getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$2<[], [AccountStructOutput$1[]], "view">;
     getFunction(nameOrSignature: "getAllServices"): TypedContractMethod$2<[], [ServiceStructOutput$1[]], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod$2<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput$1
     ], "view">;
@@ -460,7 +450,7 @@ interface InferenceServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    getFunction(nameOrSignature: "removeService"): TypedContractMethod$2<[name: string], [void], "nonpayable">;
+    getFunction(nameOrSignature: "removeService"): TypedContractMethod$2<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod$2<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod$2<[
         user: AddressLike,
@@ -492,9 +482,9 @@ interface InferenceServing extends BaseContract {
         OwnershipTransferred: TypedContractEvent$2<OwnershipTransferredEvent$2.InputTuple, OwnershipTransferredEvent$2.OutputTuple, OwnershipTransferredEvent$2.OutputObject>;
         "RefundRequested(address,address,uint256,uint256)": TypedContractEvent$2<RefundRequestedEvent$1.InputTuple, RefundRequestedEvent$1.OutputTuple, RefundRequestedEvent$1.OutputObject>;
         RefundRequested: TypedContractEvent$2<RefundRequestedEvent$1.InputTuple, RefundRequestedEvent$1.OutputTuple, RefundRequestedEvent$1.OutputObject>;
-        "ServiceRemoved(address,string)": TypedContractEvent$2<ServiceRemovedEvent$1.InputTuple, ServiceRemovedEvent$1.OutputTuple, ServiceRemovedEvent$1.OutputObject>;
+        "ServiceRemoved(address)": TypedContractEvent$2<ServiceRemovedEvent$1.InputTuple, ServiceRemovedEvent$1.OutputTuple, ServiceRemovedEvent$1.OutputObject>;
         ServiceRemoved: TypedContractEvent$2<ServiceRemovedEvent$1.InputTuple, ServiceRemovedEvent$1.OutputTuple, ServiceRemovedEvent$1.OutputObject>;
-        "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent$2<ServiceUpdatedEvent$1.InputTuple, ServiceUpdatedEvent$1.OutputTuple, ServiceUpdatedEvent$1.OutputObject>;
+        "ServiceUpdated(address,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent$2<ServiceUpdatedEvent$1.InputTuple, ServiceUpdatedEvent$1.OutputTuple, ServiceUpdatedEvent$1.OutputObject>;
         ServiceUpdated: TypedContractEvent$2<ServiceUpdatedEvent$1.InputTuple, ServiceUpdatedEvent$1.OutputTuple, ServiceUpdatedEvent$1.OutputObject>;
     };
 }
@@ -508,7 +498,7 @@ declare class InferenceServingContract {
     listService(): Promise<ServiceStructOutput$1[]>;
     listAccount(): Promise<AccountStructOutput$1[]>;
     getAccount(provider: AddressLike): Promise<AccountStructOutput$1>;
-    getService(providerAddress: string, svcName: string): Promise<ServiceStructOutput$1>;
+    getService(providerAddress: string): Promise<ServiceStructOutput$1>;
     getUserAddress(): string;
 }
 
@@ -546,17 +536,7 @@ declare class Cache {
     private initialize;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
-    static createServiceStructOutput(fields: [
-        string,
-        string,
-        string,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        string
-    ]): ServiceStructOutput$1;
+    static createServiceStructOutput(fields: [string, string, string, bigint, bigint, bigint, string, string]): ServiceStructOutput$1;
 }
 
 interface TypedDeferredTopicFilter$1<_TCEvent extends TypedContractEvent$1> extends DeferredTopicFilter {
@@ -1507,10 +1487,6 @@ interface ServingRequestHeaders {
      */
     'Previous-Output-Fee': string;
     /**
-     * Service name
-     */
-    'Service-Name': string;
-    /**
      * User's signature for the other headers.
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
@@ -1527,11 +1503,11 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
     private topUpTargetThreshold;
     private ledger;
     constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache, ledger: LedgerBroker);
-    getServiceMetadata(providerAddress: string, svcName: string): Promise<{
+    getServiceMetadata(providerAddress: string): Promise<{
         endpoint: string;
         model: string;
     }>;
-    getRequestHeaders(providerAddress: string, svcName: string, content: string): Promise<ServingRequestHeaders>;
+    getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
     /**
      * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
      * @param provider
@@ -1541,9 +1517,8 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      * @param provider
-     * @param svcName
      */
-    topUpAccountIfNeeded(provider: string, svcName: string, content: string): Promise<void>;
+    topUpAccountIfNeeded(provider: string, content: string): Promise<void>;
 }
 
 declare abstract class ZGServingUserBrokerBase {
@@ -1554,16 +1529,15 @@ declare abstract class ZGServingUserBrokerBase {
     protected getProviderData(providerAddress: string): Promise<{
         settleSignerPrivateKey: bigint[] | null;
     }>;
-    protected getService(providerAddress: string, svcName: string, useCache?: boolean): Promise<ServiceStructOutput$1>;
-    protected getExtractor(providerAddress: string, svcName: string, useCache?: boolean): Promise<Extractor>;
+    protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput$1>;
+    protected getExtractor(providerAddress: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput$1): Extractor;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
-    getHeader(providerAddress: string, svcName: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
+    getHeader(providerAddress: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
-    getCachedFeeKey(provider: string, svcName: string): string;
-    updateCachedFee(provider: string, svcName: string, fee: bigint): Promise<void>;
-    clearCacheFee(provider: string, svcName: string, fee: bigint): Promise<void>;
+    updateCachedFee(provider: string, fee: bigint): Promise<void>;
+    clearCacheFee(provider: string, fee: bigint): Promise<void>;
 }
 
 /**
@@ -1582,12 +1556,12 @@ declare class AccountProcessor extends ZGServingUserBrokerBase {
 declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
     constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache);
-    settleFeeWithA0gi(providerAddress: string, serviceName: string, fee: number): Promise<void>;
+    settleFeeWithA0gi(providerAddress: string, fee: number): Promise<void>;
     /**
      * settleFee sends an empty request to the service provider to settle the fee.
      */
-    settleFee(providerAddress: string, serviceName: string, fee: bigint): Promise<void>;
-    processResponse(providerAddress: string, svcName: string, content: string, chatID?: string): Promise<boolean | null>;
+    settleFee(providerAddress: string, fee: bigint): Promise<void>;
+    processResponse(providerAddress: string, content: string, chatID?: string): Promise<boolean | null>;
     private calculateOutputFees;
 }
 
@@ -1615,7 +1589,7 @@ interface SingerRAVerificationResult {
  * The Verifier class contains methods for verifying service reliability.
  */
 declare class Verifier extends ZGServingUserBrokerBase {
-    verifyService(providerAddress: string, svcName: string): Promise<boolean | null>;
+    verifyService(providerAddress: string): Promise<boolean | null>;
     /**
      * getSigningAddress verifies whether the signing address
      * of the signer corresponds to a valid RA.
@@ -1624,17 +1598,16 @@ declare class Verifier extends ZGServingUserBrokerBase {
      * localStorage and returns it.
      *
      * @param providerAddress - provider address.
-     * @param svcName - service name.
      * @param verifyRA - whether to verify the RA， default is false.
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    getSigningAddress(providerAddress: string, svcName: string, verifyRA?: boolean): Promise<SingerRAVerificationResult>;
-    getSignerRaDownloadLink(providerAddress: string, svcName: string): Promise<string>;
-    getChatSignatureDownloadLink(providerAddress: string, svcName: string, chatID: string): Promise<string>;
+    getSigningAddress(providerAddress: string, verifyRA?: boolean): Promise<SingerRAVerificationResult>;
+    getSignerRaDownloadLink(providerAddress: string): Promise<string>;
+    getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
     static verifyRA(nvidia_payload: any): Promise<boolean>;
-    static fetSignerRA(providerBrokerURL: string, svcName: string): Promise<SignerRA>;
-    static fetSignatureByChatID(providerBrokerURL: string, svcName: string, chatID: string): Promise<ResponseSignature>;
+    static fetSignerRA(providerBrokerURL: string): Promise<SignerRA>;
+    static fetSignatureByChatID(providerBrokerURL: string, chatID: string): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
 }
 
@@ -1677,13 +1650,12 @@ declare class InferenceBroker {
      * 2. Model information for the provider service
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      *
      * @returns { endpoint, model } - Object containing endpoint and model.
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getServiceMetadata: (providerAddress: string, svcName: string) => Promise<{
+    getServiceMetadata: (providerAddress: string) => Promise<{
         endpoint: string;
         model: string;
     }>;
@@ -1696,7 +1668,6 @@ declare class InferenceBroker {
      * for contract settlement.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
      * @returns headers. Records information such as the request fee and user signature.
@@ -1731,7 +1702,7 @@ declare class InferenceBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestHeaders: (providerAddress: string, svcName: string, content: string) => Promise<ServingRequestHeaders>;
+    getRequestHeaders: (providerAddress: string, content: string) => Promise<ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
@@ -1741,7 +1712,6 @@ declare class InferenceBroker {
      * with the chat ID.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {string} content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
@@ -1752,36 +1722,33 @@ declare class InferenceBroker {
      *
      * @throws An error if any issues occur during the processing of the response.
      */
-    processResponse: (providerAddress: string, svcName: string, content: string, chatID?: string) => Promise<boolean | null>;
+    processResponse: (providerAddress: string, content: string, chatID?: string) => Promise<boolean | null>;
     /**
      * verifyService is used to verify the reliability of the service.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
      *
      * @throws An error if errors occur during the verification process.
      */
-    verifyService: (providerAddress: string, svcName: string) => Promise<boolean | null>;
+    verifyService: (providerAddress: string) => Promise<boolean | null>;
     /**
      * getSignerRaDownloadLink returns the download link for the Signer RA.
      *
      * It can be provided to users who wish to manually verify the Signer RA.
      *
      * @param {string} providerAddress - provider address.
-     * @param {string} svcName - service name.
      *
      * @returns Download link.
      */
-    getSignerRaDownloadLink: (providerAddress: string, svcName: string) => Promise<string>;
+    getSignerRaDownloadLink: (providerAddress: string) => Promise<string>;
     /**
      * getChatSignatureDownloadLink returns the download link for the signature of a single chat.
      *
      * It can be provided to users who wish to manually verify the content of a single chat.
      *
      * @param {string} providerAddress - provider address.
-     * @param {string} svcName - service name.
      * @param {string} chatID - ID of the chat.
      *
      * @description To verify the chat signature, use the following code:
@@ -1794,7 +1761,7 @@ declare class InferenceBroker {
      *
      * @returns Download link.
      */
-    getChatSignatureDownloadLink: (providerAddress: string, svcName: string, chatID: string) => Promise<string>;
+    getChatSignatureDownloadLink: (providerAddress: string, chatID: string) => Promise<string>;
     /**
      * settleFee is used to settle the fee for the provider service.
      *
@@ -1803,14 +1770,13 @@ declare class InferenceBroker {
      * you can manually call settleFee to settle the fee.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
      * @throws An error if any issues occur during the fee settlement process.
      */
-    settleFee: (providerAddress: string, svcName: string, fee: number) => Promise<void>;
+    settleFee: (providerAddress: string, fee: number) => Promise<void>;
 }
 /**
  * createInferenceBroker is used to initialize ZGServingUserBroker

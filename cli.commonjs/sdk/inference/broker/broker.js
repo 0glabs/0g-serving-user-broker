@@ -79,15 +79,14 @@ class InferenceBroker {
      * 2. Model information for the provider service
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      *
      * @returns { endpoint, model } - Object containing endpoint and model.
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getServiceMetadata = async (providerAddress, svcName) => {
+    getServiceMetadata = async (providerAddress) => {
         try {
-            return await this.requestProcessor.getServiceMetadata(providerAddress, svcName);
+            return await this.requestProcessor.getServiceMetadata(providerAddress);
         }
         catch (error) {
             throw error;
@@ -102,7 +101,6 @@ class InferenceBroker {
      * for contract settlement.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
      * @returns headers. Records information such as the request fee and user signature.
@@ -137,9 +135,9 @@ class InferenceBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestHeaders = async (providerAddress, svcName, content) => {
+    getRequestHeaders = async (providerAddress, content) => {
         try {
-            return await this.requestProcessor.getRequestHeaders(providerAddress, svcName, content);
+            return await this.requestProcessor.getRequestHeaders(providerAddress, content);
         }
         catch (error) {
             throw error;
@@ -154,7 +152,6 @@ class InferenceBroker {
      * with the chat ID.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {string} content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
@@ -165,9 +162,9 @@ class InferenceBroker {
      *
      * @throws An error if any issues occur during the processing of the response.
      */
-    processResponse = async (providerAddress, svcName, content, chatID) => {
+    processResponse = async (providerAddress, content, chatID) => {
         try {
-            return await this.responseProcessor.processResponse(providerAddress, svcName, content, chatID);
+            return await this.responseProcessor.processResponse(providerAddress, content, chatID);
         }
         catch (error) {
             throw error;
@@ -177,15 +174,14 @@ class InferenceBroker {
      * verifyService is used to verify the reliability of the service.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
      *
      * @throws An error if errors occur during the verification process.
      */
-    verifyService = async (providerAddress, svcName) => {
+    verifyService = async (providerAddress) => {
         try {
-            return await this.verifier.verifyService(providerAddress, svcName);
+            return await this.verifier.verifyService(providerAddress);
         }
         catch (error) {
             throw error;
@@ -197,13 +193,12 @@ class InferenceBroker {
      * It can be provided to users who wish to manually verify the Signer RA.
      *
      * @param {string} providerAddress - provider address.
-     * @param {string} svcName - service name.
      *
      * @returns Download link.
      */
-    getSignerRaDownloadLink = async (providerAddress, svcName) => {
+    getSignerRaDownloadLink = async (providerAddress) => {
         try {
-            return await this.verifier.getSignerRaDownloadLink(providerAddress, svcName);
+            return await this.verifier.getSignerRaDownloadLink(providerAddress);
         }
         catch (error) {
             throw error;
@@ -215,7 +210,6 @@ class InferenceBroker {
      * It can be provided to users who wish to manually verify the content of a single chat.
      *
      * @param {string} providerAddress - provider address.
-     * @param {string} svcName - service name.
      * @param {string} chatID - ID of the chat.
      *
      * @description To verify the chat signature, use the following code:
@@ -228,9 +222,9 @@ class InferenceBroker {
      *
      * @returns Download link.
      */
-    getChatSignatureDownloadLink = async (providerAddress, svcName, chatID) => {
+    getChatSignatureDownloadLink = async (providerAddress, chatID) => {
         try {
-            return await this.verifier.getChatSignatureDownloadLink(providerAddress, svcName, chatID);
+            return await this.verifier.getChatSignatureDownloadLink(providerAddress, chatID);
         }
         catch (error) {
             throw error;
@@ -244,16 +238,15 @@ class InferenceBroker {
      * you can manually call settleFee to settle the fee.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
      * @throws An error if any issues occur during the fee settlement process.
      */
-    settleFee = async (providerAddress, svcName, fee) => {
+    settleFee = async (providerAddress, fee) => {
         try {
-            return await this.responseProcessor.settleFeeWithA0gi(providerAddress, svcName, fee);
+            return await this.responseProcessor.settleFeeWithA0gi(providerAddress, fee);
         }
         catch (error) {
             throw error;

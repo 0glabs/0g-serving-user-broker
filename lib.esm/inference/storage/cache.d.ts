@@ -14,16 +14,6 @@ export declare class Cache {
     private initialize;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
-    static createServiceStructOutput(fields: [
-        string,
-        string,
-        string,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        string
-    ]): ServiceStructOutput;
+    static createServiceStructOutput(fields: [string, string, string, bigint, bigint, bigint, string, string]): ServiceStructOutput;
 }
 //# sourceMappingURL=cache.d.ts.map

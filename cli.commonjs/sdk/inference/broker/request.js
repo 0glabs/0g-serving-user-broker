@@ -17,10 +17,10 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
         super(contract, metadata, cache);
         this.ledger = ledger;
     }
-    async getServiceMetadata(providerAddress, svcName) {
-        const service = await this.getService(providerAddress, svcName);
+    async getServiceMetadata(providerAddress) {
+        const service = await this.getService(providerAddress);
         return {
-            endpoint: `${service.url}/v1/proxy/${svcName}`,
+            endpoint: `${service.url}/v1/proxy`,
             model: service.model,
         };
     }
@@ -46,10 +46,10 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
      *
      * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
      */
-    async getRequestHeaders(providerAddress, svcName, content) {
+    async getRequestHeaders(providerAddress, content) {
         try {
-            await this.topUpAccountIfNeeded(providerAddress, svcName, content);
-            return await this.getHeader(providerAddress, svcName, content, BigInt(0));
+            await this.topUpAccountIfNeeded(providerAddress, content);
+            return await this.getHeader(providerAddress, content, BigInt(0));
         }
         catch (error) {
             throw error;
@@ -62,7 +62,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
      */
     async shouldCheckAccount(svc) {
         try {
-            const key = this.getCachedFeeKey(svc.provider, svc.name);
+            const key = svc.provider + '_cachedFee';
             const usedFund = (await this.cache.getItem(key)) || BigInt(0);
             return (usedFund >
                 this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
@@ -74,11 +74,10 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      * @param provider
-     * @param svcName
      */
-    async topUpAccountIfNeeded(provider, svcName, content) {
+    async topUpAccountIfNeeded(provider, content) {
         try {
-            const extractor = await this.getExtractor(provider, svcName);
+            const extractor = await this.getExtractor(provider);
             const svc = await extractor.getSvcInfo();
             // In first around, we top up the account to topUpTargetThreshold * (inputPrice + outputPrice).
             // Then the account will be maintained by the checkAccountThreshold.
@@ -90,7 +89,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
                 return;
             }
             const newFee = await this.calculateInputFees(extractor, content);
-            await this.updateCachedFee(provider, svcName, newFee);
+            await this.updateCachedFee(provider, newFee);
             const needCheck = await this.shouldCheckAccount(svc);
             // update cache for current content
             if (!needCheck) {
@@ -103,7 +102,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
                 await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
                     (svc.inputPrice + svc.outputPrice));
             }
-            await this.clearCacheFee(provider, svcName, newFee);
+            await this.clearCacheFee(provider, newFee);
         }
         catch (error) {
             throw error;

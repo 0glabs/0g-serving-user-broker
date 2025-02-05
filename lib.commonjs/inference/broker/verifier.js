@@ -7,9 +7,9 @@ const ethers_1 = require("ethers");
  * The Verifier class contains methods for verifying service reliability.
  */
 class Verifier extends base_1.ZGServingUserBrokerBase {
-    async verifyService(providerAddress, svcName) {
+    async verifyService(providerAddress) {
         try {
-            const { valid } = await this.getSigningAddress(providerAddress, svcName, true);
+            const { valid } = await this.getSigningAddress(providerAddress, true);
             return valid;
         }
         catch (error) {
@@ -24,13 +24,12 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
      * localStorage and returns it.
      *
      * @param providerAddress - provider address.
-     * @param svcName - service name.
      * @param verifyRA - whether to verify the RA， default is false.
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    async getSigningAddress(providerAddress, svcName, verifyRA = false) {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`;
+    async getSigningAddress(providerAddress, verifyRA = false) {
+        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
         let signingKey = await this.metadata.getSigningKey(key);
         if (!verifyRA && signingKey) {
             return {
@@ -39,13 +38,13 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             };
         }
         try {
-            const extractor = await this.getExtractor(providerAddress, svcName, false);
+            const extractor = await this.getExtractor(providerAddress, false);
             const svc = await extractor.getSvcInfo();
-            const signerRA = await Verifier.fetSignerRA(svc.url, svc.name);
+            const signerRA = await Verifier.fetSignerRA(svc.url);
             if (!signerRA?.signing_address) {
                 throw new Error('signing address does not exist');
             }
-            signingKey = `${this.contract.getUserAddress()}_${providerAddress}_${svcName}`;
+            signingKey = `${this.contract.getUserAddress()}_${providerAddress}`;
             await this.metadata.storeSigningKey(signingKey, signerRA.signing_address);
             // TODO: use intel_quote to verify signing address
             const valid = await Verifier.verifyRA(signerRA.nvidia_payload);
@@ -58,19 +57,19 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
-    async getSignerRaDownloadLink(providerAddress, svcName) {
+    async getSignerRaDownloadLink(providerAddress) {
         try {
-            const svc = await this.getService(providerAddress, svcName);
-            return `${svc.url}/v1/proxy/${svcName}/attestation/report`;
+            const svc = await this.getService(providerAddress);
+            return `${svc.url}/v1/proxy/attestation/report`;
         }
         catch (error) {
             throw error;
         }
     }
-    async getChatSignatureDownloadLink(providerAddress, svcName, chatID) {
+    async getChatSignatureDownloadLink(providerAddress, chatID) {
         try {
-            const svc = await this.getService(providerAddress, svcName);
-            return `${svc.url}/v1/proxy/${svcName}/signature/${chatID}`;
+            const svc = await this.getService(providerAddress);
+            return `${svc.url}/v1/proxy/signature/${chatID}`;
         }
         catch (error) {
             throw error;
@@ -104,8 +103,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return false;
         });
     }
-    static async fetSignerRA(providerBrokerURL, svcName) {
-        return fetch(`${providerBrokerURL}/v1/proxy/${svcName}/attestation/report`, {
+    static async fetSignerRA(providerBrokerURL) {
+        return fetch(`${providerBrokerURL}/v1/proxy/attestation/report`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -143,8 +142,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             throw error;
         });
     }
-    static async fetSignatureByChatID(providerBrokerURL, svcName, chatID) {
-        return fetch(`${providerBrokerURL}/v1/proxy/${svcName}/signature/${chatID}`, {
+    static async fetSignatureByChatID(providerBrokerURL, chatID) {
+        return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

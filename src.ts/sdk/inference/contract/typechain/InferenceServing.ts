@@ -70,7 +70,6 @@ export type AccountStructOutput = [
 
 export type ServiceStruct = {
   provider: AddressLike;
-  name: string;
   serviceType: string;
   url: string;
   inputPrice: BigNumberish;
@@ -82,7 +81,6 @@ export type ServiceStruct = {
 
 export type ServiceStructOutput = [
   provider: string,
-  name: string,
   serviceType: string,
   url: string,
   inputPrice: bigint,
@@ -92,7 +90,6 @@ export type ServiceStructOutput = [
   verifiability: string
 ] & {
   provider: string;
-  name: string;
   serviceType: string;
   url: string;
   inputPrice: bigint;
@@ -168,7 +165,7 @@ export interface InferenceServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "addOrUpdateService",
-    values: [string, string, string, string, string, BigNumberish, BigNumberish]
+    values: [string, string, string, string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "batchVerifierAddress",
@@ -196,7 +193,7 @@ export interface InferenceServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getService",
-    values: [AddressLike, string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -218,7 +215,7 @@ export interface InferenceServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "removeService",
-    values: [string]
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -382,11 +379,10 @@ export namespace RefundRequestedEvent {
 }
 
 export namespace ServiceRemovedEvent {
-  export type InputTuple = [service: AddressLike, name: string];
-  export type OutputTuple = [service: string, name: string];
+  export type InputTuple = [service: AddressLike];
+  export type OutputTuple = [service: string];
   export interface OutputObject {
     service: string;
-    name: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -397,7 +393,6 @@ export namespace ServiceRemovedEvent {
 export namespace ServiceUpdatedEvent {
   export type InputTuple = [
     service: AddressLike,
-    name: string,
     serviceType: string,
     url: string,
     inputPrice: BigNumberish,
@@ -408,7 +403,6 @@ export namespace ServiceUpdatedEvent {
   ];
   export type OutputTuple = [
     service: string,
-    name: string,
     serviceType: string,
     url: string,
     inputPrice: bigint,
@@ -419,7 +413,6 @@ export namespace ServiceUpdatedEvent {
   ];
   export interface OutputObject {
     service: string;
-    name: string;
     serviceType: string;
     url: string;
     inputPrice: bigint;
@@ -496,7 +489,6 @@ export interface InferenceServing extends BaseContract {
 
   addOrUpdateService: TypedContractMethod<
     [
-      name: string,
       serviceType: string,
       url: string,
       model: string,
@@ -533,7 +525,7 @@ export interface InferenceServing extends BaseContract {
   getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], "view">;
 
   getService: TypedContractMethod<
-    [provider: AddressLike, name: string],
+    [provider: AddressLike],
     [ServiceStructOutput],
     "view"
   >;
@@ -569,7 +561,7 @@ export interface InferenceServing extends BaseContract {
     "nonpayable"
   >;
 
-  removeService: TypedContractMethod<[name: string], [void], "nonpayable">;
+  removeService: TypedContractMethod<[], [void], "nonpayable">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -630,7 +622,6 @@ export interface InferenceServing extends BaseContract {
     nameOrSignature: "addOrUpdateService"
   ): TypedContractMethod<
     [
-      name: string,
       serviceType: string,
       url: string,
       model: string,
@@ -674,7 +665,7 @@ export interface InferenceServing extends BaseContract {
   getFunction(
     nameOrSignature: "getService"
   ): TypedContractMethod<
-    [provider: AddressLike, name: string],
+    [provider: AddressLike],
     [ServiceStructOutput],
     "view"
   >;
@@ -717,7 +708,7 @@ export interface InferenceServing extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "removeService"
-  ): TypedContractMethod<[name: string], [void], "nonpayable">;
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -819,7 +810,7 @@ export interface InferenceServing extends BaseContract {
       RefundRequestedEvent.OutputObject
     >;
 
-    "ServiceRemoved(address,string)": TypedContractEvent<
+    "ServiceRemoved(address)": TypedContractEvent<
       ServiceRemovedEvent.InputTuple,
       ServiceRemovedEvent.OutputTuple,
       ServiceRemovedEvent.OutputObject
@@ -830,7 +821,7 @@ export interface InferenceServing extends BaseContract {
       ServiceRemovedEvent.OutputObject
     >;
 
-    "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent<
+    "ServiceUpdated(address,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent<
       ServiceUpdatedEvent.InputTuple,
       ServiceUpdatedEvent.OutputTuple,
       ServiceUpdatedEvent.OutputObject

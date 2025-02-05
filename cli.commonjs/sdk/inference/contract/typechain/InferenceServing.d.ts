@@ -48,7 +48,6 @@ export type AccountStructOutput = [
 };
 export type ServiceStruct = {
     provider: AddressLike;
-    name: string;
     serviceType: string;
     url: string;
     inputPrice: BigNumberish;
@@ -59,7 +58,6 @@ export type ServiceStruct = {
 };
 export type ServiceStructOutput = [
     provider: string,
-    name: string,
     serviceType: string,
     url: string,
     inputPrice: bigint,
@@ -69,7 +67,6 @@ export type ServiceStructOutput = [
     verifiability: string
 ] & {
     provider: string;
-    name: string;
     serviceType: string;
     url: string;
     inputPrice: bigint;
@@ -100,21 +97,21 @@ export interface InferenceServingInterface extends Interface {
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]): string;
-    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, string, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "batchVerifierAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
-    encodeFunctionData(functionFragment: "getService", values: [AddressLike, string]): string;
+    encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
     encodeFunctionData(functionFragment: "ledgerAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(functionFragment: "processRefund", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "removeService", values: [string]): string;
+    encodeFunctionData(functionFragment: "removeService", values?: undefined): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct]): string;
@@ -206,11 +203,10 @@ export declare namespace RefundRequestedEvent {
     type LogDescription = TypedLogDescription<Event>;
 }
 export declare namespace ServiceRemovedEvent {
-    type InputTuple = [service: AddressLike, name: string];
-    type OutputTuple = [service: string, name: string];
+    type InputTuple = [service: AddressLike];
+    type OutputTuple = [service: string];
     interface OutputObject {
         service: string;
-        name: string;
     }
     type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
     type Filter = TypedDeferredTopicFilter<Event>;
@@ -220,7 +216,6 @@ export declare namespace ServiceRemovedEvent {
 export declare namespace ServiceUpdatedEvent {
     type InputTuple = [
         service: AddressLike,
-        name: string,
         serviceType: string,
         url: string,
         inputPrice: BigNumberish,
@@ -231,7 +226,6 @@ export declare namespace ServiceUpdatedEvent {
     ];
     type OutputTuple = [
         service: string,
-        name: string,
         serviceType: string,
         url: string,
         inputPrice: bigint,
@@ -242,7 +236,6 @@ export declare namespace ServiceUpdatedEvent {
     ];
     interface OutputObject {
         service: string;
-        name: string;
         serviceType: string;
         url: string;
         inputPrice: bigint;
@@ -284,7 +277,6 @@ export interface InferenceServing extends BaseContract {
         void
     ], "payable">;
     addOrUpdateService: TypedContractMethod<[
-        name: string,
         serviceType: string,
         url: string,
         model: string,
@@ -316,8 +308,7 @@ export interface InferenceServing extends BaseContract {
     getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], "view">;
     getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], "view">;
     getService: TypedContractMethod<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput
     ], "view">;
@@ -347,7 +338,7 @@ export interface InferenceServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    removeService: TypedContractMethod<[name: string], [void], "nonpayable">;
+    removeService: TypedContractMethod<[], [void], "nonpayable">;
     renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
     requestRefundAll: TypedContractMethod<[
         user: AddressLike,
@@ -391,7 +382,6 @@ export interface InferenceServing extends BaseContract {
         void
     ], "payable">;
     getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod<[
-        name: string,
         serviceType: string,
         url: string,
         model: string,
@@ -423,8 +413,7 @@ export interface InferenceServing extends BaseContract {
     getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod<[], [AccountStructOutput[]], "view">;
     getFunction(nameOrSignature: "getAllServices"): TypedContractMethod<[], [ServiceStructOutput[]], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod<[
-        provider: AddressLike,
-        name: string
+        provider: AddressLike
     ], [
         ServiceStructOutput
     ], "view">;
@@ -454,7 +443,7 @@ export interface InferenceServing extends BaseContract {
             pendingRefund: bigint;
         }
     ], "nonpayable">;
-    getFunction(nameOrSignature: "removeService"): TypedContractMethod<[name: string], [void], "nonpayable">;
+    getFunction(nameOrSignature: "removeService"): TypedContractMethod<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod<[], [void], "nonpayable">;
     getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod<[
         user: AddressLike,
@@ -486,9 +475,9 @@ export interface InferenceServing extends BaseContract {
         OwnershipTransferred: TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
         "RefundRequested(address,address,uint256,uint256)": TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
         RefundRequested: TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-        "ServiceRemoved(address,string)": TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+        "ServiceRemoved(address)": TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
         ServiceRemoved: TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        "ServiceUpdated(address,string,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        "ServiceUpdated(address,string,string,uint256,uint256,uint256,string,string)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
         ServiceUpdated: TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
     };
 }

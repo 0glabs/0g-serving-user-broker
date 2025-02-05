@@ -41,13 +41,12 @@ export declare class InferenceBroker {
      * 2. Model information for the provider service
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      *
      * @returns { endpoint, model } - Object containing endpoint and model.
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getServiceMetadata: (providerAddress: string, svcName: string) => Promise<{
+    getServiceMetadata: (providerAddress: string) => Promise<{
         endpoint: string;
         model: string;
     }>;
@@ -60,7 +59,6 @@ export declare class InferenceBroker {
      * for contract settlement.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
      *
      * @returns headers. Records information such as the request fee and user signature.
@@ -95,7 +93,7 @@ export declare class InferenceBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestHeaders: (providerAddress: string, svcName: string, content: string) => Promise<import("./request").ServingRequestHeaders>;
+    getRequestHeaders: (providerAddress: string, content: string) => Promise<import("./request").ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
@@ -105,7 +103,6 @@ export declare class InferenceBroker {
      * with the chat ID.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {string} content - The main content returned by the service. For example, in the case of a chatbot service,
      * it would be the response text.
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
@@ -116,36 +113,33 @@ export declare class InferenceBroker {
      *
      * @throws An error if any issues occur during the processing of the response.
      */
-    processResponse: (providerAddress: string, svcName: string, content: string, chatID?: string) => Promise<boolean | null>;
+    processResponse: (providerAddress: string, content: string, chatID?: string) => Promise<boolean | null>;
     /**
      * verifyService is used to verify the reliability of the service.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      *
      * @returns A <boolean | null> value. True indicates the service is reliable, otherwise it is unreliable.
      *
      * @throws An error if errors occur during the verification process.
      */
-    verifyService: (providerAddress: string, svcName: string) => Promise<boolean | null>;
+    verifyService: (providerAddress: string) => Promise<boolean | null>;
     /**
      * getSignerRaDownloadLink returns the download link for the Signer RA.
      *
      * It can be provided to users who wish to manually verify the Signer RA.
      *
      * @param {string} providerAddress - provider address.
-     * @param {string} svcName - service name.
      *
      * @returns Download link.
      */
-    getSignerRaDownloadLink: (providerAddress: string, svcName: string) => Promise<string>;
+    getSignerRaDownloadLink: (providerAddress: string) => Promise<string>;
     /**
      * getChatSignatureDownloadLink returns the download link for the signature of a single chat.
      *
      * It can be provided to users who wish to manually verify the content of a single chat.
      *
      * @param {string} providerAddress - provider address.
-     * @param {string} svcName - service name.
      * @param {string} chatID - ID of the chat.
      *
      * @description To verify the chat signature, use the following code:
@@ -158,7 +152,7 @@ export declare class InferenceBroker {
      *
      * @returns Download link.
      */
-    getChatSignatureDownloadLink: (providerAddress: string, svcName: string, chatID: string) => Promise<string>;
+    getChatSignatureDownloadLink: (providerAddress: string, chatID: string) => Promise<string>;
     /**
      * settleFee is used to settle the fee for the provider service.
      *
@@ -167,14 +161,13 @@ export declare class InferenceBroker {
      * you can manually call settleFee to settle the fee.
      *
      * @param {string} providerAddress - The address of the provider.
-     * @param {string} svcName - The name of the service.
      * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
      *
      * @returns A promise that resolves when the fee settlement is successful.
      *
      * @throws An error if any issues occur during the fee settlement process.
      */
-    settleFee: (providerAddress: string, svcName: string, fee: number) => Promise<void>;
+    settleFee: (providerAddress: string, fee: number) => Promise<void>;
 }
 /**
  * createInferenceBroker is used to initialize ZGServingUserBroker

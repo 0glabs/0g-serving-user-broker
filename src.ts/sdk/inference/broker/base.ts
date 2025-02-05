@@ -32,17 +32,16 @@ export abstract class ZGServingUserBrokerBase {
 
     protected async getService(
         providerAddress: string,
-        svcName: string,
         useCache = true
     ): Promise<ServiceStructOutput> {
-        const key = providerAddress + svcName
+        const key = providerAddress
         const cachedSvc = await this.cache.getItem(key)
         if (cachedSvc && useCache) {
             return cachedSvc
         }
 
         try {
-            const svc = await this.contract.getService(providerAddress, svcName)
+            const svc = await this.contract.getService(providerAddress)
             await this.cache.setItem(
                 key,
                 svc,
@@ -57,15 +56,10 @@ export abstract class ZGServingUserBrokerBase {
 
     protected async getExtractor(
         providerAddress: string,
-        svcName: string,
         useCache = true
     ): Promise<Extractor> {
         try {
-            const svc = await this.getService(
-                providerAddress,
-                svcName,
-                useCache
-            )
+            const svc = await this.getService(providerAddress, useCache)
             const extractor = this.createExtractor(svc)
             return extractor
         } catch (error) {
@@ -117,12 +111,11 @@ export abstract class ZGServingUserBrokerBase {
 
     async getHeader(
         providerAddress: string,
-        svcName: string,
         content: string,
         outputFee: bigint
     ): Promise<ServingRequestHeaders> {
         try {
-            const extractor = await this.getExtractor(providerAddress, svcName)
+            const extractor = await this.getExtractor(providerAddress)
             const { settleSignerPrivateKey } = await this.getProviderData(
                 providerAddress
             )
@@ -163,7 +156,6 @@ export abstract class ZGServingUserBrokerBase {
                 'Input-Fee': inputFee.toString(),
                 Nonce: nonce.toString(),
                 'Previous-Output-Fee': outputFee.toString(),
-                'Service-Name': svcName,
                 Signature: sig,
             }
         } catch (error) {
@@ -178,18 +170,12 @@ export abstract class ZGServingUserBrokerBase {
         return inputFee
     }
 
-    getCachedFeeKey(provider: string, svcName: string) {
-        return provider + '_' + svcName + '_cachedFee'
-    }
-
-    async updateCachedFee(provider: string, svcName: string, fee: bigint) {
+    async updateCachedFee(provider: string, fee: bigint) {
         try {
             const curFee =
-                (await this.cache.getItem(
-                    this.getCachedFeeKey(provider, svcName)
-                )) || BigInt(0)
+                (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0)
             await this.cache.setItem(
-                provider,
+                provider + '_cachedFee',
                 BigInt(curFee) + fee,
                 1 * 60 * 1000,
                 CacheValueTypeEnum.BigInt
@@ -199,12 +185,10 @@ export abstract class ZGServingUserBrokerBase {
         }
     }
 
-    async clearCacheFee(provider: string, svcName: string, fee: bigint) {
+    async clearCacheFee(provider: string, fee: bigint) {
         try {
             const curFee =
-                (await this.cache.getItem(
-                    this.getCachedFeeKey(provider, svcName)
-                )) || BigInt(0)
+                (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0)
             await this.cache.setItem(
                 provider,
                 BigInt(curFee) + fee,

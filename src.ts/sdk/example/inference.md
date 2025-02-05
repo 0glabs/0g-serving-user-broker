@@ -38,74 +38,68 @@
     import OpenAI from 'openai'
 
     async function main() {
-        const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
+        const provider = new ethers.JsonRpcProvider(
+            'https://evmrpc-testnet.0g.ai'
+        )
 
         // Step 1: Create a wallet with a private key
-        const privateKey =
-            '59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
+        const privateKey = '<YOUR_PRIVATE_KEY>'
         const wallet = new ethers.Wallet(privateKey, provider)
 
         // Step 2: Initialize the broker
         try {
-            const broker = await createZGComputeNetworkBroker(
-                wallet,
-                '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318',
-                '0x0165878A594ca255338adfa4d48449f69242Eb8F',
-                '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
-            )
+            const broker = await createZGComputeNetworkBroker(wallet)
 
-            // Step 3: List available services
+            // Step 3: Manage Accounts
+            const initialBalance = 0.01
+            // Step 3.1: Create a new account
+            console.log('Creating a new account...')
+            await broker.ledger.addLedger(initialBalance)
+            console.log('Account created successfully.')
+
+            // Step 3.2: Deposit funds into the account
+            const depositAmount = 0.01
+            console.log('Depositing funds...')
+            await broker.ledger.depositFund(depositAmount)
+            console.log('Funds deposited successfully.')
+
+            // Step 3.3: Get the account
+            await displayAccount(broker)
+
+            // Step 4: List available services
             console.log('Listing available services...')
             const services = await broker.inference.listService()
             services.forEach((service: any) => {
                 console.log(
-                    `Service: ${service.name}, Provider: ${service.provider}, Type: ${service.serviceType}, Model: ${service.model}, URL: ${service.url}, verifiability: ${service.verifiability}`
+                    `Provider: ${service.provider}\nType: ${service.serviceType}\nModel: ${service.model}\nURL: ${service.url}\nVerifiability: ${service.verifiability}\n`
                 )
             })
 
-            // Step 3.1: Select a service
+            // Step 4.1: Select a service
+            const PresetProvider = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
             const service = services.find(
-                (service: any) => service.name === 'test'
+                (service: any) => service.provider === PresetProvider
             )
             if (!service) {
                 console.error('Service not found.')
                 return
             }
-            const providerAddress = service.provider
-
-            // Step 4.2: Create a account
-            const amount = 0.01
-            console.log('Creating an account...')
-            await broker.ledger.addLedger(amount)
-            console.log('Account created successfully.')
-
-            // Step 4.3: Get the account
-            const account = await broker.ledger.getLedger()
-            console.log('Account balance:', account.ledgerInfo[0])
+            const providerAddress = PresetProvider
 
             // Step 5: Use the Provider's Services
-            console.log('Processing a request...')
-            const serviceName = service.name
             const content = 'hello world'
 
             // Step 5.1: Get the request metadata
             const { endpoint, model } =
-                await broker.inference.getServiceMetadata(
-                    providerAddress,
-                    serviceName
-                )
+                await broker.inference.getServiceMetadata(providerAddress)
 
             // Step 5.2: Get the request headers
             const headers = await broker.inference.getRequestHeaders(
                 providerAddress,
-                serviceName,
                 content
             )
 
-            console.log('Headers:', headers)
-
             // Step 6: Send a request to the service
-
             const openai = new OpenAI({
                 baseURL: endpoint,
                 apiKey: '',
@@ -127,19 +121,60 @@
             if (!receivedContent) {
                 throw new Error('No content received.')
             }
-            console.log('Response:', receivedContent)
+            console.log(`Response: ${receivedContent}\n`)
 
             // Step 7: Process the response
-            console.log('Processing a response...')
+            console.log('Processing the response...')
             const isValid = await broker.inference.processResponse(
                 providerAddress,
-                serviceName,
                 receivedContent,
                 chatID
             )
-            console.log(`Response validity: ${isValid ? 'Valid' : 'Invalid'}`)
+            console.log(`Response validity: ${isValid ? 'Valid' : 'Invalid'}\n`)
+
+            // Step 8: Retrieve the fund if needed
+            await broker.ledger.retrieveFund('fine-tuning')
+            await broker.ledger.retrieveFund('inference')
+
+            await displayAccount(broker)
         } catch (error) {
             console.error('Error during execution:', error)
+        }
+    }
+
+    async function displayAccount(broker: any) {
+        const { ledgerInfo, infers, fines } = await broker.ledger.getLedger()
+
+        console.log('\nAccount Overview')
+        console.log(' Balance (neuron):', ledgerInfo[0])
+        console.log(
+            ' Locked Balance (transferred to sub-accounts):',
+            ledgerInfo[1],
+            '\n'
+        )
+
+        console.log(
+            ' Inference sub-accounts (Dynamically Created per Used Provider)'
+        )
+        infers.forEach((infer: any) => {
+            console.log(`   Provider Address: ${infer[0]}`)
+            console.log(`   Balance (neuron): ${infer[1]}`)
+            console.log(
+                `   Requested Return to Main Account (neuron): ${infer[2]}\n`
+            )
+        })
+
+        if (fines && fines.length > 0) {
+            console.log(
+                ' Fine-tuning sub-accounts (Dynamically Created per Used Provider)'
+            )
+            fines.forEach((fine: any) => {
+                console.log(`   Provider Address: ${fine[0]}`)
+                console.log(`   Balance (neuron): ${fine[1]}`)
+                console.log(
+                    `   Requested Return to Main Account (neuron): ${fine[2]}\n`
+                )
+            })
         }
     }
 

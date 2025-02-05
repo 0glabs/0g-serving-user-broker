@@ -35,10 +35,6 @@ export interface ServingRequestHeaders {
      */
     'Previous-Output-Fee': string
     /**
-     * Service name
-     */
-    'Service-Name': string
-    /**
      * User's signature for the other headers.
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
@@ -66,16 +62,13 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         this.ledger = ledger
     }
 
-    async getServiceMetadata(
-        providerAddress: string,
-        svcName: string
-    ): Promise<{
+    async getServiceMetadata(providerAddress: string): Promise<{
         endpoint: string
         model: string
     }> {
-        const service = await this.getService(providerAddress, svcName)
+        const service = await this.getService(providerAddress)
         return {
-            endpoint: `${service.url}/v1/proxy/${svcName}`,
+            endpoint: `${service.url}/v1/proxy`,
             model: service.model,
         }
     }
@@ -104,17 +97,11 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
      */
     async getRequestHeaders(
         providerAddress: string,
-        svcName: string,
         content: string
     ): Promise<ServingRequestHeaders> {
         try {
-            await this.topUpAccountIfNeeded(providerAddress, svcName, content)
-            return await this.getHeader(
-                providerAddress,
-                svcName,
-                content,
-                BigInt(0)
-            )
+            await this.topUpAccountIfNeeded(providerAddress, content)
+            return await this.getHeader(providerAddress, content, BigInt(0))
         } catch (error) {
             throw error
         }
@@ -127,7 +114,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
      */
     async shouldCheckAccount(svc: ServiceStructOutput) {
         try {
-            const key = this.getCachedFeeKey(svc.provider, svc.name)
+            const key = svc.provider + '_cachedFee'
             const usedFund = (await this.cache.getItem(key)) || BigInt(0)
             return (
                 usedFund >
@@ -141,15 +128,10 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      * @param provider
-     * @param svcName
      */
-    async topUpAccountIfNeeded(
-        provider: string,
-        svcName: string,
-        content: string
-    ) {
+    async topUpAccountIfNeeded(provider: string, content: string) {
         try {
-            const extractor = await this.getExtractor(provider, svcName)
+            const extractor = await this.getExtractor(provider)
             const svc = await extractor.getSvcInfo()
 
             // In first around, we top up the account to topUpTargetThreshold * (inputPrice + outputPrice).
@@ -173,7 +155,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             }
 
             const newFee = await this.calculateInputFees(extractor, content)
-            await this.updateCachedFee(provider, svcName, newFee)
+            await this.updateCachedFee(provider, newFee)
             const needCheck = await this.shouldCheckAccount(svc)
             // update cache for current content
             if (!needCheck) {
@@ -192,7 +174,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                         (svc.inputPrice + svc.outputPrice)
                 )
             }
-            await this.clearCacheFee(provider, svcName, newFee)
+            await this.clearCacheFee(provider, newFee)
         } catch (error) {
             throw error
         }

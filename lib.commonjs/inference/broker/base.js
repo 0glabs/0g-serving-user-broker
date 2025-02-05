@@ -21,14 +21,14 @@ class ZGServingUserBrokerBase {
         ]);
         return { settleSignerPrivateKey };
     }
-    async getService(providerAddress, svcName, useCache = true) {
-        const key = providerAddress + svcName;
+    async getService(providerAddress, useCache = true) {
+        const key = providerAddress;
         const cachedSvc = await this.cache.getItem(key);
         if (cachedSvc && useCache) {
             return cachedSvc;
         }
         try {
-            const svc = await this.contract.getService(providerAddress, svcName);
+            const svc = await this.contract.getService(providerAddress);
             await this.cache.setItem(key, svc, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Service);
             return svc;
         }
@@ -36,9 +36,9 @@ class ZGServingUserBrokerBase {
             throw error;
         }
     }
-    async getExtractor(providerAddress, svcName, useCache = true) {
+    async getExtractor(providerAddress, useCache = true) {
         try {
-            const svc = await this.getService(providerAddress, svcName, useCache);
+            const svc = await this.getService(providerAddress, useCache);
             const extractor = this.createExtractor(svc);
             return extractor;
         }
@@ -81,9 +81,9 @@ class ZGServingUserBrokerBase {
         const decimalPart = Number(remainder) / Number(divisor);
         return Number(integerPart) + decimalPart;
     }
-    async getHeader(providerAddress, svcName, content, outputFee) {
+    async getHeader(providerAddress, content, outputFee) {
         try {
-            const extractor = await this.getExtractor(providerAddress, svcName);
+            const extractor = await this.getExtractor(providerAddress);
             const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
             const key = `${this.contract.getUserAddress()}_${providerAddress}`;
             let privateKey = settleSignerPrivateKey;
@@ -106,7 +106,6 @@ class ZGServingUserBrokerBase {
                 'Input-Fee': inputFee.toString(),
                 Nonce: nonce.toString(),
                 'Previous-Output-Fee': outputFee.toString(),
-                'Service-Name': svcName,
                 Signature: sig,
             };
         }
@@ -120,21 +119,18 @@ class ZGServingUserBrokerBase {
         const inputFee = BigInt(inputCount) * svc.inputPrice;
         return inputFee;
     }
-    getCachedFeeKey(provider, svcName) {
-        return provider + '_' + svcName + '_cachedFee';
-    }
-    async updateCachedFee(provider, svcName, fee) {
+    async updateCachedFee(provider, fee) {
         try {
-            const curFee = (await this.cache.getItem(this.getCachedFeeKey(provider, svcName))) || BigInt(0);
-            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
+            const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
+            await this.cache.setItem(provider + '_cachedFee', BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
             throw error;
         }
     }
-    async clearCacheFee(provider, svcName, fee) {
+    async clearCacheFee(provider, fee) {
         try {
-            const curFee = (await this.cache.getItem(this.getCachedFeeKey(provider, svcName))) || BigInt(0);
+            const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
             await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
