@@ -127,9 +127,12 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
 
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     * @param provider
      */
-    async topUpAccountIfNeeded(provider: string, content: string) {
+    async topUpAccountIfNeeded(
+        provider: string,
+        content: string,
+        gasPrice?: number
+    ) {
         try {
             const extractor = await this.getExtractor(provider)
             const svc = await extractor.getSvcInfo()
@@ -142,7 +145,8 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                     provider,
                     'inference',
                     this.topUpTargetThreshold *
-                        (svc.inputPrice + svc.outputPrice)
+                        (svc.inputPrice + svc.outputPrice),
+                    gasPrice
                 )
 
                 await this.cache.setItem(
@@ -171,7 +175,8 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                     provider,
                     'inference',
                     this.topUpTargetThreshold *
-                        (svc.inputPrice + svc.outputPrice)
+                        (svc.inputPrice + svc.outputPrice),
+                    gasPrice
                 )
             }
             await this.clearCacheFee(provider, newFee)

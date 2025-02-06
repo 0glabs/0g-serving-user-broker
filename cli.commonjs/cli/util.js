@@ -11,7 +11,7 @@ const chalk_1 = tslib_1.__importDefault(require("chalk"));
 async function initBroker(options) {
     const provider = new ethers_1.ethers.JsonRpcProvider(options.rpc);
     const wallet = new ethers_1.ethers.Wallet(options.key, provider);
-    return await (0, sdk_1.createZGComputeNetworkBroker)(wallet, options.ledgerCa, options.inferenceCa, options.fineTuningCa);
+    return await (0, sdk_1.createZGComputeNetworkBroker)(wallet, options.ledgerCa, options.inferenceCa, options.fineTuningCa, options.gasPrice);
 }
 async function withLedgerBroker(options, action) {
     try {

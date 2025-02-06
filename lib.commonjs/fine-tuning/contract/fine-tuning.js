@@ -6,10 +6,12 @@ class FineTuningServingContract {
     serving;
     signer;
     _userAddress;
-    constructor(signer, contractAddress, userAddress) {
+    _gasPrice;
+    constructor(signer, contractAddress, userAddress, gasPrice) {
         this.serving = typechain_1.FineTuningServing__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
+        this._gasPrice = gasPrice;
     }
     lockTime() {
         return this.serving.lockTime();
@@ -42,9 +44,13 @@ class FineTuningServingContract {
             throw error;
         }
     }
-    async acknowledgeProviderSigner(providerAddress, providerSigner) {
+    async acknowledgeProviderSigner(providerAddress, providerSigner, gasPrice) {
         try {
-            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -55,9 +61,13 @@ class FineTuningServingContract {
             throw error;
         }
     }
-    async acknowledgeDeliverable(providerAddress, index) {
+    async acknowledgeDeliverable(providerAddress, index, gasPrice) {
         try {
-            const tx = await this.serving.acknowledgeDeliverable(providerAddress, index);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.serving.acknowledgeDeliverable(providerAddress, index, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');

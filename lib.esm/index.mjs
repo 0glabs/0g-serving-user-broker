@@ -8054,9 +8054,8 @@ class RequestProcessor extends ZGServingUserBrokerBase {
     }
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     * @param provider
      */
-    async topUpAccountIfNeeded(provider, content) {
+    async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
             const extractor = await this.getExtractor(provider);
             const svc = await extractor.getSvcInfo();
@@ -8065,7 +8064,7 @@ class RequestProcessor extends ZGServingUserBrokerBase {
             const firstRound = await this.cache.getItem('firstRound');
             if (firstRound !== 'false') {
                 await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
-                    (svc.inputPrice + svc.outputPrice));
+                    (svc.inputPrice + svc.outputPrice), gasPrice);
                 await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
                 return;
             }
@@ -8081,7 +8080,7 @@ class RequestProcessor extends ZGServingUserBrokerBase {
             if (acc.balance <
                 this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice)) {
                 await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
-                    (svc.inputPrice + svc.outputPrice));
+                    (svc.inputPrice + svc.outputPrice), gasPrice);
             }
             await this.clearCacheFee(provider, newFee);
         }
@@ -9760,10 +9759,12 @@ class FineTuningServingContract {
     serving;
     signer;
     _userAddress;
-    constructor(signer, contractAddress, userAddress) {
+    _gasPrice;
+    constructor(signer, contractAddress, userAddress, gasPrice) {
         this.serving = FineTuningServing__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
+        this._gasPrice = gasPrice;
     }
     lockTime() {
         return this.serving.lockTime();
@@ -9796,9 +9797,13 @@ class FineTuningServingContract {
             throw error;
         }
     }
-    async acknowledgeProviderSigner(providerAddress, providerSigner) {
+    async acknowledgeProviderSigner(providerAddress, providerSigner, gasPrice) {
         try {
-            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -9809,9 +9814,13 @@ class FineTuningServingContract {
             throw error;
         }
     }
-    async acknowledgeDeliverable(providerAddress, index) {
+    async acknowledgeDeliverable(providerAddress, index, gasPrice) {
         try {
-            const tx = await this.serving.acknowledgeDeliverable(providerAddress, index);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.serving.acknowledgeDeliverable(providerAddress, index, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -9995,7 +10004,7 @@ class ModelProcessor extends BrokerBase {
     async downloadDataset(dataPath, dataRoot) {
         download(dataPath, dataRoot);
     }
-    async acknowledgeModel(providerAddress, dataPath) {
+    async acknowledgeModel(providerAddress, dataPath, gasPrice) {
         try {
             const account = await this.contract.getAccount(providerAddress);
             const latestDeliverable = account.deliverables[account.deliverables.length - 1];
@@ -10003,7 +10012,7 @@ class ModelProcessor extends BrokerBase {
                 throw new Error('No deliverable found');
             }
             await download(dataPath, latestDeliverable.modelRootHash);
-            await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
+            await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1, gasPrice);
         }
         catch (error) {
             throw error;
@@ -10077,7 +10086,7 @@ class ServiceProcessor extends BrokerBase {
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
     //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner(providerAddress) {
+    async acknowledgeProviderSigner(providerAddress, gasPrice) {
         try {
             try {
                 await this.contract.getAccount(providerAddress);
@@ -10087,12 +10096,12 @@ class ServiceProcessor extends BrokerBase {
                     throw error;
                 }
                 else {
-                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0));
+                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
                 }
             }
             const res = await this.servingProvider.getQuote(providerAddress);
             // TODO: verify the quote
-            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer);
+            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer, gasPrice);
         }
         catch (error) {
             throw error;
@@ -10103,11 +10112,11 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             const service = await this.contract.getService(providerAddress);
             const fee = service.pricePerToken * BigInt(dataSize);
-            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
+            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             this.verifyTrainingParams(trainingParams);
             const nonce = getNonce();
@@ -10281,10 +10290,12 @@ class FineTuningBroker {
     modelProcessor;
     serviceProcessor;
     serviceProvider;
-    constructor(signer, fineTuningCA, ledger) {
+    _gasPrice;
+    constructor(signer, fineTuningCA, ledger, gasPrice) {
         this.signer = signer;
         this.fineTuningCA = fineTuningCA;
         this.ledger = ledger;
+        this._gasPrice = gasPrice;
     }
     async initialize() {
         let userAddress;
@@ -10294,7 +10305,7 @@ class FineTuningBroker {
         catch (error) {
             throw error;
         }
-        const contract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        const contract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice);
         this.serviceProvider = new Provider(contract);
         this.modelProcessor = new ModelProcessor(contract, this.ledger, this.serviceProvider);
         this.serviceProcessor = new ServiceProcessor(contract, this.ledger, this.serviceProvider);
@@ -10331,9 +10342,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeProviderSigner = async (providerAddress) => {
+    acknowledgeProviderSigner = async (providerAddress, gasPrice) => {
         try {
-            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress);
+            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, gasPrice);
         }
         catch (error) {
             throw error;
@@ -10363,9 +10374,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
         }
         catch (error) {
             throw error;
@@ -10388,9 +10399,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeModel = async (providerAddress, dataPath) => {
+    acknowledgeModel = async (providerAddress, dataPath, gasPrice) => {
         try {
-            return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath);
+            return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath, gasPrice);
         }
         catch (error) {
             throw error;
@@ -10410,13 +10421,15 @@ class FineTuningBroker {
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ * @param ledger - Ledger broker instance.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createFineTuningBroker(signer, contractAddress = '', ledger) {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger);
+async function createFineTuningBroker(signer, contractAddress = '', ledger, gasPrice) {
+    const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice);
     try {
         await broker.initialize();
         return broker;
@@ -10482,7 +10495,7 @@ class LedgerProcessor {
             throw error;
         }
     }
-    async addLedger(balance) {
+    async addLedger(balance, gasPrice) {
         try {
             try {
                 const ledger = await this.getLedger();
@@ -10498,48 +10511,48 @@ class LedgerProcessor {
                 }
             }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
-            await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
+            await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey, gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async deleteLedger() {
+    async deleteLedger(gasPrice) {
         try {
-            await this.ledgerContract.deleteLedger();
+            await this.ledgerContract.deleteLedger(gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async depositFund(balance) {
-        try {
-            const amount = this.a0giToNeuron(balance).toString();
-            await this.ledgerContract.depositFund(amount);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async refund(balance) {
+    async depositFund(balance, gasPrice) {
         try {
             const amount = this.a0giToNeuron(balance).toString();
-            await this.ledgerContract.refund(amount);
+            await this.ledgerContract.depositFund(amount, gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async transferFund(to, serviceTypeStr, balance) {
+    async refund(balance, gasPrice) {
+        try {
+            const amount = this.a0giToNeuron(balance).toString();
+            await this.ledgerContract.refund(amount, gasPrice);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async transferFund(to, serviceTypeStr, balance, gasPrice) {
         try {
             const amount = balance.toString();
-            await this.ledgerContract.transferFund(to, serviceTypeStr, amount);
+            await this.ledgerContract.transferFund(to, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async retrieveFund(serviceTypeStr) {
+    async retrieveFund(serviceTypeStr, gasPrice) {
         try {
             const ledger = await this.getLedgerWithDetail();
             const providers = serviceTypeStr == 'inference' ? ledger.infers : ledger.fines;
@@ -10549,7 +10562,7 @@ class LedgerProcessor {
             const providerAddresses = providers
                 .filter((x) => x[1] - x[2] > 0n)
                 .map((x) => x[0]);
-            await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr);
+            await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr, gasPrice);
         }
         catch (error) {
             throw error;
@@ -11011,16 +11024,20 @@ class LedgerManagerContract {
     ledger;
     signer;
     _userAddress;
-    constructor(signer, contractAddress, userAddress) {
+    _gasPrice;
+    constructor(signer, contractAddress, userAddress, gasPrice) {
         this.ledger = LedgerManager__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
+        this._gasPrice = gasPrice;
     }
-    async addLedger(signer, balance, settleSignerEncryptedPrivateKey) {
+    async addLedger(signer, balance, settleSignerEncryptedPrivateKey, gasPrice) {
         try {
-            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, {
-                value: balance,
-            });
+            const txOptions = { value: balance };
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -11050,11 +11067,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async depositFund(balance) {
+    async depositFund(balance, gasPrice) {
         try {
-            const tx = await this.ledger.depositFund({
-                value: balance,
-            });
+            const txOptions = { value: balance };
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.depositFund(txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -11065,9 +11084,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async refund(amount) {
+    async refund(amount, gasPrice) {
         try {
-            const tx = await this.ledger.refund(amount);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.refund(amount, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -11078,9 +11101,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async transferFund(provider, serviceTypeStr, amount) {
+    async transferFund(provider, serviceTypeStr, amount, gasPrice) {
         try {
-            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -11091,9 +11118,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async retrieveFund(providers, serviceTypeStr) {
+    async retrieveFund(providers, serviceTypeStr, gasPrice) {
         try {
-            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -11104,9 +11135,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async deleteLedger() {
+    async deleteLedger(gasPrice) {
         try {
-            const tx = await this.ledger.deleteLedger();
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.deleteLedger(txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -11128,11 +11163,13 @@ class LedgerBroker {
     ledgerCA;
     inferenceCA;
     fineTuningCA;
-    constructor(signer, ledgerCA, inferenceCA, fineTuningCA) {
+    gasPrice;
+    constructor(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
         this.signer = signer;
         this.ledgerCA = ledgerCA;
         this.inferenceCA = inferenceCA;
         this.fineTuningCA = fineTuningCA;
+        this.gasPrice = gasPrice;
     }
     async initialize() {
         let userAddress;
@@ -11142,7 +11179,7 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const ledgerContract = new LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const ledgerContract = new LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice);
         const inferenceContract = new InferenceServingContract(this.signer, this.inferenceCA, userAddress);
         let fineTuningContract;
         if (this.signer instanceof Wallet) {
@@ -11155,15 +11192,17 @@ class LedgerBroker {
      * Adds a new ledger to the contract.
      *
      * @param {number} balance - The initial balance to be assigned to the new ledger. Units are in A0GI.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
      *
      * @throws  An error if the ledger creation fails.
      *
      * @remarks
      * When creating an ledger, a key pair is also created to sign the request.
      */
-    addLedger = async (balance) => {
+    addLedger = async (balance, gasPrice) => {
         try {
-            return await this.ledger.addLedger(balance);
+            return await this.ledger.addLedger(balance, gasPrice);
         }
         catch (error) {
             throw error;
@@ -11188,11 +11227,14 @@ class LedgerBroker {
      * Deposits a specified amount of funds into Ledger corresponding to the current wallet address.
      *
      * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @throws  An error if the deposit fails.
      */
-    depositFund = async (amount) => {
+    depositFund = async (amount, gasPrice) => {
         try {
-            return await this.ledger.depositFund(amount);
+            return await this.ledger.depositFund(amount, gasPrice);
         }
         catch (error) {
             throw error;
@@ -11202,14 +11244,17 @@ class LedgerBroker {
      * Refunds a specified amount using the ledger.
      *
      * @param amount - The amount to be refunded.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @returns A promise that resolves when the refund is processed.
      * @throws Will throw an error if the refund process fails.
      *
      * @note The amount should be a positive number.
      */
-    refund = async (amount) => {
+    refund = async (amount, gasPrice) => {
         try {
-            return await this.ledger.refund(amount);
+            return await this.ledger.refund(amount, gasPrice);
         }
         catch (error) {
             throw error;
@@ -11222,12 +11267,15 @@ class LedgerBroker {
      * @param serviceTypeStr - The type of service for which the funds are being transferred.
      *                         It can be either 'inference' or 'fine-tuning'.
      * @param amount - The amount of funds to be transferred. Units are in A0GI.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @returns A promise that resolves with the result of the fund transfer operation.
      * @throws Will throw an error if the fund transfer operation fails.
      */
-    transferFund = async (provider, serviceTypeStr, amount) => {
+    transferFund = async (provider, serviceTypeStr, amount, gasPrice) => {
         try {
-            return await this.ledger.transferFund(provider, serviceTypeStr, amount);
+            return await this.ledger.transferFund(provider, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
             throw error;
@@ -11238,12 +11286,15 @@ class LedgerBroker {
      *
      * @param serviceTypeStr - The type of service for which the funds are being retrieved.
      *                         It can be either 'inference' or 'fine-tuning'.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @returns A promise that resolves with the result of the fund retrieval operation.
      * @throws Will throw an error if the fund retrieval operation fails.
      */
-    retrieveFund = async (serviceTypeStr) => {
+    retrieveFund = async (serviceTypeStr, gasPrice) => {
         try {
-            return await this.ledger.retrieveFund(serviceTypeStr);
+            return await this.ledger.retrieveFund(serviceTypeStr, gasPrice);
         }
         catch (error) {
             throw error;
@@ -11252,11 +11303,14 @@ class LedgerBroker {
     /**
      * Deletes the ledger corresponding to the current wallet address.
      *
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                           the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @throws  An error if the deletion fails.
      */
-    deleteLedger = async () => {
+    deleteLedger = async (gasPrice) => {
         try {
-            return await this.ledger.deleteLedger();
+            return await this.ledger.deleteLedger(gasPrice);
         }
         catch (error) {
             throw error;
@@ -11273,8 +11327,8 @@ class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA) {
-    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
+async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
     try {
         await broker.initialize();
         return broker;
@@ -11301,18 +11355,19 @@ class ZGComputeNetworkBroker {
  * @param ledgerCA - 0G Compute Network Ledger Contact address, use default address if not provided.
  * @param inferenceCA - 0G Compute Network Inference Serving contract address, use default address if not provided.
  * @param fineTuningCA - 0G Compute Network Fine Tuning Serving contract address, use default address if not provided.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGComputeNetworkBroker(signer, ledgerCA = '0xf7bBCE7BA75bF5C46bf99AfdF14E4F5f6BBA8985', inferenceCA = '0xAdDe2e52114E1eA5D911334efe07751B1EB2058B', fineTuningCA = '0x1Ed64cA20E99Ea0751ba874b382ed4E56168070F') {
+async function createZGComputeNetworkBroker(signer, ledgerCA = '0xf7bBCE7BA75bF5C46bf99AfdF14E4F5f6BBA8985', inferenceCA = '0xAdDe2e52114E1eA5D911334efe07751B1EB2058B', fineTuningCA = '0x1Ed64cA20E99Ea0751ba874b382ed4E56168070F', gasPrice) {
     try {
-        const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
+        const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
         const inferenceBroker = await createInferenceBroker(signer, inferenceCA, ledger);
         let fineTuningBroker;
         if (signer instanceof Wallet) {
-            fineTuningBroker = await createFineTuningBroker(signer, fineTuningCA, ledger);
+            fineTuningBroker = await createFineTuningBroker(signer, fineTuningCA, ledger, gasPrice);
         }
         const broker = new ZGComputeNetworkBroker(ledger, inferenceBroker, fineTuningBroker);
         return broker;

@@ -59,7 +59,7 @@ class LedgerProcessor {
             throw error;
         }
     }
-    async addLedger(balance) {
+    async addLedger(balance, gasPrice) {
         try {
             try {
                 const ledger = await this.getLedger();
@@ -75,48 +75,48 @@ class LedgerProcessor {
                 }
             }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
-            await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey);
+            await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey, gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async deleteLedger() {
+    async deleteLedger(gasPrice) {
         try {
-            await this.ledgerContract.deleteLedger();
+            await this.ledgerContract.deleteLedger(gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async depositFund(balance) {
-        try {
-            const amount = this.a0giToNeuron(balance).toString();
-            await this.ledgerContract.depositFund(amount);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async refund(balance) {
+    async depositFund(balance, gasPrice) {
         try {
             const amount = this.a0giToNeuron(balance).toString();
-            await this.ledgerContract.refund(amount);
+            await this.ledgerContract.depositFund(amount, gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async transferFund(to, serviceTypeStr, balance) {
+    async refund(balance, gasPrice) {
+        try {
+            const amount = this.a0giToNeuron(balance).toString();
+            await this.ledgerContract.refund(amount, gasPrice);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async transferFund(to, serviceTypeStr, balance, gasPrice) {
         try {
             const amount = balance.toString();
-            await this.ledgerContract.transferFund(to, serviceTypeStr, amount);
+            await this.ledgerContract.transferFund(to, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
             throw error;
         }
     }
-    async retrieveFund(serviceTypeStr) {
+    async retrieveFund(serviceTypeStr, gasPrice) {
         try {
             const ledger = await this.getLedgerWithDetail();
             const providers = serviceTypeStr == 'inference' ? ledger.infers : ledger.fines;
@@ -126,7 +126,7 @@ class LedgerProcessor {
             const providerAddresses = providers
                 .filter((x) => x[1] - x[2] > 0n)
                 .map((x) => x[0]);
-            await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr);
+            await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr, gasPrice);
         }
         catch (error) {
             throw error;

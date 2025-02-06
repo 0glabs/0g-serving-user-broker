@@ -63,8 +63,7 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
     shouldCheckAccount(svc: ServiceStructOutput): Promise<boolean>;
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     * @param provider
      */
-    topUpAccountIfNeeded(provider: string, content: string): Promise<void>;
+    topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
 }
 //# sourceMappingURL=request.d.ts.map

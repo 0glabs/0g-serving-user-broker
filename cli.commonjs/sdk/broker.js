@@ -24,18 +24,19 @@ exports.ZGComputeNetworkBroker = ZGComputeNetworkBroker;
  * @param ledgerCA - 0G Compute Network Ledger Contact address, use default address if not provided.
  * @param inferenceCA - 0G Compute Network Inference Serving contract address, use default address if not provided.
  * @param fineTuningCA - 0G Compute Network Fine Tuning Serving contract address, use default address if not provided.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGComputeNetworkBroker(signer, ledgerCA = '0xf7bBCE7BA75bF5C46bf99AfdF14E4F5f6BBA8985', inferenceCA = '0xAdDe2e52114E1eA5D911334efe07751B1EB2058B', fineTuningCA = '0x1Ed64cA20E99Ea0751ba874b382ed4E56168070F') {
+async function createZGComputeNetworkBroker(signer, ledgerCA = '0xf7bBCE7BA75bF5C46bf99AfdF14E4F5f6BBA8985', inferenceCA = '0xAdDe2e52114E1eA5D911334efe07751B1EB2058B', fineTuningCA = '0x1Ed64cA20E99Ea0751ba874b382ed4E56168070F', gasPrice) {
     try {
-        const ledger = await (0, ledger_1.createLedgerBroker)(signer, ledgerCA, inferenceCA, fineTuningCA);
+        const ledger = await (0, ledger_1.createLedgerBroker)(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
         const inferenceBroker = await (0, broker_2.createInferenceBroker)(signer, inferenceCA, ledger);
         let fineTuningBroker;
         if (signer instanceof ethers_1.Wallet) {
-            fineTuningBroker = await (0, broker_1.createFineTuningBroker)(signer, fineTuningCA, ledger);
+            fineTuningBroker = await (0, broker_1.createFineTuningBroker)(signer, fineTuningCA, ledger, gasPrice);
         }
         const broker = new ZGComputeNetworkBroker(ledger, inferenceBroker, fineTuningBroker);
         return broker;

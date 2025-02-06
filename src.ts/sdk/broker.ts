@@ -29,6 +29,7 @@ export class ZGComputeNetworkBroker {
  * @param ledgerCA - 0G Compute Network Ledger Contact address, use default address if not provided.
  * @param inferenceCA - 0G Compute Network Inference Serving contract address, use default address if not provided.
  * @param fineTuningCA - 0G Compute Network Fine Tuning Serving contract address, use default address if not provided.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
@@ -38,14 +39,16 @@ export async function createZGComputeNetworkBroker(
     signer: JsonRpcSigner | Wallet,
     ledgerCA = '0xf7bBCE7BA75bF5C46bf99AfdF14E4F5f6BBA8985',
     inferenceCA = '0xAdDe2e52114E1eA5D911334efe07751B1EB2058B',
-    fineTuningCA = '0x1Ed64cA20E99Ea0751ba874b382ed4E56168070F'
+    fineTuningCA = '0x1Ed64cA20E99Ea0751ba874b382ed4E56168070F',
+    gasPrice?: number
 ): Promise<ZGComputeNetworkBroker> {
     try {
         const ledger = await createLedgerBroker(
             signer,
             ledgerCA,
             inferenceCA,
-            fineTuningCA
+            fineTuningCA,
+            gasPrice
         )
         const inferenceBroker = await createInferenceBroker(
             signer,
@@ -58,7 +61,8 @@ export async function createZGComputeNetworkBroker(
             fineTuningBroker = await createFineTuningBroker(
                 signer,
                 fineTuningCA,
-                ledger
+                ledger,
+                gasPrice
             )
         }
 

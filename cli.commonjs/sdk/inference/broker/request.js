@@ -73,9 +73,8 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
     }
     /**
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     * @param provider
      */
-    async topUpAccountIfNeeded(provider, content) {
+    async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
             const extractor = await this.getExtractor(provider);
             const svc = await extractor.getSvcInfo();
@@ -84,7 +83,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             const firstRound = await this.cache.getItem('firstRound');
             if (firstRound !== 'false') {
                 await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
-                    (svc.inputPrice + svc.outputPrice));
+                    (svc.inputPrice + svc.outputPrice), gasPrice);
                 await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
                 return;
             }
@@ -100,7 +99,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             if (acc.balance <
                 this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice)) {
                 await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
-                    (svc.inputPrice + svc.outputPrice));
+                    (svc.inputPrice + svc.outputPrice), gasPrice);
             }
             await this.clearCacheFee(provider, newFee);
         }

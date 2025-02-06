@@ -12,11 +12,18 @@ export class FineTuningBroker {
     private modelProcessor!: ModelProcessor
     private serviceProcessor!: ServiceProcessor
     private serviceProvider!: Provider
+    private _gasPrice?: number
 
-    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker) {
+    constructor(
+        signer: Wallet,
+        fineTuningCA: string,
+        ledger: LedgerBroker,
+        gasPrice?: number
+    ) {
         this.signer = signer
         this.fineTuningCA = fineTuningCA
         this.ledger = ledger
+        this._gasPrice = gasPrice
     }
 
     async initialize() {
@@ -30,7 +37,8 @@ export class FineTuningBroker {
         const contract = new FineTuningServingContract(
             this.signer,
             this.fineTuningCA,
-            userAddress
+            userAddress,
+            this._gasPrice
         )
 
         this.serviceProvider = new Provider(contract)
@@ -82,10 +90,14 @@ export class FineTuningBroker {
         }
     }
 
-    public acknowledgeProviderSigner = async (providerAddress: string) => {
+    public acknowledgeProviderSigner = async (
+        providerAddress: string,
+        gasPrice?: number
+    ) => {
         try {
             return await this.serviceProcessor.acknowledgeProviderSigner(
-                providerAddress
+                providerAddress,
+                gasPrice
             )
         } catch (error) {
             throw error
@@ -127,7 +139,8 @@ export class FineTuningBroker {
         preTrainedModelName: string,
         dataSize: number,
         datasetHash: string,
-        trainingPath: string
+        trainingPath: string,
+        gasPrice?: number
     ): Promise<string> => {
         try {
             return await this.serviceProcessor.createTask(
@@ -135,7 +148,8 @@ export class FineTuningBroker {
                 preTrainedModelName,
                 dataSize,
                 datasetHash,
-                trainingPath
+                trainingPath,
+                gasPrice
             )
         } catch (error) {
             throw error
@@ -170,12 +184,14 @@ export class FineTuningBroker {
 
     public acknowledgeModel = async (
         providerAddress: string,
-        dataPath: string
+        dataPath: string,
+        gasPrice?: number
     ): Promise<void> => {
         try {
             return await this.modelProcessor.acknowledgeModel(
                 providerAddress,
-                dataPath
+                dataPath,
+                gasPrice
             )
         } catch (error) {
             throw error
@@ -204,6 +220,8 @@ export class FineTuningBroker {
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ * @param ledger - Ledger broker instance.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
@@ -212,9 +230,15 @@ export class FineTuningBroker {
 export async function createFineTuningBroker(
     signer: Wallet,
     contractAddress = '',
-    ledger: LedgerBroker
+    ledger: LedgerBroker,
+    gasPrice?: number
 ): Promise<FineTuningBroker> {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger)
+    const broker = new FineTuningBroker(
+        signer,
+        contractAddress,
+        ledger,
+        gasPrice
+    )
     try {
         await broker.initialize()
         return broker

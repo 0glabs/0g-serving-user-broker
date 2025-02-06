@@ -6,16 +6,20 @@ class LedgerManagerContract {
     ledger;
     signer;
     _userAddress;
-    constructor(signer, contractAddress, userAddress) {
+    _gasPrice;
+    constructor(signer, contractAddress, userAddress, gasPrice) {
         this.ledger = typechain_1.LedgerManager__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
+        this._gasPrice = gasPrice;
     }
-    async addLedger(signer, balance, settleSignerEncryptedPrivateKey) {
+    async addLedger(signer, balance, settleSignerEncryptedPrivateKey, gasPrice) {
         try {
-            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, {
-                value: balance,
-            });
+            const txOptions = { value: balance };
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -45,11 +49,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async depositFund(balance) {
+    async depositFund(balance, gasPrice) {
         try {
-            const tx = await this.ledger.depositFund({
-                value: balance,
-            });
+            const txOptions = { value: balance };
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.depositFund(txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -60,9 +66,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async refund(amount) {
+    async refund(amount, gasPrice) {
         try {
-            const tx = await this.ledger.refund(amount);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.refund(amount, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -73,9 +83,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async transferFund(provider, serviceTypeStr, amount) {
+    async transferFund(provider, serviceTypeStr, amount, gasPrice) {
         try {
-            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -86,9 +100,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async retrieveFund(providers, serviceTypeStr) {
+    async retrieveFund(providers, serviceTypeStr, gasPrice) {
         try {
-            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr);
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr, txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -99,9 +117,13 @@ class LedgerManagerContract {
             throw error;
         }
     }
-    async deleteLedger() {
+    async deleteLedger(gasPrice) {
         try {
-            const tx = await this.ledger.deleteLedger();
+            const txOptions = {};
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice;
+            }
+            const tx = await this.ledger.deleteLedger(txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');

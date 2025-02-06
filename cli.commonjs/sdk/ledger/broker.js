@@ -14,11 +14,13 @@ class LedgerBroker {
     ledgerCA;
     inferenceCA;
     fineTuningCA;
-    constructor(signer, ledgerCA, inferenceCA, fineTuningCA) {
+    gasPrice;
+    constructor(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
         this.signer = signer;
         this.ledgerCA = ledgerCA;
         this.inferenceCA = inferenceCA;
         this.fineTuningCA = fineTuningCA;
+        this.gasPrice = gasPrice;
     }
     async initialize() {
         let userAddress;
@@ -28,7 +30,7 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const ledgerContract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress);
+        const ledgerContract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice);
         const inferenceContract = new contract_2.InferenceServingContract(this.signer, this.inferenceCA, userAddress);
         let fineTuningContract;
         if (this.signer instanceof ethers_1.Wallet) {
@@ -41,15 +43,17 @@ class LedgerBroker {
      * Adds a new ledger to the contract.
      *
      * @param {number} balance - The initial balance to be assigned to the new ledger. Units are in A0GI.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
      *
      * @throws  An error if the ledger creation fails.
      *
      * @remarks
      * When creating an ledger, a key pair is also created to sign the request.
      */
-    addLedger = async (balance) => {
+    addLedger = async (balance, gasPrice) => {
         try {
-            return await this.ledger.addLedger(balance);
+            return await this.ledger.addLedger(balance, gasPrice);
         }
         catch (error) {
             throw error;
@@ -74,11 +78,14 @@ class LedgerBroker {
      * Deposits a specified amount of funds into Ledger corresponding to the current wallet address.
      *
      * @param {string} amount - The amount of funds to be deposited. Units are in A0GI.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @throws  An error if the deposit fails.
      */
-    depositFund = async (amount) => {
+    depositFund = async (amount, gasPrice) => {
         try {
-            return await this.ledger.depositFund(amount);
+            return await this.ledger.depositFund(amount, gasPrice);
         }
         catch (error) {
             throw error;
@@ -88,14 +95,17 @@ class LedgerBroker {
      * Refunds a specified amount using the ledger.
      *
      * @param amount - The amount to be refunded.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @returns A promise that resolves when the refund is processed.
      * @throws Will throw an error if the refund process fails.
      *
      * @note The amount should be a positive number.
      */
-    refund = async (amount) => {
+    refund = async (amount, gasPrice) => {
         try {
-            return await this.ledger.refund(amount);
+            return await this.ledger.refund(amount, gasPrice);
         }
         catch (error) {
             throw error;
@@ -108,12 +118,15 @@ class LedgerBroker {
      * @param serviceTypeStr - The type of service for which the funds are being transferred.
      *                         It can be either 'inference' or 'fine-tuning'.
      * @param amount - The amount of funds to be transferred. Units are in A0GI.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @returns A promise that resolves with the result of the fund transfer operation.
      * @throws Will throw an error if the fund transfer operation fails.
      */
-    transferFund = async (provider, serviceTypeStr, amount) => {
+    transferFund = async (provider, serviceTypeStr, amount, gasPrice) => {
         try {
-            return await this.ledger.transferFund(provider, serviceTypeStr, amount);
+            return await this.ledger.transferFund(provider, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
             throw error;
@@ -124,12 +137,15 @@ class LedgerBroker {
      *
      * @param serviceTypeStr - The type of service for which the funds are being retrieved.
      *                         It can be either 'inference' or 'fine-tuning'.
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                            the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @returns A promise that resolves with the result of the fund retrieval operation.
      * @throws Will throw an error if the fund retrieval operation fails.
      */
-    retrieveFund = async (serviceTypeStr) => {
+    retrieveFund = async (serviceTypeStr, gasPrice) => {
         try {
-            return await this.ledger.retrieveFund(serviceTypeStr);
+            return await this.ledger.retrieveFund(serviceTypeStr, gasPrice);
         }
         catch (error) {
             throw error;
@@ -138,11 +154,14 @@ class LedgerBroker {
     /**
      * Deletes the ledger corresponding to the current wallet address.
      *
+     * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
+     *                           the default/auto-generated gas price will be used. Units are in neuron.
+     *
      * @throws  An error if the deletion fails.
      */
-    deleteLedger = async () => {
+    deleteLedger = async (gasPrice) => {
         try {
-            return await this.ledger.deleteLedger();
+            return await this.ledger.deleteLedger(gasPrice);
         }
         catch (error) {
             throw error;
@@ -160,8 +179,8 @@ exports.LedgerBroker = LedgerBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA) {
-    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA);
+async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
     try {
         await broker.initialize();
         return broker;

@@ -10,14 +10,21 @@ export class FineTuningServingContract {
     public signer: Wallet
 
     private _userAddress: string
+    private _gasPrice?: number
 
-    constructor(signer: Wallet, contractAddress: string, userAddress: string) {
+    constructor(
+        signer: Wallet,
+        contractAddress: string,
+        userAddress: string,
+        gasPrice?: number
+    ) {
         this.serving = FineTuningServing__factory.connect(
             contractAddress,
             signer
         )
         this.signer = signer
         this._userAddress = userAddress
+        this._gasPrice = gasPrice
     }
 
     lockTime(): Promise<bigint> {
@@ -54,12 +61,18 @@ export class FineTuningServingContract {
 
     async acknowledgeProviderSigner(
         providerAddress: AddressLike,
-        providerSigner: AddressLike
+        providerSigner: AddressLike,
+        gasPrice?: number
     ) {
         try {
+            const txOptions: any = {}
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
             const tx = await this.serving.acknowledgeProviderSigner(
                 providerAddress,
-                providerSigner
+                providerSigner,
+                txOptions
             )
 
             const receipt = await tx.wait()
@@ -75,12 +88,18 @@ export class FineTuningServingContract {
 
     async acknowledgeDeliverable(
         providerAddress: AddressLike,
-        index: BigNumberish
+        index: BigNumberish,
+        gasPrice?: number
     ) {
         try {
+            const txOptions: any = {}
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
             const tx = await this.serving.acknowledgeDeliverable(
                 providerAddress,
-                index
+                index,
+                txOptions
             )
 
             const receipt = await tx.wait()

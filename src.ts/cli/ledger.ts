@@ -29,6 +29,7 @@ export default function ledger(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Adding account...')
@@ -47,6 +48,7 @@ export default function ledger(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Depositing...')
@@ -64,11 +66,35 @@ export default function ledger(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Refunding...')
                 await broker.ledger.refund(parseFloat(options.amount))
                 console.log('Refunded amount:', options.amount, 'A0GI')
+            })
+        })
+
+    program
+        .command('retrieve-fund')
+        .description('Retrieve fund from sub account')
+        .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
+        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option(
+            '--infer',
+            'Retrieve fund from sub accounts for inference, default is fine-tuning'
+        )
+        .option('--gas-price <price>', 'Gas price for transactions')
+        .action((options: any) => {
+            withLedgerBroker(options, async (broker) => {
+                console.log('Retrieving funds from sub accounts...')
+                await broker.ledger.retrieveFund(
+                    options.infer ? 'inference' : 'fine-tuning'
+                )
+                console.log('Funds retrieved from sub accounts')
             })
         })
 }

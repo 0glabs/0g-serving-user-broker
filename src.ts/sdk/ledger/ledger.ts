@@ -84,7 +84,7 @@ export class LedgerProcessor {
         }
     }
 
-    async addLedger(balance: number) {
+    async addLedger(balance: number, gasPrice?: number) {
         try {
             try {
                 const ledger = await this.getLedger()
@@ -107,34 +107,35 @@ export class LedgerProcessor {
             await this.ledgerContract.addLedger(
                 settleSignerPublicKey,
                 this.a0giToNeuron(balance),
-                settleSignerEncryptedPrivateKey
+                settleSignerEncryptedPrivateKey,
+                gasPrice
             )
         } catch (error) {
             throw error
         }
     }
 
-    async deleteLedger() {
+    async deleteLedger(gasPrice?: number) {
         try {
-            await this.ledgerContract.deleteLedger()
+            await this.ledgerContract.deleteLedger(gasPrice)
         } catch (error) {
             throw error
         }
     }
 
-    async depositFund(balance: number) {
+    async depositFund(balance: number, gasPrice?: number) {
         try {
             const amount = this.a0giToNeuron(balance).toString()
-            await this.ledgerContract.depositFund(amount)
+            await this.ledgerContract.depositFund(amount, gasPrice)
         } catch (error) {
             throw error
         }
     }
 
-    async refund(balance: number) {
+    async refund(balance: number, gasPrice?: number) {
         try {
             const amount = this.a0giToNeuron(balance).toString()
-            await this.ledgerContract.refund(amount)
+            await this.ledgerContract.refund(amount, gasPrice)
         } catch (error) {
             throw error
         }
@@ -143,17 +144,26 @@ export class LedgerProcessor {
     async transferFund(
         to: AddressLike,
         serviceTypeStr: 'inference' | 'fine-tuning',
-        balance: bigint
+        balance: bigint,
+        gasPrice?: number
     ) {
         try {
             const amount = balance.toString()
-            await this.ledgerContract.transferFund(to, serviceTypeStr, amount)
+            await this.ledgerContract.transferFund(
+                to,
+                serviceTypeStr,
+                amount,
+                gasPrice
+            )
         } catch (error) {
             throw error
         }
     }
 
-    async retrieveFund(serviceTypeStr: 'inference' | 'fine-tuning') {
+    async retrieveFund(
+        serviceTypeStr: 'inference' | 'fine-tuning',
+        gasPrice?: number
+    ) {
         try {
             const ledger = await this.getLedgerWithDetail()
             const providers =
@@ -170,7 +180,8 @@ export class LedgerProcessor {
 
             await this.ledgerContract.retrieveFund(
                 providerAddresses,
-                serviceTypeStr
+                serviceTypeStr,
+                gasPrice
             )
         } catch (error) {
             throw error

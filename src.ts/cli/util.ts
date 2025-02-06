@@ -13,7 +13,8 @@ export async function initBroker(
         wallet,
         options.ledgerCa,
         options.inferenceCa,
-        options.fineTuningCa
+        options.fineTuningCa,
+        options.gasPrice
     )
 }
 

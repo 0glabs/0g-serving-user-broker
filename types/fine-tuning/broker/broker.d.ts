@@ -9,22 +9,23 @@ export declare class FineTuningBroker {
     private modelProcessor;
     private serviceProcessor;
     private serviceProvider;
-    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker);
+    private _gasPrice?;
+    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker, gasPrice?: number);
     initialize(): Promise<void>;
     listService: () => Promise<import("../contract").ServiceStructOutput[]>;
     getLockedTime: () => Promise<bigint>;
     getAccount: (providerAddress: string) => Promise<import("../contract").AccountStructOutput>;
     getAccountWithDetail: (providerAddress: string) => Promise<FineTuningAccountDetail>;
-    acknowledgeProviderSigner: (providerAddress: string) => Promise<void>;
+    acknowledgeProviderSigner: (providerAddress: string, gasPrice?: number) => Promise<void>;
     listModel: () => [string, {
         [key: string]: string;
     }][];
     uploadDataset: (dataPath: string) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
-    createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string) => Promise<string>;
+    createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string, gasPrice?: number) => Promise<string>;
     getTask: (providerAddress: string, taskID?: string) => Promise<Task>;
     getLog: (providerAddress: string, taskID?: string) => Promise<string>;
-    acknowledgeModel: (providerAddress: string, dataPath: string) => Promise<void>;
+    acknowledgeModel: (providerAddress: string, dataPath: string, gasPrice?: number) => Promise<void>;
     decryptModel: (providerAddress: string, encryptedModelPath: string, decryptedModelPath: string) => Promise<void>;
 }
 /**
@@ -32,10 +33,12 @@ export declare class FineTuningBroker {
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ * @param ledger - Ledger broker instance.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker): Promise<FineTuningBroker>;
+export declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
 //# sourceMappingURL=broker.d.ts.map

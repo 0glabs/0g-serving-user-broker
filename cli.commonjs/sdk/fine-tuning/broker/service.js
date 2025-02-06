@@ -55,7 +55,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
     //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner(providerAddress) {
+    async acknowledgeProviderSigner(providerAddress, gasPrice) {
         try {
             try {
                 await this.contract.getAccount(providerAddress);
@@ -65,12 +65,12 @@ class ServiceProcessor extends base_1.BrokerBase {
                     throw error;
                 }
                 else {
-                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0));
+                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
                 }
             }
             const res = await this.servingProvider.getQuote(providerAddress);
             // TODO: verify the quote
-            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer);
+            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer, gasPrice);
         }
         catch (error) {
             throw error;
@@ -81,11 +81,11 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             const service = await this.contract.getService(providerAddress);
             const fee = service.pricePerToken * BigInt(dataSize);
-            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee);
+            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             this.verifyTrainingParams(trainingParams);
             const nonce = (0, utils_1.getNonce)();

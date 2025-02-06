@@ -16,7 +16,7 @@ class ModelProcessor extends base_1.BrokerBase {
     async downloadDataset(dataPath, dataRoot) {
         (0, zg_storage_1.download)(dataPath, dataRoot);
     }
-    async acknowledgeModel(providerAddress, dataPath) {
+    async acknowledgeModel(providerAddress, dataPath, gasPrice) {
         try {
             const account = await this.contract.getAccount(providerAddress);
             const latestDeliverable = account.deliverables[account.deliverables.length - 1];
@@ -24,7 +24,7 @@ class ModelProcessor extends base_1.BrokerBase {
                 throw new Error('No deliverable found');
             }
             await (0, zg_storage_1.download)(dataPath, latestDeliverable.modelRootHash);
-            await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1);
+            await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1, gasPrice);
         }
         catch (error) {
             throw error;

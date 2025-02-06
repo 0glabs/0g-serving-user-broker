@@ -62,7 +62,10 @@ export class ServiceProcessor extends BrokerBase {
     //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
     //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
     //     3. [`call contract`] acknowledge the provider signer in contract
-    async acknowledgeProviderSigner(providerAddress: string): Promise<void> {
+    async acknowledgeProviderSigner(
+        providerAddress: string,
+        gasPrice?: number
+    ): Promise<void> {
         try {
             try {
                 await this.contract.getAccount(providerAddress)
@@ -73,7 +76,8 @@ export class ServiceProcessor extends BrokerBase {
                     await this.ledger.transferFund(
                         providerAddress,
                         'fine-tuning',
-                        BigInt(0)
+                        BigInt(0),
+                        gasPrice
                     )
                 }
             }
@@ -82,7 +86,8 @@ export class ServiceProcessor extends BrokerBase {
             // TODO: verify the quote
             await this.contract.acknowledgeProviderSigner(
                 providerAddress,
-                res.provider_signer
+                res.provider_signer,
+                gasPrice
             )
         } catch (error) {
             throw error
@@ -99,12 +104,18 @@ export class ServiceProcessor extends BrokerBase {
         preTrainedModelName: string,
         dataSize: number,
         datasetHash: string,
-        trainingPath: string
+        trainingPath: string,
+        gasPrice?: number
     ): Promise<string> {
         try {
             const service = await this.contract.getService(providerAddress)
             const fee = service.pricePerToken * BigInt(dataSize)
-            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee)
+            await this.ledger.transferFund(
+                providerAddress,
+                'fine-tuning',
+                fee,
+                gasPrice
+            )
 
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             this.verifyTrainingParams(trainingParams)

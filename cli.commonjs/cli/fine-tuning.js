@@ -16,9 +16,10 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.acknowledgeProviderSigner(options.provider);
+            await broker.fineTuning.acknowledgeProviderSigner(options.provider, options.gasPrice);
             console.log('Provider verified');
         });
     });
@@ -84,13 +85,14 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             console.log('Verify provider...');
-            await broker.fineTuning.acknowledgeProviderSigner(options.provider);
+            await broker.fineTuning.acknowledgeProviderSigner(options.provider, options.gasPrice);
             console.log('Provider verified');
             console.log('Creating task...');
-            const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath);
+            const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath, options.gasPrice);
             console.log('Created Task ID:', taskId);
         });
     });
@@ -148,9 +150,10 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.acknowledgeModel(options.provider, options.dataPath);
+            await broker.fineTuning.acknowledgeModel(options.provider, options.dataPath, options.gasPrice);
             console.log('Acknowledged model');
         });
     });

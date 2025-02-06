@@ -19,7 +19,8 @@ export class ModelProcessor extends BrokerBase {
 
     async acknowledgeModel(
         providerAddress: string,
-        dataPath: string
+        dataPath: string,
+        gasPrice?: number
     ): Promise<void> {
         try {
             const account = await this.contract.getAccount(providerAddress)
@@ -35,7 +36,8 @@ export class ModelProcessor extends BrokerBase {
 
             await this.contract.acknowledgeDeliverable(
                 providerAddress,
-                account.deliverables.length - 1
+                account.deliverables.length - 1,
+                gasPrice
             )
         } catch (error) {
             throw error

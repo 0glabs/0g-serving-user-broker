@@ -6,29 +6,36 @@ export class LedgerManagerContract {
     public signer: JsonRpcSigner | Wallet
 
     private _userAddress: string
+    private _gasPrice?: number
 
     constructor(
         signer: JsonRpcSigner | Wallet,
         contractAddress: string,
-        userAddress: string
+        userAddress: string,
+        gasPrice?: number
     ) {
         this.ledger = LedgerManager__factory.connect(contractAddress, signer)
         this.signer = signer
         this._userAddress = userAddress
+        this._gasPrice = gasPrice
     }
 
     async addLedger(
         signer: [BigNumberish, BigNumberish],
         balance: bigint,
-        settleSignerEncryptedPrivateKey: string
+        settleSignerEncryptedPrivateKey: string,
+        gasPrice?: number
     ) {
         try {
+            const txOptions: any = { value: balance }
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
+
             const tx = await this.ledger.addLedger(
                 signer,
                 settleSignerEncryptedPrivateKey,
-                {
-                    value: balance,
-                }
+                txOptions
             )
 
             const receipt = await tx.wait()
@@ -61,11 +68,13 @@ export class LedgerManagerContract {
         }
     }
 
-    async depositFund(balance: string) {
+    async depositFund(balance: string, gasPrice?: number) {
         try {
-            const tx = await this.ledger.depositFund({
-                value: balance,
-            })
+            const txOptions: any = { value: balance }
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
+            const tx = await this.ledger.depositFund(txOptions)
 
             const receipt = await tx.wait()
 
@@ -78,9 +87,13 @@ export class LedgerManagerContract {
         }
     }
 
-    async refund(amount: BigNumberish) {
+    async refund(amount: BigNumberish, gasPrice?: number) {
         try {
-            const tx = await this.ledger.refund(amount)
+            const txOptions: any = {}
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
+            const tx = await this.ledger.refund(amount, txOptions)
 
             const receipt = await tx.wait()
 
@@ -96,13 +109,19 @@ export class LedgerManagerContract {
     async transferFund(
         provider: AddressLike,
         serviceTypeStr: 'inference' | 'fine-tuning',
-        amount: BigNumberish
+        amount: BigNumberish,
+        gasPrice?: number
     ) {
         try {
+            const txOptions: any = {}
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
             const tx = await this.ledger.transferFund(
                 provider,
                 serviceTypeStr,
-                amount
+                amount,
+                txOptions
             )
 
             const receipt = await tx.wait()
@@ -118,10 +137,19 @@ export class LedgerManagerContract {
 
     async retrieveFund(
         providers: AddressLike[],
-        serviceTypeStr: 'inference' | 'fine-tuning'
+        serviceTypeStr: 'inference' | 'fine-tuning',
+        gasPrice?: number
     ) {
         try {
-            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr)
+            const txOptions: any = {}
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
+            const tx = await this.ledger.retrieveFund(
+                providers,
+                serviceTypeStr,
+                txOptions
+            )
 
             const receipt = await tx.wait()
 
@@ -134,9 +162,13 @@ export class LedgerManagerContract {
         }
     }
 
-    async deleteLedger() {
+    async deleteLedger(gasPrice?: number) {
         try {
-            const tx = await this.ledger.deleteLedger()
+            const txOptions: any = {}
+            if (gasPrice || this._gasPrice) {
+                txOptions.gasPrice = gasPrice || this._gasPrice
+            }
+            const tx = await this.ledger.deleteLedger(txOptions)
 
             const receipt = await tx.wait()
 

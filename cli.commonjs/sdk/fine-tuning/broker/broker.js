@@ -13,10 +13,12 @@ class FineTuningBroker {
     modelProcessor;
     serviceProcessor;
     serviceProvider;
-    constructor(signer, fineTuningCA, ledger) {
+    _gasPrice;
+    constructor(signer, fineTuningCA, ledger, gasPrice) {
         this.signer = signer;
         this.fineTuningCA = fineTuningCA;
         this.ledger = ledger;
+        this._gasPrice = gasPrice;
     }
     async initialize() {
         let userAddress;
@@ -26,7 +28,7 @@ class FineTuningBroker {
         catch (error) {
             throw error;
         }
-        const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
+        const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice);
         this.serviceProvider = new provider_1.Provider(contract);
         this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger, this.serviceProvider);
         this.serviceProcessor = new service_1.ServiceProcessor(contract, this.ledger, this.serviceProvider);
@@ -63,9 +65,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeProviderSigner = async (providerAddress) => {
+    acknowledgeProviderSigner = async (providerAddress, gasPrice) => {
         try {
-            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress);
+            return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, gasPrice);
         }
         catch (error) {
             throw error;
@@ -95,9 +97,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath) => {
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
         }
         catch (error) {
             throw error;
@@ -120,9 +122,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    acknowledgeModel = async (providerAddress, dataPath) => {
+    acknowledgeModel = async (providerAddress, dataPath, gasPrice) => {
         try {
-            return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath);
+            return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath, gasPrice);
         }
         catch (error) {
             throw error;
@@ -143,13 +145,15 @@ exports.FineTuningBroker = FineTuningBroker;
  *
  * @param signer - Signer from ethers.js.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
+ * @param ledger - Ledger broker instance.
+ * @param gasPrice - Gas price for transactions. If not provided, the gas price will be calculated automatically.
  *
  * @returns broker instance.
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createFineTuningBroker(signer, contractAddress = '', ledger) {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger);
+async function createFineTuningBroker(signer, contractAddress = '', ledger, gasPrice) {
+    const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice);
     try {
         await broker.initialize();
         return broker;
