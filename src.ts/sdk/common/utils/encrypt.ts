@@ -75,9 +75,9 @@ export async function eciesDecrypt(
 
 export async function aesGCMDecrypt(
     key: string,
-    data: Buffer<ArrayBufferLike>,
+    data: Buffer,
     providerSigner: string
-): Promise<Buffer<ArrayBuffer>> {
+): Promise<Buffer> {
     const iv = data.subarray(0, ivLength)
     const encryptedText = data.subarray(
         ivLength,
