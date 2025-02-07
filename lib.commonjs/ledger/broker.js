@@ -5,9 +5,9 @@ exports.createLedgerBroker = createLedgerBroker;
 const ethers_1 = require("ethers");
 const ledger_1 = require("./ledger");
 const contract_1 = require("./contract");
-const storage_1 = require("../common/storage");
 const contract_2 = require("../inference/contract");
 const contract_3 = require("../fine-tuning/contract");
+const storage_1 = require("../common/storage");
 class LedgerBroker {
     ledger;
     signer;
@@ -37,7 +37,8 @@ class LedgerBroker {
             fineTuningContract = new contract_3.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
         }
         const metadata = new storage_1.Metadata();
-        this.ledger = new ledger_1.LedgerProcessor(metadata, ledgerContract, inferenceContract, fineTuningContract);
+        const cache = new storage_1.Cache();
+        this.ledger = new ledger_1.LedgerProcessor(metadata, cache, ledgerContract, inferenceContract, fineTuningContract);
     }
     /**
      * Adds a new ledger to the contract.

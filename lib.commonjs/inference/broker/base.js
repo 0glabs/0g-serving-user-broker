@@ -4,13 +4,18 @@ exports.ZGServingUserBrokerBase = void 0;
 const extractor_1 = require("../extractor");
 const utils_1 = require("../../common/utils");
 const settle_signer_1 = require("../../common/settle-signer");
-const storage_1 = require("../storage");
+const storage_1 = require("../../common/storage");
 class ZGServingUserBrokerBase {
     contract;
     metadata;
     cache;
-    constructor(contract, metadata, cache) {
+    checkAccountThreshold = BigInt(1000);
+    topUpTriggerThreshold = BigInt(5000);
+    topUpTargetThreshold = BigInt(10000);
+    ledger;
+    constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
+        this.ledger = ledger;
         this.metadata = metadata;
         this.cache = cache;
     }
@@ -132,6 +137,77 @@ class ZGServingUserBrokerBase {
         try {
             const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
             await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     */
+    async topUpAccountIfNeeded(provider, content, gasPrice) {
+        try {
+            const extractor = await this.getExtractor(provider);
+            const svc = await extractor.getSvcInfo();
+            // Calculate target and trigger thresholds
+            const targetThreshold = this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice);
+            const triggerThreshold = this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice);
+            // Check if it's the first round
+            const isFirstRound = (await this.cache.getItem('firstRound')) !== 'false';
+            if (isFirstRound) {
+                await this.handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice);
+                return;
+            }
+            // Calculate new fee and update cached fee
+            const newFee = await this.calculateInputFees(extractor, content);
+            await this.updateCachedFee(provider, newFee);
+            // Check if we need to check the account
+            if (!(await this.shouldCheckAccount(svc)))
+                return;
+            // Re-check the account balance
+            const acc = await this.contract.getAccount(provider);
+            const lockedFund = acc.balance - acc.pendingRefund;
+            if (lockedFund < triggerThreshold) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+            await this.clearCacheFee(provider, newFee);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice) {
+        try {
+            const acc = await this.contract.getAccount(provider);
+            // Check if the account balance is below the trigger threshold
+            const lockedFund = acc.balance - acc.pendingRefund;
+            console.log('lockedFund1', lockedFund);
+            if (lockedFund < triggerThreshold) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+        }
+        catch (error) {
+            if (error.message.includes('AccountNotExists')) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+            else {
+                throw error;
+            }
+        }
+        // Mark the first round as complete
+        await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+    }
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    async shouldCheckAccount(svc) {
+        try {
+            const key = svc.provider + '_cachedFee';
+            const usedFund = (await this.cache.getItem(key)) || BigInt(0);
+            return (usedFund >
+                this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
         }
         catch (error) {
             throw error;

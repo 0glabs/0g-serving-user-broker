@@ -6825,6 +6825,47 @@ class Request {
     }
 }
 
+class Metadata {
+    nodeStorage = {};
+    initialized = false;
+    constructor() { }
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+        this.nodeStorage = {};
+        this.initialized = true;
+    }
+    async setItem(key, value) {
+        await this.initialize();
+        this.nodeStorage[key] = value;
+    }
+    async getItem(key) {
+        await this.initialize();
+        return this.nodeStorage[key] ?? null;
+    }
+    async storeSettleSignerPrivateKey(key, value) {
+        const bigIntStringArray = value.map((bi) => bi.toString());
+        const bigIntJsonString = JSON.stringify(bigIntStringArray);
+        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
+    }
+    async storeSigningKey(key, value) {
+        await this.setItem(`${key}_signingKey`, value);
+    }
+    async getSettleSignerPrivateKey(key) {
+        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
+        if (!value) {
+            return null;
+        }
+        const bigIntStringArray = JSON.parse(value);
+        return bigIntStringArray.map((str) => BigInt(str));
+    }
+    async getSigningKey(key) {
+        const value = await this.getItem(`${key}_signingKey`);
+        return value ?? null;
+    }
+}
+
 var CacheValueTypeEnum;
 (function (CacheValueTypeEnum) {
     CacheValueTypeEnum["Service"] = "service";
@@ -6901,8 +6942,13 @@ class ZGServingUserBrokerBase {
     contract;
     metadata;
     cache;
-    constructor(contract, metadata, cache) {
+    checkAccountThreshold = BigInt(1000);
+    topUpTriggerThreshold = BigInt(5000);
+    topUpTargetThreshold = BigInt(10000);
+    ledger;
+    constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
+        this.ledger = ledger;
         this.metadata = metadata;
         this.cache = cache;
     }
@@ -7024,6 +7070,77 @@ class ZGServingUserBrokerBase {
         try {
             const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
             await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, CacheValueTypeEnum.BigInt);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     */
+    async topUpAccountIfNeeded(provider, content, gasPrice) {
+        try {
+            const extractor = await this.getExtractor(provider);
+            const svc = await extractor.getSvcInfo();
+            // Calculate target and trigger thresholds
+            const targetThreshold = this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice);
+            const triggerThreshold = this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice);
+            // Check if it's the first round
+            const isFirstRound = (await this.cache.getItem('firstRound')) !== 'false';
+            if (isFirstRound) {
+                await this.handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice);
+                return;
+            }
+            // Calculate new fee and update cached fee
+            const newFee = await this.calculateInputFees(extractor, content);
+            await this.updateCachedFee(provider, newFee);
+            // Check if we need to check the account
+            if (!(await this.shouldCheckAccount(svc)))
+                return;
+            // Re-check the account balance
+            const acc = await this.contract.getAccount(provider);
+            const lockedFund = acc.balance - acc.pendingRefund;
+            if (lockedFund < triggerThreshold) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+            await this.clearCacheFee(provider, newFee);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice) {
+        try {
+            const acc = await this.contract.getAccount(provider);
+            // Check if the account balance is below the trigger threshold
+            const lockedFund = acc.balance - acc.pendingRefund;
+            console.log('lockedFund1', lockedFund);
+            if (lockedFund < triggerThreshold) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+        }
+        catch (error) {
+            if (error.message.includes('AccountNotExists')) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+            else {
+                throw error;
+            }
+        }
+        // Mark the first round as complete
+        await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
+    }
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    async shouldCheckAccount(svc) {
+        try {
+            const key = svc.provider + '_cachedFee';
+            const usedFund = (await this.cache.getItem(key)) || BigInt(0);
+            return (usedFund >
+                this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
         }
         catch (error) {
             throw error;
@@ -7990,13 +8107,8 @@ class InferenceServingContract {
  * before use.
  */
 class RequestProcessor extends ZGServingUserBrokerBase {
-    checkAccountThreshold = BigInt(1000);
-    topUpTriggerThreshold = BigInt(5000);
-    topUpTargetThreshold = BigInt(10000);
-    ledger;
     constructor(contract, metadata, cache, ledger) {
-        super(contract, metadata, cache);
-        this.ledger = ledger;
+        super(contract, ledger, metadata, cache);
     }
     async getServiceMetadata(providerAddress) {
         const service = await this.getService(providerAddress);
@@ -8035,74 +8147,6 @@ class RequestProcessor extends ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
-    }
-    /**
-     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
-     * @param provider
-     * @param svc
-     */
-    async shouldCheckAccount(svc) {
-        try {
-            const key = svc.provider + '_cachedFee';
-            const usedFund = (await this.cache.getItem(key)) || BigInt(0);
-            return (usedFund >
-                this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     */
-    async topUpAccountIfNeeded(provider, content, gasPrice) {
-        try {
-            const extractor = await this.getExtractor(provider);
-            const svc = await extractor.getSvcInfo();
-            // Calculate target and trigger thresholds
-            const targetThreshold = this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice);
-            const triggerThreshold = this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice);
-            // Check if it's the first round
-            const isFirstRound = (await this.cache.getItem('firstRound')) !== 'false';
-            if (isFirstRound) {
-                await this.handleFirstRound(provider, targetThreshold, gasPrice);
-                return;
-            }
-            // Calculate new fee and update cached fee
-            const newFee = await this.calculateInputFees(extractor, content);
-            await this.updateCachedFee(provider, newFee);
-            // Check if we need to check the account
-            if (!(await this.shouldCheckAccount(svc)))
-                return;
-            // Re-check the account balance
-            const acc = await this.contract.getAccount(provider);
-            if (acc.balance < triggerThreshold) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
-            await this.clearCacheFee(provider, newFee);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async handleFirstRound(provider, targetThreshold, gasPrice) {
-        try {
-            const acc = await this.contract.getAccount(provider);
-            // Check if the account balance is below the trigger threshold
-            if (acc.balance < targetThreshold) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
-        }
-        catch (error) {
-            if (error.message.includes('AccountNotExists')) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
-            else {
-                throw error;
-            }
-        }
-        // Mark the first round as complete
-        await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
     }
 }
 
@@ -8300,14 +8344,15 @@ class Verifier extends ZGServingUserBrokerBase {
  */
 class ResponseProcessor extends ZGServingUserBrokerBase {
     verifier;
-    constructor(contract, metadata, cache) {
-        super(contract, metadata, cache);
-        this.verifier = new Verifier(contract, metadata, cache);
+    constructor(contract, ledger, metadata, cache) {
+        super(contract, ledger, metadata, cache);
+        this.verifier = new Verifier(contract, ledger, metadata, cache);
     }
     async settleFeeWithA0gi(providerAddress, fee) {
         if (!fee) {
             return;
         }
+        await this.topUpAccountIfNeeded(providerAddress, '');
         await this.settleFee(providerAddress, this.a0giToNeuron(fee));
     }
     /**
@@ -8378,47 +8423,6 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
     }
 }
 
-class Metadata {
-    nodeStorage = {};
-    initialized = false;
-    constructor() { }
-    async initialize() {
-        if (this.initialized) {
-            return;
-        }
-        this.nodeStorage = {};
-        this.initialized = true;
-    }
-    async setItem(key, value) {
-        await this.initialize();
-        this.nodeStorage[key] = value;
-    }
-    async getItem(key) {
-        await this.initialize();
-        return this.nodeStorage[key] ?? null;
-    }
-    async storeSettleSignerPrivateKey(key, value) {
-        const bigIntStringArray = value.map((bi) => bi.toString());
-        const bigIntJsonString = JSON.stringify(bigIntStringArray);
-        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
-    }
-    async storeSigningKey(key, value) {
-        await this.setItem(`${key}_signingKey`, value);
-    }
-    async getSettleSignerPrivateKey(key) {
-        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
-        if (!value) {
-            return null;
-        }
-        const bigIntStringArray = JSON.parse(value);
-        return bigIntStringArray.map((str) => BigInt(str));
-    }
-    async getSigningKey(key) {
-        const value = await this.getItem(`${key}_signingKey`);
-        return value ?? null;
-    }
-}
-
 class InferenceBroker {
     requestProcessor;
     responseProcessor;
@@ -8445,10 +8449,10 @@ class InferenceBroker {
         const metadata = new Metadata();
         const cache = new Cache();
         this.requestProcessor = new RequestProcessor(contract, metadata, cache, this.ledger);
-        this.responseProcessor = new ResponseProcessor(contract, metadata, cache);
-        this.accountProcessor = new AccountProcessor(contract, metadata, cache);
-        this.modelProcessor = new ModelProcessor$1(contract, metadata, cache);
-        this.verifier = new Verifier(contract, metadata, cache);
+        this.responseProcessor = new ResponseProcessor(contract, this.ledger, metadata, cache);
+        this.accountProcessor = new AccountProcessor(contract, this.ledger, metadata, cache);
+        this.modelProcessor = new ModelProcessor$1(contract, this.ledger, metadata, cache);
+        this.verifier = new Verifier(contract, this.ledger, metadata, cache);
     }
     /**
      * Retrieves a list of services from the contract.
@@ -10460,14 +10464,16 @@ async function createFineTuningBroker(signer, contractAddress = '', ledger, gasP
  */
 class LedgerProcessor {
     metadata;
+    cache;
     ledgerContract;
     inferenceContract;
     fineTuningContract;
-    constructor(metadata, ledgerContract, inferenceContract, fineTuningContract) {
+    constructor(metadata, cache, ledgerContract, inferenceContract, fineTuningContract) {
         this.metadata = metadata;
         this.ledgerContract = ledgerContract;
         this.inferenceContract = inferenceContract;
         this.fineTuningContract = fineTuningContract;
+        this.cache = cache;
     }
     async getLedger() {
         try {
@@ -10579,6 +10585,9 @@ class LedgerProcessor {
                 .filter((x) => x[1] - x[2] > 0n)
                 .map((x) => x[0]);
             await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr, gasPrice);
+            if (serviceTypeStr == 'inference') {
+                await this.cache.setItem('firstRound', 'true', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
+            }
         }
         catch (error) {
             throw error;
@@ -11202,7 +11211,8 @@ class LedgerBroker {
             fineTuningContract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress);
         }
         const metadata = new Metadata();
-        this.ledger = new LedgerProcessor(metadata, ledgerContract, inferenceContract, fineTuningContract);
+        const cache = new Cache();
+        this.ledger = new LedgerProcessor(metadata, cache, ledgerContract, inferenceContract, fineTuningContract);
     }
     /**
      * Adds a new ledger to the contract.

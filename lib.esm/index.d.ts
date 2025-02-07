@@ -502,6 +502,12 @@ declare class InferenceServingContract {
     getUserAddress(): string;
 }
 
+declare abstract class Extractor {
+    abstract getSvcInfo(): Promise<ServiceStructOutput$1>;
+    abstract getInputCount(content: string): Promise<number>;
+    abstract getOutputCount(content: string): Promise<number>;
+}
+
 declare class Metadata {
     private nodeStorage;
     private initialized;
@@ -513,12 +519,6 @@ declare class Metadata {
     storeSigningKey(key: string, value: string): Promise<void>;
     getSettleSignerPrivateKey(key: string): Promise<bigint[] | null>;
     getSigningKey(key: string): Promise<string | null>;
-}
-
-declare abstract class Extractor {
-    abstract getSvcInfo(): Promise<ServiceStructOutput$1>;
-    abstract getInputCount(content: string): Promise<number>;
-    abstract getOutputCount(content: string): Promise<number>;
 }
 
 declare enum CacheValueTypeEnum {
@@ -1357,10 +1357,11 @@ interface LedgerDetailStructOutput {
  */
 declare class LedgerProcessor {
     protected metadata: Metadata;
+    protected cache: Cache;
     protected ledgerContract: LedgerManagerContract;
     protected inferenceContract: InferenceServingContract;
     protected fineTuningContract: FineTuningServingContract | undefined;
-    constructor(metadata: Metadata, ledgerContract: LedgerManagerContract, inferenceContract: InferenceServingContract, fineTuningContract?: FineTuningServingContract);
+    constructor(metadata: Metadata, cache: Cache, ledgerContract: LedgerManagerContract, inferenceContract: InferenceServingContract, fineTuningContract?: FineTuningServingContract);
     getLedger(): Promise<LedgerStructOutput>;
     getLedgerWithDetail(): Promise<LedgerDetailStructOutput>;
     listLedger(): Promise<LedgerStructOutput[]>;
@@ -1518,34 +1519,23 @@ interface ServingRequestHeaders {
  * before use.
  */
 declare class RequestProcessor extends ZGServingUserBrokerBase {
-    private checkAccountThreshold;
-    private topUpTriggerThreshold;
-    private topUpTargetThreshold;
-    private ledger;
     constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache, ledger: LedgerBroker);
     getServiceMetadata(providerAddress: string): Promise<{
         endpoint: string;
         model: string;
     }>;
     getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
-    /**
-     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
-     * @param provider
-     * @param svc
-     */
-    shouldCheckAccount(svc: ServiceStructOutput$1): Promise<boolean>;
-    /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     */
-    topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
-    private handleFirstRound;
 }
 
 declare abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract;
     protected metadata: Metadata;
     protected cache: Cache;
-    constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache);
+    private checkAccountThreshold;
+    private topUpTriggerThreshold;
+    private topUpTargetThreshold;
+    private ledger;
+    constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
     protected getProviderData(providerAddress: string): Promise<{
         settleSignerPrivateKey: bigint[] | null;
     }>;
@@ -1558,6 +1548,17 @@ declare abstract class ZGServingUserBrokerBase {
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     updateCachedFee(provider: string, fee: bigint): Promise<void>;
     clearCacheFee(provider: string, fee: bigint): Promise<void>;
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     */
+    topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
+    private handleFirstRound;
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    shouldCheckAccount(svc: ServiceStructOutput$1): Promise<boolean>;
 }
 
 /**
@@ -1575,7 +1576,7 @@ declare class AccountProcessor extends ZGServingUserBrokerBase {
  */
 declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
-    constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache);
+    constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
     settleFeeWithA0gi(providerAddress: string, fee: number): Promise<void>;
     /**
      * settleFee sends an empty request to the service provider to settle the fee.

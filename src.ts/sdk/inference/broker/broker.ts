@@ -5,8 +5,7 @@ import { ResponseProcessor } from './response'
 import { Verifier } from './verifier'
 import { AccountProcessor } from './account'
 import { ModelProcessor } from './model'
-import { Metadata } from '../../common/storage'
-import { Cache } from '../storage'
+import { Cache, Metadata } from '../../common/storage'
 import { LedgerBroker } from '../../ledger'
 
 export class InferenceBroker {
@@ -52,12 +51,23 @@ export class InferenceBroker {
         )
         this.responseProcessor = new ResponseProcessor(
             contract,
+            this.ledger,
             metadata,
             cache
         )
-        this.accountProcessor = new AccountProcessor(contract, metadata, cache)
-        this.modelProcessor = new ModelProcessor(contract, metadata, cache)
-        this.verifier = new Verifier(contract, metadata, cache)
+        this.accountProcessor = new AccountProcessor(
+            contract,
+            this.ledger,
+            metadata,
+            cache
+        )
+        this.modelProcessor = new ModelProcessor(
+            contract,
+            this.ledger,
+            metadata,
+            cache
+        )
+        this.verifier = new Verifier(contract, this.ledger, metadata, cache)
     }
 
     /**

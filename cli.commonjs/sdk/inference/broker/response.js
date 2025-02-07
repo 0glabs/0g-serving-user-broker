@@ -11,14 +11,15 @@ const verifier_1 = require("./verifier");
  */
 class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
     verifier;
-    constructor(contract, metadata, cache) {
-        super(contract, metadata, cache);
-        this.verifier = new verifier_1.Verifier(contract, metadata, cache);
+    constructor(contract, ledger, metadata, cache) {
+        super(contract, ledger, metadata, cache);
+        this.verifier = new verifier_1.Verifier(contract, ledger, metadata, cache);
     }
     async settleFeeWithA0gi(providerAddress, fee) {
         if (!fee) {
             return;
         }
+        await this.topUpAccountIfNeeded(providerAddress, '');
         await this.settleFee(providerAddress, this.a0giToNeuron(fee));
     }
     /**

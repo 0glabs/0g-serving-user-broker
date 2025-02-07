@@ -1,10 +1,10 @@
 import { AddressLike } from 'ethers'
 import { genKeyPair } from '../common/settle-signer'
 import { encryptData, privateKeyToStr } from '../common/utils'
-import { Metadata } from '../common/storage'
 import { LedgerManagerContract } from './contract'
 import { InferenceServingContract } from '../inference/contract'
 import { FineTuningServingContract } from '../fine-tuning/contract'
+import { Cache, CacheValueTypeEnum, Metadata } from '../common/storage'
 
 export interface LedgerDetailStructOutput {
     ledgerInfo: bigint[]
@@ -16,12 +16,15 @@ export interface LedgerDetailStructOutput {
  */
 export class LedgerProcessor {
     protected metadata: Metadata
+    protected cache: Cache
+
     protected ledgerContract: LedgerManagerContract
     protected inferenceContract: InferenceServingContract
     protected fineTuningContract: FineTuningServingContract | undefined
 
     constructor(
         metadata: Metadata,
+        cache: Cache,
         ledgerContract: LedgerManagerContract,
         inferenceContract: InferenceServingContract,
         fineTuningContract?: FineTuningServingContract
@@ -30,6 +33,7 @@ export class LedgerProcessor {
         this.ledgerContract = ledgerContract
         this.inferenceContract = inferenceContract
         this.fineTuningContract = fineTuningContract
+        this.cache = cache
     }
 
     async getLedger() {
@@ -183,6 +187,15 @@ export class LedgerProcessor {
                 serviceTypeStr,
                 gasPrice
             )
+
+            if (serviceTypeStr == 'inference') {
+                await this.cache.setItem(
+                    'firstRound',
+                    'true',
+                    10000000 * 60 * 1000,
+                    CacheValueTypeEnum.Other
+                )
+            }
         } catch (error) {
             throw error
         }

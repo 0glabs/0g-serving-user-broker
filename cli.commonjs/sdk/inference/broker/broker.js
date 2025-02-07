@@ -9,7 +9,6 @@ const verifier_1 = require("./verifier");
 const account_1 = require("./account");
 const model_1 = require("./model");
 const storage_1 = require("../../common/storage");
-const storage_2 = require("../storage");
 class InferenceBroker {
     requestProcessor;
     responseProcessor;
@@ -34,12 +33,12 @@ class InferenceBroker {
         }
         const contract = new contract_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
         const metadata = new storage_1.Metadata();
-        const cache = new storage_2.Cache();
+        const cache = new storage_1.Cache();
         this.requestProcessor = new request_1.RequestProcessor(contract, metadata, cache, this.ledger);
-        this.responseProcessor = new response_1.ResponseProcessor(contract, metadata, cache);
-        this.accountProcessor = new account_1.AccountProcessor(contract, metadata, cache);
-        this.modelProcessor = new model_1.ModelProcessor(contract, metadata, cache);
-        this.verifier = new verifier_1.Verifier(contract, metadata, cache);
+        this.responseProcessor = new response_1.ResponseProcessor(contract, this.ledger, metadata, cache);
+        this.accountProcessor = new account_1.AccountProcessor(contract, this.ledger, metadata, cache);
+        this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger, metadata, cache);
+        this.verifier = new verifier_1.Verifier(contract, this.ledger, metadata, cache);
     }
     /**
      * Retrieves a list of services from the contract.

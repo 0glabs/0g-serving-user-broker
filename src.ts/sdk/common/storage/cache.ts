@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../contract'
+import { ServiceStructOutput as InferenceServiceStructOutput } from '../../inference/contract'
 
 export enum CacheValueTypeEnum {
     Service = 'service',
@@ -79,7 +79,7 @@ export class Cache {
 
     static createServiceStructOutput(
         fields: [string, string, string, bigint, bigint, bigint, string, string]
-    ): ServiceStructOutput {
+    ): InferenceServiceStructOutput {
         const tuple: [
             string,
             string,

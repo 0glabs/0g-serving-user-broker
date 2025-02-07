@@ -1,8 +1,7 @@
 import { ZGServingUserBrokerBase } from './base';
-import { Cache } from '../storage';
-import { InferenceServingContract, ServiceStructOutput } from '../contract';
+import { Cache, Metadata } from '../../common/storage';
+import { InferenceServingContract } from '../contract';
 import { LedgerBroker } from '../../ledger';
-import { Metadata } from '../../common/storage';
 /**
  * ServingRequestHeaders contains headers related to request billing.
  * These need to be added to the request.
@@ -45,26 +44,11 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export declare class RequestProcessor extends ZGServingUserBrokerBase {
-    private checkAccountThreshold;
-    private topUpTriggerThreshold;
-    private topUpTargetThreshold;
-    private ledger;
     constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache, ledger: LedgerBroker);
     getServiceMetadata(providerAddress: string): Promise<{
         endpoint: string;
         model: string;
     }>;
     getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
-    /**
-     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
-     * @param provider
-     * @param svc
-     */
-    shouldCheckAccount(svc: ServiceStructOutput): Promise<boolean>;
-    /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
-     */
-    topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
-    private handleFirstRound;
 }
 //# sourceMappingURL=request.d.ts.map

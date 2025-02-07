@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../contract';
+import { ServiceStructOutput as InferenceServiceStructOutput } from '../../inference/contract';
 export declare enum CacheValueTypeEnum {
     Service = "service",
     BigInt = "bigint",
@@ -14,6 +14,6 @@ export declare class Cache {
     private initialize;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
-    static createServiceStructOutput(fields: [string, string, string, bigint, bigint, bigint, string, string]): ServiceStructOutput;
+    static createServiceStructOutput(fields: [string, string, string, bigint, bigint, bigint, string, string]): InferenceServiceStructOutput;
 }
 //# sourceMappingURL=cache.d.ts.map

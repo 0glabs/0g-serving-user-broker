@@ -1,23 +1,30 @@
 import { InferenceServingContract } from '../contract'
-import { Metadata } from '../../common/storage'
 import { ChatBot, Extractor } from '../extractor'
 import { ServiceStructOutput } from '../contract'
 import { ServingRequestHeaders } from './request'
 import { decryptData, getNonce, strToPrivateKey } from '../../common/utils'
 import { PackedPrivkey, Request, signData } from '../../common/settle-signer'
-import { Cache, CacheValueTypeEnum } from '../storage'
+import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
+import { LedgerBroker } from '../../ledger'
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract
     protected metadata: Metadata
     protected cache: Cache
 
+    private checkAccountThreshold = BigInt(1000)
+    private topUpTriggerThreshold = BigInt(5000)
+    private topUpTargetThreshold = BigInt(10000)
+    private ledger: LedgerBroker
+
     constructor(
         contract: InferenceServingContract,
+        ledger: LedgerBroker,
         metadata: Metadata,
         cache: Cache
     ) {
         this.contract = contract
+        this.ledger = ledger
         this.metadata = metadata
         this.cache = cache
     }
@@ -194,6 +201,123 @@ export abstract class ZGServingUserBrokerBase {
                 BigInt(curFee) + fee,
                 1 * 60 * 1000,
                 CacheValueTypeEnum.BigInt
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
+    /**
+     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     */
+    async topUpAccountIfNeeded(
+        provider: string,
+        content: string,
+        gasPrice?: number
+    ) {
+        try {
+            const extractor = await this.getExtractor(provider)
+            const svc = await extractor.getSvcInfo()
+
+            // Calculate target and trigger thresholds
+            const targetThreshold =
+                this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice)
+            const triggerThreshold =
+                this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice)
+
+            // Check if it's the first round
+            const isFirstRound =
+                (await this.cache.getItem('firstRound')) !== 'false'
+
+            if (isFirstRound) {
+                await this.handleFirstRound(
+                    provider,
+                    triggerThreshold,
+                    targetThreshold,
+                    gasPrice
+                )
+                return
+            }
+
+            // Calculate new fee and update cached fee
+            const newFee = await this.calculateInputFees(extractor, content)
+            await this.updateCachedFee(provider, newFee)
+
+            // Check if we need to check the account
+            if (!(await this.shouldCheckAccount(svc))) return
+
+            // Re-check the account balance
+            const acc = await this.contract.getAccount(provider)
+            const lockedFund = acc.balance - acc.pendingRefund
+            if (lockedFund < triggerThreshold) {
+                await this.ledger.transferFund(
+                    provider,
+                    'inference',
+                    targetThreshold,
+                    gasPrice
+                )
+            }
+
+            await this.clearCacheFee(provider, newFee)
+        } catch (error) {
+            throw error
+        }
+    }
+
+    private async handleFirstRound(
+        provider: string,
+        triggerThreshold: bigint,
+        targetThreshold: bigint,
+        gasPrice?: number
+    ) {
+        try {
+            const acc = await this.contract.getAccount(provider)
+
+            // Check if the account balance is below the trigger threshold
+            const lockedFund = acc.balance - acc.pendingRefund
+            console.log('lockedFund1', lockedFund)
+            if (lockedFund < triggerThreshold) {
+                await this.ledger.transferFund(
+                    provider,
+                    'inference',
+                    targetThreshold,
+                    gasPrice
+                )
+            }
+        } catch (error) {
+            if ((error as any).message.includes('AccountNotExists')) {
+                await this.ledger.transferFund(
+                    provider,
+                    'inference',
+                    targetThreshold,
+                    gasPrice
+                )
+            } else {
+                throw error
+            }
+        }
+
+        // Mark the first round as complete
+        await this.cache.setItem(
+            'firstRound',
+            'false',
+            10000000 * 60 * 1000,
+            CacheValueTypeEnum.Other
+        )
+    }
+
+    /**
+     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * @param provider
+     * @param svc
+     */
+    async shouldCheckAccount(svc: ServiceStructOutput) {
+        try {
+            const key = svc.provider + '_cachedFee'
+            const usedFund = (await this.cache.getItem(key)) || BigInt(0)
+            return (
+                usedFund >
+                this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice)
             )
         } catch (error) {
             throw error

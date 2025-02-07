@@ -1,10 +1,10 @@
 import { InferenceServingContract } from '../contract'
 import { Extractor } from '../extractor'
-import { Metadata } from '../../common/storage'
+import { Metadata, Cache } from '../../common/storage'
 import { ZGServingUserBrokerBase } from './base'
 import { isVerifiability, VerifiabilityEnum } from './model'
 import { Verifier } from './verifier'
-import { Cache } from '../storage'
+import { LedgerBroker } from '../../ledger'
 
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
@@ -16,11 +16,12 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
 
     constructor(
         contract: InferenceServingContract,
+        ledger: LedgerBroker,
         metadata: Metadata,
         cache: Cache
     ) {
-        super(contract, metadata, cache)
-        this.verifier = new Verifier(contract, metadata, cache)
+        super(contract, ledger, metadata, cache)
+        this.verifier = new Verifier(contract, ledger, metadata, cache)
     }
 
     async settleFeeWithA0gi(
@@ -30,6 +31,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         if (!fee) {
             return
         }
+        await this.topUpAccountIfNeeded(providerAddress, '')
         await this.settleFee(providerAddress, this.a0giToNeuron(fee))
     }
 

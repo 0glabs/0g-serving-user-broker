@@ -1,9 +1,9 @@
 import { AddressLike, JsonRpcSigner, Wallet } from 'ethers'
 import { LedgerDetailStructOutput, LedgerProcessor } from './ledger'
 import { LedgerManagerContract } from './contract'
-import { Metadata } from '../common/storage'
 import { InferenceServingContract } from '../inference/contract'
 import { FineTuningServingContract } from '../fine-tuning/contract'
+import { Cache, Metadata } from '../common/storage'
 
 export class LedgerBroker {
     public ledger!: LedgerProcessor
@@ -56,9 +56,11 @@ export class LedgerBroker {
             )
         }
         const metadata = new Metadata()
+        const cache = new Cache()
 
         this.ledger = new LedgerProcessor(
             metadata,
+            cache,
             ledgerContract,
             inferenceContract,
             fineTuningContract

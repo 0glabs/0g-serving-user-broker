@@ -3,19 +3,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LedgerProcessor = void 0;
 const settle_signer_1 = require("../common/settle-signer");
 const utils_1 = require("../common/utils");
+const storage_1 = require("../common/storage");
 /**
  * LedgerProcessor contains methods for creating, depositing funds, and retrieving 0G Compute Network Ledgers.
  */
 class LedgerProcessor {
     metadata;
+    cache;
     ledgerContract;
     inferenceContract;
     fineTuningContract;
-    constructor(metadata, ledgerContract, inferenceContract, fineTuningContract) {
+    constructor(metadata, cache, ledgerContract, inferenceContract, fineTuningContract) {
         this.metadata = metadata;
         this.ledgerContract = ledgerContract;
         this.inferenceContract = inferenceContract;
         this.fineTuningContract = fineTuningContract;
+        this.cache = cache;
     }
     async getLedger() {
         try {
@@ -127,6 +130,9 @@ class LedgerProcessor {
                 .filter((x) => x[1] - x[2] > 0n)
                 .map((x) => x[0]);
             await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr, gasPrice);
+            if (serviceTypeStr == 'inference') {
+                await this.cache.setItem('firstRound', 'true', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+            }
         }
         catch (error) {
             throw error;

@@ -1,8 +1,8 @@
 import { AddressLike } from 'ethers';
-import { Metadata } from '../common/storage';
 import { LedgerManagerContract } from './contract';
 import { InferenceServingContract } from '../inference/contract';
 import { FineTuningServingContract } from '../fine-tuning/contract';
+import { Cache, Metadata } from '../common/storage';
 export interface LedgerDetailStructOutput {
     ledgerInfo: bigint[];
     infers: [string, bigint, bigint][];
@@ -13,10 +13,11 @@ export interface LedgerDetailStructOutput {
  */
 export declare class LedgerProcessor {
     protected metadata: Metadata;
+    protected cache: Cache;
     protected ledgerContract: LedgerManagerContract;
     protected inferenceContract: InferenceServingContract;
     protected fineTuningContract: FineTuningServingContract | undefined;
-    constructor(metadata: Metadata, ledgerContract: LedgerManagerContract, inferenceContract: InferenceServingContract, fineTuningContract?: FineTuningServingContract);
+    constructor(metadata: Metadata, cache: Cache, ledgerContract: LedgerManagerContract, inferenceContract: InferenceServingContract, fineTuningContract?: FineTuningServingContract);
     getLedger(): Promise<import("./contract").LedgerStructOutput>;
     getLedgerWithDetail(): Promise<LedgerDetailStructOutput>;
     listLedger(): Promise<import("./contract").LedgerStructOutput[]>;
