@@ -8059,34 +8059,50 @@ class RequestProcessor extends ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(provider);
             const svc = await extractor.getSvcInfo();
-            // In first around, we top up the account to topUpTargetThreshold * (inputPrice + outputPrice).
-            // Then the account will be maintained by the checkAccountThreshold.
-            const firstRound = await this.cache.getItem('firstRound');
-            if (firstRound !== 'false') {
-                await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
-                    (svc.inputPrice + svc.outputPrice), gasPrice);
-                await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
+            // Calculate target and trigger thresholds
+            const targetThreshold = this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice);
+            const triggerThreshold = this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice);
+            // Check if it's the first round
+            const isFirstRound = (await this.cache.getItem('firstRound')) !== 'false';
+            if (isFirstRound) {
+                await this.handleFirstRound(provider, targetThreshold, gasPrice);
                 return;
             }
+            // Calculate new fee and update cached fee
             const newFee = await this.calculateInputFees(extractor, content);
             await this.updateCachedFee(provider, newFee);
-            const needCheck = await this.shouldCheckAccount(svc);
-            // update cache for current content
-            if (!needCheck) {
+            // Check if we need to check the account
+            if (!(await this.shouldCheckAccount(svc)))
                 return;
-            }
-            // check fund in account
+            // Re-check the account balance
             const acc = await this.contract.getAccount(provider);
-            if (acc.balance <
-                this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice)) {
-                await this.ledger.transferFund(provider, 'inference', this.topUpTargetThreshold *
-                    (svc.inputPrice + svc.outputPrice), gasPrice);
+            if (acc.balance < triggerThreshold) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
             }
             await this.clearCacheFee(provider, newFee);
         }
         catch (error) {
             throw error;
         }
+    }
+    async handleFirstRound(provider, targetThreshold, gasPrice) {
+        try {
+            const acc = await this.contract.getAccount(provider);
+            // Check if the account balance is below the trigger threshold
+            if (acc.balance < targetThreshold) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+        }
+        catch (error) {
+            if (error.message.includes('AccountNotExists')) {
+                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
+            }
+            else {
+                throw error;
+            }
+        }
+        // Mark the first round as complete
+        await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
     }
 }
 

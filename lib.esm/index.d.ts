@@ -1538,6 +1538,7 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
      * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
      */
     topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
+    private handleFirstRound;
 }
 
 declare abstract class ZGServingUserBrokerBase {
