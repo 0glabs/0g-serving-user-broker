@@ -176,6 +176,7 @@ export interface FineTuningServingInterface extends Interface {
       | "getAllAccounts"
       | "getAllServices"
       | "getDeliverable"
+      | "getPendingRefund"
       | "getService"
       | "initialize"
       | "initialized"
@@ -230,7 +231,7 @@ export interface FineTuningServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "depositFund",
-    values: [AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getAccount",
@@ -247,6 +248,10 @@ export interface FineTuningServingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getDeliverable",
     values: [AddressLike, AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getPendingRefund",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getService",
@@ -335,6 +340,10 @@ export interface FineTuningServingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getDeliverable",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getPendingRefund",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
@@ -574,7 +583,11 @@ export interface FineTuningServing extends BaseContract {
   >;
 
   depositFund: TypedContractMethod<
-    [user: AddressLike, provider: AddressLike],
+    [
+      user: AddressLike,
+      provider: AddressLike,
+      cancelRetrievingAmount: BigNumberish
+    ],
     [void],
     "payable"
   >;
@@ -592,6 +605,12 @@ export interface FineTuningServing extends BaseContract {
   getDeliverable: TypedContractMethod<
     [user: AddressLike, provider: AddressLike, index: BigNumberish],
     [DeliverableStructOutput],
+    "view"
+  >;
+
+  getPendingRefund: TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [bigint],
     "view"
   >;
 
@@ -717,7 +736,11 @@ export interface FineTuningServing extends BaseContract {
   getFunction(
     nameOrSignature: "depositFund"
   ): TypedContractMethod<
-    [user: AddressLike, provider: AddressLike],
+    [
+      user: AddressLike,
+      provider: AddressLike,
+      cancelRetrievingAmount: BigNumberish
+    ],
     [void],
     "payable"
   >;
@@ -739,6 +762,13 @@ export interface FineTuningServing extends BaseContract {
   ): TypedContractMethod<
     [user: AddressLike, provider: AddressLike, index: BigNumberish],
     [DeliverableStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getPendingRefund"
+  ): TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [bigint],
     "view"
   >;
   getFunction(

@@ -130,6 +130,7 @@ export interface InferenceServingInterface extends Interface {
       | "getAccount"
       | "getAllAccounts"
       | "getAllServices"
+      | "getPendingRefund"
       | "getService"
       | "initialize"
       | "initialized"
@@ -177,7 +178,7 @@ export interface InferenceServingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "depositFund",
-    values: [AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getAccount",
@@ -190,6 +191,10 @@ export interface InferenceServingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getAllServices",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getPendingRefund",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getService",
@@ -270,6 +275,10 @@ export interface InferenceServingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getAllServices",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getPendingRefund",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
@@ -509,7 +518,11 @@ export interface InferenceServing extends BaseContract {
   >;
 
   depositFund: TypedContractMethod<
-    [user: AddressLike, provider: AddressLike],
+    [
+      user: AddressLike,
+      provider: AddressLike,
+      cancelRetrievingAmount: BigNumberish
+    ],
     [void],
     "payable"
   >;
@@ -523,6 +536,12 @@ export interface InferenceServing extends BaseContract {
   getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], "view">;
 
   getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], "view">;
+
+  getPendingRefund: TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [bigint],
+    "view"
+  >;
 
   getService: TypedContractMethod<
     [provider: AddressLike],
@@ -645,7 +664,11 @@ export interface InferenceServing extends BaseContract {
   getFunction(
     nameOrSignature: "depositFund"
   ): TypedContractMethod<
-    [user: AddressLike, provider: AddressLike],
+    [
+      user: AddressLike,
+      provider: AddressLike,
+      cancelRetrievingAmount: BigNumberish
+    ],
     [void],
     "payable"
   >;
@@ -662,6 +685,13 @@ export interface InferenceServing extends BaseContract {
   getFunction(
     nameOrSignature: "getAllServices"
   ): TypedContractMethod<[], [ServiceStructOutput[]], "view">;
+  getFunction(
+    nameOrSignature: "getPendingRefund"
+  ): TypedContractMethod<
+    [user: AddressLike, provider: AddressLike],
+    [bigint],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "getService"
   ): TypedContractMethod<

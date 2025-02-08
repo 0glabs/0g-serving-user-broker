@@ -100,17 +100,18 @@ type VerifierInputStruct$1 = {
     segmentSize: BigNumberish[];
 };
 interface InferenceServingInterface extends Interface {
-    getFunction(nameOrSignature: "accountExists" | "addAccount" | "addOrUpdateService" | "batchVerifierAddress" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateBatchVerifierAddress" | "updateLockTime"): FunctionFragment;
+    getFunction(nameOrSignature: "accountExists" | "addAccount" | "addOrUpdateService" | "batchVerifierAddress" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getPendingRefund" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateBatchVerifierAddress" | "updateLockTime"): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]): string;
     encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, string, string, string, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "batchVerifierAddress", values?: undefined): string;
     encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
+    encodeFunctionData(functionFragment: "getPendingRefund", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
@@ -134,6 +135,7 @@ interface InferenceServingInterface extends Interface {
     decodeFunctionResult(functionFragment: "getAccount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAllAccounts", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAllServices", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getPendingRefund", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "initialized", data: BytesLike): Result;
@@ -302,7 +304,8 @@ interface InferenceServing extends BaseContract {
     ], "nonpayable">;
     depositFund: TypedContractMethod$2<[
         user: AddressLike,
-        provider: AddressLike
+        provider: AddressLike,
+        cancelRetrievingAmount: BigNumberish
     ], [
         void
     ], "payable">;
@@ -314,6 +317,12 @@ interface InferenceServing extends BaseContract {
     ], "view">;
     getAllAccounts: TypedContractMethod$2<[], [AccountStructOutput$1[]], "view">;
     getAllServices: TypedContractMethod$2<[], [ServiceStructOutput$1[]], "view">;
+    getPendingRefund: TypedContractMethod$2<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        bigint
+    ], "view">;
     getService: TypedContractMethod$2<[
         provider: AddressLike
     ], [
@@ -407,7 +416,8 @@ interface InferenceServing extends BaseContract {
     ], "nonpayable">;
     getFunction(nameOrSignature: "depositFund"): TypedContractMethod$2<[
         user: AddressLike,
-        provider: AddressLike
+        provider: AddressLike,
+        cancelRetrievingAmount: BigNumberish
     ], [
         void
     ], "payable">;
@@ -419,6 +429,12 @@ interface InferenceServing extends BaseContract {
     ], "view">;
     getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod$2<[], [AccountStructOutput$1[]], "view">;
     getFunction(nameOrSignature: "getAllServices"): TypedContractMethod$2<[], [ServiceStructOutput$1[]], "view">;
+    getFunction(nameOrSignature: "getPendingRefund"): TypedContractMethod$2<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        bigint
+    ], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod$2<[
         provider: AddressLike
     ], [
@@ -911,7 +927,7 @@ type VerifierInputStruct = {
     user: AddressLike;
 };
 interface FineTuningServingInterface extends Interface {
-    getFunction(nameOrSignature: "accountExists" | "acknowledgeDeliverable" | "acknowledgeProviderSigner" | "addAccount" | "addDeliverable" | "addOrUpdateService" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getDeliverable" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateLockTime"): FunctionFragment;
+    getFunction(nameOrSignature: "accountExists" | "acknowledgeDeliverable" | "acknowledgeProviderSigner" | "addAccount" | "addDeliverable" | "addOrUpdateService" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getDeliverable" | "getPendingRefund" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateLockTime"): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
     encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "acknowledgeDeliverable", values: [AddressLike, BigNumberish]): string;
@@ -920,11 +936,12 @@ interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: "addDeliverable", values: [AddressLike, BytesLike]): string;
     encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
     encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
     encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
     encodeFunctionData(functionFragment: "getDeliverable", values: [AddressLike, AddressLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "getPendingRefund", values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
     encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
@@ -950,6 +967,7 @@ interface FineTuningServingInterface extends Interface {
     decodeFunctionResult(functionFragment: "getAllAccounts", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAllServices", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getDeliverable", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getPendingRefund", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "initialized", data: BytesLike): Result;
@@ -1126,7 +1144,8 @@ interface FineTuningServing extends BaseContract {
     ], "nonpayable">;
     depositFund: TypedContractMethod<[
         user: AddressLike,
-        provider: AddressLike
+        provider: AddressLike,
+        cancelRetrievingAmount: BigNumberish
     ], [
         void
     ], "payable">;
@@ -1144,6 +1163,12 @@ interface FineTuningServing extends BaseContract {
         index: BigNumberish
     ], [
         DeliverableStructOutput
+    ], "view">;
+    getPendingRefund: TypedContractMethod<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        bigint
     ], "view">;
     getService: TypedContractMethod<[
         provider: AddressLike
@@ -1247,7 +1272,8 @@ interface FineTuningServing extends BaseContract {
     ], "nonpayable">;
     getFunction(nameOrSignature: "depositFund"): TypedContractMethod<[
         user: AddressLike,
-        provider: AddressLike
+        provider: AddressLike,
+        cancelRetrievingAmount: BigNumberish
     ], [
         void
     ], "payable">;
@@ -1265,6 +1291,12 @@ interface FineTuningServing extends BaseContract {
         index: BigNumberish
     ], [
         DeliverableStructOutput
+    ], "view">;
+    getFunction(nameOrSignature: "getPendingRefund"): TypedContractMethod<[
+        user: AddressLike,
+        provider: AddressLike
+    ], [
+        bigint
     ], "view">;
     getFunction(nameOrSignature: "getService"): TypedContractMethod<[
         provider: AddressLike

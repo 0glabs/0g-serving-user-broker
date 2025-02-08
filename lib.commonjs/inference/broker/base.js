@@ -181,7 +181,6 @@ class ZGServingUserBrokerBase {
             const acc = await this.contract.getAccount(provider);
             // Check if the account balance is below the trigger threshold
             const lockedFund = acc.balance - acc.pendingRefund;
-            console.log('lockedFund1', lockedFund);
             if (lockedFund < triggerThreshold) {
                 await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
             }

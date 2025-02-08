@@ -275,7 +275,6 @@ export abstract class ZGServingUserBrokerBase {
 
             // Check if the account balance is below the trigger threshold
             const lockedFund = acc.balance - acc.pendingRefund
-            console.log('lockedFund1', lockedFund)
             if (lockedFund < triggerThreshold) {
                 await this.ledger.transferFund(
                     provider,
