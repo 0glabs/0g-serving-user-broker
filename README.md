@@ -21,10 +21,10 @@ pnpm add @0glabs/0g-serving-broker @types/crypto-js@4.2.2 crypto-js@4.2.0
 The broker instance is initialized with a `signer`. This signer is an instance that implements the `JsonRpcSigner` or `Wallet` interface from the ethers package and is used to sign transactions for a specific Ethereum account. You can create this instance using your private key via the ethers library or use a wallet framework tool like [wagmi](https://wagmi.sh/react/guides/ethers) to initialize the signer.
 
 ```typescript
-import { createZGServingNetworkBroker } from '@0glabs/0g-serving-broker'
+import { createZGComputeNetworkBroker } from '@0glabs/0g-serving-broker'
 
 /**
- * 'createZGServingNetworkBroker' is used to initialize ZGServingUserBroker
+ * 'createZGComputeNetworkBroker' is used to initialize ZGServingUserBroker
  *
  * @param {JsonRpcSigner | Wallet} signer - A signer that implements the 'JsonRpcSigner' or 'Wallet' interface from the ethers package.
  * @param {string} contractAddress - 0G Serving contract address, use default address if not provided.
@@ -33,7 +33,7 @@ import { createZGServingNetworkBroker } from '@0glabs/0g-serving-broker'
  *
  * @throws An error if the broker cannot be initialized.
  */
-const broker = await createZGServingNetworkBroker(signer)
+const broker = await createZGComputeNetworkBroker(signer)
 ```
 
 ### Step 3: List Available Services
@@ -47,7 +47,6 @@ const broker = await createZGServingNetworkBroker(signer)
  *
  * type ServiceStructOutput = {
  *   provider: string;  // Address of the provider
- *   name: string;
  *   serviceType: string;
  *   url: string;
  *   inputPrice: bigint;
@@ -69,12 +68,11 @@ Before using the provider's services, you need to create an account specifically
 /**
  * 'addAccount' creates a new account in the contract.
  *
- * @param {string} providerAddress - The address of the provider for whom the account is being created.
  * @param {number} balance - The initial balance to be assigned to the new account. The unit is A0GI.
  *
  * @throws  An error if the account creation fails.
  */
-await broker.addAccount(providerAddress, balance)
+await broker.ledger.addLedger(balance)
 ```
 
 #### 4.2 Deposit Funds into the Account
@@ -83,12 +81,11 @@ await broker.addAccount(providerAddress, balance)
 /**
  * 'depositFund' deposits a specified amount of funds into an existing account.
  *
- * @param {string} account - The account identifier where the funds will be deposited.
  * @param {number} amount - The amount of funds to be deposited. The unit is A0GI.
  *
  * @throws  An error if the deposit fails.
  */
-await broker.depositFund(providerAddress, amount)
+await broker.ledger.depositFund(amount)
 ```
 
 ### Step 5: Use the Provider's Services
@@ -103,16 +100,12 @@ await broker.depositFund(providerAddress, amount)
  * 2. Model information for the provider service
  *
  * @param {string} providerAddress - The address of the provider.
- * @param {string} serviceName - The name of the service.
  *
  * @returns { endpoint, model } - Object containing endpoint and model.
  *
  * @throws An error if errors occur during the processing of the request.
  */
-const { endpoint, model } = await broker.getServiceMetadata(
-    providerAddress,
-    serviceName
-)
+const { endpoint, model } = await broker.getServiceMetadata(providerAddress)
 ```
 
 #### 5.2 Get Request Headers
@@ -127,16 +120,14 @@ const { endpoint, model } = await broker.getServiceMetadata(
  * for settlement in contract.
  *
  * @param {string} providerAddress - The address of the provider.
- * @param {string} serviceName - The name of the service.
  * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
  *
  * @returns headers. Records information such as the request fee and user signature.
  *
  * @throws An error if errors occur during the processing of the request.
  */
-const headers = await broker.getRequestHeaders(
+const headers = await broker.inference.getRequestHeaders(
     providerAddress,
-    serviceName,
     content
 )
 ```
@@ -200,7 +191,6 @@ await fetch(`${endpoint}/chat/completions`, {
  * with the chat ID.
  *
  * @param {string} providerAddress - The address of the provider.
- * @param {string} serviceName - The name of the service.
  * @param {string} content - The main content returned by the service. For example, in the case of a chatbot service,
  * it would be the response text.
  * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
@@ -211,9 +201,8 @@ await fetch(`${endpoint}/chat/completions`, {
  *
  * @throws An error if any issues occur during the processing of the response.
  */
-const valid = await broker.processResponse(
+const valid = await broker.inference.processResponse(
     providerAddress,
-    serviceName,
     content,
     chatID
 )
@@ -230,16 +219,15 @@ const valid = await broker.processResponse(
  * you can manually call settleFee to settle the fee.
  *
  * @param {string} providerAddress - The address of the provider.
- * @param {string} serviceName - The name of the service.
  * @param {number} fee - The fee to be settled. The unit is A0GI.
  *
  * @returns A promise that resolves when the fee settlement is successful.
  *
  * @throws An error if any issues occur during the fee settlement process.
  */
-await broker.settleFee(providerAddress, serviceName, fee)
+await broker.inference.settleFee(providerAddress, fee)
 ```
 
 ## Interface
 
-Access the more details of interfaces via opening [index.html](./docs/index.html) in browser.
+Access the more details of interfaces via cloning the repo and opening [index.html](./docs/index.html) in browser.
