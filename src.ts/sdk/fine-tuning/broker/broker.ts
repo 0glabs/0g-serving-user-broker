@@ -229,7 +229,7 @@ export class FineTuningBroker {
  */
 export async function createFineTuningBroker(
     signer: Wallet,
-    contractAddress = '',
+    contractAddress: string,
     ledger: LedgerBroker,
     gasPrice?: number
 ): Promise<FineTuningBroker> {

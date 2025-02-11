@@ -40,5 +40,5 @@ export declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
+export declare function createFineTuningBroker(signer: Wallet, contractAddress: string, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
 //# sourceMappingURL=broker.d.ts.map

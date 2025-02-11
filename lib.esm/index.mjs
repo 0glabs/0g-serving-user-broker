@@ -10505,7 +10505,7 @@ class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createFineTuningBroker(signer, contractAddress = '', ledger, gasPrice) {
+async function createFineTuningBroker(signer, contractAddress, ledger, gasPrice) {
     const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice);
     try {
         await broker.initialize();

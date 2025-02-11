@@ -1904,7 +1904,7 @@ declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createFineTuningBroker(signer: Wallet, contractAddress: string | undefined, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
+declare function createFineTuningBroker(signer: Wallet, contractAddress: string, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
 
 declare class ZGComputeNetworkBroker {
     ledger: LedgerBroker;
