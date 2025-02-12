@@ -78,6 +78,7 @@ export default function fineTuning(program: Command) {
             '--fine-tuning-ca <address>',
             'Fine Tuning contract address, use default address if not provided'
         )
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 await broker.fineTuning!.uploadDataset(options.dataPath)

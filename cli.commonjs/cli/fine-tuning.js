@@ -54,6 +54,7 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address, use default address if not provided')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address, use default address if not provided')
+        .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.uploadDataset(options.dataPath);

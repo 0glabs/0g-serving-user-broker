@@ -9973,7 +9973,7 @@ const MODEL_HASH_MAP = {
     },
 };
 
-async function upload(privateKey, dataPath) {
+async function upload(privateKey, dataPath, gasPrice) {
     try {
         const fileSize = await getFileContentSize(dataPath);
         return new Promise((resolve, reject) => {
@@ -9989,6 +9989,9 @@ async function upload(privateKey, dataPath) {
                 '--file',
                 dataPath,
             ];
+            if (gasPrice) {
+                args.push('--gas-price', gasPrice.toString());
+            }
             const process = spawn(command, args);
             process.stdout.on('data', (data) => {
                 console.log(`${data}`);
@@ -10075,8 +10078,8 @@ class ModelProcessor extends BrokerBase {
     listModel() {
         return Object.entries(MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath) {
-        upload(privateKey, dataPath);
+    async uploadDataset(privateKey, dataPath, gasPrice) {
+        upload(privateKey, dataPath, gasPrice);
     }
     async downloadDataset(dataPath, dataRoot) {
         download(dataPath, dataRoot);
@@ -10435,9 +10438,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath) => {
+    uploadDataset = async (dataPath, gasPrice) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice);
         }
         catch (error) {
             throw error;

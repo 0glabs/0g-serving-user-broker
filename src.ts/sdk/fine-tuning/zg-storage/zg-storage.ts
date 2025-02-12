@@ -5,7 +5,8 @@ import * as fs from 'fs/promises'
 
 export async function upload(
     privateKey: string,
-    dataPath: string
+    dataPath: string,
+    gasPrice?: number
 ): Promise<void> {
     try {
         const fileSize = await getFileContentSize(dataPath)
@@ -32,6 +33,10 @@ export async function upload(
                 '--file',
                 dataPath,
             ]
+
+            if (gasPrice) {
+                args.push('--gas-price', gasPrice.toString())
+            }
 
             const process = spawn(command, args)
 

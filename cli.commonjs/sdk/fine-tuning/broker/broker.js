@@ -81,9 +81,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath) => {
+    uploadDataset = async (dataPath, gasPrice) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice);
         }
         catch (error) {
             throw error;

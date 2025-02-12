@@ -9,8 +9,12 @@ export class ModelProcessor extends BrokerBase {
         return Object.entries(MODEL_HASH_MAP)
     }
 
-    async uploadDataset(privateKey: string, dataPath: string): Promise<void> {
-        upload(privateKey, dataPath)
+    async uploadDataset(
+        privateKey: string,
+        dataPath: string,
+        gasPrice?: number
+    ): Promise<void> {
+        upload(privateKey, dataPath, gasPrice)
     }
 
     async downloadDataset(dataPath: string, dataRoot: string): Promise<void> {
