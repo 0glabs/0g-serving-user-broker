@@ -1,4 +1,3 @@
-import { ZG_RPC_ENDPOINT_TESTNET } from './const'
 import { neuronToA0gi, printTableWithTitle, withLedgerBroker } from './util'
 import { Command } from 'commander'
 import Table from 'cli-table3'
@@ -10,7 +9,7 @@ export default function ledger(program: Command) {
         .command('get-account')
         .description('Retrieve account information')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
@@ -25,7 +24,7 @@ export default function ledger(program: Command) {
         .description('Add account balance')
         .requiredOption('--amount <A0GI>', 'Amount to add')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
@@ -44,7 +43,7 @@ export default function ledger(program: Command) {
         .description('Deposit funds into the account')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--amount <A0GI>', 'Amount of funds to deposit')
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
@@ -62,7 +61,7 @@ export default function ledger(program: Command) {
         .description('Refund an amount from the account')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('-a, --amount <A0GI>', 'Amount to refund')
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
@@ -79,7 +78,7 @@ export default function ledger(program: Command) {
         .command('retrieve-fund')
         .description('Retrieve fund from sub account')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')

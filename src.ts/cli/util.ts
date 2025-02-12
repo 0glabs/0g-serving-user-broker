@@ -2,18 +2,21 @@ import { createZGComputeNetworkBroker, ZGComputeNetworkBroker } from '../sdk'
 import { ethers } from 'ethers'
 import chalk from 'chalk'
 import { Table } from 'cli-table3'
+import { ZG_RPC_ENDPOINT_TESTNET } from './const'
 
 export async function initBroker(
     options: any
 ): Promise<ZGComputeNetworkBroker> {
-    const provider = new ethers.JsonRpcProvider(options.rpc)
+    const provider = new ethers.JsonRpcProvider(
+        options.rpc || process.env.RPC_ENDPOINT || ZG_RPC_ENDPOINT_TESTNET
+    )
     const wallet = new ethers.Wallet(options.key, provider)
 
     return await createZGComputeNetworkBroker(
         wallet,
-        options.ledgerCa,
-        options.inferenceCa,
-        options.fineTuningCa,
+        options.ledgerCa || process.env.LEDGER_CA,
+        options.inferenceCa || process.env.INFERENCE_CA,
+        options.fineTuningCa || process.env.FINE_TUNING_CA,
         options.gasPrice
     )
 }

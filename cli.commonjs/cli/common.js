@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 const tslib_1 = require("tslib");
 const util_1 = require("./util");
-const const_1 = require("./const");
 const cli_table3_1 = tslib_1.__importDefault(require("cli-table3"));
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 function default_1(program) {
@@ -13,7 +12,7 @@ function default_1(program) {
         .description('Retrieve sub account information')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address')
-        .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
@@ -92,7 +91,7 @@ function default_1(program) {
         .command('list-providers')
         .description('List fine-tuning providers')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .option('--rpc <url>', '0G Chain RPC endpoint', const_1.ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')

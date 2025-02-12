@@ -2,7 +2,6 @@
 
 import { Command } from 'commander'
 import { neuronToA0gi, printTableWithTitle, withFineTuningBroker } from './util'
-import { ZG_RPC_ENDPOINT_TESTNET } from './const'
 import Table from 'cli-table3'
 import chalk from 'chalk'
 
@@ -12,7 +11,7 @@ export default function (program: Command) {
         .description('Retrieve sub account information')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address')
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
@@ -109,7 +108,7 @@ export default function (program: Command) {
         .command('list-providers')
         .description('List fine-tuning providers')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')

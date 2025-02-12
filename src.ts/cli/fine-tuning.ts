@@ -16,7 +16,7 @@ export default function fineTuning(program: Command) {
             'Wallet private key, if not provided, ensure the default key is set in the environment',
             process.env.ZG_PRIVATE_KEY
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
@@ -38,7 +38,7 @@ export default function fineTuning(program: Command) {
             'Wallet private key, if not provided, ensure the default key is set in the environment',
             process.env.ZG_PRIVATE_KEY
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
@@ -69,7 +69,7 @@ export default function fineTuning(program: Command) {
             'Wallet private key, if not provided, ensure the default key is set in the environment',
             process.env.ZG_PRIVATE_KEY
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option(
             '--ledger-ca <address>',
             'Account (ledger) contract address, use default address if not provided'
@@ -125,7 +125,7 @@ export default function fineTuning(program: Command) {
             '--config-path <path>',
             'Fine-tuning configuration path'
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
@@ -165,7 +165,7 @@ export default function fineTuning(program: Command) {
             '--task <id>',
             'Task ID, if not provided, the latest task will be retrieved'
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
@@ -206,7 +206,7 @@ export default function fineTuning(program: Command) {
             '--task <id>',
             'Task ID, if not provided, the latest task will be retrieved'
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
@@ -229,7 +229,7 @@ export default function fineTuning(program: Command) {
             'Wallet private key, if not provided, ensure the default key is set in the environment',
             process.env.ZG_PRIVATE_KEY
         )
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
@@ -258,7 +258,7 @@ export default function fineTuning(program: Command) {
             process.env.ZG_PRIVATE_KEY
         )
         .requiredOption('--output <path>', 'Path to the decrypted model')
-        .option('--rpc <url>', '0G Chain RPC endpoint', ZG_RPC_ENDPOINT_TESTNET)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Ledger contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
