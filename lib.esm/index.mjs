@@ -10566,7 +10566,7 @@ class LedgerProcessor {
                 const account = await this.inferenceContract.getAccount(provider);
                 return [provider, account.balance, account.pendingRefund];
             }));
-            if (typeof ledger.fineTuningProviders == 'undefined') {
+            if (typeof this.fineTuningContract == 'undefined') {
                 return { ledgerInfo, infers, fines: [] };
             }
             const fines = await Promise.all(ledger.fineTuningProviders.map(async (provider) => {

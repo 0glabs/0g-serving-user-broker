@@ -61,7 +61,7 @@ export class LedgerProcessor {
                 })
             )
 
-            if (typeof ledger.fineTuningProviders == 'undefined') {
+            if (typeof this.fineTuningContract == 'undefined') {
                 return { ledgerInfo, infers, fines: [] }
             }
             const fines: [string, bigint, bigint][] = await Promise.all(
