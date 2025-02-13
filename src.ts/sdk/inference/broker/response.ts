@@ -2,7 +2,7 @@ import { InferenceServingContract } from '../contract'
 import { Extractor } from '../extractor'
 import { Metadata, Cache } from '../../common/storage'
 import { ZGServingUserBrokerBase } from './base'
-import { isVerifiability, VerifiabilityEnum } from './model'
+import { isVerifiability } from './model'
 import { Verifier } from './verifier'
 import { LedgerBroker } from '../../ledger'
 
@@ -81,13 +81,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
             await this.settleFee(providerAddress, outputFee)
 
             const svc = await extractor.getSvcInfo()
-            // TODO: Temporarily return true for non-TeeML verifiability.
-            // these cases will be handled in the future.
-            if (
-                isVerifiability(svc.verifiability) ||
-                svc.verifiability !== VerifiabilityEnum.TeeML
-            ) {
-                return true
+            if (!isVerifiability(svc.verifiability)) {
+                return false
             }
 
             if (!chatID) {
@@ -108,7 +103,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
 
             const ResponseSignature = await Verifier.fetSignatureByChatID(
                 svc.url,
-                chatID
+                chatID,
+                svc.model
             )
 
             return Verifier.verifySignature(

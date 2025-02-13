@@ -59,11 +59,8 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             await this.updateCachedFee(providerAddress, outputFee);
             await this.settleFee(providerAddress, outputFee);
             const svc = await extractor.getSvcInfo();
-            // TODO: Temporarily return true for non-TeeML verifiability.
-            // these cases will be handled in the future.
-            if ((0, model_1.isVerifiability)(svc.verifiability) ||
-                svc.verifiability !== model_1.VerifiabilityEnum.TeeML) {
-                return true;
+            if (!(0, model_1.isVerifiability)(svc.verifiability)) {
+                return false;
             }
             if (!chatID) {
                 throw new Error('Chat ID does not exist');
@@ -76,7 +73,7 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             if (!singerRAVerificationResult.valid) {
                 throw new Error('Signing address is invalid');
             }
-            const ResponseSignature = await verifier_1.Verifier.fetSignatureByChatID(svc.url, chatID);
+            const ResponseSignature = await verifier_1.Verifier.fetSignatureByChatID(svc.url, chatID, svc.model);
             return verifier_1.Verifier.verifySignature(ResponseSignature.text, `0x${ResponseSignature.signature}`, singerRAVerificationResult.signingAddress);
         }
         catch (error) {

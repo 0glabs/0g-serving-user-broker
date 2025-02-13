@@ -69,7 +69,7 @@ export class Verifier extends ZGServingUserBrokerBase {
             const extractor = await this.getExtractor(providerAddress, false)
             const svc = await extractor.getSvcInfo()
 
-            const signerRA = await Verifier.fetSignerRA(svc.url)
+            const signerRA = await Verifier.fetSignerRA(svc.url, svc.model)
             if (!signerRA?.signing_address) {
                 throw new Error('signing address does not exist')
             }
@@ -141,17 +141,20 @@ export class Verifier extends ZGServingUserBrokerBase {
             })
     }
 
-    static async fetSignerRA(providerBrokerURL: string): Promise<SignerRA> {
-        return fetch(`${providerBrokerURL}/v1/proxy/attestation/report`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+    static async fetSignerRA(
+        providerBrokerURL: string,
+        model: string
+    ): Promise<SignerRA> {
+        return fetch(
+            `${providerBrokerURL}/v1/proxy/attestation/report?model=${model}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        )
             .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok')
-                }
                 return response.json()
             })
             .then((data) => {
@@ -159,17 +162,18 @@ export class Verifier extends ZGServingUserBrokerBase {
                     try {
                         data.nvidia_payload = JSON.parse(data.nvidia_payload)
                     } catch (error) {
-                        throw error
+                        throw Error('parsing nvidia_payload error')
                     }
                 }
                 if (data.intel_quote) {
                     try {
-                        const intel_quota = JSON.parse(data.intel_quote)
                         data.intel_quote =
                             '0x' +
-                            Buffer.from(intel_quota, 'base64').toString('hex')
+                            Buffer.from(data.intel_quote, 'base64').toString(
+                                'hex'
+                            )
                     } catch (error) {
-                        throw error
+                        throw Error('parsing intel_quote error')
                     }
                 }
 
@@ -182,14 +186,18 @@ export class Verifier extends ZGServingUserBrokerBase {
 
     static async fetSignatureByChatID(
         providerBrokerURL: string,
-        chatID: string
+        chatID: string,
+        model: string
     ): Promise<ResponseSignature> {
-        return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+        return fetch(
+            `${providerBrokerURL}/v1/proxy/signature/${chatID}?model=${model}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        )
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('getting signature error')

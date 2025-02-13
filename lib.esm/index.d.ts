@@ -1659,8 +1659,8 @@ declare class Verifier extends ZGServingUserBrokerBase {
     getSignerRaDownloadLink(providerAddress: string): Promise<string>;
     getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
     static verifyRA(nvidia_payload: any): Promise<boolean>;
-    static fetSignerRA(providerBrokerURL: string): Promise<SignerRA>;
-    static fetSignatureByChatID(providerBrokerURL: string, chatID: string): Promise<ResponseSignature>;
+    static fetSignerRA(providerBrokerURL: string, model: string): Promise<SignerRA>;
+    static fetSignatureByChatID(providerBrokerURL: string, chatID: string, model: string): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
 }
 

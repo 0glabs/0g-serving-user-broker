@@ -40,7 +40,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(providerAddress, false);
             const svc = await extractor.getSvcInfo();
-            const signerRA = await Verifier.fetSignerRA(svc.url);
+            const signerRA = await Verifier.fetSignerRA(svc.url, svc.model);
             if (!signerRA?.signing_address) {
                 throw new Error('signing address does not exist');
             }
@@ -103,17 +103,14 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return false;
         });
     }
-    static async fetSignerRA(providerBrokerURL) {
-        return fetch(`${providerBrokerURL}/v1/proxy/attestation/report`, {
+    static async fetSignerRA(providerBrokerURL, model) {
+        return fetch(`${providerBrokerURL}/v1/proxy/attestation/report?model=${model}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
         })
             .then((response) => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
             return response.json();
         })
             .then((data) => {
@@ -122,18 +119,17 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
                     data.nvidia_payload = JSON.parse(data.nvidia_payload);
                 }
                 catch (error) {
-                    throw error;
+                    throw Error('parsing nvidia_payload error');
                 }
             }
             if (data.intel_quote) {
                 try {
-                    const intel_quota = JSON.parse(data.intel_quote);
                     data.intel_quote =
                         '0x' +
-                            Buffer.from(intel_quota, 'base64').toString('hex');
+                            Buffer.from(data.intel_quote, 'base64').toString('hex');
                 }
                 catch (error) {
-                    throw error;
+                    throw Error('parsing intel_quote error');
                 }
             }
             return data;
@@ -142,8 +138,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             throw error;
         });
     }
-    static async fetSignatureByChatID(providerBrokerURL, chatID) {
-        return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}`, {
+    static async fetSignatureByChatID(providerBrokerURL, chatID, model) {
+        return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}?model=${model}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
