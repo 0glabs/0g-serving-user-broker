@@ -98,6 +98,27 @@ function fineTuning(program) {
         });
     });
     program
+        .command('list-tasks')
+        .description('Retrieve all fine-tuning task')
+        .requiredOption('--provider <address>', 'Provider address')
+        .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
+        .option('--rpc <url>', '0G Chain RPC endpoint')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .action((options) => {
+        (0, util_1.withFineTuningBroker)(options, async (broker) => {
+            const tasks = await broker.fineTuning.listTask(options.provider);
+            const table = new cli_table3_1.default({
+                head: [chalk_1.default.blue('ID'), chalk_1.default.blue('Status')],
+                colWidths: [50, 85],
+            });
+            for (const task of tasks) {
+                table.push([task.id, task.progress]);
+            }
+            console.log(table.toString());
+        });
+    });
+    program
         .command('get-task')
         .description('Retrieve fine-tuning task information')
         .requiredOption('--provider <address>', 'Provider address')

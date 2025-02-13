@@ -145,6 +145,17 @@ export class ServiceProcessor extends BrokerBase {
         }
     }
 
+    async listTask(providerAddress: string): Promise<Task[]> {
+        try {
+            return await this.servingProvider.listTask(
+                providerAddress,
+                this.contract.getUserAddress()
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     async getTask(providerAddress: string, taskID?: string): Promise<Task> {
         try {
             if (!taskID) {
@@ -159,7 +170,11 @@ export class ServiceProcessor extends BrokerBase {
                 return tasks[0]
             }
 
-            return await this.servingProvider.getTask(providerAddress, taskID)
+            return await this.servingProvider.getTask(
+                providerAddress,
+                this.contract.getUserAddress(),
+                taskID
+            )
         } catch (error) {
             throw error
         }

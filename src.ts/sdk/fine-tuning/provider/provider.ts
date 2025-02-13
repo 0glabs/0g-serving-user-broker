@@ -105,10 +105,19 @@ export class Provider {
         }
     }
 
-    async getTask(providerAddress: string, taskID: string): Promise<Task> {
+    async getTask(
+        providerAddress: string,
+        userAddress: string,
+        taskID: string
+    ): Promise<Task> {
         try {
             const url = await this.getProviderUrl(providerAddress)
-            const endpoint = `${url}/v1/task/${taskID}`
+            const endpoint = `${url}/v1/user/${encodeURIComponent(
+                userAddress
+            )}/task/${taskID}`
+
+            console.log('url', url)
+            console.log('endpoint', endpoint)
 
             return this.fetchJSON(endpoint, { method: 'GET' }) as Promise<Task>
         } catch (error) {

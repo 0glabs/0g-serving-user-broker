@@ -105,6 +105,14 @@ class ServiceProcessor extends base_1.BrokerBase {
             throw error;
         }
     }
+    async listTask(providerAddress) {
+        try {
+            return await this.servingProvider.listTask(providerAddress, this.contract.getUserAddress());
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getTask(providerAddress, taskID) {
         try {
             if (!taskID) {
@@ -114,7 +122,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 }
                 return tasks[0];
             }
-            return await this.servingProvider.getTask(providerAddress, taskID);
+            return await this.servingProvider.getTask(providerAddress, this.contract.getUserAddress(), taskID);
         }
         catch (error) {
             throw error;

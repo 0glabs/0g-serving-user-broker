@@ -10216,6 +10216,14 @@ class ServiceProcessor extends BrokerBase {
             throw error;
         }
     }
+    async listTask(providerAddress) {
+        try {
+            return await this.servingProvider.listTask(providerAddress, this.contract.getUserAddress());
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getTask(providerAddress, taskID) {
         try {
             if (!taskID) {
@@ -10225,7 +10233,7 @@ class ServiceProcessor extends BrokerBase {
                 }
                 return tasks[0];
             }
-            return await this.servingProvider.getTask(providerAddress, taskID);
+            return await this.servingProvider.getTask(providerAddress, this.contract.getUserAddress(), taskID);
         }
         catch (error) {
             throw error;
@@ -10328,10 +10336,12 @@ class Provider {
             throw new Error('Failed to create task');
         }
     }
-    async getTask(providerAddress, taskID) {
+    async getTask(providerAddress, userAddress, taskID) {
         try {
             const url = await this.getProviderUrl(providerAddress);
-            const endpoint = `${url}/v1/task/${taskID}`;
+            const endpoint = `${url}/v1/user/${encodeURIComponent(userAddress)}/task/${taskID}`;
+            console.log('url', url);
+            console.log('endpoint', endpoint);
             return this.fetchJSON(endpoint, { method: 'GET' });
         }
         catch (error) {
@@ -10457,6 +10467,14 @@ class FineTuningBroker {
     createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
         try {
             return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    listTask = async (providerAddress) => {
+        try {
+            return await this.serviceProcessor.listTask(providerAddress);
         }
         catch (error) {
             throw error;

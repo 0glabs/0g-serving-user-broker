@@ -25,7 +25,7 @@ export declare class Provider {
     getProviderUrl(providerAddress: string): Promise<string>;
     getQuote(providerAddress: string): Promise<QuoteResponse>;
     createTask(providerAddress: string, task: Task): Promise<string>;
-    getTask(providerAddress: string, taskID: string): Promise<Task>;
+    getTask(providerAddress: string, userAddress: string, taskID: string): Promise<Task>;
     listTask(providerAddress: string, userAddress: string, latest?: boolean): Promise<Task[]>;
     getLog(providerAddress: string, userAddress: string, taskID: string): Promise<string>;
 }
