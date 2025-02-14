@@ -109,11 +109,15 @@ function fineTuning(program) {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const tasks = await broker.fineTuning.listTask(options.provider);
             const table = new cli_table3_1.default({
-                head: [chalk_1.default.blue('ID'), chalk_1.default.blue('Status')],
-                colWidths: [50, 85],
+                head: [
+                    chalk_1.default.blue('ID'),
+                    chalk_1.default.blue('Created At'),
+                    chalk_1.default.blue('Status'),
+                ],
+                colWidths: [50, 30, 30],
             });
             for (const task of tasks) {
-                table.push([task.id, task.progress]);
+                table.push([task.id, task.createdAt, task.progress]);
             }
             console.log(table.toString());
         });

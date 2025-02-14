@@ -171,11 +171,15 @@ export default function fineTuning(program: Command) {
                     options.provider
                 )
                 const table = new Table({
-                    head: [chalk.blue('ID'), chalk.blue('Status')],
-                    colWidths: [50, 85],
+                    head: [
+                        chalk.blue('ID'),
+                        chalk.blue('Created At'),
+                        chalk.blue('Status'),
+                    ],
+                    colWidths: [50, 30, 30],
                 })
                 for (const task of tasks) {
-                    table.push([task.id, task.progress])
+                    table.push([task.id, task.createdAt, task.progress])
                 }
                 console.log(table.toString())
             })
