@@ -109,7 +109,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
 
             return Verifier.verifySignature(
                 ResponseSignature.text,
-                `0x${ResponseSignature.signature}`,
+                ResponseSignature.signature,
                 singerRAVerificationResult.signingAddress
             )
         } catch (error) {

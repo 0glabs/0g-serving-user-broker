@@ -8431,7 +8431,7 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
                 throw new Error('Signing address is invalid');
             }
             const ResponseSignature = await Verifier.fetSignatureByChatID(svc.url, chatID, svc.model);
-            return Verifier.verifySignature(ResponseSignature.text, `0x${ResponseSignature.signature}`, singerRAVerificationResult.signingAddress);
+            return Verifier.verifySignature(ResponseSignature.text, ResponseSignature.signature, singerRAVerificationResult.signingAddress);
         }
         catch (error) {
             throw error;
