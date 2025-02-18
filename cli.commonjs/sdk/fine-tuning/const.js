@@ -40,7 +40,7 @@ exports.MODEL_HASH_MAP = {
     },
     // TODO: remove
     'mock-model': {
-        turbo: '0xf463fe8c26e7dbca20716eb3c81ac1f3ea23a6c5dbe002bf46507db403c71578',
+        turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
         standard: '',
         description: '',
     },
