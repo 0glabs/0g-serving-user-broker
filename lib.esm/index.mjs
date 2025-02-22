@@ -10020,7 +10020,7 @@ async function download(dataPath, dataRoot) {
             dataPath,
             '--indexer',
             INDEXER_URL_TURBO,
-            '--root',
+            '--roots',
             dataRoot,
         ];
         const process = spawn(command, args);

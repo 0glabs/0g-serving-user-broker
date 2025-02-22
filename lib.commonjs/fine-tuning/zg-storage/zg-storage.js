@@ -61,7 +61,7 @@ async function download(dataPath, dataRoot) {
             dataPath,
             '--indexer',
             const_1.INDEXER_URL_TURBO,
-            '--root',
+            '--roots',
             dataRoot,
         ];
         const process = (0, child_process_1.spawn)(command, args);

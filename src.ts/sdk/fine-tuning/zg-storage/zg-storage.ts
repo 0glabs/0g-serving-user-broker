@@ -88,7 +88,7 @@ export async function download(
             dataPath,
             '--indexer',
             INDEXER_URL_TURBO,
-            '--root',
+            '--roots',
             dataRoot,
         ]
 
