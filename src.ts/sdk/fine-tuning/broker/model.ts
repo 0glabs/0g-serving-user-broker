@@ -1,8 +1,11 @@
-import { aesGCMDecrypt, eciesDecrypt, hexToRoots } from '../../common/utils'
+import {
+    aesGCMDecryptToFile,
+    eciesDecrypt,
+    hexToRoots,
+} from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import { download, upload } from '../zg-storage'
 import { BrokerBase } from './base'
-import { promises as fs } from 'fs'
 
 export class ModelProcessor extends BrokerBase {
     listModel(): [string, { [key: string]: string }][] {
@@ -71,14 +74,12 @@ export class ModelProcessor extends BrokerBase {
                 latestDeliverable.encryptedSecret
             )
 
-            const encryptedData = await fs.readFile(encryptedModelPath)
-
-            const model = await aesGCMDecrypt(
+            await aesGCMDecryptToFile(
                 secret,
-                encryptedData,
-                account.providerSigner
+                encryptedModelPath,
+                decryptedModelPath,
+                providerAddress
             )
-            await fs.writeFile(decryptedModelPath, model)
         } catch (error) {
             throw error
         }
