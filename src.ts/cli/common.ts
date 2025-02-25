@@ -1,9 +1,15 @@
 #!/usr/bin/env ts-node
 
 import { Command } from 'commander'
-import { neuronToA0gi, printTableWithTitle, withFineTuningBroker } from './util'
+import {
+    splitIntoChunks,
+    neuronToA0gi,
+    printTableWithTitle,
+    withFineTuningBroker,
+} from './util'
 import Table from 'cli-table3'
 import chalk from 'chalk'
+import { hexToRoots } from '../sdk/common/utils'
 
 export default function (program: Command) {
     program
@@ -93,14 +99,17 @@ export default function (program: Command) {
 
                 account.deliverables.forEach((deliverable) => {
                     table.push([
-                        deliverable.modelRootHash,
+                        splitIntoChunks(
+                            hexToRoots(deliverable.modelRootHash),
+                            60
+                        ),
                         deliverable.acknowledged
                             ? chalk.greenBright.bold('\u2713')
                             : '',
                     ])
                 })
 
-                printTableWithTitle('nDeliverables', table)
+                printTableWithTitle('Deliverables', table)
             })
         })
 

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.encryptData = encryptData;
 exports.decryptData = decryptData;
+exports.hexToRoots = hexToRoots;
 exports.signRequest = signRequest;
 exports.eciesDecrypt = eciesDecrypt;
 exports.aesGCMDecrypt = aesGCMDecrypt;
@@ -32,6 +33,12 @@ async function decryptData(signer, encryptedData) {
     return decrypted;
 }
 // Fine-tuning
+function hexToRoots(hexString) {
+    if (hexString.startsWith('0x')) {
+        hexString = hexString.slice(2);
+    }
+    return Buffer.from(hexString, 'hex').toString('utf8');
+}
 async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     const hash = ethers_1.ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
     return await signer.signMessage(ethers_1.ethers.toBeArray(hash));

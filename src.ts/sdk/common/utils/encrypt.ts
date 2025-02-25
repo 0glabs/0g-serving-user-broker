@@ -44,6 +44,13 @@ export async function decryptData(
 
 // Fine-tuning
 
+export function hexToRoots(hexString: string): string {
+    if (hexString.startsWith('0x')) {
+        hexString = hexString.slice(2)
+    }
+    return Buffer.from(hexString, 'hex').toString('utf8')
+}
+
 export async function signRequest(
     signer: Wallet,
     userAddress: AddressLike,

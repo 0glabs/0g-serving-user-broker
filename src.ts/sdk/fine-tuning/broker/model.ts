@@ -1,4 +1,4 @@
-import { aesGCMDecrypt, eciesDecrypt } from '../../common/utils'
+import { aesGCMDecrypt, eciesDecrypt, hexToRoots } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import { download, upload } from '../zg-storage'
 import { BrokerBase } from './base'
@@ -36,7 +36,10 @@ export class ModelProcessor extends BrokerBase {
                 throw new Error('No deliverable found')
             }
 
-            await download(dataPath, latestDeliverable.modelRootHash)
+            await download(
+                dataPath,
+                hexToRoots(latestDeliverable.modelRootHash)
+            )
 
             await this.contract.acknowledgeDeliverable(
                 providerAddress,

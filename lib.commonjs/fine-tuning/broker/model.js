@@ -23,7 +23,7 @@ class ModelProcessor extends base_1.BrokerBase {
             if (!latestDeliverable) {
                 throw new Error('No deliverable found');
             }
-            await (0, zg_storage_1.download)(dataPath, latestDeliverable.modelRootHash);
+            await (0, zg_storage_1.download)(dataPath, (0, utils_1.hexToRoots)(latestDeliverable.modelRootHash));
             await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1, gasPrice);
         }
         catch (error) {

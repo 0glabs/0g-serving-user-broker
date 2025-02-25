@@ -6,6 +6,7 @@ const tslib_1 = require("tslib");
 const util_1 = require("./util");
 const cli_table3_1 = tslib_1.__importDefault(require("cli-table3"));
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
+const utils_1 = require("../sdk/common/utils");
 function default_1(program) {
     program
         .command('get-sub-account')
@@ -78,13 +79,13 @@ function default_1(program) {
             });
             account.deliverables.forEach((deliverable) => {
                 table.push([
-                    deliverable.modelRootHash,
+                    (0, util_1.splitIntoChunks)((0, utils_1.hexToRoots)(deliverable.modelRootHash), 60),
                     deliverable.acknowledged
                         ? chalk_1.default.greenBright.bold('\u2713')
                         : '',
                 ]);
             });
-            (0, util_1.printTableWithTitle)('nDeliverables', table);
+            (0, util_1.printTableWithTitle)('Deliverables', table);
         });
     });
     program

@@ -6602,6 +6602,12 @@ async function decryptData(signer, encryptedData) {
     return decrypted;
 }
 // Fine-tuning
+function hexToRoots(hexString) {
+    if (hexString.startsWith('0x')) {
+        hexString = hexString.slice(2);
+    }
+    return Buffer.from(hexString, 'hex').toString('utf8');
+}
 async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     const hash = ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
     return await signer.signMessage(ethers.toBeArray(hash));
@@ -9958,6 +9964,11 @@ const MODEL_HASH_MAP = {
         standard: '',
         description: 'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
     },
+    'cocktailsgd-opt-1.3b': {
+        turbo: '0xe25963fd25fe37d7df5216de1eae533ea42090d3642c3f84edd0f179ffc63a94,0xfccaf17bd0ed26b74e8a3883f5c814bcb5f247015d68fd65a28bf98e1bdb0b7f',
+        standard: '',
+        description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD'
+    },
     // TODO: remove
     'mock-model': {
         turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
@@ -10084,7 +10095,7 @@ class ModelProcessor extends BrokerBase {
             if (!latestDeliverable) {
                 throw new Error('No deliverable found');
             }
-            await download(dataPath, latestDeliverable.modelRootHash);
+            await download(dataPath, hexToRoots(latestDeliverable.modelRootHash));
             await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1, gasPrice);
         }
         catch (error) {
