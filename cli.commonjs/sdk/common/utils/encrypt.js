@@ -108,8 +108,6 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
     await writeFd.close();
     await fd.close();
     const recoveredAddress = ethers_1.ethers.recoverAddress(ethers_1.ethers.keccak256(tagsBuffer), '0x' + tagSig.toString('hex'));
-    console.log('recoveredAddress.toLowerCase()', recoveredAddress.toLowerCase());
-    console.log('providerSigner.toLowerCase()', providerSigner.toLowerCase());
     if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
         throw new Error('Invalid tag signature');
     }

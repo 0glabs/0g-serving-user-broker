@@ -6657,8 +6657,6 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
     await writeFd.close();
     await fd.close();
     const recoveredAddress = ethers.recoverAddress(ethers.keccak256(tagsBuffer), '0x' + tagSig.toString('hex'));
-    console.log('recoveredAddress.toLowerCase()', recoveredAddress.toLowerCase());
-    console.log('providerSigner.toLowerCase()', providerSigner.toLowerCase());
     if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
         throw new Error('Invalid tag signature');
     }
@@ -10134,7 +10132,7 @@ class ModelProcessor extends BrokerBase {
                 throw new Error('No deliverable found');
             }
             const secret = await eciesDecrypt(this.contract.signer, latestDeliverable.encryptedSecret);
-            await aesGCMDecryptToFile(secret, encryptedModelPath, decryptedModelPath, providerAddress);
+            await aesGCMDecryptToFile(secret, encryptedModelPath, decryptedModelPath, account.providerSigner);
         }
         catch (error) {
             throw error;
