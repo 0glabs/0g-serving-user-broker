@@ -167,12 +167,13 @@ export async function aesGCMDecryptToFile(
     await writeFd.close()
     await fd.close()
 
-    const recoveredAddress = ethers.recoverAddress(
-        ethers.keccak256(tagsBuffer),
-        '0x' + tagSig.toString('hex')
-    )
+    // // TODO: check if the recovered address is the same as the provider signer
+    // const recoveredAddress = ethers.recoverAddress(
+    //     ethers.keccak256(tagsBuffer),
+    //     '0x' + tagSig.toString('hex')
+    // )
 
-    if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
-        throw new Error('Invalid tag signature')
-    }
+    // if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
+    //     throw new Error('Invalid tag signature')
+    // }
 }

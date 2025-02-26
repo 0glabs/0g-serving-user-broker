@@ -143,7 +143,10 @@ function fineTuning(program) {
             table.push(['User Address', task.userAddress]);
             table.push(['Pre-trained Model Hash', task.preTrainedModelHash]);
             table.push(['Dataset Hash', task.datasetHash]);
-            table.push(['Training Params', task.trainingParams]);
+            table.push([
+                'Training Params',
+                (0, util_1.splitIntoChunks)(task.trainingParams, 80),
+            ]);
             table.push(['Fee', task.fee]);
             table.push(['Nonce', task.nonce]);
             table.push(['Signature', (0, util_1.splitIntoChunks)(task.signature, 80)]);
