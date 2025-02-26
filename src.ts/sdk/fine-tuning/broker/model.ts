@@ -78,7 +78,7 @@ export class ModelProcessor extends BrokerBase {
                 secret,
                 encryptedModelPath,
                 decryptedModelPath,
-                providerAddress
+                account.providerSigner,
             )
         } catch (error) {
             throw error
