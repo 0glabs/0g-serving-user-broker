@@ -2,11 +2,11 @@ import { ethers, ContractFactory, Interface, Contract, Wallet } from 'ethers';
 import CryptoJS from 'crypto-js';
 import require$$1 from 'node:crypto';
 import * as crypto$2 from 'crypto';
+import { promises } from 'fs';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
 import { spawn } from 'child_process';
 import path from 'path';
 import * as fs from 'fs/promises';
-import { promises } from 'fs';
 
 class Extractor {
 }
@@ -6584,6 +6584,7 @@ var distExports = requireDist();
 const ivLength = 12;
 const tagLength = 16;
 const sigLength = 65;
+const chunkLength = 64 * 1024 * 1024 + tagLength;
 // Inference
 async function deriveEncryptionKey(signer) {
     const signature = await signer.signMessage(MESSAGE_FOR_ENCRYPTION_KEY);
@@ -6621,23 +6622,44 @@ async function eciesDecrypt(signer, encryptedData) {
     const decrypted = distExports.decrypt(privateKey.secret, data);
     return decrypted.toString('hex');
 }
-async function aesGCMDecrypt(key, data, providerSigner) {
-    const iv = data.subarray(0, ivLength);
-    const encryptedText = data.subarray(ivLength, data.length - tagLength - sigLength);
-    const authTag = data.subarray(data.length - tagLength - sigLength, data.length - sigLength);
-    const tagSig = data.subarray(data.length - sigLength, data.length);
-    const recoveredAddress = ethers.recoverAddress(ethers.keccak256(authTag), '0x' + tagSig.toString('hex'));
+async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, providerSigner) {
+    const fd = await promises.open(encryptedModelPath, 'r');
+    // read signature and nonce
+    const tagSig = Buffer.alloc(sigLength);
+    const iv = Buffer.alloc(ivLength);
+    let offset = 0;
+    let readResult = await fd.read(tagSig, 0, sigLength, offset);
+    offset += readResult.bytesRead;
+    readResult = await fd.read(iv, 0, ivLength, offset);
+    offset += readResult.bytesRead;
+    const privateKey = Buffer.from(key, 'hex');
+    const buffer = Buffer.alloc(chunkLength);
+    let tagsBuffer = Buffer.from([]);
+    const writeFd = await promises.open(decryptedModelPath, 'w');
+    // read chunks
+    while (true) {
+        readResult = await fd.read(buffer, 0, chunkLength, offset);
+        let chunkSize = readResult.bytesRead;
+        if (chunkSize === 0) {
+            break;
+        }
+        const decipher = crypto$2.createDecipheriv('aes-256-gcm', privateKey, iv);
+        const tag = buffer.subarray(chunkSize - tagLength, chunkSize);
+        decipher.setAuthTag(tag);
+        let decrypted = Buffer.concat([
+            decipher.update(buffer.subarray(0, chunkSize - tagLength)),
+            decipher.final(),
+        ]);
+        await writeFd.appendFile(decrypted);
+        tagsBuffer = Buffer.concat([tagsBuffer, tag]);
+        offset += chunkSize;
+    }
+    await writeFd.close();
+    await fd.close();
+    const recoveredAddress = ethers.recoverAddress(ethers.keccak256(tagsBuffer), '0x' + tagSig.toString('hex'));
     if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
         throw new Error('Invalid tag signature');
     }
-    const privateKey = Buffer.from(key, 'hex');
-    const decipher = crypto$2.createDecipheriv('aes-256-gcm', privateKey, iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = Buffer.concat([
-        decipher.update(encryptedText),
-        decipher.final(),
-    ]);
-    return decrypted;
 }
 
 function strToPrivateKey(str) {
@@ -10110,9 +10132,7 @@ class ModelProcessor extends BrokerBase {
                 throw new Error('No deliverable found');
             }
             const secret = await eciesDecrypt(this.contract.signer, latestDeliverable.encryptedSecret);
-            const encryptedData = await promises.readFile(encryptedModelPath);
-            const model = await aesGCMDecrypt(secret, encryptedData, account.providerSigner);
-            await promises.writeFile(decryptedModelPath, model);
+            await aesGCMDecryptToFile(secret, encryptedModelPath, decryptedModelPath, providerAddress);
         }
         catch (error) {
             throw error;

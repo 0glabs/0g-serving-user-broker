@@ -9,10 +9,12 @@ import { MESSAGE_FOR_ENCRYPTION_KEY } from './const'
 import CryptoJS from 'crypto-js'
 import { PrivateKey, decrypt } from 'eciesjs'
 import * as crypto from 'crypto'
+import { promises as fs } from 'fs'
 
 const ivLength: number = 12
 const tagLength: number = 16
 const sigLength: number = 65
+const chunkLength: number = 64 * 1024 * 1024 + tagLength
 
 // Inference
 async function deriveEncryptionKey(
@@ -113,4 +115,64 @@ export async function aesGCMDecrypt(
     ])
 
     return decrypted
+}
+
+export async function aesGCMDecryptToFile(
+    key: string,
+    encryptedModelPath: string,
+    decryptedModelPath: string,
+    providerSigner: string
+) {
+    const fd = await fs.open(encryptedModelPath, 'r')
+
+    // read signature and nonce
+    const tagSig = Buffer.alloc(sigLength)
+    const iv = Buffer.alloc(ivLength)
+
+    let offset = 0
+    let readResult = await fd.read(tagSig, 0, sigLength, offset)
+    offset += readResult.bytesRead
+
+    readResult = await fd.read(iv, 0, ivLength, offset)
+    offset += readResult.bytesRead
+
+    const privateKey = Buffer.from(key, 'hex')
+    const buffer = Buffer.alloc(chunkLength)
+    let tagsBuffer = Buffer.from([])
+
+    const writeFd = await fs.open(decryptedModelPath, 'w')
+    
+    // read chunks
+    while (true) {
+        readResult = await fd.read(buffer, 0, chunkLength, offset)
+        let chunkSize = readResult.bytesRead
+        if (chunkSize === 0) {
+            break
+        }
+        const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv)
+        const tag = buffer.subarray(chunkSize - tagLength, chunkSize)
+        decipher.setAuthTag(tag)
+
+        let decrypted = Buffer.concat([
+            decipher.update(buffer.subarray(0, chunkSize - tagLength)),
+            decipher.final(),
+        ])
+
+        await writeFd.appendFile(decrypted)
+
+        tagsBuffer = Buffer.concat([tagsBuffer, tag])
+        offset += chunkSize
+    }
+
+    await writeFd.close()
+    await fd.close()
+
+    const recoveredAddress = ethers.recoverAddress(
+        ethers.keccak256(tagsBuffer),
+        '0x' + tagSig.toString('hex')
+    )
+
+    if (recoveredAddress.toLowerCase() !== providerSigner.toLowerCase()) {
+        throw new Error('Invalid tag signature')
+    }
 }

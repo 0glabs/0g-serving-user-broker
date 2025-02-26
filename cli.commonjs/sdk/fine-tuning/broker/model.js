@@ -5,7 +5,6 @@ const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const zg_storage_1 = require("../zg-storage");
 const base_1 = require("./base");
-const fs_1 = require("fs");
 class ModelProcessor extends base_1.BrokerBase {
     listModel() {
         return Object.entries(const_1.MODEL_HASH_MAP);
@@ -38,9 +37,7 @@ class ModelProcessor extends base_1.BrokerBase {
                 throw new Error('No deliverable found');
             }
             const secret = await (0, utils_1.eciesDecrypt)(this.contract.signer, latestDeliverable.encryptedSecret);
-            const encryptedData = await fs_1.promises.readFile(encryptedModelPath);
-            const model = await (0, utils_1.aesGCMDecrypt)(secret, encryptedData, account.providerSigner);
-            await fs_1.promises.writeFile(decryptedModelPath, model);
+            await (0, utils_1.aesGCMDecryptToFile)(secret, encryptedModelPath, decryptedModelPath, providerAddress);
         }
         catch (error) {
             throw error;
