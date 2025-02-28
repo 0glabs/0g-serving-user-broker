@@ -9989,7 +9989,7 @@ const MODEL_HASH_MAP = {
     'cocktailsgd-opt-1.3b': {
         turbo: '0xe25963fd25fe37d7df5216de1eae533ea42090d3642c3f84edd0f179ffc63a94,0xfccaf17bd0ed26b74e8a3883f5c814bcb5f247015d68fd65a28bf98e1bdb0b7f',
         standard: '',
-        description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD'
+        description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
     },
     // TODO: remove
     'mock-model': {
@@ -9998,6 +9998,36 @@ const MODEL_HASH_MAP = {
         description: '',
     },
 };
+// AutomataDcapAttestation for quote verification
+// https://explorer.ata.network/address/0xE26E11B257856B0bEBc4C759aaBDdea72B64351F/contract/65536_2/readContract#F6
+const AUTOMATA_RPC = 'https://1rpc.io/ata';
+const AUTOMATA_CONTRACT_ADDRESS = '0xE26E11B257856B0bEBc4C759aaBDdea72B64351F';
+const AUTOMATA_ABI = [
+    {
+        inputs: [
+            {
+                internalType: 'bytes',
+                name: 'rawQuote',
+                type: 'bytes',
+            },
+        ],
+        name: 'verifyAndAttestOnChain',
+        outputs: [
+            {
+                internalType: 'bool',
+                name: 'success',
+                type: 'bool',
+            },
+            {
+                internalType: 'bytes',
+                name: 'output',
+                type: 'bytes',
+            },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+    },
+];
 
 async function upload(privateKey, dataPath, gasPrice) {
     try {
@@ -10141,7 +10171,30 @@ class ModelProcessor extends BrokerBase {
     }
 }
 
+class Automata {
+    provider;
+    contract;
+    constructor() {
+        this.provider = new ethers.JsonRpcProvider(AUTOMATA_RPC);
+        this.contract = new ethers.Contract(AUTOMATA_CONTRACT_ADDRESS, AUTOMATA_ABI, this.provider);
+    }
+    async verifyQuote(rawQuote) {
+        try {
+            const [success] = await this.contract.verifyAndAttestOnChain(rawQuote);
+            return success;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+}
+
 class ServiceProcessor extends BrokerBase {
+    automata;
+    constructor(contract, ledger, servingProvider) {
+        super(contract, ledger, servingProvider);
+        this.automata = new Automata();
+    }
     async getLockTime() {
         try {
             const lockTime = await this.contract.lockTime();
@@ -10203,9 +10256,22 @@ class ServiceProcessor extends BrokerBase {
                     await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
                 }
             }
-            const res = await this.servingProvider.getQuote(providerAddress);
-            // TODO: verify the quote
-            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer, gasPrice);
+            let { quote, provider_signer } = await this.servingProvider.getQuote(providerAddress);
+            if (!quote || !provider_signer) {
+                throw new Error('Invalid quote');
+            }
+            if (!quote.startsWith('0x')) {
+                quote = '0x' + quote;
+            }
+            const rpc = process.env.RPC_ENDPOINT;
+            // bypass quote verification if the rpc is localhost
+            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+                const isVerified = await this.automata.verifyQuote(quote);
+                if (!isVerified) {
+                    throw new Error('Quote verification failed');
+                }
+            }
+            await this.contract.acknowledgeProviderSigner(providerAddress, provider_signer, gasPrice);
         }
         catch (error) {
             throw error;

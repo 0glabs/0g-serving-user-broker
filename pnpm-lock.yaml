@@ -83,9 +83,6 @@ importers:
       rollup-plugin-polyfill-node:
         specifier: ^0.13.0
         version: 0.13.0(rollup@3.29.5)
-      sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
     devDependencies:
       '@rollup/plugin-json':
         specifier: ^6.1.0
@@ -96,6 +93,9 @@ importers:
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.10
+      '@types/sinon':
+        specifier: ^17.0.4
+        version: 17.0.4
       chai:
         specifier: ^4.3.7
         version: 4.5.0
@@ -114,6 +114,9 @@ importers:
       rollup-plugin-dts:
         specifier: ^6.1.1
         version: 6.1.1(rollup@3.29.5)(typescript@5.7.3)
+      sinon:
+        specifier: ^19.0.2
+        version: 19.0.2
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.17.14)(ts-node@10.9.2(@types/node@20.17.14)(typescript@5.7.3)))(typescript@5.7.3)
@@ -717,6 +720,12 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  '@types/sinon@17.0.4':
+    resolution: {integrity: sha512-RHnIrhfPO3+tJT0s7cFaXGZvsL4bbR3/k7z3P312qMS4JaS2Tk+KiwiLx1S0rQ56ERj00u1/BtdyVd0FY+Pdew==}
+
+  '@types/sinonjs__fake-timers@8.1.5':
+    resolution: {integrity: sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -3343,6 +3352,12 @@ snapshots:
   '@types/prettier@2.7.3': {}
 
   '@types/resolve@1.20.2': {}
+
+  '@types/sinon@17.0.4':
+    dependencies:
+      '@types/sinonjs__fake-timers': 8.1.5
+
+  '@types/sinonjs__fake-timers@8.1.5': {}
 
   '@types/stack-utils@2.0.3': {}
 

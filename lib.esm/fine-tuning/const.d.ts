@@ -24,4 +24,21 @@ export declare const MODEL_HASH_MAP: {
         [key: string]: string;
     };
 };
+export declare const AUTOMATA_RPC = "https://1rpc.io/ata";
+export declare const AUTOMATA_CONTRACT_ADDRESS = "0xE26E11B257856B0bEBc4C759aaBDdea72B64351F";
+export declare const AUTOMATA_ABI: {
+    inputs: {
+        internalType: string;
+        name: string;
+        type: string;
+    }[];
+    name: string;
+    outputs: {
+        internalType: string;
+        name: string;
+        type: string;
+    }[];
+    stateMutability: string;
+    type: string;
+}[];
 //# sourceMappingURL=const.d.ts.map

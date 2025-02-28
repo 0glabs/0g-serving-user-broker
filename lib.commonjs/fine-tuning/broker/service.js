@@ -6,7 +6,13 @@ const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
+const automata_1 = require("../automata ");
 class ServiceProcessor extends base_1.BrokerBase {
+    automata;
+    constructor(contract, ledger, servingProvider) {
+        super(contract, ledger, servingProvider);
+        this.automata = new automata_1.Automata();
+    }
     async getLockTime() {
         try {
             const lockTime = await this.contract.lockTime();
@@ -68,9 +74,22 @@ class ServiceProcessor extends base_1.BrokerBase {
                     await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
                 }
             }
-            const res = await this.servingProvider.getQuote(providerAddress);
-            // TODO: verify the quote
-            await this.contract.acknowledgeProviderSigner(providerAddress, res.provider_signer, gasPrice);
+            let { quote, provider_signer } = await this.servingProvider.getQuote(providerAddress);
+            if (!quote || !provider_signer) {
+                throw new Error('Invalid quote');
+            }
+            if (!quote.startsWith('0x')) {
+                quote = '0x' + quote;
+            }
+            const rpc = process.env.RPC_ENDPOINT;
+            // bypass quote verification if the rpc is localhost
+            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+                const isVerified = await this.automata.verifyQuote(quote);
+                if (!isVerified) {
+                    throw new Error('Quote verification failed');
+                }
+            }
+            await this.contract.acknowledgeProviderSigner(providerAddress, provider_signer, gasPrice);
         }
         catch (error) {
             throw error;

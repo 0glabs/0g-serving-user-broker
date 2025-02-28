@@ -1,16 +1,33 @@
 import { AddressLike } from 'ethers'
 import { getNonce, signRequest } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
-import { AccountStructOutput, ServiceStructOutput } from '../contract'
-import { Task } from '../provider/provider'
+import {
+    AccountStructOutput,
+    FineTuningServingContract,
+    ServiceStructOutput,
+} from '../contract'
+import { Provider, Task } from '../provider/provider'
 import { BrokerBase } from './base'
 import * as fs from 'fs/promises'
+import { LedgerBroker } from '../../ledger'
+import { Automata } from '../automata '
 
 export interface FineTuningAccountDetail {
     account: AccountStructOutput
     refunds: { amount: bigint; remainTime: bigint }[]
 }
 export class ServiceProcessor extends BrokerBase {
+    protected automata: Automata
+
+    constructor(
+        contract: FineTuningServingContract,
+        ledger: LedgerBroker,
+        servingProvider: Provider
+    ) {
+        super(contract, ledger, servingProvider)
+        this.automata = new Automata()
+    }
+
     async getLockTime() {
         try {
             const lockTime = await this.contract.lockTime()
@@ -82,11 +99,27 @@ export class ServiceProcessor extends BrokerBase {
                 }
             }
 
-            const res = await this.servingProvider.getQuote(providerAddress)
-            // TODO: verify the quote
+            let { quote, provider_signer } =
+                await this.servingProvider.getQuote(providerAddress)
+            if (!quote || !provider_signer) {
+                throw new Error('Invalid quote')
+            }
+            if (!quote.startsWith('0x')) {
+                quote = '0x' + quote
+            }
+
+            const rpc = process.env.RPC_ENDPOINT
+            // bypass quote verification if testing on localhost
+            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+                const isVerified = await this.automata.verifyQuote(quote)
+                if (!isVerified) {
+                    throw new Error('Quote verification failed')
+                }
+            }
+
             await this.contract.acknowledgeProviderSigner(
                 providerAddress,
-                res.provider_signer,
+                provider_signer,
                 gasPrice
             )
         } catch (error) {

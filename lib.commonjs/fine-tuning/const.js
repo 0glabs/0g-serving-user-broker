@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MODEL_HASH_MAP = exports.INDEXER_URL_TURBO = exports.INDEXER_URL_STANDARD = exports.ZG_RPC_ENDPOINT_TESTNET = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
+exports.AUTOMATA_ABI = exports.AUTOMATA_CONTRACT_ADDRESS = exports.AUTOMATA_RPC = exports.MODEL_HASH_MAP = exports.INDEXER_URL_TURBO = exports.INDEXER_URL_STANDARD = exports.ZG_RPC_ENDPOINT_TESTNET = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *
@@ -41,7 +41,7 @@ exports.MODEL_HASH_MAP = {
     'cocktailsgd-opt-1.3b': {
         turbo: '0xe25963fd25fe37d7df5216de1eae533ea42090d3642c3f84edd0f179ffc63a94,0xfccaf17bd0ed26b74e8a3883f5c814bcb5f247015d68fd65a28bf98e1bdb0b7f',
         standard: '',
-        description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD'
+        description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
     },
     // TODO: remove
     'mock-model': {
@@ -50,4 +50,34 @@ exports.MODEL_HASH_MAP = {
         description: '',
     },
 };
+// AutomataDcapAttestation for quote verification
+// https://explorer.ata.network/address/0xE26E11B257856B0bEBc4C759aaBDdea72B64351F/contract/65536_2/readContract#F6
+exports.AUTOMATA_RPC = 'https://1rpc.io/ata';
+exports.AUTOMATA_CONTRACT_ADDRESS = '0xE26E11B257856B0bEBc4C759aaBDdea72B64351F';
+exports.AUTOMATA_ABI = [
+    {
+        inputs: [
+            {
+                internalType: 'bytes',
+                name: 'rawQuote',
+                type: 'bytes',
+            },
+        ],
+        name: 'verifyAndAttestOnChain',
+        outputs: [
+            {
+                internalType: 'bool',
+                name: 'success',
+                type: 'bool',
+            },
+            {
+                internalType: 'bytes',
+                name: 'output',
+                type: 'bytes',
+            },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+    },
+];
 //# sourceMappingURL=const.js.map
