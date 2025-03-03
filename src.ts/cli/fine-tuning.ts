@@ -79,9 +79,10 @@ export default function fineTuning(program: Command) {
             'Fine Tuning contract address, use default address if not provided'
         )
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--model <name>', 'Pre-trained model name to use')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
-                await broker.fineTuning!.uploadDataset(options.dataPath)
+                await broker.fineTuning!.uploadDataset(options.dataPath, options.gasPrice, options.model)
             })
         })
 
@@ -120,7 +121,7 @@ export default function fineTuning(program: Command) {
         )
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Size of the dataset')
+        .option('--data-size <size>', 'Size of the dataset')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption(
             '--config-path <path>',
@@ -130,6 +131,7 @@ export default function fineTuning(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--dataset-path <path>', 'Fine-tuning dataset path')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 console.log('Verify provider...')
@@ -140,13 +142,20 @@ export default function fineTuning(program: Command) {
                 console.log('Provider verified')
 
                 console.log('Creating task...')
+
+                let dataSize: number | undefined = undefined;
+                if (options.dataSize !== undefined) {
+                    dataSize = parseInt(options.dataSize, 10);
+                }
+
                 const taskId = await broker.fineTuning!.createTask(
                     options.provider,
                     options.model,
-                    parseInt(options.dataSize, 10),
                     options.dataset,
                     options.configPath,
-                    options.gasPrice
+                    dataSize,
+                    options.gasPrice,
+                    options.datasetPath,
                 )
                 console.log('Created Task ID:', taskId)
             })

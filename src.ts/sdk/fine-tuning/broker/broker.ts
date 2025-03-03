@@ -114,13 +114,15 @@ export class FineTuningBroker {
 
     public uploadDataset = async (
         dataPath: string,
-        gasPrice?: number
+        gasPrice?: number,
+        preTrainedModelName?: string,
     ): Promise<void> => {
         try {
             await this.modelProcessor.uploadDataset(
                 this.signer.privateKey,
                 dataPath,
-                gasPrice || this._gasPrice
+                gasPrice || this._gasPrice,
+                preTrainedModelName,
             )
         } catch (error) {
             throw error
@@ -141,19 +143,21 @@ export class FineTuningBroker {
     public createTask = async (
         providerAddress: string,
         preTrainedModelName: string,
-        dataSize: number,
         datasetHash: string,
         trainingPath: string,
-        gasPrice?: number
+        dataSize?: number,
+        gasPrice?: number,
+        datasetPath?: string
     ): Promise<string> => {
         try {
             return await this.serviceProcessor.createTask(
                 providerAddress,
                 preTrainedModelName,
-                dataSize,
                 datasetHash,
                 trainingPath,
-                gasPrice
+                dataSize,
+                gasPrice,
+                datasetPath
             )
         } catch (error) {
             throw error

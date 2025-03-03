@@ -3,7 +3,7 @@ export declare class ModelProcessor extends BrokerBase {
     listModel(): [string, {
         [key: string]: string;
     }][];
-    uploadDataset(privateKey: string, dataPath: string, gasPrice?: number): Promise<void>;
+    uploadDataset(privateKey: string, dataPath: string, gasPrice?: number, preTrainedModelName?: string): Promise<void>;
     downloadDataset(dataPath: string, dataRoot: string): Promise<void>;
     acknowledgeModel(providerAddress: string, dataPath: string, gasPrice?: number): Promise<void>;
     decryptModel(providerAddress: string, encryptedModelPath: string, decryptedModelPath: string): Promise<void>;

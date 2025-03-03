@@ -12,6 +12,8 @@ import * as fs from 'fs/promises'
 import { LedgerBroker } from '../../ledger'
 import { Automata } from '../automata '
 
+import { calculateTokenSize } from '../token'
+
 export interface FineTuningAccountDetail {
     account: AccountStructOutput
     refunds: { amount: bigint; remainTime: bigint }[]
@@ -135,23 +137,35 @@ export class ServiceProcessor extends BrokerBase {
     async createTask(
         providerAddress: string,
         preTrainedModelName: string,
-        dataSize: number,
         datasetHash: string,
         trainingPath: string,
-        gasPrice?: number
+        dataSize?: number,
+        gasPrice?: number,
+        datasetPath?: string
     ): Promise<string> {
         try {
             const service = await this.contract.getService(providerAddress)
-            const fee = service.pricePerToken * BigInt(dataSize)
+
+            if (dataSize === undefined) {
+                if (datasetPath !== undefined) {
+                    dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type)
+                } else {
+                    throw new Error('At least one of dataSize or datasetPath must be provided.')
+                }
+            }
+
+            const trainingParams = await fs.readFile(trainingPath, 'utf-8')
+            const parsedParams = this.verifyTrainingParams(trainingParams)
+            const trainEpochs = parsedParams.num_train_epochs ?? 3
+            const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
+            console.log(`Total fee ${fee}`)
+
             await this.ledger.transferFund(
                 providerAddress,
                 'fine-tuning',
                 fee,
                 gasPrice
             )
-
-            const trainingParams = await fs.readFile(trainingPath, 'utf-8')
-            this.verifyTrainingParams(trainingParams)
 
             const nonce = getNonce()
             const signature = await signRequest(
@@ -233,9 +247,9 @@ export class ServiceProcessor extends BrokerBase {
         )
     }
 
-    private verifyTrainingParams(trainingParams: string): void {
+    private verifyTrainingParams(trainingParams: string): any {
         try {
-            JSON.parse(trainingParams)
+            return JSON.parse(trainingParams)
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : 'An unknown error occurred'

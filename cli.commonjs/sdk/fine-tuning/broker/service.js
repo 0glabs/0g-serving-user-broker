@@ -7,6 +7,7 @@ const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 const automata_1 = require("../automata ");
+const token_1 = require("../token");
 class ServiceProcessor extends base_1.BrokerBase {
     automata;
     constructor(contract, ledger, servingProvider) {
@@ -82,7 +83,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 quote = '0x' + quote;
             }
             const rpc = process.env.RPC_ENDPOINT;
-            // bypass quote verification if the rpc is localhost
+            // bypass quote verification if testing on localhost
             if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
                 const isVerified = await this.automata.verifyQuote(quote);
                 if (!isVerified) {
@@ -100,13 +101,23 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
+    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath) {
         try {
             const service = await this.contract.getService(providerAddress);
-            const fee = service.pricePerToken * BigInt(dataSize);
-            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
+            if (dataSize === undefined) {
+                if (datasetPath !== undefined) {
+                    dataSize = await (0, token_1.calculateTokenSize)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
+                }
+                else {
+                    throw new Error('At least one of dataSize or datasetPath must be provided.');
+                }
+            }
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
-            this.verifyTrainingParams(trainingParams);
+            const parsedParams = this.verifyTrainingParams(trainingParams);
+            const trainEpochs = parsedParams.num_train_epochs ?? 3;
+            const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
+            console.log(`Total fee ${fee}`);
+            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
             const task = {
@@ -160,7 +171,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     }
     verifyTrainingParams(trainingParams) {
         try {
-            JSON.parse(trainingParams);
+            return JSON.parse(trainingParams);
         }
         catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';

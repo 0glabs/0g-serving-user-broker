@@ -81,9 +81,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, gasPrice) => {
+    uploadDataset = async (dataPath, gasPrice, preTrainedModelName) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice, preTrainedModelName);
         }
         catch (error) {
             throw error;
@@ -97,9 +97,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
+    createTask = async (providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath);
         }
         catch (error) {
             throw error;
