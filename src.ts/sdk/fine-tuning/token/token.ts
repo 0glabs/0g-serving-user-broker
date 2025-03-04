@@ -17,9 +17,19 @@ export async function calculateTokenSize(
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip')
 
     await download(tokenizerPath, tokenizerRootHash)
-    const tokenizerUnzipPath = path.join(tmpDir, 'tokenizer')
-    await fs.mkdir(tokenizerUnzipPath)
-    unzipFile(tokenizerPath, tokenizerUnzipPath);
+    const subDirectories = await getSubdirectories(tmpDir);
+    unzipFile(tokenizerPath, tmpDir);
+    const newDirectories = new Set<string>();
+    for (const item of await getSubdirectories(tmpDir)) {
+        if (!subDirectories.has(item)) {
+            newDirectories.add(item);
+        }
+    }
+
+    if (newDirectories.size !== 1) {
+        throw new Error('Invalid tokenizer directory');
+    }
+    const tokenizerUnzipPath = path.join(tmpDir, Array.from(newDirectories)[0])
 
     let datasetUnzipPath = datasetPath
     if (await isZipFile(datasetPath)) {
@@ -94,5 +104,19 @@ async function isZipFile(targetPath: string): Promise<boolean> {
         return stats.isFile() && path.extname(targetPath).toLowerCase() === '.zip';
     } catch (error) {
         return false;
+    }
+}
+
+async function getSubdirectories(dirPath: string): Promise<Set<string>> {
+    try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+        const subdirectories = new Set(entries
+            .filter(entry => entry.isDirectory())  // Only keep directories
+            .map(entry => entry.name));
+
+        return subdirectories;
+    } catch (error) {
+        console.error('Error reading directory:', error);
+        return new Set();
     }
 }

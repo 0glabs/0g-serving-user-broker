@@ -9983,27 +9983,29 @@ const MODEL_HASH_MAP = {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
         standard: '',
         description: 'DistilBERT is a transformers model, smaller and faster than BERT, which was pretrained on the same corpus in a self-supervised fashion, using the BERT base model as a teacher. More details can be found at: https://huggingface.co/distilbert/distilbert-base-uncased',
-        tokenizer: '',
+        tokenizer: '0x3317127671a3217583069001b2a00454ef4d1e838f8f1f4ffbe64db0ec7ed960',
         type: 'text',
     },
     mobilenet_v2: {
         turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
         standard: '',
         description: 'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
-        tokenizer: '',
+        tokenizer: '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
         type: 'image',
     },
     'deepseek-r1-distill-qwen-1.5b': {
         turbo: '0x2084fdd904c9a3317dde98147d4e7778a40e076b5b0eb469f7a8f27ae5b13e7f',
         standard: '',
         description: 'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-        tokenizer: '',
+        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
         type: 'text',
     },
     'cocktailsgd-opt-1.3b': {
         turbo: '0xe25963fd25fe37d7df5216de1eae533ea42090d3642c3f84edd0f179ffc63a94,0xfccaf17bd0ed26b74e8a3883f5c814bcb5f247015d68fd65a28bf98e1bdb0b7f',
         standard: '',
         description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
+        tokenizer: '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
+        type: 'text',
     },
     // TODO: remove
     'mock-model': {
@@ -13479,9 +13481,18 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
     console.log(`current temporary directory ${tmpDir}`);
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip');
     await download(tokenizerPath, tokenizerRootHash);
-    const tokenizerUnzipPath = path.join(tmpDir, 'tokenizer');
-    await fs.mkdir(tokenizerUnzipPath);
-    unzipFile(tokenizerPath, tokenizerUnzipPath);
+    const subDirectories = await getSubdirectories(tmpDir);
+    unzipFile(tokenizerPath, tmpDir);
+    const newDirectories = new Set();
+    for (const item of await getSubdirectories(tmpDir)) {
+        if (!subDirectories.has(item)) {
+            newDirectories.add(item);
+        }
+    }
+    if (newDirectories.size !== 1) {
+        throw new Error('Invalid tokenizer directory');
+    }
+    const tokenizerUnzipPath = path.join(tmpDir, Array.from(newDirectories)[0]);
     let datasetUnzipPath = datasetPath;
     if (await isZipFile(datasetPath)) {
         unzipFile(datasetPath, tmpDir);
@@ -13548,6 +13559,19 @@ async function isZipFile(targetPath) {
     }
     catch (error) {
         return false;
+    }
+}
+async function getSubdirectories(dirPath) {
+    try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+        const subdirectories = new Set(entries
+            .filter(entry => entry.isDirectory()) // Only keep directories
+            .map(entry => entry.name));
+        return subdirectories;
+    }
+    catch (error) {
+        console.error('Error reading directory:', error);
+        return new Set();
     }
 }
 

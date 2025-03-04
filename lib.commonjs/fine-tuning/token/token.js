@@ -13,9 +13,18 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
     console.log(`current temporary directory ${tmpDir}`);
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip');
     await (0, zg_storage_1.download)(tokenizerPath, tokenizerRootHash);
-    const tokenizerUnzipPath = path.join(tmpDir, 'tokenizer');
-    await fs.mkdir(tokenizerUnzipPath);
-    unzipFile(tokenizerPath, tokenizerUnzipPath);
+    const subDirectories = await getSubdirectories(tmpDir);
+    unzipFile(tokenizerPath, tmpDir);
+    const newDirectories = new Set();
+    for (const item of await getSubdirectories(tmpDir)) {
+        if (!subDirectories.has(item)) {
+            newDirectories.add(item);
+        }
+    }
+    if (newDirectories.size !== 1) {
+        throw new Error('Invalid tokenizer directory');
+    }
+    const tokenizerUnzipPath = path.join(tmpDir, Array.from(newDirectories)[0]);
     let datasetUnzipPath = datasetPath;
     if (await isZipFile(datasetPath)) {
         unzipFile(datasetPath, tmpDir);
@@ -82,6 +91,19 @@ async function isZipFile(targetPath) {
     }
     catch (error) {
         return false;
+    }
+}
+async function getSubdirectories(dirPath) {
+    try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+        const subdirectories = new Set(entries
+            .filter(entry => entry.isDirectory()) // Only keep directories
+            .map(entry => entry.name));
+        return subdirectories;
+    }
+    catch (error) {
+        console.error('Error reading directory:', error);
+        return new Set();
     }
 }
 //# sourceMappingURL=token.js.map
