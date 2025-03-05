@@ -1,7 +1,7 @@
-import { ContractFactory, ContractTransactionResponse } from "ethers";
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
-import type { NonPayableOverrides } from "../common.js";
-import type { InferenceServing, InferenceServingInterface } from "../InferenceServing.js";
+import { ContractFactory, ContractTransactionResponse } from 'ethers';
+import type { Signer, ContractDeployTransaction, ContractRunner } from 'ethers';
+import type { NonPayableOverrides } from '../common.js';
+import type { InferenceServing, InferenceServingInterface } from '../InferenceServing.js';
 type InferenceServingConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;
 export declare class InferenceServing__factory extends ContractFactory {
     constructor(...args: InferenceServingConstructorParams);

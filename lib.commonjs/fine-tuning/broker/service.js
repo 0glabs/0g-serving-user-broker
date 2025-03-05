@@ -82,7 +82,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 quote = '0x' + quote;
             }
             const rpc = process.env.RPC_ENDPOINT;
-            // bypass quote verification if the rpc is localhost
+            // bypass quote verification if testing on localhost
             if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
                 const isVerified = await this.automata.verifyQuote(quote);
                 if (!isVerified) {

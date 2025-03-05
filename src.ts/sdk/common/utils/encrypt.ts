@@ -141,7 +141,7 @@ export async function aesGCMDecryptToFile(
     let tagsBuffer = Buffer.from([])
 
     const writeFd = await fs.open(decryptedModelPath, 'w')
-    
+
     // read chunks
     while (true) {
         readResult = await fd.read(buffer, 0, chunkLength, offset)
