@@ -56,7 +56,7 @@ exports.MODEL_HASH_MAP = {
         turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
         standard: '',
         description: '',
-        tokenizer: '0xe2f23d1193a7cf4f7f98b9e803101c10bae5d6d24f9988814225726c59e3ecef',
+        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
         type: 'text',
     },
 };

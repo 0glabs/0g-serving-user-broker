@@ -2,7 +2,7 @@ import * as fs from 'fs/promises'
 import * as os from 'os';
 import * as path from 'path';
 import AdmZip from 'adm-zip';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 
 import { download } from '../zg-storage'
 
@@ -12,6 +12,23 @@ export async function calculateTokenSize(
     datasetPath: string,
     datasetType: string,
 ): Promise<number> {
+    const isPythonInstalled = await checkPythonInstalled();
+    if (!isPythonInstalled) {
+        throw new Error('Python is required but not installed. Please install Python first.');
+    }
+
+    for (const packageName of ["transformers", "datasets"]) {
+        const isPackageInstalled = await checkPackageInstalled(packageName);
+        if (!isPackageInstalled) {
+            console.log(`${packageName} is not installed. Installing...`);
+            try {
+                await installPackage(packageName);
+            } catch (error) {
+                throw new Error(`Failed to install ${packageName}: ${error}`);
+            }
+        }
+    }
+
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`)
     console.log(`current temporary directory ${tmpDir}`)
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip')
@@ -58,7 +75,44 @@ export async function calculateTokenSize(
         });
 }
 
+function checkPythonInstalled(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        exec('python3 --version', (error, stdout, stderr) => {
+            if (error) {
+                console.error('Python is not installed or not in PATH');
+                resolve(false);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
 
+function checkPackageInstalled(packageName: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        exec(`pip show ${packageName}`, (error, stdout, stderr) => {
+            if (error) {
+                resolve(false);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+function installPackage(packageName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        exec(`pip install ${packageName}`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Failed to install ${packageName}`);
+                reject(error);
+            } else {
+                console.log(`${packageName} installed successfully`);
+                resolve();
+            }
+        });
+    });
+}
 
 function runPythonScript(scriptPath: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {

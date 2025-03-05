@@ -5,7 +5,7 @@ import * as crypto$2 from 'crypto';
 import crypto__default from 'crypto';
 import require$$0, { promises } from 'fs';
 import { buildBabyjub, buildEddsa } from 'circomlibjs';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import * as path from 'path';
 import path__default from 'path';
 import * as fs from 'fs/promises';
@@ -9976,7 +9976,6 @@ class FineTuningServingContract {
  *   on the key derivation and encryption process.
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
-const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
@@ -10012,7 +10011,7 @@ const MODEL_HASH_MAP = {
         turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
         standard: '',
         description: '',
-        tokenizer: '0xe2f23d1193a7cf4f7f98b9e803101c10bae5d6d24f9988814225726c59e3ecef',
+        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
         type: 'text',
     },
 };
@@ -10047,51 +10046,6 @@ const AUTOMATA_ABI = [
     },
 ];
 
-async function upload(privateKey, dataPath, gasPrice) {
-    try {
-        const fileSize = await getFileContentSize(dataPath);
-        return new Promise((resolve, reject) => {
-            const command = path__default.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
-            const args = [
-                'upload',
-                '--url',
-                ZG_RPC_ENDPOINT_TESTNET,
-                '--key',
-                privateKey,
-                '--indexer',
-                INDEXER_URL_TURBO,
-                '--file',
-                dataPath,
-            ];
-            if (gasPrice) {
-                args.push('--gas-price', gasPrice.toString());
-            }
-            const process = spawn(command, args);
-            process.stdout.on('data', (data) => {
-                console.log(`${data}`);
-            });
-            process.stderr.on('data', (data) => {
-                console.error(`${data}`);
-            });
-            process.on('close', (code) => {
-                if (code !== 0) {
-                    reject(new Error(`Process exited with code ${code}`));
-                }
-                else {
-                    console.log(`File size: ${fileSize} bytes`);
-                    resolve();
-                }
-            });
-            process.on('error', (err) => {
-                reject(err);
-            });
-        });
-    }
-    catch (err) {
-        console.error(err);
-        throw err;
-    }
-}
 async function download(dataPath, dataRoot) {
     return new Promise((resolve, reject) => {
         const command = path__default.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
@@ -10131,21 +10085,6 @@ async function download(dataPath, dataRoot) {
             reject(err);
         });
     });
-}
-async function getFileContentSize(filePath) {
-    try {
-        const fileHandle = await fs.open(filePath, 'r');
-        try {
-            const stats = await fileHandle.stat();
-            return stats.size;
-        }
-        finally {
-            await fileHandle.close();
-        }
-    }
-    catch (err) {
-        throw new Error(`Error processing file: ${err instanceof Error ? err.message : String(err)}`);
-    }
 }
 
 var util = {exports: {}};
@@ -13477,6 +13416,22 @@ var admZipExports = requireAdmZip();
 var AdmZip = /*@__PURE__*/getDefaultExportFromCjs(admZipExports);
 
 async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
+    const isPythonInstalled = await checkPythonInstalled();
+    if (!isPythonInstalled) {
+        throw new Error('Python is required but not installed. Please install Python first.');
+    }
+    for (const packageName of ["transformers", "datasets"]) {
+        const isPackageInstalled = await checkPackageInstalled(packageName);
+        if (!isPackageInstalled) {
+            console.log(`${packageName} is not installed. Installing...`);
+            try {
+                await installPackage(packageName);
+            }
+            catch (error) {
+                throw new Error(`Failed to install ${packageName}: ${error}`);
+            }
+        }
+    }
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
     console.log(`current temporary directory ${tmpDir}`);
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip');
@@ -13517,6 +13472,45 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
         .catch((error) => {
         console.error('Error running Python script:', error);
         throw error;
+    });
+}
+function checkPythonInstalled() {
+    return new Promise((resolve, reject) => {
+        exec('python3 --version', (error, stdout, stderr) => {
+            if (error) {
+                console.error('Python is not installed or not in PATH');
+                resolve(false);
+            }
+            else {
+                resolve(true);
+            }
+        });
+    });
+}
+function checkPackageInstalled(packageName) {
+    return new Promise((resolve, reject) => {
+        exec(`pip show ${packageName}`, (error, stdout, stderr) => {
+            if (error) {
+                resolve(false);
+            }
+            else {
+                resolve(true);
+            }
+        });
+    });
+}
+function installPackage(packageName) {
+    return new Promise((resolve, reject) => {
+        exec(`pip install ${packageName}`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Failed to install ${packageName}`);
+                reject(error);
+            }
+            else {
+                console.log(`${packageName} installed successfully`);
+                resolve();
+            }
+        });
     });
 }
 function runPythonScript(scriptPath, args) {
@@ -13584,7 +13578,7 @@ class ModelProcessor extends BrokerBase {
             let dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type);
             console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
         }
-        await upload(privateKey, dataPath, gasPrice);
+        // await upload(privateKey, dataPath, gasPrice)
     }
     async downloadDataset(dataPath, dataRoot) {
         download(dataPath, dataRoot);
