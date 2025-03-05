@@ -9976,6 +9976,7 @@ class FineTuningServingContract {
  *   on the key derivation and encryption process.
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
+const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
@@ -10046,6 +10047,51 @@ const AUTOMATA_ABI = [
     },
 ];
 
+async function upload(privateKey, dataPath, gasPrice) {
+    try {
+        const fileSize = await getFileContentSize(dataPath);
+        return new Promise((resolve, reject) => {
+            const command = path__default.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
+            const args = [
+                'upload',
+                '--url',
+                ZG_RPC_ENDPOINT_TESTNET,
+                '--key',
+                privateKey,
+                '--indexer',
+                INDEXER_URL_TURBO,
+                '--file',
+                dataPath,
+            ];
+            if (gasPrice) {
+                args.push('--gas-price', gasPrice.toString());
+            }
+            const process = spawn(command, args);
+            process.stdout.on('data', (data) => {
+                console.log(`${data}`);
+            });
+            process.stderr.on('data', (data) => {
+                console.error(`${data}`);
+            });
+            process.on('close', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`Process exited with code ${code}`));
+                }
+                else {
+                    console.log(`File size: ${fileSize} bytes`);
+                    resolve();
+                }
+            });
+            process.on('error', (err) => {
+                reject(err);
+            });
+        });
+    }
+    catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
 async function download(dataPath, dataRoot) {
     return new Promise((resolve, reject) => {
         const command = path__default.join(__dirname, '..', '..', '..', '..', 'binary', '0g-storage-client');
@@ -10085,6 +10131,21 @@ async function download(dataPath, dataRoot) {
             reject(err);
         });
     });
+}
+async function getFileContentSize(filePath) {
+    try {
+        const fileHandle = await fs.open(filePath, 'r');
+        try {
+            const stats = await fileHandle.stat();
+            return stats.size;
+        }
+        finally {
+            await fileHandle.close();
+        }
+    }
+    catch (err) {
+        throw new Error(`Error processing file: ${err instanceof Error ? err.message : String(err)}`);
+    }
 }
 
 var util = {exports: {}};
@@ -13578,7 +13639,7 @@ class ModelProcessor extends BrokerBase {
             let dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type);
             console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
         }
-        // await upload(privateKey, dataPath, gasPrice)
+        await upload(privateKey, dataPath, gasPrice);
     }
     async downloadDataset(dataPath, dataRoot) {
         download(dataPath, dataRoot);

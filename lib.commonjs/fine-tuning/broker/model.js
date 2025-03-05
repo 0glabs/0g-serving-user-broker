@@ -15,7 +15,7 @@ class ModelProcessor extends base_1.BrokerBase {
             let dataSize = await (0, token_1.calculateTokenSize)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
             console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
         }
-        // await upload(privateKey, dataPath, gasPrice)
+        await (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice);
     }
     async downloadDataset(dataPath, dataRoot) {
         (0, zg_storage_1.download)(dataPath, dataRoot);
