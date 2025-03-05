@@ -1,7 +1,7 @@
-import { ContractFactory, ContractTransactionResponse } from "ethers";
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
-import type { NonPayableOverrides } from "../common.js";
-import type { FineTuningServing, FineTuningServingInterface } from "../FineTuningServing.js";
+import { ContractFactory, ContractTransactionResponse } from 'ethers';
+import type { Signer, ContractDeployTransaction, ContractRunner } from 'ethers';
+import type { NonPayableOverrides } from '../common.js';
+import type { FineTuningServing, FineTuningServingInterface } from '../FineTuningServing.js';
 type FineTuningServingConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;
 export declare class FineTuningServing__factory extends ContractFactory {
     constructor(...args: FineTuningServingConstructorParams);

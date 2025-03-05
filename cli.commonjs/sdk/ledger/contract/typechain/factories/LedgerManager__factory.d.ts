@@ -1,7 +1,7 @@
-import { ContractFactory, ContractTransactionResponse } from "ethers";
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
-import type { NonPayableOverrides } from "../common.js";
-import type { LedgerManager, LedgerManagerInterface } from "../LedgerManager.js";
+import { ContractFactory, ContractTransactionResponse } from 'ethers';
+import type { Signer, ContractDeployTransaction, ContractRunner } from 'ethers';
+import type { NonPayableOverrides } from '../common.js';
+import type { LedgerManager, LedgerManagerInterface } from '../LedgerManager.js';
 type LedgerManagerConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;
 export declare class LedgerManager__factory extends ContractFactory {
     constructor(...args: LedgerManagerConstructorParams);
