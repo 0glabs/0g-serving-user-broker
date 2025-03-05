@@ -21,13 +21,10 @@ class LedgerManagerContract {
             }
             const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, txOptions);
             const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            this.checkReceipt(receipt);
         }
         catch (error) {
-            throw error;
+            this.detailedError(error);
         }
     }
     async listLedger() {
@@ -57,13 +54,10 @@ class LedgerManagerContract {
             }
             const tx = await this.ledger.depositFund(txOptions);
             const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            this.checkReceipt(receipt);
         }
         catch (error) {
-            throw error;
+            this.detailedError(error);
         }
     }
     async refund(amount, gasPrice) {
@@ -74,13 +68,10 @@ class LedgerManagerContract {
             }
             const tx = await this.ledger.refund(amount, txOptions);
             const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            this.checkReceipt(receipt);
         }
         catch (error) {
-            throw error;
+            this.detailedError(error);
         }
     }
     async transferFund(provider, serviceTypeStr, amount, gasPrice) {
@@ -91,13 +82,10 @@ class LedgerManagerContract {
             }
             const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount, txOptions);
             const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            this.checkReceipt(receipt);
         }
         catch (error) {
-            throw error;
+            this.detailedError(error);
         }
     }
     async retrieveFund(providers, serviceTypeStr, gasPrice) {
@@ -108,13 +96,10 @@ class LedgerManagerContract {
             }
             const tx = await this.ledger.retrieveFund(providers, serviceTypeStr, txOptions);
             const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            this.checkReceipt(receipt);
         }
         catch (error) {
-            throw error;
+            this.detailedError(error);
         }
     }
     async deleteLedger(gasPrice) {
@@ -125,17 +110,42 @@ class LedgerManagerContract {
             }
             const tx = await this.ledger.deleteLedger(txOptions);
             const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            this.checkReceipt(receipt);
         }
         catch (error) {
-            throw error;
+            this.detailedError(error);
         }
     }
     getUserAddress() {
         return this._userAddress;
+    }
+    checkReceipt(receipt) {
+        if (!receipt) {
+            throw new Error('Transaction failed with no receipt');
+        }
+        if (receipt.status !== 1) {
+            throw new Error('Transaction reverted');
+        }
+    }
+    detailedError(error) {
+        if (error.raw_log) {
+            throw new Error('Transaction reverted: ' + error.raw_log);
+        }
+        else if (error.logs) {
+            // append log together
+            let log = '';
+            error.logs.forEach((l) => {
+                log += l.log;
+            });
+            throw new Error('Transaction reverted: ' + log);
+        }
+        else if (error.log) {
+            throw new Error('Transaction reverted: ' + error.log);
+        }
+        else if (error.info?.error?.message) {
+            throw new Error('Transaction reverted: ' + error.info.error.message);
+        }
+        throw error;
     }
 }
 exports.LedgerManagerContract = LedgerManagerContract;
