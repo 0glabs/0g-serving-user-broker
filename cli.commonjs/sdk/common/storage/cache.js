@@ -11,8 +11,20 @@ class Cache {
     nodeStorage = {};
     initialized = false;
     constructor() { }
-    async setItem(key, value, ttl, type) {
-        await this.initialize();
+    setLock(key, value, ttl, type) {
+        this.initialize();
+        if (this.nodeStorage[key]) {
+            return false;
+        }
+        this.setItem(key, value, ttl, type);
+        return true;
+    }
+    removeLock(key) {
+        this.initialize();
+        delete this.nodeStorage[key];
+    }
+    setItem(key, value, ttl, type) {
+        this.initialize();
         const now = new Date();
         const item = {
             type,
@@ -21,8 +33,8 @@ class Cache {
         };
         this.nodeStorage[key] = JSON.stringify(item);
     }
-    async getItem(key) {
-        await this.initialize();
+    getItem(key) {
+        this.initialize();
         const itemStr = this.nodeStorage[key] ?? null;
         if (!itemStr) {
             return null;
@@ -35,7 +47,7 @@ class Cache {
         }
         return Cache.decodeValue(item.value, item.type);
     }
-    async initialize() {
+    initialize() {
         if (this.initialized) {
             return;
         }

@@ -2,7 +2,11 @@ import { InferenceServingContract } from '../contract'
 import { ChatBot, Extractor } from '../extractor'
 import { ServiceStructOutput } from '../contract'
 import { ServingRequestHeaders } from './request'
-import { decryptData, getNonce, strToPrivateKey } from '../../common/utils'
+import {
+    decryptData,
+    getNonceWithCache,
+    strToPrivateKey,
+} from '../../common/utils'
 import { PackedPrivkey, Request, signData } from '../../common/settle-signer'
 import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
 import { LedgerBroker } from '../../ledger'
@@ -139,7 +143,7 @@ export abstract class ZGServingUserBrokerBase {
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey)
             }
 
-            const nonce = getNonce()
+            const nonce = await getNonceWithCache(this.cache)
 
             const inputFee = await this.calculateInputFees(extractor, content)
             const fee = inputFee + outputFee

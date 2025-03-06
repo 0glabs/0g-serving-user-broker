@@ -17,13 +17,27 @@ export class Cache {
 
     constructor() {}
 
-    public async setItem(
+    public setLock(
         key: string,
-        value: any,
+        value: string,
         ttl: number,
         type: CacheValueType
-    ) {
-        await this.initialize()
+    ): boolean {
+        this.initialize()
+        if (this.nodeStorage[key]) {
+            return false
+        }
+        this.setItem(key, value, ttl, type)
+        return true
+    }
+
+    public removeLock(key: string): void {
+        this.initialize()
+        delete this.nodeStorage[key]
+    }
+
+    public setItem(key: string, value: any, ttl: number, type: CacheValueType) {
+        this.initialize()
         const now = new Date()
         const item = {
             type,
@@ -33,8 +47,8 @@ export class Cache {
         this.nodeStorage[key] = JSON.stringify(item)
     }
 
-    public async getItem(key: string): Promise<any | null> {
-        await this.initialize()
+    public getItem(key: string): any | null {
+        this.initialize()
         const itemStr = this.nodeStorage[key] ?? null
         if (!itemStr) {
             return null
@@ -48,7 +62,7 @@ export class Cache {
         return Cache.decodeValue(item.value, item.type)
     }
 
-    private async initialize() {
+    private initialize() {
         if (this.initialized) {
             return
         }

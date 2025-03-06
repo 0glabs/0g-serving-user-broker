@@ -98,7 +98,7 @@ class ZGServingUserBrokerBase {
                 privateKey = (0, utils_1.strToPrivateKey)(privateKeyStr);
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey);
             }
-            const nonce = (0, utils_1.getNonce)();
+            const nonce = await (0, utils_1.getNonceWithCache)(this.cache);
             const inputFee = await this.calculateInputFees(extractor, content);
             const fee = inputFee + outputFee;
             const request = new settle_signer_1.Request(nonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
