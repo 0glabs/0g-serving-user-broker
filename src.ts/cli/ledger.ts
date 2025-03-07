@@ -29,6 +29,8 @@ export default function ledger(program: Command) {
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Adding account...')
@@ -48,6 +50,8 @@ export default function ledger(program: Command) {
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Depositing...')
@@ -66,6 +70,8 @@ export default function ledger(program: Command) {
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Refunding...')
@@ -87,6 +93,8 @@ export default function ledger(program: Command) {
             'Retrieve fund from sub accounts for inference, default is fine-tuning'
         )
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price calculation')
         .action((options: any) => {
             withLedgerBroker(options, async (broker) => {
                 console.log('Retrieving funds from sub accounts...')

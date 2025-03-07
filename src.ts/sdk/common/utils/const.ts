@@ -16,3 +16,11 @@
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 export const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY'
+
+// Define which errors to retry on
+export const RETRY_ERROR_SUBSTRINGS = [
+    'transaction underpriced',
+    'replacement transaction underpriced',
+    'fee too low',
+    'mempool',
+]

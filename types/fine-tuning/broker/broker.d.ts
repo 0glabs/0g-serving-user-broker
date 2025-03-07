@@ -10,7 +10,9 @@ export declare class FineTuningBroker {
     private serviceProcessor;
     private serviceProvider;
     private _gasPrice?;
-    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker, gasPrice?: number);
+    private _maxGasPrice?;
+    private _step?;
+    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker, gasPrice?: number, maxGasPrice?: number, step?: number);
     initialize(): Promise<void>;
     listService: () => Promise<import("../contract").ServiceStructOutput[]>;
     getLockedTime: () => Promise<bigint>;
@@ -41,5 +43,5 @@ export declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createFineTuningBroker(signer: Wallet, contractAddress: string, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
+export declare function createFineTuningBroker(signer: Wallet, contractAddress: string, ledger: LedgerBroker, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<FineTuningBroker>;
 //# sourceMappingURL=broker.d.ts.map

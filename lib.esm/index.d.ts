@@ -1,4 +1,4 @@
-import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet, ContractTransactionReceipt } from 'ethers';
+import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet, ContractMethodArgs as ContractMethodArgs$3, ContractTransactionReceipt } from 'ethers';
 
 interface TypedDeferredTopicFilter$2<_TCEvent extends TypedContractEvent$2> extends DeferredTopicFilter {
 }
@@ -786,7 +786,10 @@ declare class LedgerManagerContract {
     signer: JsonRpcSigner | Wallet;
     private _userAddress;
     private _gasPrice?;
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string, gasPrice?: number);
+    private _maxGasPrice?;
+    private _step;
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
+    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
     addLedger(signer: [BigNumberish, BigNumberish], balance: bigint, settleSignerEncryptedPrivateKey: string, gasPrice?: number): Promise<void>;
     listLedger(): Promise<LedgerStructOutput[]>;
     getLedger(): Promise<LedgerStructOutput>;
@@ -1370,8 +1373,11 @@ declare class FineTuningServingContract {
     signer: Wallet;
     private _userAddress;
     private _gasPrice?;
-    constructor(signer: Wallet, contractAddress: string, userAddress: string, gasPrice?: number);
+    private _maxGasPrice?;
+    private _step;
+    constructor(signer: Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
     lockTime(): Promise<bigint>;
+    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<void>;
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<AccountStructOutput[]>;
     getAccount(provider: AddressLike): Promise<AccountStructOutput>;
@@ -1380,6 +1386,7 @@ declare class FineTuningServingContract {
     getService(providerAddress: string): Promise<ServiceStructOutput>;
     getDeliverable(providerAddress: AddressLike, index: BigNumberish): Promise<DeliverableStructOutput>;
     getUserAddress(): string;
+    checkReceipt(receipt: ContractTransactionReceipt | null): void;
 }
 
 interface LedgerDetailStructOutput {
@@ -1418,7 +1425,9 @@ declare class LedgerBroker {
     private inferenceCA;
     private fineTuningCA;
     private gasPrice;
-    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number);
+    private maxGasPrice;
+    private step;
+    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number, maxGasPrice?: number, step?: number);
     initialize(): Promise<void>;
     /**
      * Adds a new ledger to the contract.
@@ -1510,7 +1519,7 @@ declare class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number): Promise<LedgerBroker>;
+declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<LedgerBroker>;
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -1877,7 +1886,9 @@ declare class FineTuningBroker {
     private serviceProcessor;
     private serviceProvider;
     private _gasPrice?;
-    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker, gasPrice?: number);
+    private _maxGasPrice?;
+    private _step?;
+    constructor(signer: Wallet, fineTuningCA: string, ledger: LedgerBroker, gasPrice?: number, maxGasPrice?: number, step?: number);
     initialize(): Promise<void>;
     listService: () => Promise<ServiceStructOutput[]>;
     getLockedTime: () => Promise<bigint>;
@@ -1908,7 +1919,7 @@ declare class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createFineTuningBroker(signer: Wallet, contractAddress: string, ledger: LedgerBroker, gasPrice?: number): Promise<FineTuningBroker>;
+declare function createFineTuningBroker(signer: Wallet, contractAddress: string, ledger: LedgerBroker, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<FineTuningBroker>;
 
 declare class ZGComputeNetworkBroker {
     ledger: LedgerBroker;
@@ -1929,6 +1940,6 @@ declare class ZGComputeNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number): Promise<ZGComputeNetworkBroker>;
+declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<ZGComputeNetworkBroker>;
 
 export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput$1 as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };

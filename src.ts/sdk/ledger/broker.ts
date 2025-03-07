@@ -13,19 +13,25 @@ export class LedgerBroker {
     private inferenceCA: string
     private fineTuningCA: string
     private gasPrice: number | undefined
+    private maxGasPrice: number | undefined
+    private step: number | undefined
 
     constructor(
         signer: JsonRpcSigner | Wallet,
         ledgerCA: string,
         inferenceCA: string,
         fineTuningCA: string,
-        gasPrice?: number
+        gasPrice?: number,
+        maxGasPrice?: number,
+        step?: number
     ) {
         this.signer = signer
         this.ledgerCA = ledgerCA
         this.inferenceCA = inferenceCA
         this.fineTuningCA = fineTuningCA
         this.gasPrice = gasPrice
+        this.maxGasPrice = maxGasPrice
+        this.step = step
     }
 
     async initialize() {
@@ -39,7 +45,9 @@ export class LedgerBroker {
             this.signer,
             this.ledgerCA,
             userAddress,
-            this.gasPrice
+            this.gasPrice,
+            this.maxGasPrice,
+            this.step
         )
         const inferenceContract = new InferenceServingContract(
             this.signer,
@@ -224,14 +232,18 @@ export async function createLedgerBroker(
     ledgerCA: string,
     inferenceCA: string,
     fineTuningCA: string,
-    gasPrice?: number
+    gasPrice?: number,
+    maxGasPrice?: number,
+    step?: number
 ): Promise<LedgerBroker> {
     const broker = new LedgerBroker(
         signer,
         ledgerCA,
         inferenceCA,
         fineTuningCA,
-        gasPrice
+        gasPrice,
+        maxGasPrice,
+        step
     )
     try {
         await broker.initialize()

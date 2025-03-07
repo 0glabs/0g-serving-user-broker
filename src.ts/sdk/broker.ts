@@ -40,7 +40,9 @@ export async function createZGComputeNetworkBroker(
     ledgerCA = '0x0c0D02e4E849C711B2388A829366B5bf3f9c53e7',
     inferenceCA = '0x46e8a02d609CaEfC1747197da1F38272d5E46c77',
     fineTuningCA = '0x35A5d96569867fE6534D823268337888229533dE',
-    gasPrice?: number
+    gasPrice?: number,
+    maxGasPrice?: number,
+    step?: number
 ): Promise<ZGComputeNetworkBroker> {
     try {
         const ledger = await createLedgerBroker(
@@ -48,7 +50,9 @@ export async function createZGComputeNetworkBroker(
             ledgerCA,
             inferenceCA,
             fineTuningCA,
-            gasPrice
+            gasPrice,
+            maxGasPrice,
+            step
         )
         const inferenceBroker = await createInferenceBroker(
             signer,
@@ -62,7 +66,9 @@ export async function createZGComputeNetworkBroker(
                 signer,
                 fineTuningCA,
                 ledger,
-                gasPrice
+                gasPrice,
+                maxGasPrice,
+                step
             )
         }
 
