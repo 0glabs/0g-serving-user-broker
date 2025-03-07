@@ -1,5 +1,21 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers'
+import {
+    JsonRpcSigner,
+    BigNumberish,
+    AddressLike,
+    Wallet,
+    ContractTransactionResponse,
+    ContractMethodArgs,
+} from 'ethers'
 import { LedgerManager, LedgerManager__factory } from './typechain'
+
+// Define which errors to retry on
+const RETRY_ERROR_SUBSTRINGS = [
+    'transaction underpriced',
+    'replacement transaction underpriced',
+    'fee too low',
+    'mempool',
+    'timeout',
+]
 
 export class LedgerManagerContract {
     public ledger: LedgerManager
@@ -7,17 +23,59 @@ export class LedgerManagerContract {
 
     private _userAddress: string
     private _gasPrice?: number
+    private _maxGasPrice?: number
 
     constructor(
         signer: JsonRpcSigner | Wallet,
         contractAddress: string,
         userAddress: string,
-        gasPrice?: number
+        gasPrice?: number,
+        maxGasPrice?: number
     ) {
         this.ledger = LedgerManager__factory.connect(contractAddress, signer)
         this.signer = signer
         this._userAddress = userAddress
         this._gasPrice = gasPrice
+        this._maxGasPrice = maxGasPrice
+    }
+
+    async sendTx(
+        name: string,
+        txArgs: ContractMethodArgs<any[]>,
+        txOptions: any
+    ): Promise<ContractTransactionResponse> {
+        if (this._maxGasPrice === undefined) {
+            console.log('sending tx with gas', txOptions.gasPrice)
+            return await this.ledger.getFunction(name)(...txArgs, txOptions)
+        }
+        while (true) {
+            try {
+                console.log('sending tx with gas', txOptions.gasPrice)
+                return await this.ledger.getFunction(name)(...txArgs, txOptions)
+            } catch (error: any) {
+                let errorMessage = ''
+                if (error.info?.error?.message) {
+                    errorMessage = error.info.error.message
+                }
+                const shouldRetry = RETRY_ERROR_SUBSTRINGS.some((substr) =>
+                    errorMessage.includes(substr)
+                )
+
+                // If it's not a known "underpriced" error, rethrow immediately
+                if (!shouldRetry) {
+                    throw error
+                }
+                let currentGasPrice = txOptions.gasPrice
+                if (currentGasPrice >= this._maxGasPrice) {
+                    throw error
+                }
+                currentGasPrice = currentGasPrice * 1.1
+                if (currentGasPrice > this._maxGasPrice) {
+                    currentGasPrice = this._maxGasPrice
+                }
+                txOptions.gasPrice = currentGasPrice
+            }
+        }
     }
 
     async addLedger(
@@ -32,9 +90,9 @@ export class LedgerManagerContract {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
 
-            const tx = await this.ledger.addLedger(
-                signer,
-                settleSignerEncryptedPrivateKey,
+            const tx = await this.sendTx(
+                'addLedger',
+                [signer, settleSignerEncryptedPrivateKey],
                 txOptions
             )
 
@@ -74,7 +132,7 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.ledger.depositFund(txOptions)
+            const tx = await this.sendTx('depositFund', [], txOptions)
 
             const receipt = await tx.wait()
 
@@ -93,7 +151,7 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.ledger.refund(amount, txOptions)
+            const tx = await this.sendTx('refund', [amount], txOptions)
 
             const receipt = await tx.wait()
 
@@ -117,10 +175,9 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.ledger.transferFund(
-                provider,
-                serviceTypeStr,
-                amount,
+            const tx = await this.sendTx(
+                'transferFund',
+                [provider, serviceTypeStr, amount],
                 txOptions
             )
 
@@ -145,12 +202,11 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.ledger.retrieveFund(
-                providers,
-                serviceTypeStr,
+            const tx = await this.sendTx(
+                'retrieveFund',
+                [providers, serviceTypeStr],
                 txOptions
             )
-
             const receipt = await tx.wait()
 
             if (!receipt || receipt.status !== 1) {
@@ -168,7 +224,7 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.ledger.deleteLedger(txOptions)
+            const tx = await this.sendTx('deleteLedger', [], txOptions)
 
             const receipt = await tx.wait()
 
