@@ -1,11 +1,13 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers';
+import { JsonRpcSigner, BigNumberish, AddressLike, Wallet, ContractTransactionResponse, ContractMethodArgs } from 'ethers';
 import { LedgerManager } from './typechain';
 export declare class LedgerManagerContract {
     ledger: LedgerManager;
     signer: JsonRpcSigner | Wallet;
     private _userAddress;
     private _gasPrice?;
-    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string, gasPrice?: number);
+    private _maxGasPrice?;
+    constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number);
+    sendTx(name: string, txArgs: ContractMethodArgs<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
     addLedger(signer: [BigNumberish, BigNumberish], balance: bigint, settleSignerEncryptedPrivateKey: string, gasPrice?: number): Promise<void>;
     listLedger(): Promise<import(".").LedgerStructOutput[]>;
     getLedger(): Promise<import(".").LedgerStructOutput>;

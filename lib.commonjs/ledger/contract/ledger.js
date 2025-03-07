@@ -2,16 +2,58 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LedgerManagerContract = void 0;
 const typechain_1 = require("./typechain");
+// Define which errors to retry on
+const RETRY_ERROR_SUBSTRINGS = [
+    'transaction underpriced',
+    'replacement transaction underpriced',
+    'fee too low',
+    'mempool',
+    'timeout',
+];
 class LedgerManagerContract {
     ledger;
     signer;
     _userAddress;
     _gasPrice;
-    constructor(signer, contractAddress, userAddress, gasPrice) {
+    _maxGasPrice;
+    constructor(signer, contractAddress, userAddress, gasPrice, maxGasPrice) {
         this.ledger = typechain_1.LedgerManager__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
         this._gasPrice = gasPrice;
+        this._maxGasPrice = maxGasPrice;
+    }
+    async sendTx(name, txArgs, txOptions) {
+        if (this._maxGasPrice === undefined) {
+            console.log('sending tx with gas', txOptions.gasPrice);
+            return await this.ledger.getFunction(name)(...txArgs, txOptions);
+        }
+        while (true) {
+            try {
+                console.log('sending tx with gas', txOptions.gasPrice);
+                return await this.ledger.getFunction(name)(...txArgs, txOptions);
+            }
+            catch (error) {
+                let errorMessage = '';
+                if (error.info?.error?.message) {
+                    errorMessage = error.info.error.message;
+                }
+                const shouldRetry = RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
+                // If it's not a known "underpriced" error, rethrow immediately
+                if (!shouldRetry) {
+                    throw error;
+                }
+                let currentGasPrice = txOptions.gasPrice;
+                if (currentGasPrice >= this._maxGasPrice) {
+                    throw error;
+                }
+                currentGasPrice = currentGasPrice * 1.1;
+                if (currentGasPrice > this._maxGasPrice) {
+                    currentGasPrice = this._maxGasPrice;
+                }
+                txOptions.gasPrice = currentGasPrice;
+            }
+        }
     }
     async addLedger(signer, balance, settleSignerEncryptedPrivateKey, gasPrice) {
         try {
@@ -19,7 +61,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, txOptions);
+            const tx = await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -55,7 +97,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.depositFund(txOptions);
+            const tx = await this.sendTx('depositFund', [], txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -72,7 +114,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.refund(amount, txOptions);
+            const tx = await this.sendTx('refund', [amount], txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -89,7 +131,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount, txOptions);
+            const tx = await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -106,7 +148,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr, txOptions);
+            const tx = await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
@@ -123,7 +165,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.deleteLedger(txOptions);
+            const tx = await this.sendTx('deleteLedger', [], txOptions);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');
