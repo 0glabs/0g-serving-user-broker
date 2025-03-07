@@ -797,7 +797,6 @@ declare class LedgerManagerContract {
     deleteLedger(gasPrice?: number): Promise<void>;
     getUserAddress(): string;
     checkReceipt(receipt: ContractTransactionReceipt | null): void;
-    detailedError(error: any): void;
 }
 
 interface TypedDeferredTopicFilter<_TCEvent extends TypedContractEvent> extends DeferredTopicFilter {

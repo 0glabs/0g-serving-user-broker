@@ -48,7 +48,7 @@ export class LedgerManagerContract {
 
             this.checkReceipt(receipt)
         } catch (error) {
-            this.detailedError(error)
+            throw error
         }
     }
 
@@ -83,7 +83,7 @@ export class LedgerManagerContract {
 
             this.checkReceipt(receipt)
         } catch (error) {
-            this.detailedError(error)
+            throw error
         }
     }
 
@@ -99,7 +99,7 @@ export class LedgerManagerContract {
 
             this.checkReceipt(receipt)
         } catch (error) {
-            this.detailedError(error)
+            throw error
         }
     }
 
@@ -125,7 +125,7 @@ export class LedgerManagerContract {
 
             this.checkReceipt(receipt)
         } catch (error) {
-            this.detailedError(error)
+            throw error
         }
     }
 
@@ -149,7 +149,7 @@ export class LedgerManagerContract {
 
             this.checkReceipt(receipt)
         } catch (error) {
-            this.detailedError(error)
+            throw error
         }
     }
 
@@ -165,7 +165,7 @@ export class LedgerManagerContract {
 
             this.checkReceipt(receipt)
         } catch (error) {
-            this.detailedError(error)
+            throw error
         }
     }
 
@@ -180,23 +180,5 @@ export class LedgerManagerContract {
         if (receipt.status !== 1) {
             throw new Error('Transaction reverted')
         }
-    }
-
-    detailedError(error: any): void {
-        if (error.raw_log) {
-            throw new Error('Transaction reverted: ' + error.raw_log)
-        } else if (error.logs) {
-            // append log together
-            let log = ''
-            error.logs.forEach((l: any) => {
-                log += l.log
-            })
-            throw new Error('Transaction reverted: ' + log)
-        } else if (error.log) {
-            throw new Error('Transaction reverted: ' + error.log)
-        } else if (error.info?.error?.message) {
-            throw new Error('Transaction reverted: ' + error.info.error.message)
-        }
-        throw error
     }
 }

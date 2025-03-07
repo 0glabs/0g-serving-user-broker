@@ -4,6 +4,25 @@ import chalk from 'chalk'
 import { Table } from 'cli-table3'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
 
+const errorPatterns = [
+    {
+        pattern: /ServiceNotExist/i,
+        message:
+            "The service provider doesn't exist. Please pass the right --provider",
+    },
+    {
+        pattern: /AccountNotExist/i,
+        message: "The sub account doesn't exist. Please create one first.",
+    },
+    { pattern: /AccountExist/i, message: 'The sub account already exists.' },
+    { pattern: /InsufficientBalance/i, message: 'Insufficient funds.' },
+    {
+        pattern: /InvalidVerifierInput/i,
+        message: 'The verification input is invalid.',
+    },
+    // add more patterns as needed
+]
+
 export async function initBroker(
     options: any
 ): Promise<ZGComputeNetworkBroker> {
@@ -28,7 +47,17 @@ export async function withLedgerBroker(
     try {
         const broker = await initBroker(options)
         await action(broker)
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message) {
+            console.error('Operation failed:', error.message)
+            return
+        }
+        const errMsg = String(error)
+        if (errMsg.includes('LedgerNotExist')) {
+            console.log('Ledger does not exist. Please create a ledger first.')
+            return
+        }
+
         console.error('Operation failed:', error)
     }
 }
@@ -44,7 +73,18 @@ export async function withFineTuningBroker(
         } else {
             console.log('Fine tuning broker is not available.')
         }
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message) {
+            console.error('Operation failed:', error.message)
+            return
+        }
+        const errMsg = String(error)
+        for (const { pattern, message } of errorPatterns) {
+            if (pattern.test(errMsg)) {
+                console.error('Operation failed:', message)
+                return // stop after first match; or omit if you want to allow multiple matches
+            }
+        }
         console.error('Operation failed:', error)
     }
 }

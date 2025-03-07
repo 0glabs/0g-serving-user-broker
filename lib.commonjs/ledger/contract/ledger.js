@@ -24,7 +24,7 @@ class LedgerManagerContract {
             this.checkReceipt(receipt);
         }
         catch (error) {
-            this.detailedError(error);
+            throw error;
         }
     }
     async listLedger() {
@@ -57,7 +57,7 @@ class LedgerManagerContract {
             this.checkReceipt(receipt);
         }
         catch (error) {
-            this.detailedError(error);
+            throw error;
         }
     }
     async refund(amount, gasPrice) {
@@ -71,7 +71,7 @@ class LedgerManagerContract {
             this.checkReceipt(receipt);
         }
         catch (error) {
-            this.detailedError(error);
+            throw error;
         }
     }
     async transferFund(provider, serviceTypeStr, amount, gasPrice) {
@@ -85,7 +85,7 @@ class LedgerManagerContract {
             this.checkReceipt(receipt);
         }
         catch (error) {
-            this.detailedError(error);
+            throw error;
         }
     }
     async retrieveFund(providers, serviceTypeStr, gasPrice) {
@@ -99,7 +99,7 @@ class LedgerManagerContract {
             this.checkReceipt(receipt);
         }
         catch (error) {
-            this.detailedError(error);
+            throw error;
         }
     }
     async deleteLedger(gasPrice) {
@@ -113,7 +113,7 @@ class LedgerManagerContract {
             this.checkReceipt(receipt);
         }
         catch (error) {
-            this.detailedError(error);
+            throw error;
         }
     }
     getUserAddress() {
@@ -126,26 +126,6 @@ class LedgerManagerContract {
         if (receipt.status !== 1) {
             throw new Error('Transaction reverted');
         }
-    }
-    detailedError(error) {
-        if (error.raw_log) {
-            throw new Error('Transaction reverted: ' + error.raw_log);
-        }
-        else if (error.logs) {
-            // append log together
-            let log = '';
-            error.logs.forEach((l) => {
-                log += l.log;
-            });
-            throw new Error('Transaction reverted: ' + log);
-        }
-        else if (error.log) {
-            throw new Error('Transaction reverted: ' + error.log);
-        }
-        else if (error.info?.error?.message) {
-            throw new Error('Transaction reverted: ' + error.info.error.message);
-        }
-        throw error;
     }
 }
 exports.LedgerManagerContract = LedgerManagerContract;

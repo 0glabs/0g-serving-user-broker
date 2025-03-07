@@ -9,6 +9,23 @@ const sdk_1 = require("../sdk");
 const ethers_1 = require("ethers");
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const const_1 = require("./const");
+const errorPatterns = [
+    {
+        pattern: /ServiceNotExist/i,
+        message: "The service provider doesn't exist. Please pass the right --provider",
+    },
+    {
+        pattern: /AccountNotExist/i,
+        message: "The sub account doesn't exist. Please create one first.",
+    },
+    { pattern: /AccountExist/i, message: 'The sub account already exists.' },
+    { pattern: /InsufficientBalance/i, message: 'Insufficient funds.' },
+    {
+        pattern: /InvalidVerifierInput/i,
+        message: 'The verification input is invalid.',
+    },
+    // add more patterns as needed
+];
 async function initBroker(options) {
     const provider = new ethers_1.ethers.JsonRpcProvider(options.rpc || process.env.RPC_ENDPOINT || const_1.ZG_RPC_ENDPOINT_TESTNET);
     const wallet = new ethers_1.ethers.Wallet(options.key, provider);
@@ -20,6 +37,15 @@ async function withLedgerBroker(options, action) {
         await action(broker);
     }
     catch (error) {
+        if (error.message) {
+            console.error('Operation failed:', error.message);
+            return;
+        }
+        const errMsg = String(error);
+        if (errMsg.includes('LedgerNotExist')) {
+            console.log('Ledger does not exist. Please create a ledger first.');
+            return;
+        }
         console.error('Operation failed:', error);
     }
 }
@@ -34,6 +60,17 @@ async function withFineTuningBroker(options, action) {
         }
     }
     catch (error) {
+        if (error.message) {
+            console.error('Operation failed:', error.message);
+            return;
+        }
+        const errMsg = String(error);
+        for (const { pattern, message } of errorPatterns) {
+            if (pattern.test(errMsg)) {
+                console.error('Operation failed:', message);
+                return; // stop after first match; or omit if you want to allow multiple matches
+            }
+        }
         console.error('Operation failed:', error);
     }
 }

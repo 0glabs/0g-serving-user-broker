@@ -16,6 +16,5 @@ export declare class LedgerManagerContract {
     deleteLedger(gasPrice?: number): Promise<void>;
     getUserAddress(): string;
     checkReceipt(receipt: ContractTransactionReceipt | null): void;
-    detailedError(error: any): void;
 }
 //# sourceMappingURL=ledger.d.ts.map
