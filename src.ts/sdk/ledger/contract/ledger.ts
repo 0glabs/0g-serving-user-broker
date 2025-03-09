@@ -1,4 +1,10 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers'
+import {
+    JsonRpcSigner,
+    BigNumberish,
+    AddressLike,
+    Wallet,
+    ContractTransactionReceipt,
+} from 'ethers'
 import { LedgerManager, LedgerManager__factory } from './typechain'
 
 export class LedgerManagerContract {
@@ -40,10 +46,7 @@ export class LedgerManagerContract {
 
             const receipt = await tx.wait()
 
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -78,10 +81,7 @@ export class LedgerManagerContract {
 
             const receipt = await tx.wait()
 
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -97,10 +97,7 @@ export class LedgerManagerContract {
 
             const receipt = await tx.wait()
 
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -126,10 +123,7 @@ export class LedgerManagerContract {
 
             const receipt = await tx.wait()
 
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -153,10 +147,7 @@ export class LedgerManagerContract {
 
             const receipt = await tx.wait()
 
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -172,10 +163,7 @@ export class LedgerManagerContract {
 
             const receipt = await tx.wait()
 
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed')
-                throw error
-            }
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -183,5 +171,14 @@ export class LedgerManagerContract {
 
     getUserAddress(): string {
         return this._userAddress
+    }
+
+    checkReceipt(receipt: ContractTransactionReceipt | null): void {
+        if (!receipt) {
+            throw new Error('Transaction failed with no receipt')
+        }
+        if (receipt.status !== 1) {
+            throw new Error('Transaction reverted')
+        }
     }
 }

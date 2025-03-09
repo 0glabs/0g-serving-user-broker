@@ -39,7 +39,7 @@ exports.MODEL_HASH_MAP = {
         description: 'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
     },
     'cocktailsgd-opt-1.3b': {
-        turbo: '0xb8b7bacdf70588401b1315a607478b6c76f446f3683d6cc6f956909d64f35f8b',
+        turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
         standard: '',
         description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
     },
