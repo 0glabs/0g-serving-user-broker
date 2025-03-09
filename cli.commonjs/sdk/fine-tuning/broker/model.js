@@ -39,6 +39,9 @@ class ModelProcessor extends base_1.BrokerBase {
             if (!latestDeliverable.acknowledged) {
                 throw new Error('Deliverable not acknowledged yet');
             }
+            if (!latestDeliverable.encryptedSecret) {
+                throw new Error('EncryptedSecret not found');
+            }
             const secret = await (0, utils_1.eciesDecrypt)(this.contract.signer, latestDeliverable.encryptedSecret);
             await (0, utils_1.aesGCMDecryptToFile)(secret, encryptedModelPath, decryptedModelPath, account.providerSigner);
         }

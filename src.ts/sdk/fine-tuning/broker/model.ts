@@ -73,6 +73,10 @@ export class ModelProcessor extends BrokerBase {
                 throw new Error('Deliverable not acknowledged yet')
             }
 
+            if (!latestDeliverable.encryptedSecret) {
+                throw new Error('EncryptedSecret not found')
+            }
+
             const secret = await eciesDecrypt(
                 this.contract.signer,
                 latestDeliverable.encryptedSecret
