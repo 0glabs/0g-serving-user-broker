@@ -10,6 +10,7 @@
         "types",
         "lib.commonjs",
         "lib.esm",
+        "cli.commonjs",
         "library",
         "binary"
     ],
