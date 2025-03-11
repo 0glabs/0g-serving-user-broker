@@ -1,4 +1,4 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet } from 'ethers';
+import { JsonRpcSigner, BigNumberish, AddressLike, Wallet, ContractTransactionReceipt } from 'ethers';
 import { LedgerManager } from './typechain';
 export declare class LedgerManagerContract {
     ledger: LedgerManager;
@@ -15,5 +15,6 @@ export declare class LedgerManagerContract {
     retrieveFund(providers: AddressLike[], serviceTypeStr: 'inference' | 'fine-tuning', gasPrice?: number): Promise<void>;
     deleteLedger(gasPrice?: number): Promise<void>;
     getUserAddress(): string;
+    checkReceipt(receipt: ContractTransactionReceipt | null): void;
 }
 //# sourceMappingURL=ledger.d.ts.map

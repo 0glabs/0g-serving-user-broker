@@ -1,4 +1,4 @@
-import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet } from 'ethers';
+import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet, ContractTransactionReceipt } from 'ethers';
 
 interface TypedDeferredTopicFilter$2<_TCEvent extends TypedContractEvent$2> extends DeferredTopicFilter {
 }
@@ -547,8 +547,10 @@ declare class Cache {
     private nodeStorage;
     private initialized;
     constructor();
-    setItem(key: string, value: any, ttl: number, type: CacheValueType): Promise<void>;
-    getItem(key: string): Promise<any | null>;
+    setLock(key: string, value: string, ttl: number, type: CacheValueType): boolean;
+    removeLock(key: string): void;
+    setItem(key: string, value: any, ttl: number, type: CacheValueType): void;
+    getItem(key: string): any | null;
     private initialize;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
@@ -794,6 +796,7 @@ declare class LedgerManagerContract {
     retrieveFund(providers: AddressLike[], serviceTypeStr: 'inference' | 'fine-tuning', gasPrice?: number): Promise<void>;
     deleteLedger(gasPrice?: number): Promise<void>;
     getUserAddress(): string;
+    checkReceipt(receipt: ContractTransactionReceipt | null): void;
 }
 
 interface TypedDeferredTopicFilter<_TCEvent extends TypedContractEvent> extends DeferredTopicFilter {

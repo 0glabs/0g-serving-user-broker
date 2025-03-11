@@ -9,8 +9,10 @@ export declare class Cache {
     private nodeStorage;
     private initialized;
     constructor();
-    setItem(key: string, value: any, ttl: number, type: CacheValueType): Promise<void>;
-    getItem(key: string): Promise<any | null>;
+    setLock(key: string, value: string, ttl: number, type: CacheValueType): boolean;
+    removeLock(key: string): void;
+    setItem(key: string, value: any, ttl: number, type: CacheValueType): void;
+    getItem(key: string): any | null;
     private initialize;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;

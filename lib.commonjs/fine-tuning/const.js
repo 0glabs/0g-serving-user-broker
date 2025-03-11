@@ -45,7 +45,7 @@ exports.MODEL_HASH_MAP = {
         type: 'text',
     },
     'cocktailsgd-opt-1.3b': {
-        turbo: '0xe25963fd25fe37d7df5216de1eae533ea42090d3642c3f84edd0f179ffc63a94,0xfccaf17bd0ed26b74e8a3883f5c814bcb5f247015d68fd65a28bf98e1bdb0b7f',
+        turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
         standard: '',
         description: 'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
         tokenizer: '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
