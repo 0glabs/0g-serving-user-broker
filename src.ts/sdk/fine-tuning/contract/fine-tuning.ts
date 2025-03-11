@@ -61,12 +61,12 @@ export class FineTuningServingContract {
             txOptions.gasPrice = BigInt(txOptions.gasPrice)
         }
         if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas', txOptions.gasPrice)
+            console.log('sending tx with gas price', txOptions.gasPrice)
             return await this.serving.getFunction(name)(...txArgs, txOptions)
         }
         while (true) {
             try {
-                console.log('sending tx with gas', txOptions.gasPrice)
+                console.log('sending tx with gas price', txOptions.gasPrice)
                 const tx = await this.serving.getFunction(name)(
                     ...txArgs,
                     txOptions
