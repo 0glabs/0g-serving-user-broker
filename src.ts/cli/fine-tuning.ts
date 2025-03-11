@@ -82,7 +82,11 @@ export default function fineTuning(program: Command) {
         .option('--model <name>', 'Pre-trained model name to use')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
-                await broker.fineTuning!.uploadDataset(options.dataPath, options.gasPrice, options.model)
+                await broker.fineTuning!.uploadDataset(
+                    options.dataPath,
+                    options.gasPrice,
+                    options.model
+                )
             })
         })
 
@@ -143,9 +147,9 @@ export default function fineTuning(program: Command) {
 
                 console.log('Creating task...')
 
-                let dataSize: number | undefined = undefined;
+                let dataSize: number | undefined = undefined
                 if (options.dataSize !== undefined) {
-                    dataSize = parseInt(options.dataSize, 10);
+                    dataSize = parseInt(options.dataSize, 10)
                 }
 
                 const taskId = await broker.fineTuning!.createTask(
@@ -155,7 +159,7 @@ export default function fineTuning(program: Command) {
                     options.configPath,
                     dataSize,
                     options.gasPrice,
-                    options.datasetPath,
+                    options.datasetPath
                 )
                 console.log('Created Task ID:', taskId)
             })

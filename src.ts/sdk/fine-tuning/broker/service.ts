@@ -148,16 +148,23 @@ export class ServiceProcessor extends BrokerBase {
 
             if (dataSize === undefined) {
                 if (datasetPath !== undefined) {
-                    dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type)
+                    dataSize = await calculateTokenSize(
+                        MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                        datasetPath,
+                        MODEL_HASH_MAP[preTrainedModelName].type
+                    )
                 } else {
-                    throw new Error('At least one of dataSize or datasetPath must be provided.')
+                    throw new Error(
+                        'At least one of dataSize or datasetPath must be provided.'
+                    )
                 }
             }
 
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             const parsedParams = this.verifyTrainingParams(trainingParams)
             const trainEpochs = parsedParams.num_train_epochs ?? 3
-            const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
+            const fee =
+                service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
             console.log(`Total fee ${fee}`)
 
             await this.ledger.transferFund(

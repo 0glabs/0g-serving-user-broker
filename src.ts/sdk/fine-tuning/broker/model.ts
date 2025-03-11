@@ -17,11 +17,21 @@ export class ModelProcessor extends BrokerBase {
         privateKey: string,
         dataPath: string,
         gasPrice?: number,
-        preTrainedModelName?: string,
+        preTrainedModelName?: string
     ): Promise<void> {
-        if (preTrainedModelName !== undefined && MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined && MODEL_HASH_MAP[preTrainedModelName].tokenizer !== '') {
-            let dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type);
-            console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
+        if (
+            preTrainedModelName !== undefined &&
+            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
+            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== ''
+        ) {
+            let dataSize = await calculateTokenSize(
+                MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                dataPath,
+                MODEL_HASH_MAP[preTrainedModelName].type
+            )
+            console.log(
+                `The token size for the dataset ${dataPath} is ${dataSize}`
+            )
         }
 
         await upload(privateKey, dataPath, gasPrice)
@@ -85,7 +95,7 @@ export class ModelProcessor extends BrokerBase {
                 secret,
                 encryptedModelPath,
                 decryptedModelPath,
-                account.providerSigner,
+                account.providerSigner
             )
         } catch (error) {
             throw error

@@ -115,14 +115,14 @@ export class FineTuningBroker {
     public uploadDataset = async (
         dataPath: string,
         gasPrice?: number,
-        preTrainedModelName?: string,
+        preTrainedModelName?: string
     ): Promise<void> => {
         try {
             await this.modelProcessor.uploadDataset(
                 this.signer.privateKey,
                 dataPath,
                 gasPrice || this._gasPrice,
-                preTrainedModelName,
+                preTrainedModelName
             )
         } catch (error) {
             throw error

@@ -31,7 +31,8 @@ export const MODEL_HASH_MAP: {
         standard: '',
         description:
             'DistilBERT is a transformers model, smaller and faster than BERT, which was pretrained on the same corpus in a self-supervised fashion, using the BERT base model as a teacher. More details can be found at: https://huggingface.co/distilbert/distilbert-base-uncased',
-        tokenizer: '0x3317127671a3217583069001b2a00454ef4d1e838f8f1f4ffbe64db0ec7ed960',
+        tokenizer:
+            '0x3317127671a3217583069001b2a00454ef4d1e838f8f1f4ffbe64db0ec7ed960',
         type: 'text',
     },
     mobilenet_v2: {
@@ -39,7 +40,8 @@ export const MODEL_HASH_MAP: {
         standard: '',
         description:
             'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
-        tokenizer: '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
+        tokenizer:
+            '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
         type: 'image',
     },
     'deepseek-r1-distill-qwen-1.5b': {
@@ -47,7 +49,8 @@ export const MODEL_HASH_MAP: {
         standard: '',
         description:
             'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+        tokenizer:
+            '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
         type: 'text',
     },
     'cocktailsgd-opt-1.3b': {
@@ -55,7 +58,8 @@ export const MODEL_HASH_MAP: {
         standard: '',
         description:
             'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
-        tokenizer: '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
+        tokenizer:
+            '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
         type: 'text',
     },
     // TODO: remove
@@ -63,7 +67,8 @@ export const MODEL_HASH_MAP: {
         turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
         standard: '',
         description: '',
-        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+        tokenizer:
+            '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
         type: 'text',
     },
 }

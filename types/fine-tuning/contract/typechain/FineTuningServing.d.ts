@@ -1,5 +1,5 @@
-import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers";
-import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from "./common.js";
+import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from 'ethers';
+import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from './common.js';
 export type QuotaStruct = {
     cpuCount: BigNumberish;
     nodeMemory: BigNumberish;
@@ -136,60 +136,60 @@ export type VerifierInputStructOutput = [
     user: string;
 };
 export interface FineTuningServingInterface extends Interface {
-    getFunction(nameOrSignature: "accountExists" | "acknowledgeDeliverable" | "acknowledgeProviderSigner" | "addAccount" | "addDeliverable" | "addOrUpdateService" | "deleteAccount" | "depositFund" | "getAccount" | "getAllAccounts" | "getAllServices" | "getDeliverable" | "getPendingRefund" | "getService" | "initialize" | "initialized" | "ledgerAddress" | "lockTime" | "owner" | "processRefund" | "removeService" | "renounceOwnership" | "requestRefundAll" | "settleFees" | "transferOwnership" | "updateLockTime"): FunctionFragment;
-    getEvent(nameOrSignatureOrTopic: "BalanceUpdated" | "OwnershipTransferred" | "RefundRequested" | "ServiceRemoved" | "ServiceUpdated"): EventFragment;
-    encodeFunctionData(functionFragment: "accountExists", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "acknowledgeDeliverable", values: [AddressLike, BigNumberish]): string;
-    encodeFunctionData(functionFragment: "acknowledgeProviderSigner", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "addAccount", values: [AddressLike, AddressLike, string]): string;
-    encodeFunctionData(functionFragment: "addDeliverable", values: [AddressLike, BytesLike]): string;
-    encodeFunctionData(functionFragment: "addOrUpdateService", values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
-    encodeFunctionData(functionFragment: "deleteAccount", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "depositFund", values: [AddressLike, AddressLike, BigNumberish]): string;
-    encodeFunctionData(functionFragment: "getAccount", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "getAllAccounts", values?: undefined): string;
-    encodeFunctionData(functionFragment: "getAllServices", values?: undefined): string;
-    encodeFunctionData(functionFragment: "getDeliverable", values: [AddressLike, AddressLike, BigNumberish]): string;
-    encodeFunctionData(functionFragment: "getPendingRefund", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "getService", values: [AddressLike]): string;
-    encodeFunctionData(functionFragment: "initialize", values: [BigNumberish, AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "initialized", values?: undefined): string;
-    encodeFunctionData(functionFragment: "ledgerAddress", values?: undefined): string;
-    encodeFunctionData(functionFragment: "lockTime", values?: undefined): string;
-    encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-    encodeFunctionData(functionFragment: "processRefund", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "removeService", values?: undefined): string;
-    encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
-    encodeFunctionData(functionFragment: "requestRefundAll", values: [AddressLike, AddressLike]): string;
-    encodeFunctionData(functionFragment: "settleFees", values: [VerifierInputStruct]): string;
-    encodeFunctionData(functionFragment: "transferOwnership", values: [AddressLike]): string;
-    encodeFunctionData(functionFragment: "updateLockTime", values: [BigNumberish]): string;
-    decodeFunctionResult(functionFragment: "accountExists", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "acknowledgeDeliverable", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "acknowledgeProviderSigner", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "addAccount", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "addDeliverable", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "addOrUpdateService", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "deleteAccount", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "depositFund", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getAccount", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getAllAccounts", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getAllServices", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getDeliverable", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getPendingRefund", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getService", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "initialized", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "ledgerAddress", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "lockTime", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "processRefund", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "removeService", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "renounceOwnership", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "requestRefundAll", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "settleFees", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "transferOwnership", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "updateLockTime", data: BytesLike): Result;
+    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeDeliverable' | 'acknowledgeProviderSigner' | 'addAccount' | 'addDeliverable' | 'addOrUpdateService' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getDeliverable' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateLockTime'): FunctionFragment;
+    getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated'): EventFragment;
+    encodeFunctionData(functionFragment: 'accountExists', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'acknowledgeDeliverable', values: [AddressLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'acknowledgeProviderSigner', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'addAccount', values: [AddressLike, AddressLike, string]): string;
+    encodeFunctionData(functionFragment: 'addDeliverable', values: [AddressLike, BytesLike]): string;
+    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
+    encodeFunctionData(functionFragment: 'deleteAccount', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'depositFund', values: [AddressLike, AddressLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'getAccount', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'getAllAccounts', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'getAllServices', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'getDeliverable', values: [AddressLike, AddressLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'getPendingRefund', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'getService', values: [AddressLike]): string;
+    encodeFunctionData(functionFragment: 'initialize', values: [BigNumberish, AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'initialized', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'ledgerAddress', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'lockTime', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'processRefund', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'removeService', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'requestRefundAll', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'settleFees', values: [VerifierInputStruct]): string;
+    encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike]): string;
+    encodeFunctionData(functionFragment: 'updateLockTime', values: [BigNumberish]): string;
+    decodeFunctionResult(functionFragment: 'accountExists', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'acknowledgeDeliverable', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'acknowledgeProviderSigner', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'addAccount', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'addDeliverable', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'addOrUpdateService', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'deleteAccount', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'depositFund', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getAccount', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getAllAccounts', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getAllServices', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getDeliverable', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getPendingRefund', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getService', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'initialize', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'initialized', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'ledgerAddress', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'lockTime', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'processRefund', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'removeService', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'requestRefundAll', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'settleFees', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'updateLockTime', data: BytesLike): Result;
 }
 export declare namespace BalanceUpdatedEvent {
     type InputTuple = [
@@ -310,32 +310,32 @@ export interface FineTuningServing extends BaseContract {
         provider: AddressLike
     ], [
         boolean
-    ], "view">;
+    ], 'view'>;
     acknowledgeDeliverable: TypedContractMethod<[
         provider: AddressLike,
         index: BigNumberish
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     acknowledgeProviderSigner: TypedContractMethod<[
         provider: AddressLike,
         providerSigner: AddressLike
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     addAccount: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
         additionalInfo: string
     ], [
         void
-    ], "payable">;
+    ], 'payable'>;
     addDeliverable: TypedContractMethod<[
         user: AddressLike,
         modelRootHash: BytesLike
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     addOrUpdateService: TypedContractMethod<[
         url: string,
         quota: QuotaStruct,
@@ -344,57 +344,57 @@ export interface FineTuningServing extends BaseContract {
         occupied: boolean
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     deleteAccount: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     depositFund: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
         cancelRetrievingAmount: BigNumberish
     ], [
         void
-    ], "payable">;
+    ], 'payable'>;
     getAccount: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         AccountStructOutput
-    ], "view">;
-    getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], "view">;
-    getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], "view">;
+    ], 'view'>;
+    getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], 'view'>;
+    getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], 'view'>;
     getDeliverable: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
         index: BigNumberish
     ], [
         DeliverableStructOutput
-    ], "view">;
+    ], 'view'>;
     getPendingRefund: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         bigint
-    ], "view">;
+    ], 'view'>;
     getService: TypedContractMethod<[
         provider: AddressLike
     ], [
         ServiceStructOutput
-    ], "view">;
+    ], 'view'>;
     initialize: TypedContractMethod<[
         _locktime: BigNumberish,
         _ledgerAddress: AddressLike,
         owner: AddressLike
     ], [
         void
-    ], "nonpayable">;
-    initialized: TypedContractMethod<[], [boolean], "view">;
-    ledgerAddress: TypedContractMethod<[], [string], "view">;
-    lockTime: TypedContractMethod<[], [bigint], "view">;
-    owner: TypedContractMethod<[], [string], "view">;
+    ], 'nonpayable'>;
+    initialized: TypedContractMethod<[], [boolean], 'view'>;
+    ledgerAddress: TypedContractMethod<[], [string], 'view'>;
+    lockTime: TypedContractMethod<[], [bigint], 'view'>;
+    owner: TypedContractMethod<[], [string], 'view'>;
     processRefund: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
@@ -408,63 +408,63 @@ export interface FineTuningServing extends BaseContract {
             balance: bigint;
             pendingRefund: bigint;
         }
-    ], "nonpayable">;
-    removeService: TypedContractMethod<[], [void], "nonpayable">;
-    renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+    ], 'nonpayable'>;
+    removeService: TypedContractMethod<[], [void], 'nonpayable'>;
+    renounceOwnership: TypedContractMethod<[], [void], 'nonpayable'>;
     requestRefundAll: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     settleFees: TypedContractMethod<[
         verifierInput: VerifierInputStruct
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     transferOwnership: TypedContractMethod<[
         newOwner: AddressLike
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     updateLockTime: TypedContractMethod<[
         _locktime: BigNumberish
     ], [
         void
-    ], "nonpayable">;
+    ], 'nonpayable'>;
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
-    getFunction(nameOrSignature: "accountExists"): TypedContractMethod<[
+    getFunction(nameOrSignature: 'accountExists'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         boolean
-    ], "view">;
-    getFunction(nameOrSignature: "acknowledgeDeliverable"): TypedContractMethod<[
+    ], 'view'>;
+    getFunction(nameOrSignature: 'acknowledgeDeliverable'): TypedContractMethod<[
         provider: AddressLike,
         index: BigNumberish
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "acknowledgeProviderSigner"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'acknowledgeProviderSigner'): TypedContractMethod<[
         provider: AddressLike,
         providerSigner: AddressLike
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "addAccount"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'addAccount'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
         additionalInfo: string
     ], [
         void
-    ], "payable">;
-    getFunction(nameOrSignature: "addDeliverable"): TypedContractMethod<[
+    ], 'payable'>;
+    getFunction(nameOrSignature: 'addDeliverable'): TypedContractMethod<[
         user: AddressLike,
         modelRootHash: BytesLike
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "addOrUpdateService"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'addOrUpdateService'): TypedContractMethod<[
         url: string,
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
@@ -472,58 +472,58 @@ export interface FineTuningServing extends BaseContract {
         occupied: boolean
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "deleteAccount"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'deleteAccount'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "depositFund"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'depositFund'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
         cancelRetrievingAmount: BigNumberish
     ], [
         void
-    ], "payable">;
-    getFunction(nameOrSignature: "getAccount"): TypedContractMethod<[
+    ], 'payable'>;
+    getFunction(nameOrSignature: 'getAccount'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         AccountStructOutput
-    ], "view">;
-    getFunction(nameOrSignature: "getAllAccounts"): TypedContractMethod<[], [AccountStructOutput[]], "view">;
-    getFunction(nameOrSignature: "getAllServices"): TypedContractMethod<[], [ServiceStructOutput[]], "view">;
-    getFunction(nameOrSignature: "getDeliverable"): TypedContractMethod<[
+    ], 'view'>;
+    getFunction(nameOrSignature: 'getAllAccounts'): TypedContractMethod<[], [AccountStructOutput[]], 'view'>;
+    getFunction(nameOrSignature: 'getAllServices'): TypedContractMethod<[], [ServiceStructOutput[]], 'view'>;
+    getFunction(nameOrSignature: 'getDeliverable'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
         index: BigNumberish
     ], [
         DeliverableStructOutput
-    ], "view">;
-    getFunction(nameOrSignature: "getPendingRefund"): TypedContractMethod<[
+    ], 'view'>;
+    getFunction(nameOrSignature: 'getPendingRefund'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         bigint
-    ], "view">;
-    getFunction(nameOrSignature: "getService"): TypedContractMethod<[
+    ], 'view'>;
+    getFunction(nameOrSignature: 'getService'): TypedContractMethod<[
         provider: AddressLike
     ], [
         ServiceStructOutput
-    ], "view">;
-    getFunction(nameOrSignature: "initialize"): TypedContractMethod<[
+    ], 'view'>;
+    getFunction(nameOrSignature: 'initialize'): TypedContractMethod<[
         _locktime: BigNumberish,
         _ledgerAddress: AddressLike,
         owner: AddressLike
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "initialized"): TypedContractMethod<[], [boolean], "view">;
-    getFunction(nameOrSignature: "ledgerAddress"): TypedContractMethod<[], [string], "view">;
-    getFunction(nameOrSignature: "lockTime"): TypedContractMethod<[], [bigint], "view">;
-    getFunction(nameOrSignature: "owner"): TypedContractMethod<[], [string], "view">;
-    getFunction(nameOrSignature: "processRefund"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'initialized'): TypedContractMethod<[], [boolean], 'view'>;
+    getFunction(nameOrSignature: 'ledgerAddress'): TypedContractMethod<[], [string], 'view'>;
+    getFunction(nameOrSignature: 'lockTime'): TypedContractMethod<[], [bigint], 'view'>;
+    getFunction(nameOrSignature: 'owner'): TypedContractMethod<[], [string], 'view'>;
+    getFunction(nameOrSignature: 'processRefund'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
@@ -536,37 +536,37 @@ export interface FineTuningServing extends BaseContract {
             balance: bigint;
             pendingRefund: bigint;
         }
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "removeService"): TypedContractMethod<[], [void], "nonpayable">;
-    getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod<[], [void], "nonpayable">;
-    getFunction(nameOrSignature: "requestRefundAll"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'removeService'): TypedContractMethod<[], [void], 'nonpayable'>;
+    getFunction(nameOrSignature: 'renounceOwnership'): TypedContractMethod<[], [void], 'nonpayable'>;
+    getFunction(nameOrSignature: 'requestRefundAll'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "settleFees"): TypedContractMethod<[
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'settleFees'): TypedContractMethod<[
         verifierInput: VerifierInputStruct
     ], [
         void
-    ], "nonpayable">;
-    getFunction(nameOrSignature: "transferOwnership"): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
-    getFunction(nameOrSignature: "updateLockTime"): TypedContractMethod<[_locktime: BigNumberish], [void], "nonpayable">;
-    getEvent(key: "BalanceUpdated"): TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
-    getEvent(key: "OwnershipTransferred"): TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
-    getEvent(key: "RefundRequested"): TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-    getEvent(key: "ServiceRemoved"): TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-    getEvent(key: "ServiceUpdated"): TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'transferOwnership'): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
+    getFunction(nameOrSignature: 'updateLockTime'): TypedContractMethod<[_locktime: BigNumberish], [void], 'nonpayable'>;
+    getEvent(key: 'BalanceUpdated'): TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
+    getEvent(key: 'OwnershipTransferred'): TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
+    getEvent(key: 'RefundRequested'): TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
+    getEvent(key: 'ServiceRemoved'): TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+    getEvent(key: 'ServiceUpdated'): TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
     filters: {
-        "BalanceUpdated(address,address,uint256,uint256)": TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
+        'BalanceUpdated(address,address,uint256,uint256)': TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
         BalanceUpdated: TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
-        "OwnershipTransferred(address,address)": TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
+        'OwnershipTransferred(address,address)': TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
         OwnershipTransferred: TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
-        "RefundRequested(address,address,uint256,uint256)": TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
+        'RefundRequested(address,address,uint256,uint256)': TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
         RefundRequested: TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
-        "ServiceRemoved(address)": TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
+        'ServiceRemoved(address)': TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
         ServiceRemoved: TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
-        "ServiceUpdated(address,string,tuple,uint256,address,bool)": TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        'ServiceUpdated(address,string,tuple,uint256,address,bool)': TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
         ServiceUpdated: TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
     };
 }

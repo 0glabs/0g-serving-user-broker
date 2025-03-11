@@ -21,7 +21,7 @@ const ethers_1 = require("ethers");
             const mockResponse = {
                 ok: true,
                 status: 200,
-                json: async () => ({ result: true })
+                json: async () => ({ result: true }),
             };
             fetchStub.resolves(mockResponse);
             const testPayload = { test: 'payload' };
@@ -31,7 +31,9 @@ const ethers_1 = require("ethers");
             (0, chai_1.expect)(fetchStub.firstCall.args[0]).to.equal('https://nras.attestation.nvidia.com/v3/attest/gpu');
             const requestInit = fetchStub.firstCall.args[1];
             (0, chai_1.expect)(requestInit.method).to.equal('POST');
-            (0, chai_1.expect)(requestInit.headers).to.deep.include({ 'Content-Type': 'application/json' });
+            (0, chai_1.expect)(requestInit.headers).to.deep.include({
+                'Content-Type': 'application/json',
+            });
             const requestBody = JSON.parse(requestInit.body);
             (0, chai_1.expect)(requestBody).to.deep.equal(testPayload);
         });
@@ -40,7 +42,7 @@ const ethers_1 = require("ethers");
             const mockResponse = {
                 ok: false,
                 status: 400,
-                json: async () => ({ error: 'Bad request' })
+                json: async () => ({ error: 'Bad request' }),
             };
             fetchStub.resolves(mockResponse);
             const result = await verifier_1.Verifier.verifyRA({ test: 'payload' });
@@ -89,8 +91,8 @@ const ethers_1 = require("ethers");
                 json: async () => ({
                     signing_address: '0x123',
                     nvidia_payload: '{"test":"data"}',
-                    intel_quote: 'base64data'
-                })
+                    intel_quote: 'base64data',
+                }),
             };
             fetchStub.resolves(mockResponse);
             const url = 'https://example.com';
@@ -121,8 +123,8 @@ const ethers_1 = require("ethers");
                 ok: true,
                 json: async () => ({
                     text: 'message content',
-                    signature: '0xsignature'
-                })
+                    signature: '0xsignature',
+                }),
             };
             fetchStub.resolves(mockResponse);
             const url = 'https://example.com';
@@ -139,7 +141,7 @@ const ethers_1 = require("ethers");
             const mockResponse = {
                 ok: false,
                 status: 404,
-                json: async () => ({ error: 'Not found' })
+                json: async () => ({ error: 'Not found' }),
             };
             fetchStub.resolves(mockResponse);
             try {

@@ -13,7 +13,7 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
     if (!isPythonInstalled) {
         throw new Error('Python is required but not installed. Please install Python first.');
     }
-    for (const packageName of ["transformers", "datasets"]) {
+    for (const packageName of ['transformers', 'datasets']) {
         const isPackageInstalled = await checkPackageInstalled(packageName);
         if (!isPackageInstalled) {
             console.log(`${packageName} is not installed. Installing...`);
@@ -56,7 +56,9 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
     return runPythonScript(path.join(projectRoot, 'token.counter', 'token_counter.py'), [datasetUnzipPath, datasetType, tokenizerUnzipPath])
         .then((output) => {
         console.log('token_counter script output:', output);
-        const [num1, num2] = output.split(' ').map((str) => parseInt(str, 10));
+        const [num1, num2] = output
+            .split(' ')
+            .map((str) => parseInt(str, 10));
         if (isNaN(num1) || isNaN(num2)) {
             throw new Error('Invalid number');
         }
@@ -135,14 +137,14 @@ function unzipFile(zipFilePath, targetDir) {
         console.log(`Successfully unzipped to ${targetDir}`);
     }
     catch (error) {
-        console.error("Error during unzipping:", error);
+        console.error('Error during unzipping:', error);
         throw error;
     }
 }
 async function isZipFile(targetPath) {
     try {
         const stats = await fs.stat(targetPath);
-        return stats.isFile() && path.extname(targetPath).toLowerCase() === '.zip';
+        return (stats.isFile() && path.extname(targetPath).toLowerCase() === '.zip');
     }
     catch (error) {
         return false;
@@ -152,8 +154,8 @@ async function getSubdirectories(dirPath) {
     try {
         const entries = await fs.readdir(dirPath, { withFileTypes: true });
         const subdirectories = new Set(entries
-            .filter(entry => entry.isDirectory()) // Only keep directories
-            .map(entry => entry.name));
+            .filter((entry) => entry.isDirectory()) // Only keep directories
+            .map((entry) => entry.name));
         return subdirectories;
     }
     catch (error) {

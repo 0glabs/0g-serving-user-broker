@@ -11,7 +11,9 @@ class ModelProcessor extends base_1.BrokerBase {
         return Object.entries(const_1.MODEL_HASH_MAP);
     }
     async uploadDataset(privateKey, dataPath, gasPrice, preTrainedModelName) {
-        if (preTrainedModelName !== undefined && const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined && const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer !== '') {
+        if (preTrainedModelName !== undefined &&
+            const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
+            const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer !== '') {
             let dataSize = await (0, token_1.calculateTokenSize)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
             console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
         }
