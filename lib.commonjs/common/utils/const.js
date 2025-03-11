@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
+exports.RETRY_ERROR_SUBSTRINGS = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *
@@ -19,4 +19,11 @@ exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 exports.MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
+// Define which errors to retry on
+exports.RETRY_ERROR_SUBSTRINGS = [
+    'transaction underpriced',
+    'replacement transaction underpriced',
+    'fee too low',
+    'mempool',
+];
 //# sourceMappingURL=const.js.map

@@ -16,4 +16,5 @@
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 export declare const MESSAGE_FOR_ENCRYPTION_KEY = "MESSAGE_FOR_ENCRYPTION_KEY";
+export declare const RETRY_ERROR_SUBSTRINGS: string[];
 //# sourceMappingURL=const.d.ts.map

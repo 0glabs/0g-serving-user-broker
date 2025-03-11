@@ -55,6 +55,8 @@ function fineTuning(program) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address, use default address if not provided')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address, use default address if not provided')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.uploadDataset(options.dataPath);
@@ -87,6 +89,8 @@ function fineTuning(program) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             console.log('Verify provider...');
@@ -180,6 +184,8 @@ function fineTuning(program) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             await broker.fineTuning.acknowledgeModel(options.provider, options.dataPath, options.gasPrice);

@@ -2,19 +2,74 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FineTuningServingContract = void 0;
 const typechain_1 = require("./typechain");
+const const_1 = require("../../common/utils/const");
+const TIMEOUT_MS = 30_000;
 class FineTuningServingContract {
     serving;
     signer;
     _userAddress;
     _gasPrice;
-    constructor(signer, contractAddress, userAddress, gasPrice) {
+    _maxGasPrice;
+    _step;
+    constructor(signer, contractAddress, userAddress, gasPrice, maxGasPrice, step) {
         this.serving = typechain_1.FineTuningServing__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
         this._gasPrice = gasPrice;
+        if (maxGasPrice) {
+            this._maxGasPrice = BigInt(maxGasPrice);
+        }
+        this._step = step || 11;
     }
     lockTime() {
         return this.serving.lockTime();
+    }
+    async sendTx(name, txArgs, txOptions) {
+        if (txOptions.gasPrice === undefined) {
+            txOptions.gasPrice = (await this.signer.provider?.getFeeData())?.gasPrice;
+        }
+        else {
+            txOptions.gasPrice = BigInt(txOptions.gasPrice);
+        }
+        if (this._maxGasPrice === undefined) {
+            console.log('sending tx with gas', txOptions.gasPrice);
+            return await this.serving.getFunction(name)(...txArgs, txOptions);
+        }
+        while (true) {
+            try {
+                console.log('sending tx with gas', txOptions.gasPrice);
+                const tx = await this.serving.getFunction(name)(...txArgs, txOptions);
+                const receipt = (await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout, try set higher gas price')), TIMEOUT_MS)),
+                ]));
+                this.checkReceipt(receipt);
+            }
+            catch (error) {
+                let errorMessage = '';
+                if (error.message) {
+                    errorMessage = error.message;
+                }
+                else if (error.info?.error?.message) {
+                    errorMessage = error.info.error.message;
+                }
+                const shouldRetry = const_1.RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
+                if (!shouldRetry) {
+                    throw error;
+                }
+                console.log('Retrying transaction with higher gas price due to:', errorMessage);
+                let currentGasPrice = txOptions.gasPrice;
+                if (currentGasPrice >= this._maxGasPrice) {
+                    throw error;
+                }
+                currentGasPrice =
+                    (currentGasPrice * BigInt(this._step)) / BigInt(10);
+                if (currentGasPrice > this._maxGasPrice) {
+                    currentGasPrice = this._maxGasPrice;
+                }
+                txOptions.gasPrice = currentGasPrice;
+            }
+        }
     }
     async listService() {
         try {
@@ -50,12 +105,7 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner, txOptions);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
         }
         catch (error) {
             throw error;
@@ -67,12 +117,7 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.serving.acknowledgeDeliverable(providerAddress, index, txOptions);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
         }
         catch (error) {
             throw error;
@@ -97,6 +142,14 @@ class FineTuningServingContract {
     }
     getUserAddress() {
         return this._userAddress;
+    }
+    checkReceipt(receipt) {
+        if (!receipt) {
+            throw new Error('Transaction failed with no receipt');
+        }
+        if (receipt.status !== 1) {
+            throw new Error('Transaction reverted');
+        }
     }
 }
 exports.FineTuningServingContract = FineTuningServingContract;

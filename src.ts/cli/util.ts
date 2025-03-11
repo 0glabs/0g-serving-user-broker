@@ -17,7 +17,9 @@ export async function initBroker(
         options.ledgerCa || process.env.LEDGER_CA,
         options.inferenceCa || process.env.INFERENCE_CA,
         options.fineTuningCa || process.env.FINE_TUNING_CA,
-        options.gasPrice
+        options.gasPrice,
+        options.maxGasPrice,
+        options.step
     )
 }
 

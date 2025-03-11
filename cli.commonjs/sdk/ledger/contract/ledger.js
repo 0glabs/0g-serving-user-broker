@@ -2,16 +2,69 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LedgerManagerContract = void 0;
 const typechain_1 = require("./typechain");
+const const_1 = require("../../common/utils/const");
+const TIMEOUT_MS = 30_000;
 class LedgerManagerContract {
     ledger;
     signer;
     _userAddress;
     _gasPrice;
-    constructor(signer, contractAddress, userAddress, gasPrice) {
+    _maxGasPrice;
+    _step;
+    constructor(signer, contractAddress, userAddress, gasPrice, maxGasPrice, step) {
         this.ledger = typechain_1.LedgerManager__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
         this._gasPrice = gasPrice;
+        this._maxGasPrice = maxGasPrice;
+        this._step = step || 1.1;
+    }
+    async sendTx(name, txArgs, txOptions) {
+        if (txOptions.gasPrice === undefined) {
+            txOptions.gasPrice = (await this.signer.provider?.getFeeData())?.gasPrice;
+        }
+        else {
+            txOptions.gasPrice = BigInt(txOptions.gasPrice);
+        }
+        if (this._maxGasPrice === undefined) {
+            console.log('sending tx with gas', txOptions.gasPrice);
+            return await this.ledger.getFunction(name)(...txArgs, txOptions);
+        }
+        while (true) {
+            try {
+                console.log('sending tx with gas', txOptions.gasPrice);
+                const tx = await this.ledger.getFunction(name)(...txArgs, txOptions);
+                const receipt = (await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout')), TIMEOUT_MS)),
+                ]));
+                this.checkReceipt(receipt);
+            }
+            catch (error) {
+                let errorMessage = '';
+                if (error.message) {
+                    errorMessage = error.message;
+                }
+                else if (error.info?.error?.message) {
+                    errorMessage = error.info.error.message;
+                }
+                const shouldRetry = const_1.RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
+                if (!shouldRetry) {
+                    throw error;
+                }
+                console.log('Retrying transaction with higher gas price due to:', errorMessage);
+                let currentGasPrice = txOptions.gasPrice;
+                if (currentGasPrice >= this._maxGasPrice) {
+                    throw error;
+                }
+                currentGasPrice =
+                    (currentGasPrice * BigInt(this._step)) / BigInt(10);
+                if (currentGasPrice > this._maxGasPrice) {
+                    currentGasPrice = this._maxGasPrice;
+                }
+                txOptions.gasPrice = currentGasPrice;
+            }
+        }
     }
     async addLedger(signer, balance, settleSignerEncryptedPrivateKey, gasPrice) {
         try {
@@ -19,7 +72,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, txOptions);
+            const tx = await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -52,7 +105,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.depositFund(txOptions);
+            const tx = await this.sendTx('depositFund', [], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -66,7 +119,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.refund(amount, txOptions);
+            const tx = await this.sendTx('refund', [amount], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -80,7 +133,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount, txOptions);
+            const tx = await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -94,7 +147,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr, txOptions);
+            const tx = await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -108,7 +161,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.deleteLedger(txOptions);
+            const tx = await this.sendTx('deleteLedger', [], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
