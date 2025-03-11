@@ -145,7 +145,6 @@ export default function (program: Command) {
                         'Price Per Byte in Dataset (A0GI)',
                         neuronToA0gi(service.pricePerToken).toFixed(18),
                     ])
-                    table.push(['URL', service.url])
                     // TODO: Show quota when backend ready
                     // table.push([
                     //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',

@@ -51,8 +51,8 @@ export default function fineTuning(program: Command) {
                 })
                 models.forEach((model) => {
                     table.push([
-                        model[0],
-                        splitIntoChunks(model[1].description, 70),
+                        splitIntoChunks(model[0], 28),
+                        splitIntoChunks(model[1].description, 73),
                     ])
                 })
 
@@ -218,18 +218,14 @@ export default function fineTuning(program: Command) {
                 })
                 table.push(['ID', task.id])
                 table.push(['Created At', task.createdAt])
-                table.push(['User Address', task.userAddress])
                 table.push(['Pre-trained Model Hash', task.preTrainedModelHash])
                 table.push(['Dataset Hash', task.datasetHash])
                 table.push([
                     'Training Params',
                     splitIntoChunks(task.trainingParams, 80),
                 ])
-                table.push(['Fee', task.fee])
-                table.push(['Nonce', task.nonce])
-                table.push(['Signature', splitIntoChunks(task.signature, 80)])
+                table.push(['Fee (neuron)', task.fee])
                 table.push(['Progress', task.progress])
-                table.push(['Deliver Index', task.deliverIndex])
                 console.log(table.toString())
             })
         })
