@@ -101,12 +101,17 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath) {
+    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath) {
         try {
             const service = await this.contract.getService(providerAddress);
             if (dataSize === undefined) {
                 if (datasetPath !== undefined) {
-                    dataSize = await (0, token_1.calculateTokenSize)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
+                    if (usePython) {
+                        dataSize = await (0, token_1.calculateTokenSizeViaPython)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
+                    }
+                    else {
+                        dataSize = await (0, token_1.calculateTokenSizeViaExe)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type, const_1.TOKEN_COUNTER_MERKLE_ROOT);
+                    }
                 }
                 else {
                     throw new Error('At least one of dataSize or datasetPath must be provided.');

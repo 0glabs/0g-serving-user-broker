@@ -10020,6 +10020,7 @@ class FineTuningServingContract {
  */
 const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
+const TOKEN_COUNTER_MERKLE_ROOT = '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97';
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
@@ -13518,7 +13519,53 @@ function requireAdmZip () {
 var admZipExports = requireAdmZip();
 var AdmZip = /*@__PURE__*/getDefaultExportFromCjs(admZipExports);
 
-async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
+async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot) {
+    const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary');
+    const versionFile = path.join(executorDir, 'token_counter.ver');
+    const binaryFile = path.join(executorDir, 'token_counter');
+    let needDownload = false;
+    try {
+        await fs.access(versionFile);
+        // Todo: calculate merkle root from file
+        const localRoot = await fs.readFile(versionFile, 'utf-8');
+        if (tokenCounterMerkleRoot !== localRoot) {
+            needDownload = true;
+        }
+    }
+    catch (error) {
+        console.log(`File ${versionFile} does not exist.`);
+        needDownload = true;
+    }
+    if (!needDownload) {
+        try {
+            await fs.access(binaryFile);
+        }
+        catch (error) {
+            console.log(`File ${binaryFile} does not exist.`);
+            needDownload = true;
+        }
+    }
+    if (needDownload) {
+        try {
+            await fs.unlink(versionFile);
+        }
+        catch (error) {
+            console.error(`Failed to delete ${versionFile}:`, error);
+        }
+        try {
+            await fs.unlink(binaryFile);
+        }
+        catch (error) {
+            console.error(`Failed to delete ${binaryFile}:`, error);
+        }
+        console.log(`Downloading ${binaryFile}`);
+        await download(binaryFile, tokenCounterMerkleRoot);
+        await fs.chmod(binaryFile, 0o755);
+        await fs.writeFile(versionFile, tokenCounterMerkleRoot, 'utf8');
+    }
+    return await calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, binaryFile, []);
+}
+async function calculateTokenSizeViaPython(tokenizerRootHash, datasetPath, datasetType) {
     const isPythonInstalled = await checkPythonInstalled();
     if (!isPythonInstalled) {
         throw new Error('Python is required but not installed. Please install Python first.');
@@ -13535,6 +13582,10 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
             }
         }
     }
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    return await calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, 'python3', [path.join(projectRoot, 'token.counter', 'token_counter.py')]);
+}
+async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, executor, args) {
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
     console.log(`current temporary directory ${tmpDir}`);
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip');
@@ -13562,8 +13613,12 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType) {
             await fs.mkdir(datasetUnzipPath, { recursive: true });
         }
     }
-    const projectRoot = path.resolve(__dirname, '../../../../');
-    return runPythonScript(path.join(projectRoot, 'token.counter', 'token_counter.py'), [datasetUnzipPath, datasetType, tokenizerUnzipPath])
+    return runExecutor(executor, [
+        ...args,
+        datasetUnzipPath,
+        datasetType,
+        tokenizerUnzipPath,
+    ])
         .then((output) => {
         console.log('token_counter script output:', output);
         const [num1, num2] = output
@@ -13618,9 +13673,10 @@ function installPackage(packageName) {
         });
     });
 }
-function runPythonScript(scriptPath, args) {
+function runExecutor(executor, args) {
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python3', [scriptPath, ...args]);
+        console.log(`Run ${executor} ${args}`);
+        const pythonProcess = spawn(executor, [...args]);
         let output = '';
         let errorOutput = '';
         pythonProcess.stdout.on('data', (data) => {
@@ -13678,11 +13734,17 @@ class ModelProcessor extends BrokerBase {
     listModel() {
         return Object.entries(MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, gasPrice, preTrainedModelName) {
+    async uploadDataset(privateKey, dataPath, usePython, gasPrice, preTrainedModelName) {
         if (preTrainedModelName !== undefined &&
             MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
             MODEL_HASH_MAP[preTrainedModelName].tokenizer !== '') {
-            let dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type);
+            let dataSize = 0;
+            if (usePython) {
+                dataSize = await calculateTokenSizeViaPython(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type);
+            }
+            else {
+                dataSize = await calculateTokenSizeViaExe(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type, TOKEN_COUNTER_MERKLE_ROOT);
+            }
             console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
         }
         await upload(privateKey, dataPath, gasPrice);
@@ -13838,12 +13900,17 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath) {
+    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath) {
         try {
             const service = await this.contract.getService(providerAddress);
             if (dataSize === undefined) {
                 if (datasetPath !== undefined) {
-                    dataSize = await calculateTokenSize(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type);
+                    if (usePython) {
+                        dataSize = await calculateTokenSizeViaPython(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type);
+                    }
+                    else {
+                        dataSize = await calculateTokenSizeViaExe(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type, TOKEN_COUNTER_MERKLE_ROOT);
+                    }
                 }
                 else {
                     throw new Error('At least one of dataSize or datasetPath must be provided.');
@@ -14104,9 +14171,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, gasPrice, preTrainedModelName) => {
+    uploadDataset = async (dataPath, usePython, gasPrice, preTrainedModelName) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice, preTrainedModelName);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, usePython, gasPrice || this._gasPrice, preTrainedModelName);
         }
         catch (error) {
             throw error;
@@ -14120,9 +14187,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath) => {
+    createTask = async (providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, dataSize, gasPrice, datasetPath);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath);
         }
         catch (error) {
             throw error;

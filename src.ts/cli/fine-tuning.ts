@@ -80,10 +80,12 @@ export default function fineTuning(program: Command) {
         )
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--model <name>', 'Pre-trained model name to use')
+        .option('--use-python', 'use python to calculate token size', false)
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 await broker.fineTuning!.uploadDataset(
                     options.dataPath,
+                    options.usePython,
                     options.gasPrice,
                     options.model
                 )
@@ -136,6 +138,7 @@ export default function fineTuning(program: Command) {
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--dataset-path <path>', 'Fine-tuning dataset path')
+        .option('--use-python', 'use python to calculate token size', false)
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 console.log('Verify provider...')
@@ -157,6 +160,7 @@ export default function fineTuning(program: Command) {
                     options.model,
                     options.dataset,
                     options.configPath,
+                    options.usePython,
                     dataSize,
                     options.gasPrice,
                     options.datasetPath

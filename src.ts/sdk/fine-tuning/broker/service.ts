@@ -1,6 +1,6 @@
 import { AddressLike } from 'ethers'
 import { getNonce, signRequest } from '../../common/utils'
-import { MODEL_HASH_MAP } from '../const'
+import { MODEL_HASH_MAP, TOKEN_COUNTER_MERKLE_ROOT } from '../const'
 import {
     AccountStructOutput,
     FineTuningServingContract,
@@ -12,7 +12,7 @@ import * as fs from 'fs/promises'
 import { LedgerBroker } from '../../ledger'
 import { Automata } from '../automata '
 
-import { calculateTokenSize } from '../token'
+import { calculateTokenSizeViaPython, calculateTokenSizeViaExe } from '../token'
 
 export interface FineTuningAccountDetail {
     account: AccountStructOutput
@@ -139,6 +139,7 @@ export class ServiceProcessor extends BrokerBase {
         preTrainedModelName: string,
         datasetHash: string,
         trainingPath: string,
+        usePython: boolean,
         dataSize?: number,
         gasPrice?: number,
         datasetPath?: string
@@ -148,11 +149,20 @@ export class ServiceProcessor extends BrokerBase {
 
             if (dataSize === undefined) {
                 if (datasetPath !== undefined) {
-                    dataSize = await calculateTokenSize(
-                        MODEL_HASH_MAP[preTrainedModelName].tokenizer,
-                        datasetPath,
-                        MODEL_HASH_MAP[preTrainedModelName].type
-                    )
+                    if (usePython) {
+                        dataSize = await calculateTokenSizeViaPython(
+                            MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                            datasetPath,
+                            MODEL_HASH_MAP[preTrainedModelName].type
+                        )
+                    } else {
+                        dataSize = await calculateTokenSizeViaExe(
+                            MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                            datasetPath,
+                            MODEL_HASH_MAP[preTrainedModelName].type,
+                            TOKEN_COUNTER_MERKLE_ROOT
+                        )
+                    }
                 } else {
                     throw new Error(
                         'At least one of dataSize or datasetPath must be provided.'

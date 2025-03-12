@@ -114,6 +114,7 @@ export class FineTuningBroker {
 
     public uploadDataset = async (
         dataPath: string,
+        usePython: boolean,
         gasPrice?: number,
         preTrainedModelName?: string
     ): Promise<void> => {
@@ -121,6 +122,7 @@ export class FineTuningBroker {
             await this.modelProcessor.uploadDataset(
                 this.signer.privateKey,
                 dataPath,
+                usePython,
                 gasPrice || this._gasPrice,
                 preTrainedModelName
             )
@@ -145,6 +147,7 @@ export class FineTuningBroker {
         preTrainedModelName: string,
         datasetHash: string,
         trainingPath: string,
+        usePython: boolean,
         dataSize?: number,
         gasPrice?: number,
         datasetPath?: string
@@ -155,6 +158,7 @@ export class FineTuningBroker {
                 preTrainedModelName,
                 datasetHash,
                 trainingPath,
+                usePython,
                 dataSize,
                 gasPrice,
                 datasetPath

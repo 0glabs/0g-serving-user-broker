@@ -6,7 +6,67 @@ import { spawn, exec } from 'child_process'
 
 import { download } from '../zg-storage'
 
-export async function calculateTokenSize(
+export async function calculateTokenSizeViaExe(
+    tokenizerRootHash: string,
+    datasetPath: string,
+    datasetType: string,
+    tokenCounterMerkleRoot: string
+): Promise<number> {
+    const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary')
+    const versionFile = path.join(executorDir, 'token_counter.ver')
+    const binaryFile = path.join(executorDir, 'token_counter')
+
+    let needDownload = false
+    try {
+        await fs.access(versionFile)
+        // Todo: calculate merkle root from file
+        const localRoot = await fs.readFile(versionFile, 'utf-8')
+        if (tokenCounterMerkleRoot !== localRoot) {
+            needDownload = true
+        }
+    } catch (error) {
+        console.log(`File ${versionFile} does not exist.`)
+        needDownload = true
+    }
+
+    if (!needDownload) {
+        try {
+            await fs.access(binaryFile)
+        } catch (error) {
+            console.log(`File ${binaryFile} does not exist.`)
+            needDownload = true
+        }
+    }
+
+    if (needDownload) {
+        try {
+            await fs.unlink(versionFile)
+        } catch (error) {
+            console.error(`Failed to delete ${versionFile}:`, error)
+        }
+
+        try {
+            await fs.unlink(binaryFile)
+        } catch (error) {
+            console.error(`Failed to delete ${binaryFile}:`, error)
+        }
+
+        console.log(`Downloading ${binaryFile}`)
+        await download(binaryFile, tokenCounterMerkleRoot)
+        await fs.chmod(binaryFile, 0o755)
+        await fs.writeFile(versionFile, tokenCounterMerkleRoot, 'utf8')
+    }
+
+    return await calculateTokenSize(
+        tokenizerRootHash,
+        datasetPath,
+        datasetType,
+        binaryFile,
+        []
+    )
+}
+
+export async function calculateTokenSizeViaPython(
     tokenizerRootHash: string,
     datasetPath: string,
     datasetType: string
@@ -29,7 +89,23 @@ export async function calculateTokenSize(
             }
         }
     }
+    const projectRoot = path.resolve(__dirname, '../../../../')
+    return await calculateTokenSize(
+        tokenizerRootHash,
+        datasetPath,
+        datasetType,
+        'python3',
+        [path.join(projectRoot, 'token.counter', 'token_counter.py')]
+    )
+}
 
+async function calculateTokenSize(
+    tokenizerRootHash: string,
+    datasetPath: string,
+    datasetType: string,
+    executor: string,
+    args: string[]
+): Promise<number> {
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`)
     console.log(`current temporary directory ${tmpDir}`)
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip')
@@ -60,11 +136,12 @@ export async function calculateTokenSize(
         }
     }
 
-    const projectRoot = path.resolve(__dirname, '../../../../')
-    return runPythonScript(
-        path.join(projectRoot, 'token.counter', 'token_counter.py'),
-        [datasetUnzipPath, datasetType, tokenizerUnzipPath]
-    )
+    return runExecutor(executor, [
+        ...args,
+        datasetUnzipPath,
+        datasetType,
+        tokenizerUnzipPath,
+    ])
         .then((output) => {
             console.log('token_counter script output:', output)
             const [num1, num2] = output
@@ -120,9 +197,10 @@ function installPackage(packageName: string): Promise<void> {
     })
 }
 
-function runPythonScript(scriptPath: string, args: string[]): Promise<string> {
+function runExecutor(executor: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python3', [scriptPath, ...args])
+        console.log(`Run ${executor} ${args}`)
+        const pythonProcess = spawn(executor, [...args])
 
         let output = ''
         let errorOutput = ''

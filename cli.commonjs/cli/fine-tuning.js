@@ -56,9 +56,10 @@ function fineTuning(program) {
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address, use default address if not provided')
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--model <name>', 'Pre-trained model name to use')
+        .option('--use-python', 'use python to calculate token size', false)
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.uploadDataset(options.dataPath, options.gasPrice, options.model);
+            await broker.fineTuning.uploadDataset(options.dataPath, options.usePython, options.gasPrice, options.model);
         });
     });
     program
@@ -89,6 +90,7 @@ function fineTuning(program) {
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--dataset-path <path>', 'Fine-tuning dataset path')
+        .option('--use-python', 'use python to calculate token size', false)
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             console.log('Verify provider...');
@@ -99,7 +101,7 @@ function fineTuning(program) {
             if (options.dataSize !== undefined) {
                 dataSize = parseInt(options.dataSize, 10);
             }
-            const taskId = await broker.fineTuning.createTask(options.provider, options.model, options.dataset, options.configPath, dataSize, options.gasPrice, options.datasetPath);
+            const taskId = await broker.fineTuning.createTask(options.provider, options.model, options.dataset, options.configPath, options.usePython, dataSize, options.gasPrice, options.datasetPath);
             console.log('Created Task ID:', taskId);
         });
     });

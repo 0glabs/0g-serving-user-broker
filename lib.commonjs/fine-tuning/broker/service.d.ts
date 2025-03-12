@@ -19,7 +19,7 @@ export declare class ServiceProcessor extends BrokerBase {
     getAccountWithDetail(provider: AddressLike): Promise<FineTuningAccountDetail>;
     listService(): Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
-    createTask(providerAddress: string, preTrainedModelName: string, datasetHash: string, trainingPath: string, dataSize?: number, gasPrice?: number, datasetPath?: string): Promise<string>;
+    createTask(providerAddress: string, preTrainedModelName: string, datasetHash: string, trainingPath: string, usePython: boolean, dataSize?: number, gasPrice?: number, datasetPath?: string): Promise<string>;
     listTask(providerAddress: string): Promise<Task[]>;
     getTask(providerAddress: string, taskID?: string): Promise<Task>;
     getLog(providerAddress: string, taskID?: string): Promise<string>;
