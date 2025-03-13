@@ -14,11 +14,15 @@ class FineTuningBroker {
     serviceProcessor;
     serviceProvider;
     _gasPrice;
-    constructor(signer, fineTuningCA, ledger, gasPrice) {
+    _maxGasPrice;
+    _step;
+    constructor(signer, fineTuningCA, ledger, gasPrice, maxGasPrice, step) {
         this.signer = signer;
         this.fineTuningCA = fineTuningCA;
         this.ledger = ledger;
         this._gasPrice = gasPrice;
+        this._maxGasPrice = maxGasPrice;
+        this._step = step;
     }
     async initialize() {
         let userAddress;
@@ -28,7 +32,7 @@ class FineTuningBroker {
         catch (error) {
             throw error;
         }
-        const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice);
+        const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice, this._maxGasPrice, this._step);
         this.serviceProvider = new provider_1.Provider(contract);
         this.modelProcessor = new model_1.ModelProcessor(contract, this.ledger, this.serviceProvider);
         this.serviceProcessor = new service_1.ServiceProcessor(contract, this.ledger, this.serviceProvider);
@@ -160,8 +164,8 @@ exports.FineTuningBroker = FineTuningBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createFineTuningBroker(signer, contractAddress, ledger, gasPrice) {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice);
+async function createFineTuningBroker(signer, contractAddress, ledger, gasPrice, maxGasPrice, step) {
+    const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice, maxGasPrice, step);
     try {
         await broker.initialize();
         return broker;

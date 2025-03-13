@@ -56,6 +56,13 @@ class ChatBot extends Extractor {
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
+// Define which errors to retry on
+const RETRY_ERROR_SUBSTRINGS = [
+    'transaction underpriced',
+    'replacement transaction underpriced',
+    'fee too low',
+    'mempool',
+];
 
 function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -9903,19 +9910,73 @@ class FineTuningServing__factory extends ContractFactory {
     }
 }
 
+const TIMEOUT_MS$1 = 30_000;
 class FineTuningServingContract {
     serving;
     signer;
     _userAddress;
     _gasPrice;
-    constructor(signer, contractAddress, userAddress, gasPrice) {
+    _maxGasPrice;
+    _step;
+    constructor(signer, contractAddress, userAddress, gasPrice, maxGasPrice, step) {
         this.serving = FineTuningServing__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
         this._gasPrice = gasPrice;
+        if (maxGasPrice) {
+            this._maxGasPrice = BigInt(maxGasPrice);
+        }
+        this._step = step || 11;
     }
     lockTime() {
         return this.serving.lockTime();
+    }
+    async sendTx(name, txArgs, txOptions) {
+        if (txOptions.gasPrice === undefined) {
+            txOptions.gasPrice = (await this.signer.provider?.getFeeData())?.gasPrice;
+        }
+        else {
+            txOptions.gasPrice = BigInt(txOptions.gasPrice);
+        }
+        if (this._maxGasPrice === undefined) {
+            console.log('sending tx with gas price', txOptions.gasPrice);
+            return await this.serving.getFunction(name)(...txArgs, txOptions);
+        }
+        while (true) {
+            try {
+                console.log('sending tx with gas price', txOptions.gasPrice);
+                const tx = await this.serving.getFunction(name)(...txArgs, txOptions);
+                const receipt = (await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout, try set higher gas price')), TIMEOUT_MS$1)),
+                ]));
+                this.checkReceipt(receipt);
+            }
+            catch (error) {
+                let errorMessage = '';
+                if (error.message) {
+                    errorMessage = error.message;
+                }
+                else if (error.info?.error?.message) {
+                    errorMessage = error.info.error.message;
+                }
+                const shouldRetry = RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
+                if (!shouldRetry) {
+                    throw error;
+                }
+                console.log('Retrying transaction with higher gas price due to:', errorMessage);
+                let currentGasPrice = txOptions.gasPrice;
+                if (currentGasPrice >= this._maxGasPrice) {
+                    throw error;
+                }
+                currentGasPrice =
+                    (currentGasPrice * BigInt(this._step)) / BigInt(10);
+                if (currentGasPrice > this._maxGasPrice) {
+                    currentGasPrice = this._maxGasPrice;
+                }
+                txOptions.gasPrice = currentGasPrice;
+            }
+        }
     }
     async listService() {
         try {
@@ -9951,12 +10012,7 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner, txOptions);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
         }
         catch (error) {
             throw error;
@@ -9968,12 +10024,7 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.serving.acknowledgeDeliverable(providerAddress, index, txOptions);
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) {
-                const error = new Error('Transaction failed');
-                throw error;
-            }
+            await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
         }
         catch (error) {
             throw error;
@@ -9998,6 +10049,14 @@ class FineTuningServingContract {
     }
     getUserAddress() {
         return this._userAddress;
+    }
+    checkReceipt(receipt) {
+        if (!receipt) {
+            throw new Error('Transaction failed with no receipt');
+        }
+        if (receipt.status !== 1) {
+            throw new Error('Transaction reverted');
+        }
     }
 }
 
@@ -10029,20 +10088,24 @@ const MODEL_HASH_MAP = {
         tokenizer: '0x3317127671a3217583069001b2a00454ef4d1e838f8f1f4ffbe64db0ec7ed960',
         type: 'text',
     },
-    mobilenet_v2: {
-        turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
-        standard: '',
-        description: 'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
-        tokenizer: '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
-        type: 'image',
-    },
-    'deepseek-r1-distill-qwen-1.5b': {
-        turbo: '0x2084fdd904c9a3317dde98147d4e7778a40e076b5b0eb469f7a8f27ae5b13e7f',
-        standard: '',
-        description: 'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
-        type: 'text',
-    },
+    // mobilenet_v2: {
+    //     turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
+    //     standard: '',
+    //     description:
+    //         'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
+    // tokenizer:
+    //     '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
+    // type: 'image',
+    // },
+    // 'deepseek-r1-distill-qwen-1.5b': {
+    //     turbo: '0x2084fdd904c9a3317dde98147d4e7778a40e076b5b0eb469f7a8f27ae5b13e7f',
+    //     standard: '',
+    //     description:
+    //         'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+    // tokenizer:
+    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    // type: 'text',
+    // },
     'cocktailsgd-opt-1.3b': {
         turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
         standard: '',
@@ -10050,14 +10113,15 @@ const MODEL_HASH_MAP = {
         tokenizer: '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
         type: 'text',
     },
-    // TODO: remove
-    'mock-model': {
-        turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
-        standard: '',
-        description: '',
-        tokenizer: '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
-        type: 'text',
-    },
+    // // TODO: remove
+    // 'mock-model': {
+    //     turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
+    //     standard: '',
+    //     description: '',
+    // tokenizer:
+    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    // type: 'text',
+    // },
 };
 // AutomataDcapAttestation for quote verification
 // https://explorer.ata.network/address/0xE26E11B257856B0bEBc4C759aaBDdea72B64351F/contract/65536_2/readContract#F6
@@ -14104,11 +14168,15 @@ class FineTuningBroker {
     serviceProcessor;
     serviceProvider;
     _gasPrice;
-    constructor(signer, fineTuningCA, ledger, gasPrice) {
+    _maxGasPrice;
+    _step;
+    constructor(signer, fineTuningCA, ledger, gasPrice, maxGasPrice, step) {
         this.signer = signer;
         this.fineTuningCA = fineTuningCA;
         this.ledger = ledger;
         this._gasPrice = gasPrice;
+        this._maxGasPrice = maxGasPrice;
+        this._step = step;
     }
     async initialize() {
         let userAddress;
@@ -14118,7 +14186,7 @@ class FineTuningBroker {
         catch (error) {
             throw error;
         }
-        const contract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice);
+        const contract = new FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice, this._maxGasPrice, this._step);
         this.serviceProvider = new Provider(contract);
         this.modelProcessor = new ModelProcessor(contract, this.ledger, this.serviceProvider);
         this.serviceProcessor = new ServiceProcessor(contract, this.ledger, this.serviceProvider);
@@ -14249,8 +14317,8 @@ class FineTuningBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createFineTuningBroker(signer, contractAddress, ledger, gasPrice) {
-    const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice);
+async function createFineTuningBroker(signer, contractAddress, ledger, gasPrice, maxGasPrice, step) {
+    const broker = new FineTuningBroker(signer, contractAddress, ledger, gasPrice, maxGasPrice, step);
     try {
         await broker.initialize();
         return broker;
@@ -14846,16 +14914,68 @@ class LedgerManager__factory extends ContractFactory {
     }
 }
 
+const TIMEOUT_MS = 30_000;
 class LedgerManagerContract {
     ledger;
     signer;
     _userAddress;
     _gasPrice;
-    constructor(signer, contractAddress, userAddress, gasPrice) {
+    _maxGasPrice;
+    _step;
+    constructor(signer, contractAddress, userAddress, gasPrice, maxGasPrice, step) {
         this.ledger = LedgerManager__factory.connect(contractAddress, signer);
         this.signer = signer;
         this._userAddress = userAddress;
         this._gasPrice = gasPrice;
+        this._maxGasPrice = maxGasPrice;
+        this._step = step || 1.1;
+    }
+    async sendTx(name, txArgs, txOptions) {
+        if (txOptions.gasPrice === undefined) {
+            txOptions.gasPrice = (await this.signer.provider?.getFeeData())?.gasPrice;
+        }
+        else {
+            txOptions.gasPrice = BigInt(txOptions.gasPrice);
+        }
+        if (this._maxGasPrice === undefined) {
+            console.log('sending tx with gas price', txOptions.gasPrice);
+            return await this.ledger.getFunction(name)(...txArgs, txOptions);
+        }
+        while (true) {
+            try {
+                console.log('sending tx with gas price', txOptions.gasPrice);
+                const tx = await this.ledger.getFunction(name)(...txArgs, txOptions);
+                const receipt = (await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout')), TIMEOUT_MS)),
+                ]));
+                this.checkReceipt(receipt);
+            }
+            catch (error) {
+                let errorMessage = '';
+                if (error.message) {
+                    errorMessage = error.message;
+                }
+                else if (error.info?.error?.message) {
+                    errorMessage = error.info.error.message;
+                }
+                const shouldRetry = RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
+                if (!shouldRetry) {
+                    throw error;
+                }
+                console.log('Retrying transaction with higher gas price due to:', errorMessage);
+                let currentGasPrice = txOptions.gasPrice;
+                if (currentGasPrice >= this._maxGasPrice) {
+                    throw error;
+                }
+                currentGasPrice =
+                    (currentGasPrice * BigInt(this._step)) / BigInt(10);
+                if (currentGasPrice > this._maxGasPrice) {
+                    currentGasPrice = this._maxGasPrice;
+                }
+                txOptions.gasPrice = currentGasPrice;
+            }
+        }
     }
     async addLedger(signer, balance, settleSignerEncryptedPrivateKey, gasPrice) {
         try {
@@ -14863,7 +14983,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.addLedger(signer, settleSignerEncryptedPrivateKey, txOptions);
+            const tx = await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -14896,7 +15016,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.depositFund(txOptions);
+            const tx = await this.sendTx('depositFund', [], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -14910,7 +15030,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.refund(amount, txOptions);
+            const tx = await this.sendTx('refund', [amount], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -14924,7 +15044,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.transferFund(provider, serviceTypeStr, amount, txOptions);
+            const tx = await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -14938,7 +15058,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.retrieveFund(providers, serviceTypeStr, txOptions);
+            const tx = await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -14952,7 +15072,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.ledger.deleteLedger(txOptions);
+            const tx = await this.sendTx('deleteLedger', [], txOptions);
             const receipt = await tx.wait();
             this.checkReceipt(receipt);
         }
@@ -14980,12 +15100,16 @@ class LedgerBroker {
     inferenceCA;
     fineTuningCA;
     gasPrice;
-    constructor(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
+    maxGasPrice;
+    step;
+    constructor(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step) {
         this.signer = signer;
         this.ledgerCA = ledgerCA;
         this.inferenceCA = inferenceCA;
         this.fineTuningCA = fineTuningCA;
         this.gasPrice = gasPrice;
+        this.maxGasPrice = maxGasPrice;
+        this.step = step;
     }
     async initialize() {
         let userAddress;
@@ -14995,7 +15119,7 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const ledgerContract = new LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice);
+        const ledgerContract = new LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice, this.maxGasPrice, this.step);
         const inferenceContract = new InferenceServingContract(this.signer, this.inferenceCA, userAddress);
         let fineTuningContract;
         if (this.signer instanceof Wallet) {
@@ -15144,8 +15268,8 @@ class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
-    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
+async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step) {
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step);
     try {
         await broker.initialize();
         return broker;
@@ -15178,13 +15302,13 @@ class ZGComputeNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGComputeNetworkBroker(signer, ledgerCA = '0x0c0D02e4E849C711B2388A829366B5bf3f9c53e7', inferenceCA = '0x46e8a02d609CaEfC1747197da1F38272d5E46c77', fineTuningCA = '0x35A5d96569867fE6534D823268337888229533dE', gasPrice) {
+async function createZGComputeNetworkBroker(signer, ledgerCA = '0x0c0D02e4E849C711B2388A829366B5bf3f9c53e7', inferenceCA = '0x46e8a02d609CaEfC1747197da1F38272d5E46c77', fineTuningCA = '0x35A5d96569867fE6534D823268337888229533dE', gasPrice, maxGasPrice, step) {
     try {
-        const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
+        const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step);
         const inferenceBroker = await createInferenceBroker(signer, inferenceCA, ledger);
         let fineTuningBroker;
         if (signer instanceof Wallet) {
-            fineTuningBroker = await createFineTuningBroker(signer, fineTuningCA, ledger, gasPrice);
+            fineTuningBroker = await createFineTuningBroker(signer, fineTuningCA, ledger, gasPrice, maxGasPrice, step);
         }
         const broker = new ZGComputeNetworkBroker(ledger, inferenceBroker, fineTuningBroker);
         return broker;

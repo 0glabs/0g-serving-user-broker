@@ -21,5 +21,5 @@ export declare class ZGComputeNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number): Promise<ZGComputeNetworkBroker>;
+export declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<ZGComputeNetworkBroker>;
 //# sourceMappingURL=broker.d.ts.map

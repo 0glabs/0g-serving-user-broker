@@ -13,17 +13,23 @@ export class FineTuningBroker {
     private serviceProcessor!: ServiceProcessor
     private serviceProvider!: Provider
     private _gasPrice?: number
+    private _maxGasPrice?: number
+    private _step?: number
 
     constructor(
         signer: Wallet,
         fineTuningCA: string,
         ledger: LedgerBroker,
-        gasPrice?: number
+        gasPrice?: number,
+        maxGasPrice?: number,
+        step?: number
     ) {
         this.signer = signer
         this.fineTuningCA = fineTuningCA
         this.ledger = ledger
         this._gasPrice = gasPrice
+        this._maxGasPrice = maxGasPrice
+        this._step = step
     }
 
     async initialize() {
@@ -38,7 +44,9 @@ export class FineTuningBroker {
             this.signer,
             this.fineTuningCA,
             userAddress,
-            this._gasPrice
+            this._gasPrice,
+            this._maxGasPrice,
+            this._step
         )
 
         this.serviceProvider = new Provider(contract)
@@ -251,13 +259,17 @@ export async function createFineTuningBroker(
     signer: Wallet,
     contractAddress: string,
     ledger: LedgerBroker,
-    gasPrice?: number
+    gasPrice?: number,
+    maxGasPrice?: number,
+    step?: number
 ): Promise<FineTuningBroker> {
     const broker = new FineTuningBroker(
         signer,
         contractAddress,
         ledger,
-        gasPrice
+        gasPrice,
+        maxGasPrice,
+        step
     )
     try {
         await broker.initialize()

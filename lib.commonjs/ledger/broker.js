@@ -15,12 +15,16 @@ class LedgerBroker {
     inferenceCA;
     fineTuningCA;
     gasPrice;
-    constructor(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
+    maxGasPrice;
+    step;
+    constructor(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step) {
         this.signer = signer;
         this.ledgerCA = ledgerCA;
         this.inferenceCA = inferenceCA;
         this.fineTuningCA = fineTuningCA;
         this.gasPrice = gasPrice;
+        this.maxGasPrice = maxGasPrice;
+        this.step = step;
     }
     async initialize() {
         let userAddress;
@@ -30,7 +34,7 @@ class LedgerBroker {
         catch (error) {
             throw error;
         }
-        const ledgerContract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice);
+        const ledgerContract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice, this.maxGasPrice, this.step);
         const inferenceContract = new contract_2.InferenceServingContract(this.signer, this.inferenceCA, userAddress);
         let fineTuningContract;
         if (this.signer instanceof ethers_1.Wallet) {
@@ -180,8 +184,8 @@ exports.LedgerBroker = LedgerBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice) {
-    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice);
+async function createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step) {
+    const broker = new LedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step);
     try {
         await broker.initialize();
         return broker;

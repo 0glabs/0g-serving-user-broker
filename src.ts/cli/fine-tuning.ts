@@ -55,8 +55,8 @@ export default function fineTuning(program: Command) {
                 })
                 models.forEach((model) => {
                     table.push([
-                        model[0],
-                        splitIntoChunks(model[1].description, 70),
+                        splitIntoChunks(model[0], 28),
+                        splitIntoChunks(model[1].description, 73),
                     ])
                 })
 
@@ -85,6 +85,8 @@ export default function fineTuning(program: Command) {
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--model <name>', 'Pre-trained model name to use')
         .option('--use-python', 'use python to calculate token size', false)
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 await broker.fineTuning!.uploadDataset(
@@ -143,6 +145,8 @@ export default function fineTuning(program: Command) {
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--dataset-path <path>', 'Fine-tuning dataset path')
         .option('--use-python', 'use python to calculate token size', false)
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 console.log('Verify provider...')
@@ -235,18 +239,14 @@ export default function fineTuning(program: Command) {
                 })
                 table.push(['ID', task.id])
                 table.push(['Created At', task.createdAt])
-                table.push(['User Address', task.userAddress])
                 table.push(['Pre-trained Model Hash', task.preTrainedModelHash])
                 table.push(['Dataset Hash', task.datasetHash])
                 table.push([
                     'Training Params',
                     splitIntoChunks(task.trainingParams, 80),
                 ])
-                table.push(['Fee', task.fee])
-                table.push(['Nonce', task.nonce])
-                table.push(['Signature', splitIntoChunks(task.signature, 80)])
+                table.push(['Fee (neuron)', task.fee])
                 table.push(['Progress', task.progress])
-                table.push(['Deliver Index', task.deliverIndex])
                 console.log(table.toString())
             })
         })
@@ -291,6 +291,8 @@ export default function fineTuning(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 await broker.fineTuning!.acknowledgeModel(

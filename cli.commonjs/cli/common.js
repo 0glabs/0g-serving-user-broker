@@ -118,7 +118,6 @@ function default_1(program) {
                     'Price Per Byte in Dataset (A0GI)',
                     (0, util_1.neuronToA0gi)(service.pricePerToken).toFixed(18),
                 ]);
-                table.push(['URL', service.url]);
                 // TODO: Show quota when backend ready
                 // table.push([
                 //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',

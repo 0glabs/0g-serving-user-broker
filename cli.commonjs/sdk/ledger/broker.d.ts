@@ -7,7 +7,9 @@ export declare class LedgerBroker {
     private inferenceCA;
     private fineTuningCA;
     private gasPrice;
-    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number);
+    private maxGasPrice;
+    private step;
+    constructor(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number, maxGasPrice?: number, step?: number);
     initialize(): Promise<void>;
     /**
      * Adds a new ledger to the contract.
@@ -99,5 +101,5 @@ export declare class LedgerBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-export declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number): Promise<LedgerBroker>;
+export declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<LedgerBroker>;
 //# sourceMappingURL=broker.d.ts.map

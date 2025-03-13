@@ -38,24 +38,24 @@ export const MODEL_HASH_MAP: {
             '0x3317127671a3217583069001b2a00454ef4d1e838f8f1f4ffbe64db0ec7ed960',
         type: 'text',
     },
-    mobilenet_v2: {
-        turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
-        standard: '',
-        description:
-            'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
-        tokenizer:
-            '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
-        type: 'image',
-    },
-    'deepseek-r1-distill-qwen-1.5b': {
-        turbo: '0x2084fdd904c9a3317dde98147d4e7778a40e076b5b0eb469f7a8f27ae5b13e7f',
-        standard: '',
-        description:
-            'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-        tokenizer:
-            '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
-        type: 'text',
-    },
+    // mobilenet_v2: {
+    //     turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
+    //     standard: '',
+    //     description:
+    //         'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
+    // tokenizer:
+    //     '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
+    // type: 'image',
+    // },
+    // 'deepseek-r1-distill-qwen-1.5b': {
+    //     turbo: '0x2084fdd904c9a3317dde98147d4e7778a40e076b5b0eb469f7a8f27ae5b13e7f',
+    //     standard: '',
+    //     description:
+    //         'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+    // tokenizer:
+    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    // type: 'text',
+    // },
     'cocktailsgd-opt-1.3b': {
         turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
         standard: '',
@@ -65,15 +65,15 @@ export const MODEL_HASH_MAP: {
             '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
         type: 'text',
     },
-    // TODO: remove
-    'mock-model': {
-        turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
-        standard: '',
-        description: '',
-        tokenizer:
-            '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
-        type: 'text',
-    },
+    // // TODO: remove
+    // 'mock-model': {
+    //     turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
+    //     standard: '',
+    //     description: '',
+    // tokenizer:
+    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    // type: 'text',
+    // },
 }
 
 // AutomataDcapAttestation for quote verification
