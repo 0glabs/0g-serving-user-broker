@@ -5,6 +5,10 @@ import { splitIntoChunks, withFineTuningBroker } from './util'
 import Table from 'cli-table3'
 import chalk from 'chalk'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
+import * as path from 'path'
+import * as fs from 'fs/promises'
+import { download } from '../sdk/fine-tuning/zg-storage'
+import { TOKEN_COUNTER_MERKLE_ROOT } from '../sdk/fine-tuning/const'
 
 export default function fineTuning(program: Command) {
     program
@@ -79,11 +83,18 @@ export default function fineTuning(program: Command) {
             'Fine Tuning contract address, use default address if not provided'
         )
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--model <name>', 'Pre-trained model name to use')
+        .option('--use-python', 'use python to calculate token size', false)
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
-                await broker.fineTuning!.uploadDataset(options.dataPath)
+                await broker.fineTuning!.uploadDataset(
+                    options.dataPath,
+                    options.usePython,
+                    options.gasPrice,
+                    options.model
+                )
             })
         })
 
@@ -122,7 +133,7 @@ export default function fineTuning(program: Command) {
         )
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Size of the dataset')
+        .option('--data-size <size>', 'Size of the dataset')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption(
             '--config-path <path>',
@@ -132,6 +143,8 @@ export default function fineTuning(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--dataset-path <path>', 'Fine-tuning dataset path')
+        .option('--use-python', 'use python to calculate token size', false)
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
@@ -144,13 +157,21 @@ export default function fineTuning(program: Command) {
                 console.log('Provider verified')
 
                 console.log('Creating task...')
+
+                let dataSize: number | undefined = undefined
+                if (options.dataSize !== undefined) {
+                    dataSize = parseInt(options.dataSize, 10)
+                }
+
                 const taskId = await broker.fineTuning!.createTask(
                     options.provider,
                     options.model,
-                    parseInt(options.dataSize, 10),
                     options.dataset,
                     options.configPath,
-                    options.gasPrice
+                    options.usePython,
+                    dataSize,
+                    options.gasPrice,
+                    options.datasetPath
                 )
                 console.log('Created Task ID:', taskId)
             })
@@ -309,5 +330,34 @@ export default function fineTuning(program: Command) {
                 )
                 console.log('Decrypted model')
             })
+        })
+
+    program
+        .command('download-counter')
+        .description('Download token-counter')
+        .option('--path <path>', 'Path to download')
+        .action(async (options) => {
+            let binaryDir = path.join(__dirname, '..', '..', 'binary')
+            let executorDir = binaryDir
+            if (options.path !== undefined) {
+                executorDir = options.path
+            }
+
+            const versionFile = path.join(executorDir, 'token_counter.ver')
+            const binaryFile = path.join(executorDir, 'token_counter')
+
+            const storageClient = path.join(binaryDir, '0g-storage-client')
+            try {
+                await fs.access(storageClient, fs.constants.X_OK)
+            } catch (err) {
+                console.log(
+                    `Grant execute permission (755) to the file ${storageClient}`
+                )
+                await fs.chmod(storageClient, 0o755)
+            }
+
+            await download(binaryFile, TOKEN_COUNTER_MERKLE_ROOT)
+            await fs.chmod(binaryFile, 0o755)
+            await fs.writeFile(versionFile, TOKEN_COUNTER_MERKLE_ROOT, 'utf8')
         })
 }

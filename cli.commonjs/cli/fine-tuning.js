@@ -7,6 +7,10 @@ const util_1 = require("./util");
 const cli_table3_1 = tslib_1.__importDefault(require("cli-table3"));
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const const_1 = require("./const");
+const path = tslib_1.__importStar(require("path"));
+const fs = tslib_1.__importStar(require("fs/promises"));
+const zg_storage_1 = require("../sdk/fine-tuning/zg-storage");
+const const_2 = require("../sdk/fine-tuning/const");
 function fineTuning(program) {
     program
         .command('verify')
@@ -55,11 +59,13 @@ function fineTuning(program) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address, use default address if not provided')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address, use default address if not provided')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--model <name>', 'Pre-trained model name to use')
+        .option('--use-python', 'use python to calculate token size', false)
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.uploadDataset(options.dataPath);
+            await broker.fineTuning.uploadDataset(options.dataPath, options.usePython, options.gasPrice, options.model);
         });
     });
     program
@@ -82,13 +88,15 @@ function fineTuning(program) {
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Size of the dataset')
+        .option('--data-size <size>', 'Size of the dataset')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption('--config-path <path>', 'Fine-tuning configuration path')
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--dataset-path <path>', 'Fine-tuning dataset path')
+        .option('--use-python', 'use python to calculate token size', false)
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
@@ -97,7 +105,11 @@ function fineTuning(program) {
             await broker.fineTuning.acknowledgeProviderSigner(options.provider, options.gasPrice);
             console.log('Provider verified');
             console.log('Creating task...');
-            const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath, options.gasPrice);
+            let dataSize = undefined;
+            if (options.dataSize !== undefined) {
+                dataSize = parseInt(options.dataSize, 10);
+            }
+            const taskId = await broker.fineTuning.createTask(options.provider, options.model, options.dataset, options.configPath, options.usePython, dataSize, options.gasPrice, options.datasetPath);
             console.log('Created Task ID:', taskId);
         });
     });
@@ -203,6 +215,30 @@ function fineTuning(program) {
             await broker.fineTuning.decryptModel(options.provider, options.encryptedModel, options.output);
             console.log('Decrypted model');
         });
+    });
+    program
+        .command('download-counter')
+        .description('Download token-counter')
+        .option('--path <path>', 'Path to download')
+        .action(async (options) => {
+        let binaryDir = path.join(__dirname, '..', '..', 'binary');
+        let executorDir = binaryDir;
+        if (options.path !== undefined) {
+            executorDir = options.path;
+        }
+        const versionFile = path.join(executorDir, 'token_counter.ver');
+        const binaryFile = path.join(executorDir, 'token_counter');
+        const storageClient = path.join(binaryDir, '0g-storage-client');
+        try {
+            await fs.access(storageClient, fs.constants.X_OK);
+        }
+        catch (err) {
+            console.log(`Grant execute permission (755) to the file ${storageClient}`);
+            await fs.chmod(storageClient, 0o755);
+        }
+        await (0, zg_storage_1.download)(binaryFile, const_2.TOKEN_COUNTER_MERKLE_ROOT);
+        await fs.chmod(binaryFile, 0o755);
+        await fs.writeFile(versionFile, const_2.TOKEN_COUNTER_MERKLE_ROOT, 'utf8');
     });
 }
 //# sourceMappingURL=fine-tuning.js.map

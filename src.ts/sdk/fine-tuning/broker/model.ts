@@ -3,9 +3,10 @@ import {
     eciesDecrypt,
     hexToRoots,
 } from '../../common/utils'
-import { MODEL_HASH_MAP } from '../const'
+import { MODEL_HASH_MAP, TOKEN_COUNTER_MERKLE_ROOT } from '../const'
 import { download, upload } from '../zg-storage'
 import { BrokerBase } from './base'
+import { calculateTokenSizeViaPython, calculateTokenSizeViaExe } from '../token'
 
 export class ModelProcessor extends BrokerBase {
     listModel(): [string, { [key: string]: string }][] {
@@ -15,9 +16,36 @@ export class ModelProcessor extends BrokerBase {
     async uploadDataset(
         privateKey: string,
         dataPath: string,
-        gasPrice?: number
+        usePython: boolean,
+        gasPrice?: number,
+        preTrainedModelName?: string
     ): Promise<void> {
-        upload(privateKey, dataPath, gasPrice)
+        if (
+            preTrainedModelName !== undefined &&
+            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
+            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== ''
+        ) {
+            let dataSize = 0
+            if (usePython) {
+                dataSize = await calculateTokenSizeViaPython(
+                    MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                    dataPath,
+                    MODEL_HASH_MAP[preTrainedModelName].type
+                )
+            } else {
+                dataSize = await calculateTokenSizeViaExe(
+                    MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                    dataPath,
+                    MODEL_HASH_MAP[preTrainedModelName].type,
+                    TOKEN_COUNTER_MERKLE_ROOT
+                )
+            }
+            console.log(
+                `The token size for the dataset ${dataPath} is ${dataSize}`
+            )
+        }
+
+        await upload(privateKey, dataPath, gasPrice)
     }
 
     async downloadDataset(dataPath: string, dataRoot: string): Promise<void> {
