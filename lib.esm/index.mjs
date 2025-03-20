@@ -6660,6 +6660,11 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
         await writeFd.appendFile(decrypted);
         tagsBuffer = Buffer.concat([tagsBuffer, tag]);
         offset += chunkSize;
+        for (let i = iv.length - 1; i >= 0; i--) {
+            iv[i]++;
+            if (iv[i] !== 0)
+                break;
+        }
     }
     await writeFd.close();
     await fd.close();
@@ -10004,7 +10009,9 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
+            const tx = await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
+            const receipt = await tx.wait();
+            this.checkReceipt(receipt);
         }
         catch (error) {
             throw error;
@@ -10016,7 +10023,9 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
+            const tx = await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
+            const receipt = await tx.wait();
+            this.checkReceipt(receipt);
         }
         catch (error) {
             throw error;

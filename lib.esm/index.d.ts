@@ -1377,7 +1377,7 @@ declare class FineTuningServingContract {
     private _step;
     constructor(signer: Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
     lockTime(): Promise<bigint>;
-    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<void>;
+    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<AccountStructOutput[]>;
     getAccount(provider: AddressLike): Promise<AccountStructOutput>;

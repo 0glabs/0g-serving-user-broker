@@ -2,6 +2,7 @@ import {
     BigNumberish,
     AddressLike,
     Wallet,
+    ContractTransactionResponse,
     ContractMethodArgs,
     ContractTransactionReceipt,
 } from 'ethers'
@@ -52,7 +53,7 @@ export class FineTuningServingContract {
         name: string,
         txArgs: ContractMethodArgs<any[]>,
         txOptions: any
-    ): Promise<void> {
+    ): Promise<ContractTransactionResponse> {
         if (txOptions.gasPrice === undefined) {
             txOptions.gasPrice = (
                 await this.signer.provider?.getFeeData()
@@ -157,11 +158,14 @@ export class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            await this.sendTx(
+            const tx = await this.sendTx(
                 'acknowledgeProviderSigner',
                 [providerAddress, providerSigner],
                 txOptions
             )
+
+            const receipt = await tx.wait()
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -177,11 +181,13 @@ export class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            await this.sendTx(
+            const tx = await this.sendTx(
                 'acknowledgeDeliverable',
                 [providerAddress, index],
                 txOptions
             )
+            const receipt = await tx.wait()
+            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }

@@ -105,7 +105,9 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
+            const tx = await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
+            const receipt = await tx.wait();
+            this.checkReceipt(receipt);
         }
         catch (error) {
             throw error;
@@ -117,7 +119,9 @@ class FineTuningServingContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
+            const tx = await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
+            const receipt = await tx.wait();
+            this.checkReceipt(receipt);
         }
         catch (error) {
             throw error;
