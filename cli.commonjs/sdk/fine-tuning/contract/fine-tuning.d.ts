@@ -1,4 +1,4 @@
-import { BigNumberish, AddressLike, Wallet, ContractTransactionResponse, ContractMethodArgs, ContractTransactionReceipt } from 'ethers';
+import { BigNumberish, AddressLike, Wallet, ContractMethodArgs, ContractTransactionReceipt } from 'ethers';
 import { FineTuningServing } from './typechain';
 import { ServiceStructOutput, DeliverableStructOutput } from './typechain/FineTuningServing';
 export declare class FineTuningServingContract {
@@ -10,7 +10,7 @@ export declare class FineTuningServingContract {
     private _step;
     constructor(signer: Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
     lockTime(): Promise<bigint>;
-    sendTx(name: string, txArgs: ContractMethodArgs<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
+    sendTx(name: string, txArgs: ContractMethodArgs<any[]>, txOptions: any): Promise<void>;
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<import("./typechain/FineTuningServing").AccountStructOutput[]>;
     getAccount(provider: AddressLike): Promise<import("./typechain/FineTuningServing").AccountStructOutput>;

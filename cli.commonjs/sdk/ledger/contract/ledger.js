@@ -26,10 +26,6 @@ class LedgerManagerContract {
         else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice);
         }
-        if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas price', txOptions.gasPrice);
-            return await this.ledger.getFunction(name)(...txArgs, txOptions);
-        }
         while (true) {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
@@ -39,8 +35,12 @@ class LedgerManagerContract {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout')), TIMEOUT_MS)),
                 ]));
                 this.checkReceipt(receipt);
+                break;
             }
             catch (error) {
+                if (this._maxGasPrice === undefined) {
+                    throw error;
+                }
                 let errorMessage = '';
                 if (error.message) {
                     errorMessage = error.message;
@@ -72,9 +72,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
         }
         catch (error) {
             throw error;
@@ -105,9 +103,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('depositFund', [], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('depositFund', [], txOptions);
         }
         catch (error) {
             throw error;
@@ -119,9 +115,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('refund', [amount], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('refund', [amount], txOptions);
         }
         catch (error) {
             throw error;
@@ -133,9 +127,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
         }
         catch (error) {
             throw error;
@@ -147,9 +139,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
         }
         catch (error) {
             throw error;
@@ -161,9 +151,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('deleteLedger', [], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('deleteLedger', [], txOptions);
         }
         catch (error) {
             throw error;

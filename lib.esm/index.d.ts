@@ -789,7 +789,7 @@ declare class LedgerManagerContract {
     private _maxGasPrice?;
     private _step;
     constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
-    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
+    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<void>;
     addLedger(signer: [BigNumberish, BigNumberish], balance: bigint, settleSignerEncryptedPrivateKey: string, gasPrice?: number): Promise<void>;
     listLedger(): Promise<LedgerStructOutput[]>;
     getLedger(): Promise<LedgerStructOutput>;
@@ -1377,7 +1377,7 @@ declare class FineTuningServingContract {
     private _step;
     constructor(signer: Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
     lockTime(): Promise<bigint>;
-    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
+    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<void>;
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<AccountStructOutput[]>;
     getAccount(provider: AddressLike): Promise<AccountStructOutput>;
