@@ -31,10 +31,6 @@ class FineTuningServingContract {
         else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice);
         }
-        if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas price', txOptions.gasPrice);
-            return await this.serving.getFunction(name)(...txArgs, txOptions);
-        }
         while (true) {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
@@ -44,8 +40,12 @@ class FineTuningServingContract {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout, try set higher gas price')), TIMEOUT_MS)),
                 ]));
                 this.checkReceipt(receipt);
+                break;
             }
             catch (error) {
+                if (this._maxGasPrice === undefined) {
+                    throw error;
+                }
                 let errorMessage = '';
                 if (error.message) {
                     errorMessage = error.message;

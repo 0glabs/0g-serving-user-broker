@@ -104,6 +104,11 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
         await writeFd.appendFile(decrypted);
         tagsBuffer = Buffer.concat([tagsBuffer, tag]);
         offset += chunkSize;
+        for (let i = iv.length - 1; i >= 0; i--) {
+            iv[i]++;
+            if (iv[i] !== 0)
+                break;
+        }
     }
     await writeFd.close();
     await fd.close();

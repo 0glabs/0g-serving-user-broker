@@ -162,6 +162,11 @@ export async function aesGCMDecryptToFile(
 
         tagsBuffer = Buffer.concat([tagsBuffer, tag])
         offset += chunkSize
+
+        for (let i = iv.length - 1; i >= 0; i--) {
+            iv[i]++
+            if (iv[i] !== 0) break
+        }
     }
 
     await writeFd.close()

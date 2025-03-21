@@ -52,17 +52,13 @@ export class FineTuningServingContract {
         name: string,
         txArgs: ContractMethodArgs<any[]>,
         txOptions: any
-    ): Promise<void> {
+    ) {
         if (txOptions.gasPrice === undefined) {
             txOptions.gasPrice = (
                 await this.signer.provider?.getFeeData()
             )?.gasPrice
         } else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice)
-        }
-        if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas price', txOptions.gasPrice)
-            return await this.serving.getFunction(name)(...txArgs, txOptions)
         }
         while (true) {
             try {
@@ -87,7 +83,12 @@ export class FineTuningServingContract {
                 ])) as ContractTransactionReceipt | null
 
                 this.checkReceipt(receipt)
+                break
             } catch (error: any) {
+                if (this._maxGasPrice === undefined) {
+                    throw error
+                }
+
                 let errorMessage = ''
                 if (error.message) {
                     errorMessage = error.message
