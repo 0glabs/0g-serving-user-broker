@@ -22,7 +22,7 @@ export declare class FineTuningBroker {
     listModel: () => [string, {
         [key: string]: string;
     }][];
-    uploadDataset: (dataPath: string, gasPrice?: number) => Promise<void>;
+    uploadDataset: (dataPath: string, gasPrice?: number, maxGasPrice?: number) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
     createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string, gasPrice?: number) => Promise<string>;
     listTask: (providerAddress: string) => Promise<Task[]>;

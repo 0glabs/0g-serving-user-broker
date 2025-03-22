@@ -9,8 +9,8 @@ class ModelProcessor extends base_1.BrokerBase {
     listModel() {
         return Object.entries(const_1.MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, gasPrice) {
-        (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice);
+    async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
+        (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice, maxGasPrice);
     }
     async downloadDataset(dataPath, dataRoot) {
         (0, zg_storage_1.download)(dataPath, dataRoot);

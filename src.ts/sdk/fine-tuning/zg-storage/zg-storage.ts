@@ -6,7 +6,8 @@ import * as fs from 'fs/promises'
 export async function upload(
     privateKey: string,
     dataPath: string,
-    gasPrice?: number
+    gasPrice?: number,
+    maxGasPrice?: number
 ): Promise<void> {
     try {
         const fileSize = await getFileContentSize(dataPath)
@@ -21,7 +22,6 @@ export async function upload(
                 'binary',
                 '0g-storage-client'
             )
-
             const args = [
                 'upload',
                 '--url',
@@ -32,10 +32,15 @@ export async function upload(
                 INDEXER_URL_TURBO,
                 '--file',
                 dataPath,
+                '--skip-tx=false',
             ]
 
             if (gasPrice) {
                 args.push('--gas-price', gasPrice.toString())
+            }
+
+            if (maxGasPrice) {
+                args.push('--max-gas-price', maxGasPrice.toString())
             }
 
             const process = spawn(command, args)

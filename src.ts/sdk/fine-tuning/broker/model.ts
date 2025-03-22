@@ -15,9 +15,10 @@ export class ModelProcessor extends BrokerBase {
     async uploadDataset(
         privateKey: string,
         dataPath: string,
-        gasPrice?: number
+        gasPrice?: number,
+        maxGasPrice?: number
     ): Promise<void> {
-        upload(privateKey, dataPath, gasPrice)
+        upload(privateKey, dataPath, gasPrice, maxGasPrice)
     }
 
     async downloadDataset(dataPath: string, dataRoot: string): Promise<void> {

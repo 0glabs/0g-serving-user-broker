@@ -10137,7 +10137,7 @@ const AUTOMATA_ABI = [
     },
 ];
 
-async function upload(privateKey, dataPath, gasPrice) {
+async function upload(privateKey, dataPath, gasPrice, maxGasPrice) {
     try {
         const fileSize = await getFileContentSize(dataPath);
         return new Promise((resolve, reject) => {
@@ -10152,9 +10152,13 @@ async function upload(privateKey, dataPath, gasPrice) {
                 INDEXER_URL_TURBO,
                 '--file',
                 dataPath,
+                '--skip-tx=false',
             ];
             if (gasPrice) {
                 args.push('--gas-price', gasPrice.toString());
+            }
+            if (maxGasPrice) {
+                args.push('--max-gas-price', maxGasPrice.toString());
             }
             const process = spawn(command, args);
             process.stdout.on('data', (data) => {
@@ -10242,8 +10246,8 @@ class ModelProcessor extends BrokerBase {
     listModel() {
         return Object.entries(MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, gasPrice) {
-        upload(privateKey, dataPath, gasPrice);
+    async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
+        upload(privateKey, dataPath, gasPrice, maxGasPrice);
     }
     async downloadDataset(dataPath, dataRoot) {
         download(dataPath, dataRoot);
@@ -10656,9 +10660,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, gasPrice) => {
+    uploadDataset = async (dataPath, gasPrice, maxGasPrice) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice, maxGasPrice || this._maxGasPrice);
         }
         catch (error) {
             throw error;
