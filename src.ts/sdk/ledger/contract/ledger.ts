@@ -3,7 +3,6 @@ import {
     BigNumberish,
     AddressLike,
     Wallet,
-    ContractTransactionResponse,
     ContractTransactionReceipt,
     ContractMethodArgs,
 } from 'ethers'
@@ -41,17 +40,13 @@ export class LedgerManagerContract {
         name: string,
         txArgs: ContractMethodArgs<any[]>,
         txOptions: any
-    ): Promise<ContractTransactionResponse> {
+    ) {
         if (txOptions.gasPrice === undefined) {
             txOptions.gasPrice = (
                 await this.signer.provider?.getFeeData()
             )?.gasPrice
         } else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice)
-        }
-        if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas price', txOptions.gasPrice)
-            return await this.ledger.getFunction(name)(...txArgs, txOptions)
         }
         while (true) {
             try {
@@ -71,7 +66,12 @@ export class LedgerManagerContract {
                 ])) as ContractTransactionReceipt | null
 
                 this.checkReceipt(receipt)
+                break
             } catch (error: any) {
+                if (this._maxGasPrice === undefined) {
+                    throw error
+                }
+
                 let errorMessage = ''
                 if (error.message) {
                     errorMessage = error.message
@@ -115,15 +115,11 @@ export class LedgerManagerContract {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
 
-            const tx = await this.sendTx(
+            await this.sendTx(
                 'addLedger',
                 [signer, settleSignerEncryptedPrivateKey],
                 txOptions
             )
-
-            const receipt = await tx.wait()
-
-            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -154,11 +150,7 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.sendTx('depositFund', [], txOptions)
-
-            const receipt = await tx.wait()
-
-            this.checkReceipt(receipt)
+            await this.sendTx('depositFund', [], txOptions)
         } catch (error) {
             throw error
         }
@@ -170,11 +162,7 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.sendTx('refund', [amount], txOptions)
-
-            const receipt = await tx.wait()
-
-            this.checkReceipt(receipt)
+            await this.sendTx('refund', [amount], txOptions)
         } catch (error) {
             throw error
         }
@@ -191,15 +179,11 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.sendTx(
+            await this.sendTx(
                 'transferFund',
                 [provider, serviceTypeStr, amount],
                 txOptions
             )
-
-            const receipt = await tx.wait()
-
-            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -215,14 +199,11 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.sendTx(
+            await this.sendTx(
                 'retrieveFund',
                 [providers, serviceTypeStr],
                 txOptions
             )
-            const receipt = await tx.wait()
-
-            this.checkReceipt(receipt)
         } catch (error) {
             throw error
         }
@@ -234,11 +215,7 @@ export class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice
             }
-            const tx = await this.sendTx('deleteLedger', [], txOptions)
-
-            const receipt = await tx.wait()
-
-            this.checkReceipt(receipt)
+            await this.sendTx('deleteLedger', [], txOptions)
         } catch (error) {
             throw error
         }

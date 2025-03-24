@@ -789,7 +789,7 @@ declare class LedgerManagerContract {
     private _maxGasPrice?;
     private _step;
     constructor(signer: JsonRpcSigner | Wallet, contractAddress: string, userAddress: string, gasPrice?: number, maxGasPrice?: number, step?: number);
-    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<ContractTransactionResponse>;
+    sendTx(name: string, txArgs: ContractMethodArgs$3<any[]>, txOptions: any): Promise<void>;
     addLedger(signer: [BigNumberish, BigNumberish], balance: bigint, settleSignerEncryptedPrivateKey: string, gasPrice?: number): Promise<void>;
     listLedger(): Promise<LedgerStructOutput[]>;
     getLedger(): Promise<LedgerStructOutput>;
@@ -1898,7 +1898,7 @@ declare class FineTuningBroker {
     listModel: () => [string, {
         [key: string]: string;
     }][];
-    uploadDataset: (dataPath: string, gasPrice?: number) => Promise<void>;
+    uploadDataset: (dataPath: string, gasPrice?: number, maxGasPrice?: number) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
     calculateToken: (datasetPath: string, preTrainedModelName: string, usePython: boolean) => Promise<void>;
     createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string, gasPrice?: number) => Promise<string>;

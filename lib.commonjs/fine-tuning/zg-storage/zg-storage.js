@@ -7,7 +7,7 @@ const const_1 = require("../const");
 const child_process_1 = require("child_process");
 const path_1 = tslib_1.__importDefault(require("path"));
 const fs = tslib_1.__importStar(require("fs/promises"));
-async function upload(privateKey, dataPath, gasPrice) {
+async function upload(privateKey, dataPath, gasPrice, maxGasPrice) {
     try {
         const fileSize = await getFileContentSize(dataPath);
         return new Promise((resolve, reject) => {
@@ -22,9 +22,13 @@ async function upload(privateKey, dataPath, gasPrice) {
                 const_1.INDEXER_URL_TURBO,
                 '--file',
                 dataPath,
+                '--skip-tx=false',
             ];
             if (gasPrice) {
                 args.push('--gas-price', gasPrice.toString());
+            }
+            if (maxGasPrice) {
+                args.push('--max-gas-price', maxGasPrice.toString());
             }
             const process = (0, child_process_1.spawn)(command, args);
             process.stdout.on('data', (data) => {

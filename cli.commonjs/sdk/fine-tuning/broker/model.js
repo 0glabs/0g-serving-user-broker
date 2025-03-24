@@ -10,7 +10,7 @@ class ModelProcessor extends base_1.BrokerBase {
     listModel() {
         return Object.entries(const_1.MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, gasPrice) {
+    async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
         await (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice);
     }
     async calculateToken(datasetPath, usePython, preTrainedModelName) {

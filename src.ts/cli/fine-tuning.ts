@@ -171,7 +171,6 @@ export default function fineTuning(program: Command) {
                 console.log('Provider verified')
 
                 console.log('Creating task...')
-
                 const taskId = await broker.fineTuning!.createTask(
                     options.provider,
                     options.model,

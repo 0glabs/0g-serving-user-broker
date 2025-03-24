@@ -6668,6 +6668,11 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
         await writeFd.appendFile(decrypted);
         tagsBuffer = Buffer.concat([tagsBuffer, tag]);
         offset += chunkSize;
+        for (let i = iv.length - 1; i >= 0; i--) {
+            iv[i]++;
+            if (iv[i] !== 0)
+                break;
+        }
     }
     await writeFd.close();
     await fd.close();
@@ -9938,10 +9943,6 @@ class FineTuningServingContract {
         else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice);
         }
-        if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas price', txOptions.gasPrice);
-            return await this.serving.getFunction(name)(...txArgs, txOptions);
-        }
         while (true) {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
@@ -9951,8 +9952,12 @@ class FineTuningServingContract {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout, try set higher gas price')), TIMEOUT_MS$1)),
                 ]));
                 this.checkReceipt(receipt);
+                break;
             }
             catch (error) {
+                if (this._maxGasPrice === undefined) {
+                    throw error;
+                }
                 let errorMessage = '';
                 if (error.message) {
                     errorMessage = error.message;
@@ -10154,7 +10159,7 @@ const AUTOMATA_ABI = [
     },
 ];
 
-async function upload(privateKey, dataPath, gasPrice) {
+async function upload(privateKey, dataPath, gasPrice, maxGasPrice) {
     try {
         const fileSize = await getFileContentSize(dataPath);
         return new Promise((resolve, reject) => {
@@ -10169,9 +10174,13 @@ async function upload(privateKey, dataPath, gasPrice) {
                 INDEXER_URL_TURBO,
                 '--file',
                 dataPath,
+                '--skip-tx=false',
             ];
             if (gasPrice) {
                 args.push('--gas-price', gasPrice.toString());
+            }
+            if (maxGasPrice) {
+                args.push('--max-gas-price', maxGasPrice.toString());
             }
             const process = spawn(command, args);
             process.stdout.on('data', (data) => {
@@ -13798,7 +13807,7 @@ class ModelProcessor extends BrokerBase {
     listModel() {
         return Object.entries(MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, gasPrice) {
+    async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
         await upload(privateKey, dataPath, gasPrice);
     }
     async calculateToken(datasetPath, usePython, preTrainedModelName) {
@@ -14223,9 +14232,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, gasPrice) => {
+    uploadDataset = async (dataPath, gasPrice, maxGasPrice) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice, maxGasPrice || this._maxGasPrice);
         }
         catch (error) {
             throw error;
@@ -14929,10 +14938,6 @@ class LedgerManagerContract {
         else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice);
         }
-        if (this._maxGasPrice === undefined) {
-            console.log('sending tx with gas price', txOptions.gasPrice);
-            return await this.ledger.getFunction(name)(...txArgs, txOptions);
-        }
         while (true) {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
@@ -14942,8 +14947,12 @@ class LedgerManagerContract {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout')), TIMEOUT_MS)),
                 ]));
                 this.checkReceipt(receipt);
+                break;
             }
             catch (error) {
+                if (this._maxGasPrice === undefined) {
+                    throw error;
+                }
                 let errorMessage = '';
                 if (error.message) {
                     errorMessage = error.message;
@@ -14975,9 +14984,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
         }
         catch (error) {
             throw error;
@@ -15008,9 +15015,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('depositFund', [], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('depositFund', [], txOptions);
         }
         catch (error) {
             throw error;
@@ -15022,9 +15027,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('refund', [amount], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('refund', [amount], txOptions);
         }
         catch (error) {
             throw error;
@@ -15036,9 +15039,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
         }
         catch (error) {
             throw error;
@@ -15050,9 +15051,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
         }
         catch (error) {
             throw error;
@@ -15064,9 +15063,7 @@ class LedgerManagerContract {
             if (gasPrice || this._gasPrice) {
                 txOptions.gasPrice = gasPrice || this._gasPrice;
             }
-            const tx = await this.sendTx('deleteLedger', [], txOptions);
-            const receipt = await tx.wait();
-            this.checkReceipt(receipt);
+            await this.sendTx('deleteLedger', [], txOptions);
         }
         catch (error) {
             throw error;
