@@ -16,36 +16,35 @@ export class ModelProcessor extends BrokerBase {
     async uploadDataset(
         privateKey: string,
         dataPath: string,
-        usePython: boolean,
-        gasPrice?: number,
-        preTrainedModelName?: string
+        gasPrice?: number
     ): Promise<void> {
-        if (
-            preTrainedModelName !== undefined &&
-            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
-            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== ''
-        ) {
-            let dataSize = 0
-            if (usePython) {
-                dataSize = await calculateTokenSizeViaPython(
-                    MODEL_HASH_MAP[preTrainedModelName].tokenizer,
-                    dataPath,
-                    MODEL_HASH_MAP[preTrainedModelName].type
-                )
-            } else {
-                dataSize = await calculateTokenSizeViaExe(
-                    MODEL_HASH_MAP[preTrainedModelName].tokenizer,
-                    dataPath,
-                    MODEL_HASH_MAP[preTrainedModelName].type,
-                    TOKEN_COUNTER_MERKLE_ROOT
-                )
-            }
-            console.log(
-                `The token size for the dataset ${dataPath} is ${dataSize}`
+        await upload(privateKey, dataPath, gasPrice)
+    }
+
+    async calculateToken(
+        datasetPath: string,
+        usePython: boolean,
+        preTrainedModelName: string
+    ) {
+        let dataSize = 0
+        if (usePython) {
+            dataSize = await calculateTokenSizeViaPython(
+                MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                datasetPath,
+                MODEL_HASH_MAP[preTrainedModelName].type
+            )
+        } else {
+            dataSize = await calculateTokenSizeViaExe(
+                MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                datasetPath,
+                MODEL_HASH_MAP[preTrainedModelName].type,
+                TOKEN_COUNTER_MERKLE_ROOT
             )
         }
 
-        await upload(privateKey, dataPath, gasPrice)
+        console.log(
+            `The token size for the dataset ${datasetPath} is ${dataSize}`
+        )
     }
 
     async downloadDataset(dataPath: string, dataRoot: string): Promise<void> {

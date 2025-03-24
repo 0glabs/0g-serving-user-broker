@@ -59,13 +59,11 @@ function fineTuning(program) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address, use default address if not provided')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address, use default address if not provided')
         .option('--gas-price <price>', 'Gas price for transactions')
-        .option('--model <name>', 'Pre-trained model name to use')
-        .option('--use-python', 'use python to calculate token size', false)
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.uploadDataset(options.dataPath, options.usePython, options.gasPrice, options.model);
+            await broker.fineTuning.uploadDataset(options.dataPath);
         });
     });
     program
@@ -83,20 +81,29 @@ function fineTuning(program) {
         });
     });
     program
+        .command('calculate-token')
+        .description('Download token-counter')
+        .requiredOption('--model <name>', 'Pre-trained model name to use')
+        .requiredOption('--dataset-path <path>', 'Path to the zip file containing the fine-tuning dataset')
+        .requiredOption('--use-python', 'use python to calculate token size', false)
+        .action(async (options) => {
+        (0, util_1.withFineTuningBroker)(options, async (broker) => {
+            await broker.fineTuning.calculateToken(options.datasetPath, options.model, options.userPython);
+        });
+    });
+    program
         .command('create-task')
         .description('Create a fine-tuning task')
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .option('--data-size <size>', 'Size of the dataset')
+        .requiredOption('--data-size <size>', 'Size of the dataset')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption('--config-path <path>', 'Fine-tuning configuration path')
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
-        .option('--dataset-path <path>', 'Fine-tuning dataset path')
-        .option('--use-python', 'use python to calculate token size', false)
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
@@ -105,11 +112,7 @@ function fineTuning(program) {
             await broker.fineTuning.acknowledgeProviderSigner(options.provider, options.gasPrice);
             console.log('Provider verified');
             console.log('Creating task...');
-            let dataSize = undefined;
-            if (options.dataSize !== undefined) {
-                dataSize = parseInt(options.dataSize, 10);
-            }
-            const taskId = await broker.fineTuning.createTask(options.provider, options.model, options.dataset, options.configPath, options.usePython, dataSize, options.gasPrice, options.datasetPath);
+            const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath, options.gasPrice);
             console.log('Created Task ID:', taskId);
         });
     });

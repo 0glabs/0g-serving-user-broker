@@ -13798,20 +13798,18 @@ class ModelProcessor extends BrokerBase {
     listModel() {
         return Object.entries(MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, usePython, gasPrice, preTrainedModelName) {
-        if (preTrainedModelName !== undefined &&
-            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
-            MODEL_HASH_MAP[preTrainedModelName].tokenizer !== '') {
-            let dataSize = 0;
-            if (usePython) {
-                dataSize = await calculateTokenSizeViaPython(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type);
-            }
-            else {
-                dataSize = await calculateTokenSizeViaExe(MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, MODEL_HASH_MAP[preTrainedModelName].type, TOKEN_COUNTER_MERKLE_ROOT);
-            }
-            console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
-        }
+    async uploadDataset(privateKey, dataPath, gasPrice) {
         await upload(privateKey, dataPath, gasPrice);
+    }
+    async calculateToken(datasetPath, usePython, preTrainedModelName) {
+        let dataSize = 0;
+        if (usePython) {
+            dataSize = await calculateTokenSizeViaPython(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type);
+        }
+        else {
+            dataSize = await calculateTokenSizeViaExe(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type, TOKEN_COUNTER_MERKLE_ROOT);
+        }
+        console.log(`The token size for the dataset ${datasetPath} is ${dataSize}`);
     }
     async downloadDataset(dataPath, dataRoot) {
         download(dataPath, dataRoot);
@@ -13964,27 +13962,13 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             const service = await this.contract.getService(providerAddress);
-            if (dataSize === undefined) {
-                if (datasetPath !== undefined) {
-                    if (usePython) {
-                        dataSize = await calculateTokenSizeViaPython(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type);
-                    }
-                    else {
-                        dataSize = await calculateTokenSizeViaExe(MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, MODEL_HASH_MAP[preTrainedModelName].type, TOKEN_COUNTER_MERKLE_ROOT);
-                    }
-                }
-                else {
-                    throw new Error('At least one of dataSize or datasetPath must be provided.');
-                }
-            }
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             const parsedParams = this.verifyTrainingParams(trainingParams);
             const trainEpochs = parsedParams.num_train_epochs ?? 3;
             const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
-            console.log(`Total fee ${fee}`);
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = getNonce();
             const signature = await signRequest(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
@@ -14239,9 +14223,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    uploadDataset = async (dataPath, usePython, gasPrice, preTrainedModelName) => {
+    uploadDataset = async (dataPath, gasPrice) => {
         try {
-            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, usePython, gasPrice || this._gasPrice, preTrainedModelName);
+            await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice);
         }
         catch (error) {
             throw error;
@@ -14255,9 +14239,17 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath) => {
+    calculateToken = async (datasetPath, preTrainedModelName, usePython) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath);
+            await this.modelProcessor.calculateToken(datasetPath, usePython, preTrainedModelName);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
+        try {
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
         }
         catch (error) {
             throw error;

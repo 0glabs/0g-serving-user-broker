@@ -1,6 +1,6 @@
 import { AddressLike } from 'ethers'
 import { getNonce, signRequest } from '../../common/utils'
-import { MODEL_HASH_MAP, TOKEN_COUNTER_MERKLE_ROOT } from '../const'
+import { MODEL_HASH_MAP } from '../const'
 import {
     AccountStructOutput,
     FineTuningServingContract,
@@ -11,8 +11,6 @@ import { BrokerBase } from './base'
 import * as fs from 'fs/promises'
 import { LedgerBroker } from '../../ledger'
 import { Automata } from '../automata '
-
-import { calculateTokenSizeViaPython, calculateTokenSizeViaExe } from '../token'
 
 export interface FineTuningAccountDetail {
     account: AccountStructOutput
@@ -137,45 +135,18 @@ export class ServiceProcessor extends BrokerBase {
     async createTask(
         providerAddress: string,
         preTrainedModelName: string,
+        dataSize: number,
         datasetHash: string,
         trainingPath: string,
-        usePython: boolean,
-        dataSize?: number,
-        gasPrice?: number,
-        datasetPath?: string
+        gasPrice?: number
     ): Promise<string> {
         try {
             const service = await this.contract.getService(providerAddress)
-
-            if (dataSize === undefined) {
-                if (datasetPath !== undefined) {
-                    if (usePython) {
-                        dataSize = await calculateTokenSizeViaPython(
-                            MODEL_HASH_MAP[preTrainedModelName].tokenizer,
-                            datasetPath,
-                            MODEL_HASH_MAP[preTrainedModelName].type
-                        )
-                    } else {
-                        dataSize = await calculateTokenSizeViaExe(
-                            MODEL_HASH_MAP[preTrainedModelName].tokenizer,
-                            datasetPath,
-                            MODEL_HASH_MAP[preTrainedModelName].type,
-                            TOKEN_COUNTER_MERKLE_ROOT
-                        )
-                    }
-                } else {
-                    throw new Error(
-                        'At least one of dataSize or datasetPath must be provided.'
-                    )
-                }
-            }
-
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             const parsedParams = this.verifyTrainingParams(trainingParams)
             const trainEpochs = parsedParams.num_train_epochs ?? 3
             const fee =
                 service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
-            console.log(`Total fee ${fee}`)
 
             await this.ledger.transferFund(
                 providerAddress,

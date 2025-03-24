@@ -7,7 +7,6 @@ const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 const automata_1 = require("../automata ");
-const token_1 = require("../token");
 class ServiceProcessor extends base_1.BrokerBase {
     automata;
     constructor(contract, ledger, servingProvider) {
@@ -101,27 +100,13 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, datasetHash, trainingPath, usePython, dataSize, gasPrice, datasetPath) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             const service = await this.contract.getService(providerAddress);
-            if (dataSize === undefined) {
-                if (datasetPath !== undefined) {
-                    if (usePython) {
-                        dataSize = await (0, token_1.calculateTokenSizeViaPython)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
-                    }
-                    else {
-                        dataSize = await (0, token_1.calculateTokenSizeViaExe)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type, const_1.TOKEN_COUNTER_MERKLE_ROOT);
-                    }
-                }
-                else {
-                    throw new Error('At least one of dataSize or datasetPath must be provided.');
-                }
-            }
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             const parsedParams = this.verifyTrainingParams(trainingParams);
             const trainEpochs = parsedParams.num_train_epochs ?? 3;
             const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
-            console.log(`Total fee ${fee}`);
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);

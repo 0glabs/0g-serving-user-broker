@@ -10,20 +10,18 @@ class ModelProcessor extends base_1.BrokerBase {
     listModel() {
         return Object.entries(const_1.MODEL_HASH_MAP);
     }
-    async uploadDataset(privateKey, dataPath, usePython, gasPrice, preTrainedModelName) {
-        if (preTrainedModelName !== undefined &&
-            const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer !== undefined &&
-            const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer !== '') {
-            let dataSize = 0;
-            if (usePython) {
-                dataSize = await (0, token_1.calculateTokenSizeViaPython)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
-            }
-            else {
-                dataSize = await (0, token_1.calculateTokenSizeViaExe)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, dataPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type, const_1.TOKEN_COUNTER_MERKLE_ROOT);
-            }
-            console.log(`The token size for the dataset ${dataPath} is ${dataSize}`);
-        }
+    async uploadDataset(privateKey, dataPath, gasPrice) {
         await (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice);
+    }
+    async calculateToken(datasetPath, usePython, preTrainedModelName) {
+        let dataSize = 0;
+        if (usePython) {
+            dataSize = await (0, token_1.calculateTokenSizeViaPython)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
+        }
+        else {
+            dataSize = await (0, token_1.calculateTokenSizeViaExe)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type, const_1.TOKEN_COUNTER_MERKLE_ROOT);
+        }
+        console.log(`The token size for the dataset ${datasetPath} is ${dataSize}`);
     }
     async downloadDataset(dataPath, dataRoot) {
         (0, zg_storage_1.download)(dataPath, dataRoot);
