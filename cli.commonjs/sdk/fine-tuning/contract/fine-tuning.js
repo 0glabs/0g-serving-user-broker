@@ -35,6 +35,7 @@ class FineTuningServingContract {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
                 const tx = await this.serving.getFunction(name)(...txArgs, txOptions);
+                console.log('tx hash:', tx.hash);
                 const receipt = (await Promise.race([
                     tx.wait(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout, try set higher gas price')), TIMEOUT_MS)),
