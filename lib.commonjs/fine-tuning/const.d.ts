@@ -19,6 +19,7 @@ export declare const MESSAGE_FOR_ENCRYPTION_KEY = "MESSAGE_FOR_ENCRYPTION_KEY";
 export declare const ZG_RPC_ENDPOINT_TESTNET = "https://evmrpc-testnet.0g.ai";
 export declare const INDEXER_URL_STANDARD = "https://indexer-storage-testnet-standard.0g.ai";
 export declare const INDEXER_URL_TURBO = "https://indexer-storage-testnet-turbo.0g.ai";
+export declare const TOKEN_COUNTER_MERKLE_ROOT = "0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97";
 export declare const MODEL_HASH_MAP: {
     [key: string]: {
         [key: string]: string;

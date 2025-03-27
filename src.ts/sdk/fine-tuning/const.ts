@@ -23,6 +23,9 @@ export const INDEXER_URL_STANDARD =
     'https://indexer-storage-testnet-standard.0g.ai'
 export const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai'
 
+export const TOKEN_COUNTER_MERKLE_ROOT =
+    '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97'
+
 export const MODEL_HASH_MAP: {
     [key: string]: { [key: string]: string }
 } = {
@@ -31,30 +34,45 @@ export const MODEL_HASH_MAP: {
         standard: '',
         description:
             'DistilBERT is a transformers model, smaller and faster than BERT, which was pretrained on the same corpus in a self-supervised fashion, using the BERT base model as a teacher. More details can be found at: https://huggingface.co/distilbert/distilbert-base-uncased',
+        tokenizer:
+            '0x3317127671a3217583069001b2a00454ef4d1e838f8f1f4ffbe64db0ec7ed960',
+        type: 'text',
     },
     // mobilenet_v2: {
     //     turbo: '0x8645816c17a8a70ebf32bcc7e621c659e8d0150b1a6bfca27f48f83010c6d12e',
     //     standard: '',
     //     description:
     //         'MobileNet V2 model pre-trained on ImageNet-1k at resolution 224x224. More details can be found at: https://huggingface.co/google/mobilenet_v2_1.0_224',
+    // tokenizer:
+    //     '0xcfdb4cf199829a3cbd453dd39cea5c337a29d4be5a87bad99d76f5a33ac2dfba',
+    // type: 'image',
     // },
     // 'deepseek-r1-distill-qwen-1.5b': {
     //     turbo: '0x2084fdd904c9a3317dde98147d4e7778a40e076b5b0eb469f7a8f27ae5b13e7f',
     //     standard: '',
     //     description:
     //         'DeepSeek-R1-Zero, a model trained via large-scale reinforcement learning (RL) without supervised fine-tuning (SFT) as a preliminary step, demonstrated remarkable performance on reasoning. More details can be found at: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+    // tokenizer:
+    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    // type: 'text',
     // },
     'cocktailsgd-opt-1.3b': {
         turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
         standard: '',
         description:
             'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
+        tokenizer:
+            '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
+        type: 'text',
     },
     // // TODO: remove
     // 'mock-model': {
     //     turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
     //     standard: '',
     //     description: '',
+    // tokenizer:
+    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    // type: 'text',
     // },
 }
 
