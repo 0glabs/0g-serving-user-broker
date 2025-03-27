@@ -124,17 +124,12 @@ export default function fineTuning(program: Command) {
             '--dataset-path <path>',
             'Path to the zip file containing the fine-tuning dataset'
         )
-        .requiredOption(
-            '--use-python',
-            'use python to calculate token size',
-            false
-        )
         .action(async (options) => {
             withFineTuningBroker(options, async (broker) => {
                 await broker.fineTuning!.calculateToken(
                     options.datasetPath,
                     options.model,
-                    options.userPython
+                    false
                 )
             })
         })
@@ -341,13 +336,9 @@ export default function fineTuning(program: Command) {
     program
         .command('download-counter')
         .description('Download token-counter')
-        .option('--path <path>', 'Path to download')
         .action(async (options) => {
             let binaryDir = path.join(__dirname, '..', '..', 'binary')
             let executorDir = binaryDir
-            if (options.path !== undefined) {
-                executorDir = options.path
-            }
 
             const versionFile = path.join(executorDir, 'token_counter.ver')
             const binaryFile = path.join(executorDir, 'token_counter')

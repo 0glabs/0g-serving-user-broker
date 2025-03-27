@@ -85,10 +85,9 @@ function fineTuning(program) {
         .description('Download token-counter')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
         .requiredOption('--dataset-path <path>', 'Path to the zip file containing the fine-tuning dataset')
-        .requiredOption('--use-python', 'use python to calculate token size', false)
         .action(async (options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.calculateToken(options.datasetPath, options.model, options.userPython);
+            await broker.fineTuning.calculateToken(options.datasetPath, options.model, false);
         });
     });
     program
@@ -222,13 +221,9 @@ function fineTuning(program) {
     program
         .command('download-counter')
         .description('Download token-counter')
-        .option('--path <path>', 'Path to download')
         .action(async (options) => {
         let binaryDir = path.join(__dirname, '..', '..', 'binary');
         let executorDir = binaryDir;
-        if (options.path !== undefined) {
-            executorDir = options.path;
-        }
         const versionFile = path.join(executorDir, 'token_counter.ver');
         const binaryFile = path.join(executorDir, 'token_counter');
         const storageClient = path.join(binaryDir, '0g-storage-client');
