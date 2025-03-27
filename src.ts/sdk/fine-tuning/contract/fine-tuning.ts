@@ -12,7 +12,7 @@ import {
 } from './typechain/FineTuningServing'
 import { RETRY_ERROR_SUBSTRINGS } from '../../common/utils/const'
 
-const TIMEOUT_MS = 30_000
+const TIMEOUT_MS = 300_000
 
 export class FineTuningServingContract {
     public serving: FineTuningServing

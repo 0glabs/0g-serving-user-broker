@@ -9907,7 +9907,7 @@ class FineTuningServing__factory extends ContractFactory {
     }
 }
 
-const TIMEOUT_MS$1 = 30_000;
+const TIMEOUT_MS$1 = 300_000;
 class FineTuningServingContract {
     serving;
     signer;
@@ -11342,7 +11342,7 @@ class LedgerManager__factory extends ContractFactory {
     }
 }
 
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MS = 300_000;
 class LedgerManagerContract {
     ledger;
     signer;

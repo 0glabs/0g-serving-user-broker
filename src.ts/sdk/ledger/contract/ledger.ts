@@ -9,7 +9,7 @@ import {
 import { LedgerManager, LedgerManager__factory } from './typechain'
 import { RETRY_ERROR_SUBSTRINGS } from '../../common/utils/const'
 
-const TIMEOUT_MS = 30_000
+const TIMEOUT_MS = 300_000
 
 export class LedgerManagerContract {
     public ledger: LedgerManager
