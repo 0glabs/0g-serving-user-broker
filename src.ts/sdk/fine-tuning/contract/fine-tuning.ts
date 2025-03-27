@@ -67,6 +67,7 @@ export class FineTuningServingContract {
                     ...txArgs,
                     txOptions
                 )
+                console.log('tx hash:', tx.hash)
                 const receipt = (await Promise.race([
                     tx.wait(),
                     new Promise((_, reject) =>

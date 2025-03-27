@@ -9947,6 +9947,7 @@ class FineTuningServingContract {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
                 const tx = await this.serving.getFunction(name)(...txArgs, txOptions);
+                console.log('tx hash:', tx.hash);
                 const receipt = (await Promise.race([
                     tx.wait(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout, try set higher gas price')), TIMEOUT_MS$1)),
@@ -13956,9 +13957,15 @@ class ServiceProcessor extends BrokerBase {
             // bypass quote verification if testing on localhost
             if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
                 const isVerified = await this.automata.verifyQuote(quote);
+                console.log('Quote verification:', isVerified);
                 if (!isVerified) {
                     throw new Error('Quote verification failed');
                 }
+            }
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.providerSigner === provider_signer) {
+                console.log('Provider signer already acknowledged');
+                return;
             }
             await this.contract.acknowledgeProviderSigner(providerAddress, provider_signer, gasPrice);
         }
