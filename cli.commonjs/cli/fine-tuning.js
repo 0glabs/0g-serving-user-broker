@@ -83,6 +83,7 @@ function fineTuning(program) {
     program
         .command('calculate-token')
         .description('Download token-counter')
+        .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--model <name>', 'Pre-trained model name to use')
         .requiredOption('--dataset-path <path>', 'Path to the zip file containing the fine-tuning dataset')
         .action(async (options) => {
@@ -96,7 +97,7 @@ function fineTuning(program) {
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Size of the dataset')
+        .requiredOption('--data-size <size>', 'Token number of the dataset. Use calculate-token command for the calculation')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption('--config-path <path>', 'Fine-tuning configuration path')
         .option('--rpc <url>', '0G Chain RPC endpoint')
