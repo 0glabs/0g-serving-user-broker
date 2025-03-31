@@ -149,16 +149,19 @@ export class ServiceProcessor extends BrokerBase {
     ): Promise<string> {
         try {
             const service = await this.contract.getService(providerAddress)
-            const fee = service.pricePerToken * BigInt(dataSize)
+            const trainingParams = await fs.readFile(trainingPath, 'utf-8')
+            const parsedParams = this.verifyTrainingParams(trainingParams)
+            const trainEpochs =
+                (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3
+            const fee =
+                service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
+
             await this.ledger.transferFund(
                 providerAddress,
                 'fine-tuning',
                 fee,
                 gasPrice
             )
-
-            const trainingParams = await fs.readFile(trainingPath, 'utf-8')
-            this.verifyTrainingParams(trainingParams)
 
             const nonce = getNonce()
             const signature = await signRequest(
@@ -240,9 +243,9 @@ export class ServiceProcessor extends BrokerBase {
         )
     }
 
-    private verifyTrainingParams(trainingParams: string): void {
+    private verifyTrainingParams(trainingParams: string): any {
         try {
-            JSON.parse(trainingParams)
+            return JSON.parse(trainingParams)
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : 'An unknown error occurred'

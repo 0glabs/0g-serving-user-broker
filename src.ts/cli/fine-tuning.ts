@@ -5,6 +5,10 @@ import { splitIntoChunks, withFineTuningBroker } from './util'
 import Table from 'cli-table3'
 import chalk from 'chalk'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
+import * as path from 'path'
+import * as fs from 'fs/promises'
+import { download } from '../sdk/fine-tuning/zg-storage'
+import { TOKEN_COUNTER_MERKLE_ROOT } from '../sdk/fine-tuning/const'
 
 export default function fineTuning(program: Command) {
     program
@@ -113,6 +117,29 @@ export default function fineTuning(program: Command) {
         })
 
     program
+        .command('calculate-token')
+        .description('Download token-counter')
+        .option(
+            '--key <key>',
+            'Wallet private key, if not provided, ensure the default key is set in the environment',
+            process.env.ZG_PRIVATE_KEY
+        )
+        .requiredOption('--model <name>', 'Pre-trained model name to use')
+        .requiredOption(
+            '--dataset-path <path>',
+            'Path to the zip file containing the fine-tuning dataset'
+        )
+        .action(async (options) => {
+            withFineTuningBroker(options, async (broker) => {
+                await broker.fineTuning!.calculateToken(
+                    options.datasetPath,
+                    options.model,
+                    false
+                )
+            })
+        })
+
+    program
         .command('create-task')
         .description('Create a fine-tuning task')
         .option(
@@ -122,7 +149,10 @@ export default function fineTuning(program: Command) {
         )
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Size of the dataset')
+        .requiredOption(
+            '--data-size <size>',
+            'Token number of the dataset. Use calculate-token command for the calculation'
+        )
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption(
             '--config-path <path>',
@@ -309,5 +339,30 @@ export default function fineTuning(program: Command) {
                 )
                 console.log('Decrypted model')
             })
+        })
+
+    program
+        .command('download-counter')
+        .description('Download token-counter')
+        .action(async (options) => {
+            let binaryDir = path.join(__dirname, '..', '..', 'binary')
+            let executorDir = binaryDir
+
+            const versionFile = path.join(executorDir, 'token_counter.ver')
+            const binaryFile = path.join(executorDir, 'token_counter')
+
+            const storageClient = path.join(binaryDir, '0g-storage-client')
+            try {
+                await fs.access(storageClient, fs.constants.X_OK)
+            } catch (err) {
+                console.log(
+                    `Grant execute permission (755) to the file ${storageClient}`
+                )
+                await fs.chmod(storageClient, 0o755)
+            }
+
+            await download(binaryFile, TOKEN_COUNTER_MERKLE_ROOT)
+            await fs.chmod(binaryFile, 0o755)
+            await fs.writeFile(versionFile, TOKEN_COUNTER_MERKLE_ROOT, 'utf8')
         })
 }
