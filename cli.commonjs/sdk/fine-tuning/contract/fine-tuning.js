@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FineTuningServingContract = void 0;
 const typechain_1 = require("./typechain");
 const const_1 = require("../../common/utils/const");
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MS = 300_000;
 class FineTuningServingContract {
     serving;
     signer;
