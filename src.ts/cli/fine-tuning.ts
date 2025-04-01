@@ -66,7 +66,7 @@ export default function fineTuning(program: Command) {
 
     program
         .command('upload')
-        .description('Upload a dataset for fine-tuning')
+        .description('Upload a dataset or customized model for fine-tuning')
         .requiredOption('--data-path <path>', 'Path to the dataset')
         .option(
             '--key <key>',
@@ -148,8 +148,11 @@ export default function fineTuning(program: Command) {
             process.env.ZG_PRIVATE_KEY
         )
         .requiredOption('--provider <address>', 'Provider address for the task')
-        .requiredOption('--model <name>', 'Pre-trained model name to use')
         .requiredOption(
+            '--model <name>',
+            'Pre-trained model name or customized model hash to use'
+        )
+        .option(
             '--data-size <size>',
             'Token number of the dataset. Use calculate-token command for the calculation'
         )
@@ -164,6 +167,12 @@ export default function fineTuning(program: Command) {
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
+        .option('--image-name', 'Docker image name for the customized model')
+        .option(
+            '--docker-run-cmd',
+            'Docker run command for the customized model'
+        )
+        .option('--fund', 'Initial fund to run the customized model')
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 console.log('Verify provider...')
@@ -177,10 +186,15 @@ export default function fineTuning(program: Command) {
                 const taskId = await broker.fineTuning!.createTask(
                     options.provider,
                     options.model,
-                    parseInt(options.dataSize, 10),
                     options.dataset,
                     options.configPath,
-                    options.gasPrice
+                    options.dataSize === undefined
+                        ? undefined
+                        : parseInt(options.dataSize, 10),
+                    options.gasPrice,
+                    options.imageName,
+                    options.dockerRunCmd,
+                    options.fund
                 )
                 console.log('Created Task ID:', taskId)
             })

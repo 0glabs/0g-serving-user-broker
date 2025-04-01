@@ -7,6 +7,8 @@ import { MODEL_HASH_MAP, TOKEN_COUNTER_MERKLE_ROOT } from '../const'
 import { download, upload } from '../zg-storage'
 import { BrokerBase } from './base'
 import { calculateTokenSizeViaPython, calculateTokenSizeViaExe } from '../token'
+import { promises as fs } from 'fs'
+import AdmZip from 'adm-zip'
 
 export class ModelProcessor extends BrokerBase {
     listModel(): [string, { [key: string]: string }][] {
@@ -19,7 +21,24 @@ export class ModelProcessor extends BrokerBase {
         gasPrice?: number,
         maxGasPrice?: number
     ): Promise<void> {
-        await upload(privateKey, dataPath, gasPrice)
+        try {
+            const stats = await fs.stat(dataPath)
+            let zipFile = dataPath
+            if (stats.isDirectory()) {
+                zipFile = `${dataPath}.zip`
+
+                const zip = new AdmZip()
+                zip.addLocalFolder(dataPath)
+                zip.writeZip(zipFile)
+            } else if (!stats.isFile()) {
+                throw new Error('data-path is neither a file nor a directory')
+            }
+
+            await upload(privateKey, zipFile, gasPrice)
+        } catch (error) {
+            console.error('Error during processing:', error)
+            throw error
+        }
     }
 
     async calculateToken(

@@ -166,20 +166,26 @@ export class FineTuningBroker {
 
     public createTask = async (
         providerAddress: string,
-        preTrainedModelName: string,
-        dataSize: number,
+        preTrainedModel: string,
         datasetHash: string,
         trainingPath: string,
-        gasPrice?: number
+        dataSize?: number,
+        gasPrice?: number,
+        imageName?: string,
+        dockerRunCmd?: string,
+        fund?: string
     ): Promise<string> => {
         try {
             return await this.serviceProcessor.createTask(
                 providerAddress,
-                preTrainedModelName,
-                dataSize,
+                preTrainedModel,
                 datasetHash,
                 trainingPath,
-                gasPrice
+                dataSize,
+                gasPrice,
+                imageName,
+                dockerRunCmd,
+                fund
             )
         } catch (error) {
             throw error

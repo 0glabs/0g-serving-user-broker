@@ -106,13 +106,32 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
+    async createTask(providerAddress, preTrainedModel, datasetHash, trainingPath, dataSize, gasPrice, imageName, dockerRunCmd, fund) {
         try {
-            const service = await this.contract.getService(providerAddress);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             const parsedParams = this.verifyTrainingParams(trainingParams);
             const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3;
-            const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
+            const service = await this.contract.getService(providerAddress);
+            let preTrainedModelHash = '';
+            const hashPattern = /^0x[a-fA-F0-9]{64}$/;
+            let fee = BigInt(0);
+            if (hashPattern.test(preTrainedModel)) {
+                if (!imageName || !dockerRunCmd || !fund) {
+                    throw new Error('Image name, docker run command, or fund is undefined');
+                }
+                preTrainedModelHash = preTrainedModel;
+                fee = BigInt(fund);
+            }
+            else {
+                if (dataSize === undefined) {
+                    throw new Error('Data size is undefined');
+                }
+                preTrainedModelHash = const_1.MODEL_HASH_MAP[preTrainedModel].turbo;
+                fee =
+                    service.pricePerToken *
+                        BigInt(dataSize) *
+                        BigInt(trainEpochs);
+            }
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
@@ -120,10 +139,12 @@ class ServiceProcessor extends base_1.BrokerBase {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].turbo,
+                preTrainedModelHash,
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                imageName,
+                dockerRunCmd,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }

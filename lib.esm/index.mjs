@@ -13809,7 +13809,24 @@ class ModelProcessor extends BrokerBase {
         return Object.entries(MODEL_HASH_MAP);
     }
     async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
-        await upload(privateKey, dataPath, gasPrice);
+        try {
+            const stats = await promises.stat(dataPath);
+            let zipFile = dataPath;
+            if (stats.isDirectory()) {
+                zipFile = `${dataPath}.zip`;
+                const zip = new AdmZip();
+                zip.addLocalFolder(dataPath);
+                zip.writeZip(zipFile);
+            }
+            else if (!stats.isFile()) {
+                throw new Error('data-path is neither a file nor a directory');
+            }
+            await upload(privateKey, zipFile, gasPrice);
+        }
+        catch (error) {
+            console.error('Error during processing:', error);
+            throw error;
+        }
     }
     async calculateToken(datasetPath, usePython, preTrainedModelName) {
         let dataSize = 0;
@@ -13978,13 +13995,32 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
+    async createTask(providerAddress, preTrainedModel, datasetHash, trainingPath, dataSize, gasPrice, imageName, dockerRunCmd, fund) {
         try {
-            const service = await this.contract.getService(providerAddress);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             const parsedParams = this.verifyTrainingParams(trainingParams);
             const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3;
-            const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
+            const service = await this.contract.getService(providerAddress);
+            let preTrainedModelHash = '';
+            const hashPattern = /^0x[a-fA-F0-9]{64}$/;
+            let fee = BigInt(0);
+            if (hashPattern.test(preTrainedModel)) {
+                if (!imageName || !dockerRunCmd || !fund) {
+                    throw new Error('Image name, docker run command, or fund is undefined');
+                }
+                preTrainedModelHash = preTrainedModel;
+                fee = BigInt(fund);
+            }
+            else {
+                if (dataSize === undefined) {
+                    throw new Error('Data size is undefined');
+                }
+                preTrainedModelHash = MODEL_HASH_MAP[preTrainedModel].turbo;
+                fee =
+                    service.pricePerToken *
+                        BigInt(dataSize) *
+                        BigInt(trainEpochs);
+            }
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = getNonce();
             const signature = await signRequest(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
@@ -13992,10 +14028,12 @@ class ServiceProcessor extends BrokerBase {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
+                preTrainedModelHash,
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                imageName,
+                dockerRunCmd,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
@@ -14263,9 +14301,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
+    createTask = async (providerAddress, preTrainedModel, datasetHash, trainingPath, dataSize, gasPrice, imageName, dockerRunCmd, fund) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModel, datasetHash, trainingPath, dataSize, gasPrice, imageName, dockerRunCmd, fund);
         }
         catch (error) {
             throw error;

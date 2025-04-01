@@ -12,6 +12,8 @@ export interface Task {
     signature: string;
     readonly progress?: string;
     readonly deliverIndex?: string;
+    imageName?: string;
+    dockerRunCmd?: string;
 }
 export interface QuoteResponse {
     quote: string;

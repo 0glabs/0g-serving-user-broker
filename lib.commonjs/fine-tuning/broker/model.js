@@ -1,17 +1,37 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelProcessor = void 0;
+const tslib_1 = require("tslib");
 const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const zg_storage_1 = require("../zg-storage");
 const base_1 = require("./base");
 const token_1 = require("../token");
+const fs_1 = require("fs");
+const adm_zip_1 = tslib_1.__importDefault(require("adm-zip"));
 class ModelProcessor extends base_1.BrokerBase {
     listModel() {
         return Object.entries(const_1.MODEL_HASH_MAP);
     }
     async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
-        await (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice);
+        try {
+            const stats = await fs_1.promises.stat(dataPath);
+            let zipFile = dataPath;
+            if (stats.isDirectory()) {
+                zipFile = `${dataPath}.zip`;
+                const zip = new adm_zip_1.default();
+                zip.addLocalFolder(dataPath);
+                zip.writeZip(zipFile);
+            }
+            else if (!stats.isFile()) {
+                throw new Error('data-path is neither a file nor a directory');
+            }
+            await (0, zg_storage_1.upload)(privateKey, zipFile, gasPrice);
+        }
+        catch (error) {
+            console.error('Error during processing:', error);
+            throw error;
+        }
     }
     async calculateToken(datasetPath, usePython, preTrainedModelName) {
         let dataSize = 0;

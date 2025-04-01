@@ -25,7 +25,7 @@ export declare class FineTuningBroker {
     uploadDataset: (dataPath: string, gasPrice?: number, maxGasPrice?: number) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
     calculateToken: (datasetPath: string, preTrainedModelName: string, usePython: boolean) => Promise<void>;
-    createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string, gasPrice?: number) => Promise<string>;
+    createTask: (providerAddress: string, preTrainedModel: string, datasetHash: string, trainingPath: string, dataSize?: number, gasPrice?: number, imageName?: string, dockerRunCmd?: string, fund?: string) => Promise<string>;
     listTask: (providerAddress: string) => Promise<Task[]>;
     getTask: (providerAddress: string, taskID?: string) => Promise<Task>;
     getLog: (providerAddress: string, taskID?: string) => Promise<string>;

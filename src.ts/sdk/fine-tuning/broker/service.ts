@@ -141,20 +141,44 @@ export class ServiceProcessor extends BrokerBase {
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
     async createTask(
         providerAddress: string,
-        preTrainedModelName: string,
-        dataSize: number,
+        preTrainedModel: string,
         datasetHash: string,
         trainingPath: string,
-        gasPrice?: number
+        dataSize?: number,
+        gasPrice?: number,
+        imageName?: string,
+        dockerRunCmd?: string,
+        fund?: string
     ): Promise<string> {
         try {
-            const service = await this.contract.getService(providerAddress)
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             const parsedParams = this.verifyTrainingParams(trainingParams)
             const trainEpochs =
                 (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3
-            const fee =
-                service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
+
+            const service = await this.contract.getService(providerAddress)
+            let preTrainedModelHash = ''
+            const hashPattern = /^0x[a-fA-F0-9]{64}$/
+            let fee = BigInt(0)
+            if (hashPattern.test(preTrainedModel)) {
+                if (!imageName || !dockerRunCmd || !fund) {
+                    throw new Error(
+                        'Image name, docker run command, or fund is undefined'
+                    )
+                }
+                preTrainedModelHash = preTrainedModel
+                fee = BigInt(fund)
+            } else {
+                if (dataSize === undefined) {
+                    throw new Error('Data size is undefined')
+                }
+
+                preTrainedModelHash = MODEL_HASH_MAP[preTrainedModel].turbo
+                fee =
+                    service.pricePerToken *
+                    BigInt(dataSize) *
+                    BigInt(trainEpochs)
+            }
 
             await this.ledger.transferFund(
                 providerAddress,
@@ -176,10 +200,12 @@ export class ServiceProcessor extends BrokerBase {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
+                preTrainedModelHash,
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                imageName,
+                dockerRunCmd,
             }
 
             return await this.servingProvider.createTask(providerAddress, task)

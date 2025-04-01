@@ -52,7 +52,7 @@ function fineTuning(program) {
     });
     program
         .command('upload')
-        .description('Upload a dataset for fine-tuning')
+        .description('Upload a dataset or customized model for fine-tuning')
         .requiredOption('--data-path <path>', 'Path to the dataset')
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint')
@@ -96,8 +96,8 @@ function fineTuning(program) {
         .description('Create a fine-tuning task')
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address for the task')
-        .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Token number of the dataset. Use calculate-token command for the calculation')
+        .requiredOption('--model <name>', 'Pre-trained model name or customized model hash to use')
+        .option('--data-size <size>', 'Token number of the dataset. Use calculate-token command for the calculation')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption('--config-path <path>', 'Fine-tuning configuration path')
         .option('--rpc <url>', '0G Chain RPC endpoint')
@@ -106,13 +106,18 @@ function fineTuning(program) {
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
+        .option('--image-name', 'Docker image name for the customized model')
+        .option('--docker-run-cmd', 'Docker run command for the customized model')
+        .option('--fund', 'Initial fund to run the customized model')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             console.log('Verify provider...');
             await broker.fineTuning.acknowledgeProviderSigner(options.provider, options.gasPrice);
             console.log('Provider verified');
             console.log('Creating task...');
-            const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath, options.gasPrice);
+            const taskId = await broker.fineTuning.createTask(options.provider, options.model, options.dataset, options.configPath, options.dataSize === undefined
+                ? undefined
+                : parseInt(options.dataSize, 10), options.gasPrice, options.imageName, options.dockerRunCmd, options.fund);
             console.log('Created Task ID:', taskId);
         });
     });
