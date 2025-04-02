@@ -21,12 +21,8 @@ exports.AUTOMATA_ABI = exports.AUTOMATA_CONTRACT_ADDRESS = exports.AUTOMATA_RPC 
 exports.MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY';
 exports.ZG_RPC_ENDPOINT_TESTNET = 'http://8.218.94.246:8545';
 exports.INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
-<<<<<<< HEAD
 exports.INDEXER_URL_TURBO = 'http://47.251.40.189:12345';
-=======
-exports.INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 exports.TOKEN_COUNTER_MERKLE_ROOT = '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97';
->>>>>>> c01444d (Feat(fine-tuning): token fee for data set (#17))
 exports.MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',

@@ -10083,14 +10083,9 @@ class FineTuningServingContract {
  *   on the key derivation and encryption process.
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
-<<<<<<< HEAD
 const ZG_RPC_ENDPOINT_TESTNET = 'http://8.218.94.246:8545';
 const INDEXER_URL_TURBO = 'http://47.251.40.189:12345';
-=======
-const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
-const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai';
 const TOKEN_COUNTER_MERKLE_ROOT = '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97';
->>>>>>> c01444d (Feat(fine-tuning): token fee for data set (#17))
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
