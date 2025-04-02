@@ -111,7 +111,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             const service = await this.contract.getService(providerAddress);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             const parsedParams = this.verifyTrainingParams(trainingParams);
-            const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3;
+            const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_step) ?? 3;
             const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
