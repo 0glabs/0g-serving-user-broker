@@ -152,7 +152,7 @@ export class ServiceProcessor extends BrokerBase {
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             const parsedParams = this.verifyTrainingParams(trainingParams)
             const trainEpochs =
-                (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3
+                (parsedParams.num_train_epochs || parsedParams.total_step) ?? 3
             const fee =
                 service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
 
