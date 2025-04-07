@@ -17,11 +17,11 @@
  */
 export const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY'
 
-export const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai'
+export const ZG_RPC_ENDPOINT_TESTNET = 'http://8.218.94.246:8545'
 
 export const INDEXER_URL_STANDARD =
     'https://indexer-storage-testnet-standard.0g.ai'
-export const INDEXER_URL_TURBO = 'https://indexer-storage-testnet-turbo.0g.ai'
+export const INDEXER_URL_TURBO = 'http://47.251.40.189:12345'
 
 export const MODEL_HASH_MAP: {
     [key: string]: { [key: string]: string }
