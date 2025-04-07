@@ -23,6 +23,7 @@ async function upload(privateKey, dataPath, gasPrice, maxGasPrice) {
                 '--file',
                 dataPath,
                 '--skip-tx=false',
+                '--log-level=debug',
             ];
             if (gasPrice) {
                 args.push('--gas-price', gasPrice.toString());

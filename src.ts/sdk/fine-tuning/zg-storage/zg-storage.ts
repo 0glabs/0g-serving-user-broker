@@ -33,6 +33,7 @@ export async function upload(
                 '--file',
                 dataPath,
                 '--skip-tx=false',
+                '--log-level=debug',
             ]
 
             if (gasPrice) {
