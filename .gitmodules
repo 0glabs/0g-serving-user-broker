@@ -1,0 +1,3 @@
+[submodule "token.counter"]
+	path = token.counter
+	url = https://github.com/0glabs/0g-serving-token-counter.git

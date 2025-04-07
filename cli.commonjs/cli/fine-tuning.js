@@ -7,6 +7,10 @@ const util_1 = require("./util");
 const cli_table3_1 = tslib_1.__importDefault(require("cli-table3"));
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const const_1 = require("./const");
+const path = tslib_1.__importStar(require("path"));
+const fs = tslib_1.__importStar(require("fs/promises"));
+const zg_storage_1 = require("../sdk/fine-tuning/zg-storage");
+const const_2 = require("../sdk/fine-tuning/const");
 function fineTuning(program) {
     program
         .command('verify')
@@ -77,12 +81,23 @@ function fineTuning(program) {
         });
     });
     program
+        .command('calculate-token')
+        .description('Download token-counter')
+        .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
+        .requiredOption('--model <name>', 'Pre-trained model name to use')
+        .requiredOption('--dataset-path <path>', 'Path to the zip file containing the fine-tuning dataset')
+        .action(async (options) => {
+        (0, util_1.withFineTuningBroker)(options, async (broker) => {
+            await broker.fineTuning.calculateToken(options.datasetPath, options.model, false);
+        });
+    });
+    program
         .command('create-task')
         .description('Create a fine-tuning task')
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--provider <address>', 'Provider address for the task')
         .requiredOption('--model <name>', 'Pre-trained model name to use')
-        .requiredOption('--data-size <size>', 'Size of the dataset')
+        .requiredOption('--data-size <size>', 'Token number of the dataset. Use calculate-token command for the calculation')
         .requiredOption('--dataset <hash>', 'Hash of the dataset')
         .requiredOption('--config-path <path>', 'Fine-tuning configuration path')
         .option('--rpc <url>', '0G Chain RPC endpoint')
@@ -203,6 +218,26 @@ function fineTuning(program) {
             await broker.fineTuning.decryptModel(options.provider, options.encryptedModel, options.output);
             console.log('Decrypted model');
         });
+    });
+    program
+        .command('download-counter')
+        .description('Download token-counter')
+        .action(async (options) => {
+        let binaryDir = path.join(__dirname, '..', '..', 'binary');
+        let executorDir = binaryDir;
+        const versionFile = path.join(executorDir, 'token_counter.ver');
+        const binaryFile = path.join(executorDir, 'token_counter');
+        const storageClient = path.join(binaryDir, '0g-storage-client');
+        try {
+            await fs.access(storageClient, fs.constants.X_OK);
+        }
+        catch (err) {
+            console.log(`Grant execute permission (755) to the file ${storageClient}`);
+            await fs.chmod(storageClient, 0o755);
+        }
+        await (0, zg_storage_1.download)(binaryFile, const_2.TOKEN_COUNTER_MERKLE_ROOT);
+        await fs.chmod(binaryFile, 0o755);
+        await fs.writeFile(versionFile, const_2.TOKEN_COUNTER_MERKLE_ROOT, 'utf8');
     });
 }
 //# sourceMappingURL=fine-tuning.js.map

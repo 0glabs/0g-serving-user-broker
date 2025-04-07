@@ -148,6 +148,22 @@ export class FineTuningBroker {
         }
     }
 
+    public calculateToken = async (
+        datasetPath: string,
+        preTrainedModelName: string,
+        usePython: boolean
+    ): Promise<void> => {
+        try {
+            await this.modelProcessor.calculateToken(
+                datasetPath,
+                usePython,
+                preTrainedModelName
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     public createTask = async (
         providerAddress: string,
         preTrainedModelName: string,

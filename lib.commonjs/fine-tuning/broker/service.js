@@ -109,10 +109,11 @@ class ServiceProcessor extends base_1.BrokerBase {
     async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             const service = await this.contract.getService(providerAddress);
-            const fee = service.pricePerToken * BigInt(dataSize);
-            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
-            this.verifyTrainingParams(trainingParams);
+            const parsedParams = this.verifyTrainingParams(trainingParams);
+            const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3;
+            const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
+            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
             const task = {
@@ -166,7 +167,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     }
     verifyTrainingParams(trainingParams) {
         try {
-            JSON.parse(trainingParams);
+            return JSON.parse(trainingParams);
         }
         catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
