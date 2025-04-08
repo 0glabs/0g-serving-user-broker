@@ -56,15 +56,15 @@ export const MODEL_HASH_MAP: {
     //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
     // type: 'text',
     // },
-    'cocktailsgd-opt-1.3b': {
-        turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
-        standard: '',
-        description:
-            'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
-        tokenizer:
-            '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
-        type: 'text',
-    },
+    // 'cocktailsgd-opt-1.3b': {
+    //     turbo: '0x02ed6d3889bebad9e2cd4008066478654c0886b12ad25ea7cf7d31df3441182e',
+    //     standard: '',
+    //     description:
+    //         'CocktailSGD-opt-1.3B finetunes the Opt-1.3B langauge model with CocktailSGD, which is a novel distributed finetuning framework. More details can be found at: https://github.com/DS3Lab/CocktailSGD',
+    //     tokenizer:
+    //         '0x459311517bdeb3a955466d4e5e396944b2fdc68890de78f506261d95e6d1b000',
+    //     type: 'text',
+    // },
     // // TODO: remove
     // 'mock-model': {
     //     turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
