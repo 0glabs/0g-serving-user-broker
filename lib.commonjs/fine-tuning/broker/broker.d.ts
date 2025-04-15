@@ -19,12 +19,12 @@ export declare class FineTuningBroker {
     getAccount: (providerAddress: string) => Promise<import("../contract").AccountStructOutput>;
     getAccountWithDetail: (providerAddress: string) => Promise<FineTuningAccountDetail>;
     acknowledgeProviderSigner: (providerAddress: string, gasPrice?: number) => Promise<void>;
-    listModel: () => [string, {
+    listModel: () => Promise<[string, {
         [key: string]: string;
-    }][];
+    }][][]>;
     uploadDataset: (dataPath: string, gasPrice?: number, maxGasPrice?: number) => Promise<void>;
     downloadDataset: (dataPath: string, dataRoot: string) => Promise<void>;
-    calculateToken: (datasetPath: string, preTrainedModelName: string, usePython: boolean) => Promise<void>;
+    calculateToken: (datasetPath: string, preTrainedModelName: string, usePython: boolean, providerAddress?: string) => Promise<void>;
     createTask: (providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string, gasPrice?: number) => Promise<string>;
     listTask: (providerAddress: string) => Promise<Task[]>;
     getTask: (providerAddress: string, taskID?: string) => Promise<Task>;

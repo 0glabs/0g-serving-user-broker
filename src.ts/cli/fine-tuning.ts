@@ -49,14 +49,34 @@ export default function fineTuning(program: Command) {
             withFineTuningBroker(options, async (broker) => {
                 const models = await broker.fineTuning!.listModel()
 
-                const table = new Table({
+                console.log(`Predefined models:`)
+                let table = new Table({
                     head: [chalk.blue('Name'), chalk.blue('Description')],
                     colWidths: [30, 75],
                 })
-                models.forEach((model) => {
+                models[0].forEach((model) => {
                     table.push([
                         splitIntoChunks(model[0], 28),
                         splitIntoChunks(model[1].description, 73),
+                    ])
+                })
+
+                console.log(table.toString())
+
+                console.log(`Customized models:`)
+                table = new Table({
+                    head: [
+                        chalk.blue('Name'),
+                        chalk.blue('Description'),
+                        chalk.blue('Provider'),
+                    ],
+                    colWidths: [30, 75, 45],
+                })
+                models[1].forEach((model) => {
+                    table.push([
+                        splitIntoChunks(model[0], 28),
+                        splitIntoChunks(model[1].description, 73),
+                        splitIntoChunks(model[1].provider, 42),
                     ])
                 })
 
@@ -129,12 +149,14 @@ export default function fineTuning(program: Command) {
             '--dataset-path <path>',
             'Path to the zip file containing the fine-tuning dataset'
         )
+        .option('--provider <address>', 'Provider address for the task')
         .action(async (options) => {
             withFineTuningBroker(options, async (broker) => {
                 await broker.fineTuning!.calculateToken(
                     options.datasetPath,
                     options.model,
-                    false
+                    false,
+                    options.provider
                 )
             })
         })

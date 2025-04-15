@@ -20,6 +20,16 @@ export interface QuoteResponse {
     provider_signer: string
 }
 
+export interface CustomizedModel {
+    name: string
+    hash: string
+    image: string
+    dataType: string
+    trainingScript: string
+    description: string
+    tokenizer: string
+}
+
 export class Provider {
     private contract: FineTuningServingContract
 
@@ -157,6 +167,31 @@ export class Provider {
             const url = await this.getProviderUrl(providerAddress)
             const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/log`
             return this.fetchText(endpoint, { method: 'GET' })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getCustomizedModels(url: string): Promise<CustomizedModel[]> {
+        try {
+            const endpoint = `${url}/v1/model`
+            const response = await this.fetchJSON(endpoint, { method: 'GET' })
+            return response as CustomizedModel[]
+        } catch (error) {
+            console.error(`Failed to get customized models: ${error}`)
+            return []
+        }
+    }
+
+    async getCustomizedModel(
+        providerAddress: string,
+        moduleName: string
+    ): Promise<CustomizedModel> {
+        try {
+            const url = await this.getProviderUrl(providerAddress)
+            const endpoint = `${url}/v1/model/${moduleName}`
+            const response = await this.fetchJSON(endpoint, { method: 'GET' })
+            return response as CustomizedModel
         } catch (error) {
             throw error
         }

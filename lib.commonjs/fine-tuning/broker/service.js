@@ -108,6 +108,15 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
     async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
+            let preTrainedModelHash;
+            if (preTrainedModelName in const_1.MODEL_HASH_MAP) {
+                preTrainedModelHash = const_1.MODEL_HASH_MAP[preTrainedModelName].turbo;
+            }
+            else {
+                let model = await this.servingProvider.getCustomizedModel(providerAddress, preTrainedModelName);
+                preTrainedModelHash = model.hash;
+                console.log(`customized model hash: ${preTrainedModelHash}`);
+            }
             const service = await this.contract.getService(providerAddress);
             const trainingParams = await fs.readFile(trainingPath, 'utf-8');
             const parsedParams = this.verifyTrainingParams(trainingParams);
@@ -120,7 +129,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: const_1.MODEL_HASH_MAP[preTrainedModelName].turbo,
+                preTrainedModelHash,
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,

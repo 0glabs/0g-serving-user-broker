@@ -148,6 +148,18 @@ export class ServiceProcessor extends BrokerBase {
         gasPrice?: number
     ): Promise<string> {
         try {
+            let preTrainedModelHash: string
+            if (preTrainedModelName in MODEL_HASH_MAP) {
+                preTrainedModelHash = MODEL_HASH_MAP[preTrainedModelName].turbo
+            } else {
+                let model = await this.servingProvider.getCustomizedModel(
+                    providerAddress,
+                    preTrainedModelName
+                )
+                preTrainedModelHash = model.hash
+                console.log(`customized model hash: ${preTrainedModelHash}`)
+            }
+
             const service = await this.contract.getService(providerAddress)
             const trainingParams = await fs.readFile(trainingPath, 'utf-8')
             const parsedParams = this.verifyTrainingParams(trainingParams)
@@ -176,7 +188,7 @@ export class ServiceProcessor extends BrokerBase {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
                 trainingParams,
-                preTrainedModelHash: MODEL_HASH_MAP[preTrainedModelName].turbo,
+                preTrainedModelHash,
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
