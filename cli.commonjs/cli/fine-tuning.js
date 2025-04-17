@@ -37,7 +37,7 @@ function fineTuning(program) {
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const models = await broker.fineTuning.listModel();
-            console.log(`Predefined models:`);
+            console.log(`Predefined Model:`);
             let table = new cli_table3_1.default({
                 head: [chalk_1.default.blue('Name'), chalk_1.default.blue('Description')],
                 colWidths: [30, 75],
@@ -49,7 +49,7 @@ function fineTuning(program) {
                 ]);
             });
             console.log(table.toString());
-            console.log(`Customized models:`);
+            console.log(`Provider's Model:`);
             table = new cli_table3_1.default({
                 head: [
                     chalk_1.default.blue('Name'),

@@ -49,7 +49,7 @@ export default function fineTuning(program: Command) {
             withFineTuningBroker(options, async (broker) => {
                 const models = await broker.fineTuning!.listModel()
 
-                console.log(`Predefined models:`)
+                console.log(`Predefined Model:`)
                 let table = new Table({
                     head: [chalk.blue('Name'), chalk.blue('Description')],
                     colWidths: [30, 75],
@@ -63,7 +63,7 @@ export default function fineTuning(program: Command) {
 
                 console.log(table.toString())
 
-                console.log(`Customized models:`)
+                console.log(`Provider's Model:`)
                 table = new Table({
                     head: [
                         chalk.blue('Name'),
