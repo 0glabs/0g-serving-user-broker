@@ -7,19 +7,50 @@ const zg_storage_1 = require("../zg-storage");
 const base_1 = require("./base");
 const token_1 = require("../token");
 class ModelProcessor extends base_1.BrokerBase {
-    listModel() {
-        return Object.entries(const_1.MODEL_HASH_MAP);
+    async listModel() {
+        const services = await this.contract.listService();
+        let customizedModels = [];
+        for (const service of services) {
+            if (service.models.length !== 0) {
+                const url = service.url;
+                const models = await this.servingProvider.getCustomizedModels(url);
+                for (const item of models) {
+                    customizedModels.push([
+                        item.name,
+                        {
+                            description: item.description,
+                            provider: service.provider,
+                        },
+                    ]);
+                }
+            }
+        }
+        return [Object.entries(const_1.MODEL_HASH_MAP), customizedModels];
     }
     async uploadDataset(privateKey, dataPath, gasPrice, maxGasPrice) {
         await (0, zg_storage_1.upload)(privateKey, dataPath, gasPrice);
     }
-    async calculateToken(datasetPath, usePython, preTrainedModelName) {
-        let dataSize = 0;
-        if (usePython) {
-            dataSize = await (0, token_1.calculateTokenSizeViaPython)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type);
+    async calculateToken(datasetPath, usePython, preTrainedModelName, providerAddress) {
+        let tokenizer;
+        let dataType;
+        if (preTrainedModelName in const_1.MODEL_HASH_MAP) {
+            tokenizer = const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer;
+            dataType = const_1.MODEL_HASH_MAP[preTrainedModelName].type;
         }
         else {
-            dataSize = await (0, token_1.calculateTokenSizeViaExe)(const_1.MODEL_HASH_MAP[preTrainedModelName].tokenizer, datasetPath, const_1.MODEL_HASH_MAP[preTrainedModelName].type, const_1.TOKEN_COUNTER_MERKLE_ROOT);
+            if (providerAddress === undefined) {
+                throw new Error('Provider address is required for customized model');
+            }
+            let model = await this.servingProvider.getCustomizedModel(providerAddress, preTrainedModelName);
+            tokenizer = model.tokenizer;
+            dataType = model.dataType;
+        }
+        let dataSize = 0;
+        if (usePython) {
+            dataSize = await (0, token_1.calculateTokenSizeViaPython)(tokenizer, datasetPath, dataType);
+        }
+        else {
+            dataSize = await (0, token_1.calculateTokenSizeViaExe)(tokenizer, datasetPath, dataType, const_1.TOKEN_COUNTER_MERKLE_ROOT);
         }
         console.log(`The token size for the dataset ${datasetPath} is ${dataSize}`);
     }

@@ -17,6 +17,15 @@ export interface QuoteResponse {
     quote: string;
     provider_signer: string;
 }
+export interface CustomizedModel {
+    name: string;
+    hash: string;
+    image: string;
+    dataType: string;
+    trainingScript: string;
+    description: string;
+    tokenizer: string;
+}
 export declare class Provider {
     private contract;
     constructor(contract: FineTuningServingContract);
@@ -28,5 +37,7 @@ export declare class Provider {
     getTask(providerAddress: string, userAddress: string, taskID: string): Promise<Task>;
     listTask(providerAddress: string, userAddress: string, latest?: boolean): Promise<Task[]>;
     getLog(providerAddress: string, userAddress: string, taskID: string): Promise<string>;
+    getCustomizedModels(url: string): Promise<CustomizedModel[]>;
+    getCustomizedModel(providerAddress: string, moduleName: string): Promise<CustomizedModel>;
 }
 //# sourceMappingURL=provider.d.ts.map

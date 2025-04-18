@@ -111,6 +111,28 @@ class Provider {
             throw error;
         }
     }
+    async getCustomizedModels(url) {
+        try {
+            const endpoint = `${url}/v1/model`;
+            const response = await this.fetchJSON(endpoint, { method: 'GET' });
+            return response;
+        }
+        catch (error) {
+            console.error(`Failed to get customized models: ${error}`);
+            return [];
+        }
+    }
+    async getCustomizedModel(providerAddress, moduleName) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const endpoint = `${url}/v1/model/${moduleName}`;
+            const response = await this.fetchJSON(endpoint, { method: 'GET' });
+            return response;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
 }
 exports.Provider = Provider;
 //# sourceMappingURL=provider.js.map

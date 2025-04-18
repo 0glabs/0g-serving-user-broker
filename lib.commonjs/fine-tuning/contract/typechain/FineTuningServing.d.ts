@@ -90,6 +90,7 @@ export type ServiceStruct = {
     pricePerToken: BigNumberish;
     providerSigner: AddressLike;
     occupied: boolean;
+    models: string[];
 };
 export type ServiceStructOutput = [
     provider: string,
@@ -97,7 +98,8 @@ export type ServiceStructOutput = [
     quota: QuotaStructOutput,
     pricePerToken: bigint,
     providerSigner: string,
-    occupied: boolean
+    occupied: boolean,
+    models: string[]
 ] & {
     provider: string;
     url: string;
@@ -105,6 +107,7 @@ export type ServiceStructOutput = [
     pricePerToken: bigint;
     providerSigner: string;
     occupied: boolean;
+    models: string[];
 };
 export type VerifierInputStruct = {
     index: BigNumberish;
@@ -136,14 +139,21 @@ export type VerifierInputStructOutput = [
     user: string;
 };
 export interface FineTuningServingInterface extends Interface {
-    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeDeliverable' | 'acknowledgeProviderSigner' | 'addAccount' | 'addDeliverable' | 'addOrUpdateService' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getDeliverable' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateLockTime'): FunctionFragment;
+    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeDeliverable' | 'acknowledgeProviderSigner' | 'addAccount' | 'addDeliverable' | 'addOrUpdateService' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getDeliverable' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'penaltyPercentage' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateLockTime' | 'updatePenaltyPercentage'): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated'): EventFragment;
     encodeFunctionData(functionFragment: 'accountExists', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'acknowledgeDeliverable', values: [AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'acknowledgeProviderSigner', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'addAccount', values: [AddressLike, AddressLike, string]): string;
     encodeFunctionData(functionFragment: 'addDeliverable', values: [AddressLike, BytesLike]): string;
-    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]): string;
+    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [
+        string,
+        QuotaStruct,
+        BigNumberish,
+        AddressLike,
+        boolean,
+        string[]
+    ]): string;
     encodeFunctionData(functionFragment: 'deleteAccount', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'depositFund', values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'getAccount', values: [AddressLike, AddressLike]): string;
@@ -152,11 +162,12 @@ export interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: 'getDeliverable', values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'getPendingRefund', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'getService', values: [AddressLike]): string;
-    encodeFunctionData(functionFragment: 'initialize', values: [BigNumberish, AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'initialize', values: [BigNumberish, AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'initialized', values?: undefined): string;
     encodeFunctionData(functionFragment: 'ledgerAddress', values?: undefined): string;
     encodeFunctionData(functionFragment: 'lockTime', values?: undefined): string;
     encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'penaltyPercentage', values?: undefined): string;
     encodeFunctionData(functionFragment: 'processRefund', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'removeService', values?: undefined): string;
     encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
@@ -164,6 +175,7 @@ export interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: 'settleFees', values: [VerifierInputStruct]): string;
     encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike]): string;
     encodeFunctionData(functionFragment: 'updateLockTime', values: [BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'updatePenaltyPercentage', values: [BigNumberish]): string;
     decodeFunctionResult(functionFragment: 'accountExists', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'acknowledgeDeliverable', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'acknowledgeProviderSigner', data: BytesLike): Result;
@@ -183,6 +195,7 @@ export interface FineTuningServingInterface extends Interface {
     decodeFunctionResult(functionFragment: 'ledgerAddress', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'lockTime', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'penaltyPercentage', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'processRefund', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'removeService', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Result;
@@ -190,6 +203,7 @@ export interface FineTuningServingInterface extends Interface {
     decodeFunctionResult(functionFragment: 'settleFees', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'updateLockTime', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'updatePenaltyPercentage', data: BytesLike): Result;
 }
 export declare namespace BalanceUpdatedEvent {
     type InputTuple = [
@@ -341,7 +355,8 @@ export interface FineTuningServing extends BaseContract {
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
         providerSigner: AddressLike,
-        occupied: boolean
+        occupied: boolean,
+        models: string[]
     ], [
         void
     ], 'nonpayable'>;
@@ -387,7 +402,8 @@ export interface FineTuningServing extends BaseContract {
     initialize: TypedContractMethod<[
         _locktime: BigNumberish,
         _ledgerAddress: AddressLike,
-        owner: AddressLike
+        owner: AddressLike,
+        _penaltyPercentage: BigNumberish
     ], [
         void
     ], 'nonpayable'>;
@@ -395,6 +411,7 @@ export interface FineTuningServing extends BaseContract {
     ledgerAddress: TypedContractMethod<[], [string], 'view'>;
     lockTime: TypedContractMethod<[], [bigint], 'view'>;
     owner: TypedContractMethod<[], [string], 'view'>;
+    penaltyPercentage: TypedContractMethod<[], [bigint], 'view'>;
     processRefund: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
@@ -429,6 +446,11 @@ export interface FineTuningServing extends BaseContract {
     ], 'nonpayable'>;
     updateLockTime: TypedContractMethod<[
         _locktime: BigNumberish
+    ], [
+        void
+    ], 'nonpayable'>;
+    updatePenaltyPercentage: TypedContractMethod<[
+        _penaltyPercentage: BigNumberish
     ], [
         void
     ], 'nonpayable'>;
@@ -469,7 +491,8 @@ export interface FineTuningServing extends BaseContract {
         quota: QuotaStruct,
         pricePerToken: BigNumberish,
         providerSigner: AddressLike,
-        occupied: boolean
+        occupied: boolean,
+        models: string[]
     ], [
         void
     ], 'nonpayable'>;
@@ -515,7 +538,8 @@ export interface FineTuningServing extends BaseContract {
     getFunction(nameOrSignature: 'initialize'): TypedContractMethod<[
         _locktime: BigNumberish,
         _ledgerAddress: AddressLike,
-        owner: AddressLike
+        owner: AddressLike,
+        _penaltyPercentage: BigNumberish
     ], [
         void
     ], 'nonpayable'>;
@@ -523,6 +547,7 @@ export interface FineTuningServing extends BaseContract {
     getFunction(nameOrSignature: 'ledgerAddress'): TypedContractMethod<[], [string], 'view'>;
     getFunction(nameOrSignature: 'lockTime'): TypedContractMethod<[], [bigint], 'view'>;
     getFunction(nameOrSignature: 'owner'): TypedContractMethod<[], [string], 'view'>;
+    getFunction(nameOrSignature: 'penaltyPercentage'): TypedContractMethod<[], [bigint], 'view'>;
     getFunction(nameOrSignature: 'processRefund'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike
@@ -552,6 +577,11 @@ export interface FineTuningServing extends BaseContract {
     ], 'nonpayable'>;
     getFunction(nameOrSignature: 'transferOwnership'): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
     getFunction(nameOrSignature: 'updateLockTime'): TypedContractMethod<[_locktime: BigNumberish], [void], 'nonpayable'>;
+    getFunction(nameOrSignature: 'updatePenaltyPercentage'): TypedContractMethod<[
+        _penaltyPercentage: BigNumberish
+    ], [
+        void
+    ], 'nonpayable'>;
     getEvent(key: 'BalanceUpdated'): TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
     getEvent(key: 'OwnershipTransferred'): TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
     getEvent(key: 'RefundRequested'): TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;

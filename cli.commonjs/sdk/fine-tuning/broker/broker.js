@@ -101,9 +101,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    calculateToken = async (datasetPath, preTrainedModelName, usePython) => {
+    calculateToken = async (datasetPath, preTrainedModelName, usePython, providerAddress) => {
         try {
-            await this.modelProcessor.calculateToken(datasetPath, usePython, preTrainedModelName);
+            await this.modelProcessor.calculateToken(datasetPath, usePython, preTrainedModelName, providerAddress);
         }
         catch (error) {
             throw error;

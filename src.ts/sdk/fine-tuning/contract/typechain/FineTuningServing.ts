@@ -112,6 +112,7 @@ export type ServiceStruct = {
     pricePerToken: BigNumberish
     providerSigner: AddressLike
     occupied: boolean
+    models: string[]
 }
 
 export type ServiceStructOutput = [
@@ -120,7 +121,8 @@ export type ServiceStructOutput = [
     quota: QuotaStructOutput,
     pricePerToken: bigint,
     providerSigner: string,
-    occupied: boolean
+    occupied: boolean,
+    models: string[]
 ] & {
     provider: string
     url: string
@@ -128,6 +130,7 @@ export type ServiceStructOutput = [
     pricePerToken: bigint
     providerSigner: string
     occupied: boolean
+    models: string[]
 }
 
 export type VerifierInputStruct = {
@@ -183,6 +186,7 @@ export interface FineTuningServingInterface extends Interface {
             | 'ledgerAddress'
             | 'lockTime'
             | 'owner'
+            | 'penaltyPercentage'
             | 'processRefund'
             | 'removeService'
             | 'renounceOwnership'
@@ -190,6 +194,7 @@ export interface FineTuningServingInterface extends Interface {
             | 'settleFees'
             | 'transferOwnership'
             | 'updateLockTime'
+            | 'updatePenaltyPercentage'
     ): FunctionFragment
 
     getEvent(
@@ -223,7 +228,14 @@ export interface FineTuningServingInterface extends Interface {
     ): string
     encodeFunctionData(
         functionFragment: 'addOrUpdateService',
-        values: [string, QuotaStruct, BigNumberish, AddressLike, boolean]
+        values: [
+            string,
+            QuotaStruct,
+            BigNumberish,
+            AddressLike,
+            boolean,
+            string[]
+        ]
     ): string
     encodeFunctionData(
         functionFragment: 'deleteAccount',
@@ -259,7 +271,7 @@ export interface FineTuningServingInterface extends Interface {
     ): string
     encodeFunctionData(
         functionFragment: 'initialize',
-        values: [BigNumberish, AddressLike, AddressLike]
+        values: [BigNumberish, AddressLike, AddressLike, BigNumberish]
     ): string
     encodeFunctionData(
         functionFragment: 'initialized',
@@ -271,6 +283,10 @@ export interface FineTuningServingInterface extends Interface {
     ): string
     encodeFunctionData(functionFragment: 'lockTime', values?: undefined): string
     encodeFunctionData(functionFragment: 'owner', values?: undefined): string
+    encodeFunctionData(
+        functionFragment: 'penaltyPercentage',
+        values?: undefined
+    ): string
     encodeFunctionData(
         functionFragment: 'processRefund',
         values: [AddressLike, AddressLike]
@@ -297,6 +313,10 @@ export interface FineTuningServingInterface extends Interface {
     ): string
     encodeFunctionData(
         functionFragment: 'updateLockTime',
+        values: [BigNumberish]
+    ): string
+    encodeFunctionData(
+        functionFragment: 'updatePenaltyPercentage',
         values: [BigNumberish]
     ): string
 
@@ -371,6 +391,10 @@ export interface FineTuningServingInterface extends Interface {
     decodeFunctionResult(functionFragment: 'lockTime', data: BytesLike): Result
     decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result
     decodeFunctionResult(
+        functionFragment: 'penaltyPercentage',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
         functionFragment: 'processRefund',
         data: BytesLike
     ): Result
@@ -396,6 +420,10 @@ export interface FineTuningServingInterface extends Interface {
     ): Result
     decodeFunctionResult(
         functionFragment: 'updateLockTime',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
+        functionFragment: 'updatePenaltyPercentage',
         data: BytesLike
     ): Result
 }
@@ -605,7 +633,8 @@ export interface FineTuningServing extends BaseContract {
             quota: QuotaStruct,
             pricePerToken: BigNumberish,
             providerSigner: AddressLike,
-            occupied: boolean
+            occupied: boolean,
+            models: string[]
         ],
         [void],
         'nonpayable'
@@ -659,7 +688,8 @@ export interface FineTuningServing extends BaseContract {
         [
             _locktime: BigNumberish,
             _ledgerAddress: AddressLike,
-            owner: AddressLike
+            owner: AddressLike,
+            _penaltyPercentage: BigNumberish
         ],
         [void],
         'nonpayable'
@@ -672,6 +702,8 @@ export interface FineTuningServing extends BaseContract {
     lockTime: TypedContractMethod<[], [bigint], 'view'>
 
     owner: TypedContractMethod<[], [string], 'view'>
+
+    penaltyPercentage: TypedContractMethod<[], [bigint], 'view'>
 
     processRefund: TypedContractMethod<
         [user: AddressLike, provider: AddressLike],
@@ -709,6 +741,12 @@ export interface FineTuningServing extends BaseContract {
 
     updateLockTime: TypedContractMethod<
         [_locktime: BigNumberish],
+        [void],
+        'nonpayable'
+    >
+
+    updatePenaltyPercentage: TypedContractMethod<
+        [_penaltyPercentage: BigNumberish],
         [void],
         'nonpayable'
     >
@@ -760,7 +798,8 @@ export interface FineTuningServing extends BaseContract {
             quota: QuotaStruct,
             pricePerToken: BigNumberish,
             providerSigner: AddressLike,
-            occupied: boolean
+            occupied: boolean,
+            models: string[]
         ],
         [void],
         'nonpayable'
@@ -823,7 +862,8 @@ export interface FineTuningServing extends BaseContract {
         [
             _locktime: BigNumberish,
             _ledgerAddress: AddressLike,
-            owner: AddressLike
+            owner: AddressLike,
+            _penaltyPercentage: BigNumberish
         ],
         [void],
         'nonpayable'
@@ -840,6 +880,9 @@ export interface FineTuningServing extends BaseContract {
     getFunction(
         nameOrSignature: 'owner'
     ): TypedContractMethod<[], [string], 'view'>
+    getFunction(
+        nameOrSignature: 'penaltyPercentage'
+    ): TypedContractMethod<[], [bigint], 'view'>
     getFunction(nameOrSignature: 'processRefund'): TypedContractMethod<
         [user: AddressLike, provider: AddressLike],
         [
@@ -877,6 +920,13 @@ export interface FineTuningServing extends BaseContract {
     getFunction(
         nameOrSignature: 'updateLockTime'
     ): TypedContractMethod<[_locktime: BigNumberish], [void], 'nonpayable'>
+    getFunction(
+        nameOrSignature: 'updatePenaltyPercentage'
+    ): TypedContractMethod<
+        [_penaltyPercentage: BigNumberish],
+        [void],
+        'nonpayable'
+    >
 
     getEvent(
         key: 'BalanceUpdated'

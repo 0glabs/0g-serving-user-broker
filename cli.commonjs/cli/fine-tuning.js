@@ -37,14 +37,32 @@ function fineTuning(program) {
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const models = await broker.fineTuning.listModel();
-            const table = new cli_table3_1.default({
+            console.log(`Predefined Model:`);
+            let table = new cli_table3_1.default({
                 head: [chalk_1.default.blue('Name'), chalk_1.default.blue('Description')],
                 colWidths: [30, 75],
             });
-            models.forEach((model) => {
+            models[0].forEach((model) => {
                 table.push([
                     (0, util_1.splitIntoChunks)(model[0], 28),
                     (0, util_1.splitIntoChunks)(model[1].description, 73),
+                ]);
+            });
+            console.log(table.toString());
+            console.log(`Provider's Model:`);
+            table = new cli_table3_1.default({
+                head: [
+                    chalk_1.default.blue('Name'),
+                    chalk_1.default.blue('Description'),
+                    chalk_1.default.blue('Provider'),
+                ],
+                colWidths: [30, 75, 45],
+            });
+            models[1].forEach((model) => {
+                table.push([
+                    (0, util_1.splitIntoChunks)(model[0], 28),
+                    (0, util_1.splitIntoChunks)(model[1].description, 73),
+                    (0, util_1.splitIntoChunks)(model[1].provider, 42),
                 ]);
             });
             console.log(table.toString());
@@ -86,9 +104,10 @@ function fineTuning(program) {
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .requiredOption('--model <name>', 'Pre-trained model name to use')
         .requiredOption('--dataset-path <path>', 'Path to the zip file containing the fine-tuning dataset')
+        .option('--provider <address>', 'Provider address for the task')
         .action(async (options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            await broker.fineTuning.calculateToken(options.datasetPath, options.model, false);
+            await broker.fineTuning.calculateToken(options.datasetPath, options.model, false, options.provider);
         });
     });
     program

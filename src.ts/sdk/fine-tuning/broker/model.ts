@@ -9,8 +9,28 @@ import { BrokerBase } from './base'
 import { calculateTokenSizeViaPython, calculateTokenSizeViaExe } from '../token'
 
 export class ModelProcessor extends BrokerBase {
-    listModel(): [string, { [key: string]: string }][] {
-        return Object.entries(MODEL_HASH_MAP)
+    async listModel(): Promise<[string, { [key: string]: string }][][]> {
+        const services = await this.contract.listService()
+        let customizedModels: [string, { [key: string]: string }][] = []
+        for (const service of services) {
+            if (service.models.length !== 0) {
+                const url = service.url
+                const models = await this.servingProvider.getCustomizedModels(
+                    url
+                )
+                for (const item of models) {
+                    customizedModels.push([
+                        item.name,
+                        {
+                            description: item.description,
+                            provider: service.provider,
+                        },
+                    ])
+                }
+            }
+        }
+
+        return [Object.entries(MODEL_HASH_MAP), customizedModels]
     }
 
     async uploadDataset(
@@ -25,20 +45,41 @@ export class ModelProcessor extends BrokerBase {
     async calculateToken(
         datasetPath: string,
         usePython: boolean,
-        preTrainedModelName: string
+        preTrainedModelName: string,
+        providerAddress?: string
     ) {
+        let tokenizer: string
+        let dataType: string
+        if (preTrainedModelName in MODEL_HASH_MAP) {
+            tokenizer = MODEL_HASH_MAP[preTrainedModelName].tokenizer
+            dataType = MODEL_HASH_MAP[preTrainedModelName].type
+        } else {
+            if (providerAddress === undefined) {
+                throw new Error(
+                    'Provider address is required for customized model'
+                )
+            }
+
+            let model = await this.servingProvider.getCustomizedModel(
+                providerAddress,
+                preTrainedModelName
+            )
+            tokenizer = model.tokenizer
+            dataType = model.dataType
+        }
+
         let dataSize = 0
         if (usePython) {
             dataSize = await calculateTokenSizeViaPython(
-                MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                tokenizer,
                 datasetPath,
-                MODEL_HASH_MAP[preTrainedModelName].type
+                dataType
             )
         } else {
             dataSize = await calculateTokenSizeViaExe(
-                MODEL_HASH_MAP[preTrainedModelName].tokenizer,
+                tokenizer,
                 datasetPath,
-                MODEL_HASH_MAP[preTrainedModelName].type,
+                dataType,
                 TOKEN_COUNTER_MERKLE_ROOT
             )
         }

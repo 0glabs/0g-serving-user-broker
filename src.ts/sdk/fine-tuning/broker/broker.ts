@@ -151,13 +151,15 @@ export class FineTuningBroker {
     public calculateToken = async (
         datasetPath: string,
         preTrainedModelName: string,
-        usePython: boolean
+        usePython: boolean,
+        providerAddress?: string
     ): Promise<void> => {
         try {
             await this.modelProcessor.calculateToken(
                 datasetPath,
                 usePython,
-                preTrainedModelName
+                preTrainedModelName,
+                providerAddress
             )
         } catch (error) {
             throw error
