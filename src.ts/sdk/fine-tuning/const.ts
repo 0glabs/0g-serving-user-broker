@@ -70,9 +70,9 @@ export const MODEL_HASH_MAP: {
     //     turbo: '0xcb42b5ca9e998c82dd239ef2d20d22a4ae16b3dc0ce0a855c93b52c7c2bab6dc',
     //     standard: '',
     //     description: '',
-    // tokenizer:
-    //     '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
-    // type: 'text',
+    //     tokenizer:
+    //         '0x382842561e59d71f90c1861041989428dd2c1f664e65a56ea21f3ade216b2046',
+    //     type: 'text',
     // },
 }
 
