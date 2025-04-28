@@ -11,6 +11,21 @@ import { BrokerBase } from './base'
 import * as fs from 'fs/promises'
 import { LedgerBroker } from '../../ledger'
 import { Automata } from '../automata '
+import * as readline from 'readline'
+
+async function askUser(question: string): Promise<string> {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    })
+
+    return new Promise((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close()
+            resolve(answer.trim())
+        })
+    })
+}
 
 export interface FineTuningAccountDetail {
     account: AccountStructOutput
@@ -145,7 +160,6 @@ export class ServiceProcessor extends BrokerBase {
         dataSize: number,
         datasetHash: string,
         trainingPath: string,
-        wait: boolean,
         gasPrice?: number
     ): Promise<string> {
         try {
@@ -185,6 +199,24 @@ export class ServiceProcessor extends BrokerBase {
                 fee
             )
 
+            let wait = false
+            const counter = await this.servingProvider.getPendingTaskCounter(
+                providerAddress
+            )
+            if (counter > 0) {
+                const answer = await askUser(
+                    `There are possible ${counter} tasks in the waiting queue. Do you want to continue? (y/n): `
+                )
+
+                if (
+                    answer.toLowerCase() === 'yes' ||
+                    answer.toLowerCase() === 'y'
+                ) {
+                    wait = true
+                } else {
+                    throw new Error('There are pending tasks in the queue.')
+                }
+            }
             const task: Task = {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,

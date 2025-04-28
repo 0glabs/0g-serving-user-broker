@@ -11,6 +11,7 @@ import path__default from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import require$$0$1 from 'zlib';
+import * as readline from 'readline';
 
 class Extractor {
 }
@@ -13959,6 +13960,18 @@ class Automata {
     }
 }
 
+async function askUser(question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    return new Promise((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
 class ServiceProcessor extends BrokerBase {
     automata;
     constructor(contract, ledger, servingProvider) {
@@ -14058,7 +14071,7 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             let preTrainedModelHash;
             if (preTrainedModelName in MODEL_HASH_MAP) {
@@ -14077,6 +14090,18 @@ class ServiceProcessor extends BrokerBase {
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = getNonce();
             const signature = await signRequest(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
+            let wait = false;
+            const counter = await this.servingProvider.getPendingTaskCounter(providerAddress);
+            if (counter > 0) {
+                const answer = await askUser(`There are possible ${counter} tasks in the waiting queue. Do you want to continue? (y/n): `);
+                if (answer.toLowerCase() === 'yes' ||
+                    answer.toLowerCase() === 'y') {
+                    wait = true;
+                }
+                else {
+                    throw new Error('There are pending tasks in the queue.');
+                }
+            }
             const task = {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
@@ -14238,6 +14263,18 @@ class Provider {
             throw error;
         }
     }
+    async getPendingTaskCounter(providerAddress) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const endpoint = `${url}/v1/task/pending`;
+            return Number(await this.fetchText(endpoint, {
+                method: 'GET',
+            }));
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getLog(providerAddress, userAddress, taskID) {
         try {
             const url = await this.getProviderUrl(providerAddress);
@@ -14375,9 +14412,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) => {
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
         }
         catch (error) {
             throw error;

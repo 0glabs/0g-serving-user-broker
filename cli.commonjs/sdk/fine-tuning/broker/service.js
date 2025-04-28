@@ -7,6 +7,19 @@ const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 const automata_1 = require("../automata ");
+const readline = tslib_1.__importStar(require("readline"));
+async function askUser(question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    return new Promise((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
 class ServiceProcessor extends base_1.BrokerBase {
     automata;
     constructor(contract, ledger, servingProvider) {
@@ -106,7 +119,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             let preTrainedModelHash;
             if (preTrainedModelName in const_1.MODEL_HASH_MAP) {
@@ -125,6 +138,18 @@ class ServiceProcessor extends base_1.BrokerBase {
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
+            let wait = false;
+            const counter = await this.servingProvider.getPendingTaskCounter(providerAddress);
+            if (counter > 0) {
+                const answer = await askUser(`There are possible ${counter} tasks in the waiting queue. Do you want to continue? (y/n): `);
+                if (answer.toLowerCase() === 'yes' ||
+                    answer.toLowerCase() === 'y') {
+                    wait = true;
+                }
+                else {
+                    throw new Error('There are pending tasks in the queue.');
+                }
+            }
             const task = {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
