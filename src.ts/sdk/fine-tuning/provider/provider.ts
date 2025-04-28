@@ -13,6 +13,7 @@ export interface Task {
     signature: string
     readonly progress?: string
     readonly deliverIndex?: string
+    wait: boolean
 }
 
 export interface QuoteResponse {

@@ -145,6 +145,7 @@ export class ServiceProcessor extends BrokerBase {
         dataSize: number,
         datasetHash: string,
         trainingPath: string,
+        wait: boolean,
         gasPrice?: number
     ): Promise<string> {
         try {
@@ -192,6 +193,7 @@ export class ServiceProcessor extends BrokerBase {
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                wait,
             }
 
             return await this.servingProvider.createTask(providerAddress, task)

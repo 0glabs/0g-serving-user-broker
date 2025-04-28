@@ -186,6 +186,7 @@ export default function fineTuning(program: Command) {
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price adjustment')
+        .option('--wait', 'Add the task to the waiting queue', false)
         .action((options) => {
             withFineTuningBroker(options, async (broker) => {
                 console.log('Verify provider...')
@@ -202,6 +203,7 @@ export default function fineTuning(program: Command) {
                     parseInt(options.dataSize, 10),
                     options.dataset,
                     options.configPath,
+                    options.wait,
                     options.gasPrice
                 )
                 console.log('Created Task ID:', taskId)

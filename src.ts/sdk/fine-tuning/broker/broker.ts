@@ -172,6 +172,7 @@ export class FineTuningBroker {
         dataSize: number,
         datasetHash: string,
         trainingPath: string,
+        wait: boolean,
         gasPrice?: number
     ): Promise<string> => {
         try {
@@ -181,6 +182,7 @@ export class FineTuningBroker {
                 dataSize,
                 datasetHash,
                 trainingPath,
+                wait,
                 gasPrice
             )
         } catch (error) {

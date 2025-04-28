@@ -106,7 +106,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) {
         try {
             let preTrainedModelHash;
             if (preTrainedModelName in const_1.MODEL_HASH_MAP) {
@@ -133,6 +133,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                wait,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }

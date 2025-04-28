@@ -109,9 +109,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice);
         }
         catch (error) {
             throw error;

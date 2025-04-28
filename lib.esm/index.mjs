@@ -14058,7 +14058,7 @@ class ServiceProcessor extends BrokerBase {
     //     2. [`call contract`] calculate fee
     //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
     //     4. [`call provider url/v1/task`]call provider task creation api to create task
-    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
+    async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) {
         try {
             let preTrainedModelHash;
             if (preTrainedModelName in MODEL_HASH_MAP) {
@@ -14085,6 +14085,7 @@ class ServiceProcessor extends BrokerBase {
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                wait,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
@@ -14374,9 +14375,9 @@ class FineTuningBroker {
             throw error;
         }
     };
-    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
+    createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice) => {
         try {
-            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
+            return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, wait, gasPrice);
         }
         catch (error) {
             throw error;
