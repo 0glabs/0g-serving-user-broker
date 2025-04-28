@@ -204,17 +204,26 @@ export class ServiceProcessor extends BrokerBase {
                 providerAddress
             )
             if (counter > 0) {
-                const answer = await askUser(
-                    `There are possible ${counter} tasks in the waiting queue. Do you want to continue? (y/n): `
-                )
+                while (true) {
+                    const answer = await askUser(
+                        `There are ${counter} tasks in the queue. Do you want to continue? (yes/no): `
+                    )
 
-                if (
-                    answer.toLowerCase() === 'yes' ||
-                    answer.toLowerCase() === 'y'
-                ) {
-                    wait = true
-                } else {
-                    throw new Error('There are pending tasks in the queue.')
+                    if (
+                        answer.toLowerCase() === 'yes' ||
+                        answer.toLowerCase() === 'y'
+                    ) {
+                        wait = true
+                        break
+                    } else if (['no', 'n'].includes(answer.toLowerCase())) {
+                        throw new Error(
+                            'User opted not to continue due to pending tasks in the queue.'
+                        )
+                    } else {
+                        console.log(
+                            'Invalid input. Please respond with yes/y or no/n.'
+                        )
+                    }
                 }
             }
             const task: Task = {
