@@ -13,6 +13,7 @@ export interface Task {
     signature: string
     readonly progress?: string
     readonly deliverIndex?: string
+    wait: boolean
 }
 
 export interface QuoteResponse {
@@ -153,6 +154,21 @@ export class Provider {
             return this.fetchJSON(endpoint, { method: 'GET' }) as Promise<
                 Task[]
             >
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getPendingTaskCounter(providerAddress: string) {
+        try {
+            const url = await this.getProviderUrl(providerAddress)
+            const endpoint = `${url}/v1/task/pending`
+
+            return Number(
+                await this.fetchText(endpoint, {
+                    method: 'GET',
+                })
+            )
         } catch (error) {
             throw error
         }

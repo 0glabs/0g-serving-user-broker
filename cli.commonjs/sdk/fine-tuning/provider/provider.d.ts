@@ -12,6 +12,7 @@ export interface Task {
     signature: string;
     readonly progress?: string;
     readonly deliverIndex?: string;
+    wait: boolean;
 }
 export interface QuoteResponse {
     quote: string;
@@ -36,6 +37,7 @@ export declare class Provider {
     createTask(providerAddress: string, task: Task): Promise<string>;
     getTask(providerAddress: string, userAddress: string, taskID: string): Promise<Task>;
     listTask(providerAddress: string, userAddress: string, latest?: boolean): Promise<Task[]>;
+    getPendingTaskCounter(providerAddress: string): Promise<number>;
     getLog(providerAddress: string, userAddress: string, taskID: string): Promise<string>;
     getCustomizedModels(url: string): Promise<CustomizedModel[]>;
     getCustomizedModel(providerAddress: string, moduleName: string): Promise<CustomizedModel>;

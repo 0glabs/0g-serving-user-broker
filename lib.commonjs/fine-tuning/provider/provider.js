@@ -101,6 +101,18 @@ class Provider {
             throw error;
         }
     }
+    async getPendingTaskCounter(providerAddress) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const endpoint = `${url}/v1/task/pending`;
+            return Number(await this.fetchText(endpoint, {
+                method: 'GET',
+            }));
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getLog(providerAddress, userAddress, taskID) {
         try {
             const url = await this.getProviderUrl(providerAddress);

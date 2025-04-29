@@ -11,6 +11,7 @@ import path__default from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import require$$0$1 from 'zlib';
+import * as readline from 'readline';
 
 class Extractor {
 }
@@ -13959,6 +13960,18 @@ class Automata {
     }
 }
 
+async function askUser(question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    return new Promise((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
 class ServiceProcessor extends BrokerBase {
     automata;
     constructor(contract, ledger, servingProvider) {
@@ -14077,6 +14090,24 @@ class ServiceProcessor extends BrokerBase {
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = getNonce();
             const signature = await signRequest(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
+            let wait = false;
+            const counter = await this.servingProvider.getPendingTaskCounter(providerAddress);
+            if (counter > 0) {
+                while (true) {
+                    const answer = await askUser(`There are ${counter} tasks in the queue. Do you want to continue? (yes/no): `);
+                    if (answer.toLowerCase() === 'yes' ||
+                        answer.toLowerCase() === 'y') {
+                        wait = true;
+                        break;
+                    }
+                    else if (['no', 'n'].includes(answer.toLowerCase())) {
+                        throw new Error('User opted not to continue due to pending tasks in the queue.');
+                    }
+                    else {
+                        console.log('Invalid input. Please respond with yes/y or no/n.');
+                    }
+                }
+            }
             const task = {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
@@ -14085,6 +14116,7 @@ class ServiceProcessor extends BrokerBase {
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                wait,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
@@ -14232,6 +14264,18 @@ class Provider {
                 endpoint += '?latest=true';
             }
             return this.fetchJSON(endpoint, { method: 'GET' });
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getPendingTaskCounter(providerAddress) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const endpoint = `${url}/v1/task/pending`;
+            return Number(await this.fetchText(endpoint, {
+                method: 'GET',
+            }));
         }
         catch (error) {
             throw error;

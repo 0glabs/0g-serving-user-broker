@@ -7,6 +7,19 @@ const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
 const automata_1 = require("../automata ");
+const readline = tslib_1.__importStar(require("readline"));
+async function askUser(question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    return new Promise((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
 class ServiceProcessor extends base_1.BrokerBase {
     automata;
     constructor(contract, ledger, servingProvider) {
@@ -125,6 +138,24 @@ class ServiceProcessor extends base_1.BrokerBase {
             await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
+            let wait = false;
+            const counter = await this.servingProvider.getPendingTaskCounter(providerAddress);
+            if (counter > 0) {
+                while (true) {
+                    const answer = await askUser(`There are ${counter} tasks in the queue. Do you want to continue? (yes/no): `);
+                    if (answer.toLowerCase() === 'yes' ||
+                        answer.toLowerCase() === 'y') {
+                        wait = true;
+                        break;
+                    }
+                    else if (['no', 'n'].includes(answer.toLowerCase())) {
+                        throw new Error('User opted not to continue due to pending tasks in the queue.');
+                    }
+                    else {
+                        console.log('Invalid input. Please respond with yes/y or no/n.');
+                    }
+                }
+            }
             const task = {
                 userAddress: this.contract.getUserAddress(),
                 datasetHash,
@@ -133,6 +164,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 fee: fee.toString(),
                 nonce: nonce.toString(),
                 signature,
+                wait,
             };
             return await this.servingProvider.createTask(providerAddress, task);
         }
