@@ -172,6 +172,25 @@ class ServiceProcessor extends base_1.BrokerBase {
             throw error;
         }
     }
+    async cancelTask(providerAddress, taskID) {
+        try {
+            const signature = await (0, utils_1.signTaskID)(this.contract.signer, taskID);
+            const task = {
+                id: taskID,
+                userAddress: this.contract.getUserAddress(),
+                preTrainedModelHash: '',
+                datasetHash: '',
+                trainingParams: '',
+                fee: '',
+                nonce: '',
+                signature,
+            };
+            return await this.servingProvider.cancelTask(providerAddress, task);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async listTask(providerAddress) {
         try {
             return await this.servingProvider.listTask(providerAddress, this.contract.getUserAddress());

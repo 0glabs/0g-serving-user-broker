@@ -188,6 +188,20 @@ export class FineTuningBroker {
         }
     }
 
+    public cancelTask = async (
+        providerAddress: string,
+        taskID: string
+    ): Promise<string> => {
+        try {
+            return await this.serviceProcessor.cancelTask(
+                providerAddress,
+                taskID
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     public listTask = async (providerAddress: string): Promise<Task[]> => {
         try {
             return await this.serviceProcessor.listTask(providerAddress)
