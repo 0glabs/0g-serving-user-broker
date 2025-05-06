@@ -68,6 +68,17 @@ export async function signRequest(
     return await signer.signMessage(ethers.toBeArray(hash))
 }
 
+export async function signTaskID(
+    signer: Wallet,
+    taskID: string
+): Promise<string> {
+    const hash = ethers.solidityPackedKeccak256(
+        ['bytes'],
+        ['0x' + taskID.replace(/-/g, '')]
+    )
+    return await signer.signMessage(ethers.toBeArray(hash))
+}
+
 export async function eciesDecrypt(
     signer: Wallet,
     encryptedData: string

@@ -76,6 +76,23 @@ class Provider {
             throw new Error('Failed to create task');
         }
     }
+    async cancelTask(providerAddress, task) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const endpoint = `${url}/v1/task/cancel`;
+            const response = await this.fetchText(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(task),
+            });
+            return response;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getTask(providerAddress, userAddress, taskID) {
         try {
             const url = await this.getProviderUrl(providerAddress);

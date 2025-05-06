@@ -1,5 +1,5 @@
 import { AddressLike } from 'ethers'
-import { getNonce, signRequest } from '../../common/utils'
+import { getNonce, signRequest, signTaskID } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import {
     AccountStructOutput,
@@ -238,6 +238,26 @@ export class ServiceProcessor extends BrokerBase {
             }
 
             return await this.servingProvider.createTask(providerAddress, task)
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async cancelTask(providerAddress: string, taskID: string): Promise<string> {
+        try {
+            const signature = await signTaskID(this.contract.signer, taskID)
+            const task: Task = {
+                id: taskID,
+                userAddress: this.contract.getUserAddress(),
+                preTrainedModelHash: '',
+                datasetHash: '',
+                trainingParams: '',
+                fee: '',
+                nonce: '',
+                signature,
+            }
+
+            return await this.servingProvider.cancelTask(providerAddress, task)
         } catch (error) {
             throw error
         }
