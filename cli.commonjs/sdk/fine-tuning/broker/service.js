@@ -206,6 +206,14 @@ class ServiceProcessor extends base_1.BrokerBase {
         }
         return this.servingProvider.getLog(providerAddress, this.contract.getUserAddress(), taskID);
     }
+    async modelUsage(providerAddress, preTrainedModelName, output) {
+        try {
+            return await this.servingProvider.getCustomizedModelDetailUsage(providerAddress, preTrainedModelName, output);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     verifyTrainingParams(trainingParams) {
         try {
             return JSON.parse(trainingParams);

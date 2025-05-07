@@ -120,6 +120,22 @@ export class FineTuningBroker {
         }
     }
 
+    public modelUsage = (
+        providerAddress: string,
+        preTrainedModelName: string,
+        output: string
+    ) => {
+        try {
+            return this.serviceProcessor.modelUsage(
+                providerAddress,
+                preTrainedModelName,
+                output
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     public uploadDataset = async (
         dataPath: string,
         gasPrice?: number,

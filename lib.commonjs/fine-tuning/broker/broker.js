@@ -85,6 +85,14 @@ class FineTuningBroker {
             throw error;
         }
     };
+    modelUsage = (providerAddress, preTrainedModelName, output) => {
+        try {
+            return this.serviceProcessor.modelUsage(providerAddress, preTrainedModelName, output);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     uploadDataset = async (dataPath, gasPrice, maxGasPrice) => {
         try {
             await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice, maxGasPrice || this._maxGasPrice);

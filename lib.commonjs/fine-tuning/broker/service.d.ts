@@ -23,6 +23,7 @@ export declare class ServiceProcessor extends BrokerBase {
     listTask(providerAddress: string): Promise<Task[]>;
     getTask(providerAddress: string, taskID?: string): Promise<Task>;
     getLog(providerAddress: string, taskID?: string): Promise<string>;
+    modelUsage(providerAddress: string, preTrainedModelName: string, output: string): Promise<void>;
     private verifyTrainingParams;
 }
 //# sourceMappingURL=service.d.ts.map
