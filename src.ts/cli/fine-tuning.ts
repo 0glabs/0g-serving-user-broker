@@ -85,6 +85,33 @@ export default function fineTuning(program: Command) {
         })
 
     program
+        .command('model-usage')
+        .description('Download detailed customized model usage')
+        .option(
+            '--key <key>',
+            'Wallet private key, if not provided, ensure the default key is set in the environment',
+            process.env.ZG_PRIVATE_KEY
+        )
+        .requiredOption('--provider <address>', 'Provider address for the task')
+        .requiredOption('--model <name>', 'Pre-trained model name to use')
+        .requiredOption('--output <path>', 'Download path')
+        .option(
+            `--rpc <url>', '0G Chain RPC endpoint, default is ${ZG_RPC_ENDPOINT_TESTNET}`,
+            ZG_RPC_ENDPOINT_TESTNET
+        )
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .action((options) => {
+            withFineTuningBroker(options, async (broker) => {
+                await broker.fineTuning!.modelUsage(
+                    options.provider,
+                    options.model,
+                    options.output
+                )
+            })
+        })
+
+    program
         .command('upload')
         .description('Upload a dataset for fine-tuning')
         .requiredOption('--data-path <path>', 'Path to the dataset')
