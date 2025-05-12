@@ -14139,17 +14139,7 @@ class ServiceProcessor extends BrokerBase {
     async cancelTask(providerAddress, taskID) {
         try {
             const signature = await signTaskID(this.contract.signer, taskID);
-            const task = {
-                id: taskID,
-                userAddress: '',
-                preTrainedModelHash: '',
-                datasetHash: '',
-                trainingParams: '',
-                fee: '',
-                nonce: '',
-                signature,
-            };
-            return await this.servingProvider.cancelTask(providerAddress, task);
+            return await this.servingProvider.cancelTask(providerAddress, signature, taskID);
         }
         catch (error) {
             throw error;
@@ -33186,17 +33176,19 @@ class Provider {
             throw new Error('Failed to create task');
         }
     }
-    async cancelTask(providerAddress, task) {
+    async cancelTask(providerAddress, signature, taskID) {
         try {
             const url = await this.getProviderUrl(providerAddress);
             const userAddress = this.contract.getUserAddress();
-            const endpoint = `${url}/v1/user/${userAddress}/task/cancel`;
+            const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/cancel`;
             const response = await this.fetchText(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(task),
+                body: JSON.stringify({
+                    signature: signature,
+                }),
             });
             return response;
         }

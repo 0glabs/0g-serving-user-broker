@@ -175,17 +175,7 @@ class ServiceProcessor extends base_1.BrokerBase {
     async cancelTask(providerAddress, taskID) {
         try {
             const signature = await (0, utils_1.signTaskID)(this.contract.signer, taskID);
-            const task = {
-                id: taskID,
-                userAddress: '',
-                preTrainedModelHash: '',
-                datasetHash: '',
-                trainingParams: '',
-                fee: '',
-                nonce: '',
-                signature,
-            };
-            return await this.servingProvider.cancelTask(providerAddress, task);
+            return await this.servingProvider.cancelTask(providerAddress, signature, taskID);
         }
         catch (error) {
             throw error;

@@ -246,18 +246,11 @@ export class ServiceProcessor extends BrokerBase {
     async cancelTask(providerAddress: string, taskID: string): Promise<string> {
         try {
             const signature = await signTaskID(this.contract.signer, taskID)
-            const task: Task = {
-                id: taskID,
-                userAddress: '',
-                preTrainedModelHash: '',
-                datasetHash: '',
-                trainingParams: '',
-                fee: '',
-                nonce: '',
+            return await this.servingProvider.cancelTask(
+                providerAddress,
                 signature,
-            }
-
-            return await this.servingProvider.cancelTask(providerAddress, task)
+                taskID
+            )
         } catch (error) {
             throw error
         }
