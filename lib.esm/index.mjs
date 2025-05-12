@@ -14141,7 +14141,7 @@ class ServiceProcessor extends BrokerBase {
             const signature = await signTaskID(this.contract.signer, taskID);
             const task = {
                 id: taskID,
-                userAddress: this.contract.getUserAddress(),
+                userAddress: '',
                 preTrainedModelHash: '',
                 datasetHash: '',
                 trainingParams: '',
@@ -33189,7 +33189,8 @@ class Provider {
     async cancelTask(providerAddress, task) {
         try {
             const url = await this.getProviderUrl(providerAddress);
-            const endpoint = `${url}/v1/task/cancel`;
+            const userAddress = this.contract.getUserAddress();
+            const endpoint = `${url}/v1/user/${userAddress}/task/cancel`;
             const response = await this.fetchText(endpoint, {
                 method: 'POST',
                 headers: {

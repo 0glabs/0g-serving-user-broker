@@ -122,7 +122,8 @@ export class Provider {
     async cancelTask(providerAddress: string, task: Task): Promise<string> {
         try {
             const url = await this.getProviderUrl(providerAddress)
-            const endpoint = `${url}/v1/task/cancel`
+            const userAddress = this.contract.getUserAddress()
+            const endpoint = `${url}/v1/user/${userAddress}/task/cancel`
 
             const response = await this.fetchText(endpoint, {
                 method: 'POST',

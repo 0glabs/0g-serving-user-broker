@@ -177,7 +177,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             const signature = await (0, utils_1.signTaskID)(this.contract.signer, taskID);
             const task = {
                 id: taskID,
-                userAddress: this.contract.getUserAddress(),
+                userAddress: '',
                 preTrainedModelHash: '',
                 datasetHash: '',
                 trainingParams: '',

@@ -248,7 +248,7 @@ export class ServiceProcessor extends BrokerBase {
             const signature = await signTaskID(this.contract.signer, taskID)
             const task: Task = {
                 id: taskID,
-                userAddress: this.contract.getUserAddress(),
+                userAddress: '',
                 preTrainedModelHash: '',
                 datasetHash: '',
                 trainingParams: '',
