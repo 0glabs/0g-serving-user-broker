@@ -1,4 +1,7 @@
 import { FineTuningServingContract } from '../contract'
+import axios from 'axios'
+import * as fs from 'fs/promises'
+import * as path from 'path'
 
 export interface Task {
     readonly id?: string
@@ -227,6 +230,38 @@ export class Provider {
             const response = await this.fetchJSON(endpoint, { method: 'GET' })
             return response as CustomizedModel
         } catch (error) {
+            throw error
+        }
+    }
+
+    async getCustomizedModelDetailUsage(
+        providerAddress: string,
+        moduleName: string,
+        outputPath: string
+    ): Promise<void> {
+        try {
+            const url = await this.getProviderUrl(providerAddress)
+            const endpoint = `${url}/v1/model/desc/${moduleName}`
+
+            let destFile = outputPath
+            try {
+                const stats = await fs.stat(outputPath)
+                if (stats.isDirectory()) {
+                    destFile = path.join(outputPath, `${moduleName}.zip`)
+                }
+
+                await fs.unlink(destFile)
+            } catch (err) {}
+
+            const response = await axios({
+                method: 'get',
+                url: endpoint,
+                responseType: 'arraybuffer',
+            })
+
+            await fs.writeFile(destFile, response.data)
+            console.log(`Model downloaded and saved to ${destFile}`)
+        } catch (error: any) {
             throw error
         }
     }

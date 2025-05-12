@@ -318,6 +318,22 @@ export class ServiceProcessor extends BrokerBase {
         )
     }
 
+    async modelUsage(
+        providerAddress: string,
+        preTrainedModelName: string,
+        output: string
+    ) {
+        try {
+            return await this.servingProvider.getCustomizedModelDetailUsage(
+                providerAddress,
+                preTrainedModelName,
+                output
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     private verifyTrainingParams(trainingParams: string): any {
         try {
             return JSON.parse(trainingParams)

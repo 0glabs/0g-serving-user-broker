@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Provider = void 0;
+const tslib_1 = require("tslib");
+const axios_1 = tslib_1.__importDefault(require("axios"));
+const fs = tslib_1.__importStar(require("fs/promises"));
+const path = tslib_1.__importStar(require("path"));
 class Provider {
     contract;
     constructor(contract) {
@@ -157,6 +161,31 @@ class Provider {
             const endpoint = `${url}/v1/model/${moduleName}`;
             const response = await this.fetchJSON(endpoint, { method: 'GET' });
             return response;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async getCustomizedModelDetailUsage(providerAddress, moduleName, outputPath) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const endpoint = `${url}/v1/model/desc/${moduleName}`;
+            let destFile = outputPath;
+            try {
+                const stats = await fs.stat(outputPath);
+                if (stats.isDirectory()) {
+                    destFile = path.join(outputPath, `${moduleName}.zip`);
+                }
+                await fs.unlink(destFile);
+            }
+            catch (err) { }
+            const response = await (0, axios_1.default)({
+                method: 'get',
+                url: endpoint,
+                responseType: 'arraybuffer',
+            });
+            await fs.writeFile(destFile, response.data);
+            console.log(`Model downloaded and saved to ${destFile}`);
         }
         catch (error) {
             throw error;

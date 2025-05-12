@@ -42,5 +42,6 @@ export declare class Provider {
     getLog(providerAddress: string, userAddress: string, taskID: string): Promise<string>;
     getCustomizedModels(url: string): Promise<CustomizedModel[]>;
     getCustomizedModel(providerAddress: string, moduleName: string): Promise<CustomizedModel>;
+    getCustomizedModelDetailUsage(providerAddress: string, moduleName: string, outputPath: string): Promise<void>;
 }
 //# sourceMappingURL=provider.d.ts.map
