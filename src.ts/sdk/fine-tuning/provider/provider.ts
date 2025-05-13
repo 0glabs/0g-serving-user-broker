@@ -16,7 +16,7 @@ export interface Task {
     signature: string
     readonly progress?: string
     readonly deliverIndex?: string
-    wait: boolean
+    wait?: boolean
 }
 
 export interface QuoteResponse {
@@ -116,6 +116,31 @@ export class Provider {
                 throw new Error(`Failed to create task: ${error.message}`)
             }
             throw new Error('Failed to create task')
+        }
+    }
+
+    async cancelTask(
+        providerAddress: string,
+        signature: string,
+        taskID: string
+    ): Promise<string> {
+        try {
+            const url = await this.getProviderUrl(providerAddress)
+            const userAddress = this.contract.getUserAddress()
+            const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/cancel`
+
+            const response = await this.fetchText(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    signature: signature,
+                }),
+            })
+            return response
+        } catch (error) {
+            throw error
         }
     }
 

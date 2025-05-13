@@ -6637,6 +6637,10 @@ async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     const hash = ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
     return await signer.signMessage(ethers.toBeArray(hash));
 }
+async function signTaskID(signer, taskID) {
+    const hash = ethers.solidityPackedKeccak256(['bytes'], ['0x' + taskID.replace(/-/g, '')]);
+    return await signer.signMessage(ethers.toBeArray(hash));
+}
 async function eciesDecrypt(signer, encryptedData) {
     encryptedData = encryptedData.startsWith('0x')
         ? encryptedData.slice(2)
@@ -14127,6 +14131,15 @@ class ServiceProcessor extends BrokerBase {
                 wait,
             };
             return await this.servingProvider.createTask(providerAddress, task);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async cancelTask(providerAddress, taskID) {
+        try {
+            const signature = await signTaskID(this.contract.signer, taskID);
+            return await this.servingProvider.cancelTask(providerAddress, signature, taskID);
         }
         catch (error) {
             throw error;
@@ -33163,6 +33176,26 @@ class Provider {
             throw new Error('Failed to create task');
         }
     }
+    async cancelTask(providerAddress, signature, taskID) {
+        try {
+            const url = await this.getProviderUrl(providerAddress);
+            const userAddress = this.contract.getUserAddress();
+            const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/cancel`;
+            const response = await this.fetchText(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    signature: signature,
+                }),
+            });
+            return response;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getTask(providerAddress, userAddress, taskID) {
         try {
             const url = await this.getProviderUrl(providerAddress);
@@ -33373,6 +33406,14 @@ class FineTuningBroker {
     createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
         try {
             return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    cancelTask = async (providerAddress, taskID) => {
+        try {
+            return await this.serviceProcessor.cancelTask(providerAddress, taskID);
         }
         catch (error) {
             throw error;

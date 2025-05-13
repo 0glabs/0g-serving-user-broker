@@ -20,6 +20,7 @@ export declare class ServiceProcessor extends BrokerBase {
     listService(): Promise<ServiceStructOutput[]>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
     createTask(providerAddress: string, preTrainedModelName: string, dataSize: number, datasetHash: string, trainingPath: string, gasPrice?: number): Promise<string>;
+    cancelTask(providerAddress: string, taskID: string): Promise<string>;
     listTask(providerAddress: string): Promise<Task[]>;
     getTask(providerAddress: string, taskID?: string): Promise<Task>;
     getLog(providerAddress: string, taskID?: string): Promise<string>;

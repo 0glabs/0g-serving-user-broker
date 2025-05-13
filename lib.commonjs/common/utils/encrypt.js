@@ -4,6 +4,7 @@ exports.encryptData = encryptData;
 exports.decryptData = decryptData;
 exports.hexToRoots = hexToRoots;
 exports.signRequest = signRequest;
+exports.signTaskID = signTaskID;
 exports.eciesDecrypt = eciesDecrypt;
 exports.aesGCMDecrypt = aesGCMDecrypt;
 exports.aesGCMDecryptToFile = aesGCMDecryptToFile;
@@ -44,6 +45,10 @@ function hexToRoots(hexString) {
 }
 async function signRequest(signer, userAddress, nonce, datasetRootHash, fee) {
     const hash = ethers_1.ethers.solidityPackedKeccak256(['address', 'uint256', 'string', 'uint256'], [userAddress, nonce, datasetRootHash, fee]);
+    return await signer.signMessage(ethers_1.ethers.toBeArray(hash));
+}
+async function signTaskID(signer, taskID) {
+    const hash = ethers_1.ethers.solidityPackedKeccak256(['bytes'], ['0x' + taskID.replace(/-/g, '')]);
     return await signer.signMessage(ethers_1.ethers.toBeArray(hash));
 }
 async function eciesDecrypt(signer, encryptedData) {

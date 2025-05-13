@@ -125,6 +125,14 @@ class FineTuningBroker {
             throw error;
         }
     };
+    cancelTask = async (providerAddress, taskID) => {
+        try {
+            return await this.serviceProcessor.cancelTask(providerAddress, taskID);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     listTask = async (providerAddress) => {
         try {
             return await this.serviceProcessor.listTask(providerAddress);

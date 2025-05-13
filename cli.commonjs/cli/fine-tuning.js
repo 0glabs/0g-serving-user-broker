@@ -137,9 +137,6 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
-        .option('--gas-price <price>', 'Gas price for transactions')
-        .option('--max-gas-price <price>', 'Max gas price for transactions')
-        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             console.log('Verify provider...');
@@ -148,6 +145,24 @@ function fineTuning(program) {
             console.log('Creating task...');
             const taskId = await broker.fineTuning.createTask(options.provider, options.model, parseInt(options.dataSize, 10), options.dataset, options.configPath, options.gasPrice);
             console.log('Created Task ID:', taskId);
+        });
+    });
+    program
+        .command('cancel-task')
+        .description('Cancel a fine-tuning task')
+        .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
+        .requiredOption('--task <id>', 'Task ID, if not provided, the latest task will be retrieved')
+        .requiredOption('--provider <address>', 'Provider address for the task')
+        .option('--rpc <url>', '0G Chain RPC endpoint')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
+        .action((options) => {
+        (0, util_1.withFineTuningBroker)(options, async (broker) => {
+            const r = await broker.fineTuning.cancelTask(options.provider, options.task);
+            console.log(r);
         });
     });
     program
