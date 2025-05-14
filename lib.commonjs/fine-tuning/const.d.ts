@@ -16,7 +16,7 @@
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
 export declare const MESSAGE_FOR_ENCRYPTION_KEY = "MESSAGE_FOR_ENCRYPTION_KEY";
-export declare const ZG_RPC_ENDPOINT_TESTNET = "http://8.218.94.246:8545";
+export declare const ZG_RPC_ENDPOINT_TESTNET = "https://evmrpc-testnet.0g.ai";
 export declare const INDEXER_URL_STANDARD = "https://indexer-storage-testnet-standard.0g.ai";
 export declare const INDEXER_URL_TURBO = "http://47.251.40.189:12345";
 export declare const TOKEN_COUNTER_MERKLE_ROOT = "0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97";
