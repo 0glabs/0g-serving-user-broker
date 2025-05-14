@@ -39,7 +39,7 @@
 
     async function main() {
         const provider = new ethers.JsonRpcProvider(
-            'http://8.218.94.246:8545'
+            'https://evmrpc-testnet.0g.ai'
         )
 
         // Step 1: Create a wallet with a private key

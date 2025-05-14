@@ -10142,7 +10142,7 @@ class FineTuningServingContract {
  *   on the key derivation and encryption process.
  * - Because the signature is derived from the wallet's private key, it ensures that different wallets cannot produce the same key.
  */
-const ZG_RPC_ENDPOINT_TESTNET = 'http://8.218.94.246:8545';
+const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_TURBO = 'http://47.251.40.189:12345';
 const TOKEN_COUNTER_MERKLE_ROOT = '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97';
 const MODEL_HASH_MAP = {
@@ -34446,7 +34446,7 @@ class ZGComputeNetworkBroker {
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGComputeNetworkBroker(signer, ledgerCA = '0xd70dC24E2c75B37B2294a719C5d732487563F7c4', inferenceCA = '0xB6C4cd83F695b1Ffb7fa260cedB13B03e8B2F472', fineTuningCA = '0xc0B71cA19184B678Fdd6eC729aa24f054E57c10c', gasPrice, maxGasPrice, step) {
+async function createZGComputeNetworkBroker(signer, ledgerCA = '0x70e1dD4B057B94b01D782c67b1A4B0F403277897', inferenceCA = '0x9A34fE4E3E29A6EB7e90b84b963E44591A58Ecc6', fineTuningCA = '0x58a9842553Dada1BE9741ceB916eD5b7119d510e', gasPrice, maxGasPrice, step) {
     try {
         const ledger = await createLedgerBroker(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step);
         const inferenceBroker = await createInferenceBroker(signer, inferenceCA, ledger);

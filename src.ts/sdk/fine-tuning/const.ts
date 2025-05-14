@@ -17,7 +17,7 @@
  */
 export const MESSAGE_FOR_ENCRYPTION_KEY = 'MESSAGE_FOR_ENCRYPTION_KEY'
 
-export const ZG_RPC_ENDPOINT_TESTNET = 'http://8.218.94.246:8545'
+export const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai'
 
 export const INDEXER_URL_STANDARD =
     'https://indexer-storage-testnet-standard.0g.ai'
