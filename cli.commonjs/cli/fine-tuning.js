@@ -137,6 +137,9 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             console.log('Verify provider...');
@@ -156,9 +159,6 @@ function fineTuning(program) {
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
-        .option('--gas-price <price>', 'Gas price for transactions')
-        .option('--max-gas-price <price>', 'Max gas price for transactions')
-        .option('--step <step>', 'Step for gas price adjustment')
         .action((options) => {
         (0, util_1.withFineTuningBroker)(options, async (broker) => {
             const r = await broker.fineTuning.cancelTask(options.provider, options.task);
