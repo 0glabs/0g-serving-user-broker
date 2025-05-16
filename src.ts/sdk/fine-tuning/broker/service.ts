@@ -183,12 +183,19 @@ export class ServiceProcessor extends BrokerBase {
             const fee =
                 service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs)
 
-            await this.ledger.transferFund(
-                providerAddress,
-                'fine-tuning',
-                fee,
-                gasPrice
+            console.log(
+                `Estimated fee: ${fee} (neuron), data size: ${dataSize}, train epochs: ${trainEpochs}, price per token: ${service.pricePerToken} (neuron)`
             )
+
+            const account = await this.contract.getAccount(providerAddress)
+            if (account.balance - account.pendingRefund < fee) {
+                await this.ledger.transferFund(
+                    providerAddress,
+                    'fine-tuning',
+                    fee,
+                    gasPrice
+                )
+            }
 
             const nonce = getNonce()
             const signature = await signRequest(

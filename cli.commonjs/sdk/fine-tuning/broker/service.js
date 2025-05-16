@@ -135,7 +135,11 @@ class ServiceProcessor extends base_1.BrokerBase {
             const parsedParams = this.verifyTrainingParams(trainingParams);
             const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3;
             const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);
-            await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
+            console.log(`Estimated fee: ${fee} (neuron), data size: ${dataSize}, train epochs: ${trainEpochs}, price per token: ${service.pricePerToken} (neuron)`);
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.balance - account.pendingRefund < fee) {
+                await this.ledger.transferFund(providerAddress, 'fine-tuning', fee, gasPrice);
+            }
             const nonce = (0, utils_1.getNonce)();
             const signature = await (0, utils_1.signRequest)(this.contract.signer, this.contract.getUserAddress(), BigInt(nonce), datasetHash, fee);
             let wait = false;
