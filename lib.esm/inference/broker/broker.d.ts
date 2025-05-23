@@ -34,6 +34,7 @@ export declare class InferenceBroker {
      * @throws Will throw an error if the account retrieval process fails.
      */
     getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
+    acknowledgeProviderSigner: (providerAddress: string, gasPrice?: number) => Promise<void>;
     /**
      * Generates request metadata for the provider service.
      * Includes:
@@ -153,21 +154,6 @@ export declare class InferenceBroker {
      * @returns Download link.
      */
     getChatSignatureDownloadLink: (providerAddress: string, chatID: string) => Promise<string>;
-    /**
-     * settleFee is used to settle the fee for the provider service.
-     *
-     * Normally, the fee for each request will be automatically settled in processResponse.
-     * However, if processResponse fails due to network issues or other reasons,
-     * you can manually call settleFee to settle the fee.
-     *
-     * @param {string} providerAddress - The address of the provider.
-     * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
-     *
-     * @returns A promise that resolves when the fee settlement is successful.
-     *
-     * @throws An error if any issues occur during the fee settlement process.
-     */
-    settleFee: (providerAddress: string, fee: number) => Promise<void>;
 }
 /**
  * createInferenceBroker is used to initialize ZGServingUserBroker

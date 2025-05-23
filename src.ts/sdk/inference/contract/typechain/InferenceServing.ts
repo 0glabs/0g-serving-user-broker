@@ -23,6 +23,34 @@ import type {
     TypedContractMethod,
 } from './common.js'
 
+export type ServiceParamsStruct = {
+    serviceType: string
+    url: string
+    model: string
+    verifiability: string
+    inputPrice: BigNumberish
+    outputPrice: BigNumberish
+    additionalInfo: string
+}
+
+export type ServiceParamsStructOutput = [
+    serviceType: string,
+    url: string,
+    model: string,
+    verifiability: string,
+    inputPrice: bigint,
+    outputPrice: bigint,
+    additionalInfo: string
+] & {
+    serviceType: string
+    url: string
+    model: string
+    verifiability: string
+    inputPrice: bigint
+    outputPrice: bigint
+    additionalInfo: string
+}
+
 export type RefundStruct = {
     index: BigNumberish
     amount: BigNumberish
@@ -46,6 +74,7 @@ export type AccountStruct = {
     signer: [BigNumberish, BigNumberish]
     refunds: RefundStruct[]
     additionalInfo: string
+    providerPubKey: [BigNumberish, BigNumberish]
 }
 
 export type AccountStructOutput = [
@@ -56,7 +85,8 @@ export type AccountStructOutput = [
     pendingRefund: bigint,
     signer: [bigint, bigint],
     refunds: RefundStructOutput[],
-    additionalInfo: string
+    additionalInfo: string,
+    providerPubKey: [bigint, bigint]
 ] & {
     user: string
     provider: string
@@ -66,6 +96,7 @@ export type AccountStructOutput = [
     signer: [bigint, bigint]
     refunds: RefundStructOutput[]
     additionalInfo: string
+    providerPubKey: [bigint, bigint]
 }
 
 export type ServiceStruct = {
@@ -77,6 +108,7 @@ export type ServiceStruct = {
     updatedAt: BigNumberish
     model: string
     verifiability: string
+    additionalInfo: string
 }
 
 export type ServiceStructOutput = [
@@ -87,7 +119,8 @@ export type ServiceStructOutput = [
     outputPrice: bigint,
     updatedAt: bigint,
     model: string,
-    verifiability: string
+    verifiability: string,
+    additionalInfo: string
 ] & {
     provider: string
     serviceType: string
@@ -97,6 +130,7 @@ export type ServiceStructOutput = [
     updatedAt: bigint
     model: string
     verifiability: string
+    additionalInfo: string
 }
 
 export type VerifierInputStruct = {
@@ -122,6 +156,7 @@ export interface InferenceServingInterface extends Interface {
     getFunction(
         nameOrSignature:
             | 'accountExists'
+            | 'acknowledgeProviderSigner'
             | 'addAccount'
             | 'addOrUpdateService'
             | 'batchVerifierAddress'
@@ -161,12 +196,16 @@ export interface InferenceServingInterface extends Interface {
         values: [AddressLike, AddressLike]
     ): string
     encodeFunctionData(
+        functionFragment: 'acknowledgeProviderSigner',
+        values: [AddressLike, [BigNumberish, BigNumberish]]
+    ): string
+    encodeFunctionData(
         functionFragment: 'addAccount',
         values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]
     ): string
     encodeFunctionData(
         functionFragment: 'addOrUpdateService',
-        values: [string, string, string, string, BigNumberish, BigNumberish]
+        values: [ServiceParamsStruct]
     ): string
     encodeFunctionData(
         functionFragment: 'batchVerifierAddress',
@@ -249,6 +288,10 @@ export interface InferenceServingInterface extends Interface {
 
     decodeFunctionResult(
         functionFragment: 'accountExists',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
+        functionFragment: 'acknowledgeProviderSigner',
         data: BytesLike
     ): Result
     decodeFunctionResult(
@@ -520,6 +563,12 @@ export interface InferenceServing extends BaseContract {
         'view'
     >
 
+    acknowledgeProviderSigner: TypedContractMethod<
+        [provider: AddressLike, providerPubKey: [BigNumberish, BigNumberish]],
+        [void],
+        'nonpayable'
+    >
+
     addAccount: TypedContractMethod<
         [
             user: AddressLike,
@@ -532,14 +581,7 @@ export interface InferenceServing extends BaseContract {
     >
 
     addOrUpdateService: TypedContractMethod<
-        [
-            serviceType: string,
-            url: string,
-            model: string,
-            verifiability: string,
-            inputPrice: BigNumberish,
-            outputPrice: BigNumberish
-        ],
+        [params: ServiceParamsStruct],
         [void],
         'nonpayable'
     >
@@ -661,6 +703,13 @@ export interface InferenceServing extends BaseContract {
         'view'
     >
     getFunction(
+        nameOrSignature: 'acknowledgeProviderSigner'
+    ): TypedContractMethod<
+        [provider: AddressLike, providerPubKey: [BigNumberish, BigNumberish]],
+        [void],
+        'nonpayable'
+    >
+    getFunction(
         nameOrSignature: 'addAccount'
     ): TypedContractMethod<
         [
@@ -674,18 +723,7 @@ export interface InferenceServing extends BaseContract {
     >
     getFunction(
         nameOrSignature: 'addOrUpdateService'
-    ): TypedContractMethod<
-        [
-            serviceType: string,
-            url: string,
-            model: string,
-            verifiability: string,
-            inputPrice: BigNumberish,
-            outputPrice: BigNumberish
-        ],
-        [void],
-        'nonpayable'
-    >
+    ): TypedContractMethod<[params: ServiceParamsStruct], [void], 'nonpayable'>
     getFunction(
         nameOrSignature: 'batchVerifierAddress'
     ): TypedContractMethod<[], [string], 'view'>

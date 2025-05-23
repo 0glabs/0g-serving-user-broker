@@ -1,4 +1,4 @@
-import { JsonRpcSigner, AddressLike, Wallet } from 'ethers';
+import { JsonRpcSigner, AddressLike, Wallet, BigNumberish } from 'ethers';
 import { InferenceServing } from './typechain';
 import { ServiceStructOutput } from './typechain/InferenceServing';
 export declare class InferenceServingContract {
@@ -10,6 +10,7 @@ export declare class InferenceServingContract {
     listService(): Promise<ServiceStructOutput[]>;
     listAccount(): Promise<import(".").AccountStructOutput[]>;
     getAccount(provider: AddressLike): Promise<import(".").AccountStructOutput>;
+    acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: [BigNumberish, BigNumberish]): Promise<void>;
     getService(providerAddress: string): Promise<ServiceStructOutput>;
     getUserAddress(): string;
 }

@@ -1,4 +1,4 @@
-import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet, ContractMethodArgs as ContractMethodArgs$3, ContractTransactionReceipt } from 'ethers';
+import { DeferredTopicFilter, EventFragment, EventLog, ContractTransactionResponse, FunctionFragment, ContractTransaction, LogDescription, Typed, TransactionRequest, BaseContract, ContractRunner, Listener, AddressLike, BigNumberish, ContractMethod, Interface, BytesLike, Result, JsonRpcSigner, Wallet, ContractMethodArgs as ContractMethodArgs$3, ContractTransactionReceipt, ethers } from 'ethers';
 
 interface TypedDeferredTopicFilter$2<_TCEvent extends TypedContractEvent$2> extends DeferredTopicFilter {
 }
@@ -44,6 +44,15 @@ interface TypedContractMethod$2<A extends Array<any> = Array<any>, R = any, S ex
     staticCallResult(...args: ContractMethodArgs$2<A, 'view'>): Promise<R>;
 }
 
+type ServiceParamsStruct = {
+    serviceType: string;
+    url: string;
+    model: string;
+    verifiability: string;
+    inputPrice: BigNumberish;
+    outputPrice: BigNumberish;
+    additionalInfo: string;
+};
 type RefundStructOutput$1 = [
     index: bigint,
     amount: bigint,
@@ -63,7 +72,8 @@ type AccountStructOutput$1 = [
     pendingRefund: bigint,
     signer: [bigint, bigint],
     refunds: RefundStructOutput$1[],
-    additionalInfo: string
+    additionalInfo: string,
+    providerPubKey: [bigint, bigint]
 ] & {
     user: string;
     provider: string;
@@ -73,6 +83,7 @@ type AccountStructOutput$1 = [
     signer: [bigint, bigint];
     refunds: RefundStructOutput$1[];
     additionalInfo: string;
+    providerPubKey: [bigint, bigint];
 };
 type ServiceStructOutput$1 = [
     provider: string,
@@ -82,7 +93,8 @@ type ServiceStructOutput$1 = [
     outputPrice: bigint,
     updatedAt: bigint,
     model: string,
-    verifiability: string
+    verifiability: string,
+    additionalInfo: string
 ] & {
     provider: string;
     serviceType: string;
@@ -92,6 +104,7 @@ type ServiceStructOutput$1 = [
     updatedAt: bigint;
     model: string;
     verifiability: string;
+    additionalInfo: string;
 };
 type VerifierInputStruct$1 = {
     inProof: BigNumberish[];
@@ -100,11 +113,12 @@ type VerifierInputStruct$1 = {
     segmentSize: BigNumberish[];
 };
 interface InferenceServingInterface extends Interface {
-    getFunction(nameOrSignature: 'accountExists' | 'addAccount' | 'addOrUpdateService' | 'batchVerifierAddress' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateBatchVerifierAddress' | 'updateLockTime'): FunctionFragment;
+    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeProviderSigner' | 'addAccount' | 'addOrUpdateService' | 'batchVerifierAddress' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateBatchVerifierAddress' | 'updateLockTime'): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated'): EventFragment;
     encodeFunctionData(functionFragment: 'accountExists', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'acknowledgeProviderSigner', values: [AddressLike, [BigNumberish, BigNumberish]]): string;
     encodeFunctionData(functionFragment: 'addAccount', values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]): string;
-    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [string, string, string, string, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [ServiceParamsStruct]): string;
     encodeFunctionData(functionFragment: 'batchVerifierAddress', values?: undefined): string;
     encodeFunctionData(functionFragment: 'deleteAccount', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'depositFund', values: [AddressLike, AddressLike, BigNumberish]): string;
@@ -127,6 +141,7 @@ interface InferenceServingInterface extends Interface {
     encodeFunctionData(functionFragment: 'updateBatchVerifierAddress', values: [AddressLike]): string;
     encodeFunctionData(functionFragment: 'updateLockTime', values: [BigNumberish]): string;
     decodeFunctionResult(functionFragment: 'accountExists', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'acknowledgeProviderSigner', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'addAccount', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'addOrUpdateService', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'batchVerifierAddress', data: BytesLike): Result;
@@ -277,6 +292,12 @@ interface InferenceServing extends BaseContract {
     ], [
         boolean
     ], 'view'>;
+    acknowledgeProviderSigner: TypedContractMethod$2<[
+        provider: AddressLike,
+        providerPubKey: [BigNumberish, BigNumberish]
+    ], [
+        void
+    ], 'nonpayable'>;
     addAccount: TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike,
@@ -286,12 +307,7 @@ interface InferenceServing extends BaseContract {
         void
     ], 'payable'>;
     addOrUpdateService: TypedContractMethod$2<[
-        serviceType: string,
-        url: string,
-        model: string,
-        verifiability: string,
-        inputPrice: BigNumberish,
-        outputPrice: BigNumberish
+        params: ServiceParamsStruct
     ], [
         void
     ], 'nonpayable'>;
@@ -389,6 +405,12 @@ interface InferenceServing extends BaseContract {
     ], [
         boolean
     ], 'view'>;
+    getFunction(nameOrSignature: 'acknowledgeProviderSigner'): TypedContractMethod$2<[
+        provider: AddressLike,
+        providerPubKey: [BigNumberish, BigNumberish]
+    ], [
+        void
+    ], 'nonpayable'>;
     getFunction(nameOrSignature: 'addAccount'): TypedContractMethod$2<[
         user: AddressLike,
         provider: AddressLike,
@@ -397,16 +419,7 @@ interface InferenceServing extends BaseContract {
     ], [
         void
     ], 'payable'>;
-    getFunction(nameOrSignature: 'addOrUpdateService'): TypedContractMethod$2<[
-        serviceType: string,
-        url: string,
-        model: string,
-        verifiability: string,
-        inputPrice: BigNumberish,
-        outputPrice: BigNumberish
-    ], [
-        void
-    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'addOrUpdateService'): TypedContractMethod$2<[params: ServiceParamsStruct], [void], 'nonpayable'>;
     getFunction(nameOrSignature: 'batchVerifierAddress'): TypedContractMethod$2<[], [string], 'view'>;
     getFunction(nameOrSignature: 'deleteAccount'): TypedContractMethod$2<[
         user: AddressLike,
@@ -514,6 +527,7 @@ declare class InferenceServingContract {
     listService(): Promise<ServiceStructOutput$1[]>;
     listAccount(): Promise<AccountStructOutput$1[]>;
     getAccount(provider: AddressLike): Promise<AccountStructOutput$1>;
+    acknowledgeProviderSigner(providerAddress: AddressLike, providerSigner: [BigNumberish, BigNumberish]): Promise<void>;
     getService(providerAddress: string): Promise<ServiceStructOutput$1>;
     getUserAddress(): string;
 }
@@ -554,7 +568,17 @@ declare class Cache {
     private initialize;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
-    static createServiceStructOutput(fields: [string, string, string, bigint, bigint, bigint, string, string]): ServiceStructOutput$1;
+    static createServiceStructOutput(fields: [
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string,
+        string
+    ]): ServiceStructOutput$1;
 }
 
 interface TypedDeferredTopicFilter$1<_TCEvent extends TypedContractEvent$1> extends DeferredTopicFilter {
@@ -1550,6 +1574,13 @@ declare class LedgerBroker {
  */
 declare function createLedgerBroker(signer: JsonRpcSigner | Wallet, ledgerCA: string, inferenceCA: string, fineTuningCA: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<LedgerBroker>;
 
+declare class Automata {
+    protected provider: any;
+    protected contract: ethers.Contract;
+    constructor();
+    verifyQuote(rawQuote: string): Promise<boolean | undefined>;
+}
+
 /**
  * ServingRequestHeaders contains headers related to request billing.
  * These need to be added to the request.
@@ -1571,20 +1602,21 @@ interface ServingRequestHeaders {
      * 'Input-Fee' = number of tokens input by the user * price per token
      */
     'Input-Fee': string;
-    Nonce: string;
     /**
-     * Fee returned from the previous request.
-     * In the 0G Serving system, the request is the only payment proof,
-     * so the fee returned from the previous request will be included in the current request.
-     * For example, for a chatbot service,
-     * 'Previous-Output-Fee' = number of tokens returned by the service in the previous round * price per token
+     * Pedersen hash for nonce, user address and provider address
      */
-    'Previous-Output-Fee': string;
+    'Request-Hash': string;
+    Nonce: string;
     /**
      * User's signature for the other headers.
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
     Signature: string;
+}
+interface QuoteResponse {
+    quote: string;
+    provider_signer: string;
+    key: [bigint, bigint];
 }
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
@@ -1592,12 +1624,16 @@ interface ServingRequestHeaders {
  * before use.
  */
 declare class RequestProcessor extends ZGServingUserBrokerBase {
+    protected automata: Automata;
     constructor(contract: InferenceServingContract, metadata: Metadata, cache: Cache, ledger: LedgerBroker);
     getServiceMetadata(providerAddress: string): Promise<{
         endpoint: string;
         model: string;
     }>;
     getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
+    acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
+    getQuote(providerAddress: string): Promise<QuoteResponse>;
+    private fetchText;
 }
 
 declare abstract class ZGServingUserBrokerBase {
@@ -1607,7 +1643,7 @@ declare abstract class ZGServingUserBrokerBase {
     private checkAccountThreshold;
     private topUpTriggerThreshold;
     private topUpTargetThreshold;
-    private ledger;
+    protected ledger: LedgerBroker;
     constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
     protected getProviderData(providerAddress: string): Promise<{
         settleSignerPrivateKey: bigint[] | null;
@@ -1617,6 +1653,7 @@ declare abstract class ZGServingUserBrokerBase {
     protected createExtractor(svc: ServiceStructOutput$1): Extractor;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
+    protected userAcknowledged(providerAddress: string, userAddress: string): Promise<boolean>;
     getHeader(providerAddress: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     updateCachedFee(provider: string, fee: bigint): Promise<void>;
@@ -1650,11 +1687,6 @@ declare class AccountProcessor extends ZGServingUserBrokerBase {
 declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
     constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
-    settleFeeWithA0gi(providerAddress: string, fee: number): Promise<void>;
-    /**
-     * settleFee sends an empty request to the service provider to settle the fee.
-     */
-    settleFee(providerAddress: string, fee: bigint): Promise<void>;
     processResponse(providerAddress: string, content: string, chatID?: string): Promise<boolean | null>;
     private calculateOutputFees;
 }
@@ -1737,6 +1769,7 @@ declare class InferenceBroker {
      * @throws Will throw an error if the account retrieval process fails.
      */
     getAccount: (providerAddress: string) => Promise<AccountStructOutput$1>;
+    acknowledgeProviderSigner: (providerAddress: string, gasPrice?: number) => Promise<void>;
     /**
      * Generates request metadata for the provider service.
      * Includes:
@@ -1856,21 +1889,6 @@ declare class InferenceBroker {
      * @returns Download link.
      */
     getChatSignatureDownloadLink: (providerAddress: string, chatID: string) => Promise<string>;
-    /**
-     * settleFee is used to settle the fee for the provider service.
-     *
-     * Normally, the fee for each request will be automatically settled in processResponse.
-     * However, if processResponse fails due to network issues or other reasons,
-     * you can manually call settleFee to settle the fee.
-     *
-     * @param {string} providerAddress - The address of the provider.
-     * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
-     *
-     * @returns A promise that resolves when the fee settlement is successful.
-     *
-     * @throws An error if any issues occur during the fee settlement process.
-     */
-    settleFee: (providerAddress: string, fee: number) => Promise<void>;
 }
 /**
  * createInferenceBroker is used to initialize ZGServingUserBroker

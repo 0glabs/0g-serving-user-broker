@@ -1,4 +1,4 @@
-import { JsonRpcSigner, AddressLike, Wallet } from 'ethers'
+import { JsonRpcSigner, AddressLike, Wallet, BigNumberish } from 'ethers'
 import { InferenceServing, InferenceServing__factory } from './typechain'
 import { ServiceStructOutput } from './typechain/InferenceServing'
 
@@ -48,6 +48,26 @@ export class InferenceServingContract {
             const user = this.getUserAddress()
             const account = await this.serving.getAccount(user, provider)
             return account
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async acknowledgeProviderSigner(
+        providerAddress: AddressLike,
+        providerSigner: [BigNumberish, BigNumberish]
+    ) {
+        try {
+            const tx = await this.serving.acknowledgeProviderSigner(
+                providerAddress,
+                providerSigner
+            )
+
+            const receipt = await tx.wait()
+            if (!receipt || receipt.status !== 1) {
+                const error = new Error('Transaction failed')
+                throw error
+            }
         } catch (error) {
             throw error
         }
