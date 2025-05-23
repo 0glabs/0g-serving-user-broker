@@ -1,5 +1,31 @@
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from 'ethers';
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from './common.js';
+export type ServiceParamsStruct = {
+    serviceType: string;
+    url: string;
+    model: string;
+    verifiability: string;
+    inputPrice: BigNumberish;
+    outputPrice: BigNumberish;
+    additionalInfo: string;
+};
+export type ServiceParamsStructOutput = [
+    serviceType: string,
+    url: string,
+    model: string,
+    verifiability: string,
+    inputPrice: bigint,
+    outputPrice: bigint,
+    additionalInfo: string
+] & {
+    serviceType: string;
+    url: string;
+    model: string;
+    verifiability: string;
+    inputPrice: bigint;
+    outputPrice: bigint;
+    additionalInfo: string;
+};
 export type RefundStruct = {
     index: BigNumberish;
     amount: BigNumberish;
@@ -26,6 +52,7 @@ export type AccountStruct = {
     signer: [BigNumberish, BigNumberish];
     refunds: RefundStruct[];
     additionalInfo: string;
+    providerPubKey: [BigNumberish, BigNumberish];
 };
 export type AccountStructOutput = [
     user: string,
@@ -35,7 +62,8 @@ export type AccountStructOutput = [
     pendingRefund: bigint,
     signer: [bigint, bigint],
     refunds: RefundStructOutput[],
-    additionalInfo: string
+    additionalInfo: string,
+    providerPubKey: [bigint, bigint]
 ] & {
     user: string;
     provider: string;
@@ -45,6 +73,7 @@ export type AccountStructOutput = [
     signer: [bigint, bigint];
     refunds: RefundStructOutput[];
     additionalInfo: string;
+    providerPubKey: [bigint, bigint];
 };
 export type ServiceStruct = {
     provider: AddressLike;
@@ -55,6 +84,7 @@ export type ServiceStruct = {
     updatedAt: BigNumberish;
     model: string;
     verifiability: string;
+    additionalInfo: string;
 };
 export type ServiceStructOutput = [
     provider: string,
@@ -64,7 +94,8 @@ export type ServiceStructOutput = [
     outputPrice: bigint,
     updatedAt: bigint,
     model: string,
-    verifiability: string
+    verifiability: string,
+    additionalInfo: string
 ] & {
     provider: string;
     serviceType: string;
@@ -74,6 +105,7 @@ export type ServiceStructOutput = [
     updatedAt: bigint;
     model: string;
     verifiability: string;
+    additionalInfo: string;
 };
 export type VerifierInputStruct = {
     inProof: BigNumberish[];
@@ -93,11 +125,12 @@ export type VerifierInputStructOutput = [
     segmentSize: bigint[];
 };
 export interface InferenceServingInterface extends Interface {
-    getFunction(nameOrSignature: 'accountExists' | 'addAccount' | 'addOrUpdateService' | 'batchVerifierAddress' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateBatchVerifierAddress' | 'updateLockTime'): FunctionFragment;
+    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeProviderSigner' | 'addAccount' | 'addOrUpdateService' | 'batchVerifierAddress' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateBatchVerifierAddress' | 'updateLockTime'): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated'): EventFragment;
     encodeFunctionData(functionFragment: 'accountExists', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'acknowledgeProviderSigner', values: [AddressLike, [BigNumberish, BigNumberish]]): string;
     encodeFunctionData(functionFragment: 'addAccount', values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]): string;
-    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [string, string, string, string, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'addOrUpdateService', values: [ServiceParamsStruct]): string;
     encodeFunctionData(functionFragment: 'batchVerifierAddress', values?: undefined): string;
     encodeFunctionData(functionFragment: 'deleteAccount', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'depositFund', values: [AddressLike, AddressLike, BigNumberish]): string;
@@ -120,6 +153,7 @@ export interface InferenceServingInterface extends Interface {
     encodeFunctionData(functionFragment: 'updateBatchVerifierAddress', values: [AddressLike]): string;
     encodeFunctionData(functionFragment: 'updateLockTime', values: [BigNumberish]): string;
     decodeFunctionResult(functionFragment: 'accountExists', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'acknowledgeProviderSigner', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'addAccount', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'addOrUpdateService', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'batchVerifierAddress', data: BytesLike): Result;
@@ -270,6 +304,12 @@ export interface InferenceServing extends BaseContract {
     ], [
         boolean
     ], 'view'>;
+    acknowledgeProviderSigner: TypedContractMethod<[
+        provider: AddressLike,
+        providerPubKey: [BigNumberish, BigNumberish]
+    ], [
+        void
+    ], 'nonpayable'>;
     addAccount: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
@@ -279,12 +319,7 @@ export interface InferenceServing extends BaseContract {
         void
     ], 'payable'>;
     addOrUpdateService: TypedContractMethod<[
-        serviceType: string,
-        url: string,
-        model: string,
-        verifiability: string,
-        inputPrice: BigNumberish,
-        outputPrice: BigNumberish
+        params: ServiceParamsStruct
     ], [
         void
     ], 'nonpayable'>;
@@ -382,6 +417,12 @@ export interface InferenceServing extends BaseContract {
     ], [
         boolean
     ], 'view'>;
+    getFunction(nameOrSignature: 'acknowledgeProviderSigner'): TypedContractMethod<[
+        provider: AddressLike,
+        providerPubKey: [BigNumberish, BigNumberish]
+    ], [
+        void
+    ], 'nonpayable'>;
     getFunction(nameOrSignature: 'addAccount'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
@@ -390,16 +431,7 @@ export interface InferenceServing extends BaseContract {
     ], [
         void
     ], 'payable'>;
-    getFunction(nameOrSignature: 'addOrUpdateService'): TypedContractMethod<[
-        serviceType: string,
-        url: string,
-        model: string,
-        verifiability: string,
-        inputPrice: BigNumberish,
-        outputPrice: BigNumberish
-    ], [
-        void
-    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'addOrUpdateService'): TypedContractMethod<[params: ServiceParamsStruct], [void], 'nonpayable'>;
     getFunction(nameOrSignature: 'batchVerifierAddress'): TypedContractMethod<[], [string], 'view'>;
     getFunction(nameOrSignature: 'deleteAccount'): TypedContractMethod<[
         user: AddressLike,

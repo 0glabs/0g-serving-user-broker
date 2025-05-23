@@ -5,6 +5,7 @@ const extractor_1 = require("../extractor");
 const utils_1 = require("../../common/utils");
 const settle_signer_1 = require("../../common/settle-signer");
 const storage_1 = require("../../common/storage");
+const ethers_1 = require("ethers");
 class ZGServingUserBrokerBase {
     contract;
     metadata;
@@ -86,11 +87,36 @@ class ZGServingUserBrokerBase {
         const decimalPart = Number(remainder) / Number(divisor);
         return Number(integerPart) + decimalPart;
     }
+    async userAcknowledged(providerAddress, userAddress) {
+        const key = `${userAddress}_${providerAddress}_ack`;
+        const cachedSvc = await this.cache.getItem(key);
+        if (cachedSvc) {
+            return true;
+        }
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.providerPubKey[0] !== 0n &&
+                account.providerPubKey[1] !== 0n) {
+                await this.cache.setItem(key, account.providerPubKey, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getHeader(providerAddress, content, outputFee) {
         try {
+            const userAddress = this.contract.getUserAddress();
+            if (!(await this.userAcknowledged(providerAddress, userAddress))) {
+                throw new Error('Provider signer is not acknowledged');
+            }
             const extractor = await this.getExtractor(providerAddress);
             const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            const key = `${userAddress}_${providerAddress}`;
             let privateKey = settleSignerPrivateKey;
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress);
@@ -101,16 +127,19 @@ class ZGServingUserBrokerBase {
             const nonce = await (0, utils_1.getNonceWithCache)(this.cache);
             const inputFee = await this.calculateInputFees(extractor, content);
             const fee = inputFee + outputFee;
-            const request = new settle_signer_1.Request(nonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
+            const request = new settle_signer_1.Request(nonce.toString(), fee.toString(), userAddress, providerAddress);
             const settleSignature = await (0, settle_signer_1.signData)([request], privateKey);
             const sig = JSON.stringify(Array.from(settleSignature[0]));
+            const msg = ethers_1.ethers.solidityPacked(['uint64', 'address', 'address'], [BigInt(nonce), userAddress, providerAddress]);
+            const requestHash = (0, ethers_1.hexlify)(await (0, settle_signer_1.pedersenHash)((0, ethers_1.getBytes)(msg)));
+            console.log(`nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, msg ${msg}, hash ${requestHash}`);
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
-                Address: this.contract.getUserAddress(),
+                Address: userAddress,
                 Fee: fee.toString(),
                 'Input-Fee': inputFee.toString(),
                 Nonce: nonce.toString(),
-                'Previous-Output-Fee': outputFee.toString(),
+                'Request-Hash': requestHash,
                 Signature: sig,
             };
         }

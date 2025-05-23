@@ -1,7 +1,8 @@
 import { ZGServingUserBrokerBase } from './base'
-import { Cache, Metadata } from '../../common/storage'
+import { Cache, Metadata, CacheValueTypeEnum } from '../../common/storage'
 import { InferenceServingContract } from '../contract'
 import { LedgerBroker } from '../../ledger'
+import { Automata } from '../../common/automata '
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -24,20 +25,21 @@ export interface ServingRequestHeaders {
      * 'Input-Fee' = number of tokens input by the user * price per token
      */
     'Input-Fee': string
-    Nonce: string
     /**
-     * Fee returned from the previous request.
-     * In the 0G Serving system, the request is the only payment proof,
-     * so the fee returned from the previous request will be included in the current request.
-     * For example, for a chatbot service,
-     * 'Previous-Output-Fee' = number of tokens returned by the service in the previous round * price per token
+     * Pedersen hash for nonce, user address and provider address
      */
-    'Previous-Output-Fee': string
+    'Request-Hash': string
+    Nonce: string
     /**
      * User's signature for the other headers.
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
     Signature: string
+}
+export interface QuoteResponse {
+    quote: string
+    provider_signer: string
+    key: [bigint, bigint]
 }
 
 /**
@@ -46,6 +48,8 @@ export interface ServingRequestHeaders {
  * before use.
  */
 export class RequestProcessor extends ZGServingUserBrokerBase {
+    protected automata: Automata
+
     constructor(
         contract: InferenceServingContract,
         metadata: Metadata,
@@ -53,6 +57,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         ledger: LedgerBroker
     ) {
         super(contract, ledger, metadata, cache)
+        this.automata = new Automata()
     }
 
     async getServiceMetadata(providerAddress: string): Promise<{
@@ -95,6 +100,111 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content)
             return await this.getHeader(providerAddress, content, BigInt(0))
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async acknowledgeProviderSigner(
+        providerAddress: string,
+        gasPrice?: number
+    ): Promise<void> {
+        try {
+            try {
+                await this.contract.getAccount(providerAddress)
+            } catch (error) {
+                if (!(error as any).message.includes('AccountNotExists')) {
+                    throw error
+                } else {
+                    await this.ledger.transferFund(
+                        providerAddress,
+                        'inference',
+                        BigInt(0),
+                        gasPrice
+                    )
+                }
+            }
+
+            let { quote, provider_signer, key } = await this.getQuote(
+                providerAddress
+            )
+            if (!quote || !provider_signer) {
+                throw new Error('Invalid quote')
+            }
+            if (!quote.startsWith('0x')) {
+                quote = '0x' + quote
+            }
+
+            console.log(`provider signer ${provider_signer}`)
+            const rpc = process.env.RPC_ENDPOINT
+            // bypass quote verification if testing on localhost
+            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+                const isVerified = await this.automata.verifyQuote(quote)
+                console.log('Quote verification:', isVerified)
+                if (!isVerified) {
+                    throw new Error('Quote verification failed')
+                }
+            }
+
+            const account = await this.contract.getAccount(providerAddress)
+            if (
+                account.providerPubKey[0] === key[0] &&
+                account.providerPubKey[1] === key[1]
+            ) {
+                console.log('Provider signer already acknowledged')
+                return
+            }
+
+            await this.contract.acknowledgeProviderSigner(providerAddress, key)
+
+            const userAddress = this.contract.getUserAddress()
+            const cacheKey = `${userAddress}_${providerAddress}_ack`
+            await this.cache.setItem(
+                cacheKey,
+                key,
+                1 * 60 * 1000,
+                CacheValueTypeEnum.Other
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getQuote(providerAddress: string): Promise<QuoteResponse> {
+        try {
+            const service = await this.getService(providerAddress)
+
+            const url = service.url
+            const endpoint = `${url}/v1/quote`
+
+            const quoteString = await this.fetchText(endpoint, {
+                method: 'GET',
+            })
+
+            const ret = JSON.parse(quoteString, (_, value) => {
+                if (typeof value === 'string' && /^\d+$/.test(value)) {
+                    return BigInt(value)
+                }
+
+                return value
+            })
+            return ret
+        } catch (error) {
+            throw error
+        }
+    }
+
+    private async fetchText(
+        endpoint: string,
+        options: RequestInit
+    ): Promise<string> {
+        try {
+            const response = await fetch(endpoint, options)
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`)
+            }
+            const buffer = await response.arrayBuffer()
+            return Buffer.from(buffer).toString('utf-8')
         } catch (error) {
             throw error
         }

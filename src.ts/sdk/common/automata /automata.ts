@@ -1,5 +1,9 @@
 import { ethers } from 'ethers'
-import { AUTOMATA_ABI, AUTOMATA_CONTRACT_ADDRESS, AUTOMATA_RPC } from '../const'
+import {
+    AUTOMATA_ABI,
+    AUTOMATA_CONTRACT_ADDRESS,
+    AUTOMATA_RPC,
+} from '../../fine-tuning/const'
 
 export class Automata {
     protected provider: any

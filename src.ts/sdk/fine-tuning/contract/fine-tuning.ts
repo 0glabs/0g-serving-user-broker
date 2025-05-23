@@ -68,7 +68,7 @@ export class FineTuningServingContract {
 
         if (pendingNonce !== undefined && pendingNonce - nonce > 5) {
             console.warn(
-            `Significant gap detected between pending nonce (${pendingNonce}) and current nonce (${nonce}). This may indicate skipped or missing transactions. Using the current confirmed nonce for the transaction.`
+                `Significant gap detected between pending nonce (${pendingNonce}) and current nonce (${nonce}). This may indicate skipped or missing transactions. Using the current confirmed nonce for the transaction.`
             )
             txOptions.nonce = nonce
         }

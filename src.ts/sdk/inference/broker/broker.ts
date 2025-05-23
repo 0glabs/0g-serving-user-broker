@@ -103,6 +103,20 @@ export class InferenceBroker {
         }
     }
 
+    public acknowledgeProviderSigner = async (
+        providerAddress: string,
+        gasPrice?: number
+    ) => {
+        try {
+            return await this.requestProcessor.acknowledgeProviderSigner(
+                providerAddress,
+                gasPrice
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     /**
      * Generates request metadata for the provider service.
      * Includes:
@@ -284,34 +298,6 @@ export class InferenceBroker {
             return await this.verifier.getChatSignatureDownloadLink(
                 providerAddress,
                 chatID
-            )
-        } catch (error) {
-            throw error
-        }
-    }
-
-    /**
-     * settleFee is used to settle the fee for the provider service.
-     *
-     * Normally, the fee for each request will be automatically settled in processResponse.
-     * However, if processResponse fails due to network issues or other reasons,
-     * you can manually call settleFee to settle the fee.
-     *
-     * @param {string} providerAddress - The address of the provider.
-     * @param {number} fee - The fee to be settled. The unit of the fee is A0GI.
-     *
-     * @returns A promise that resolves when the fee settlement is successful.
-     *
-     * @throws An error if any issues occur during the fee settlement process.
-     */
-    public settleFee = async (
-        providerAddress: string,
-        fee: number
-    ): Promise<void> => {
-        try {
-            return await this.responseProcessor.settleFeeWithA0gi(
-                providerAddress,
-                fee
             )
         } catch (error) {
             throw error

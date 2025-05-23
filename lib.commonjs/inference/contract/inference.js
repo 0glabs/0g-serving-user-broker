@@ -42,6 +42,19 @@ class InferenceServingContract {
             throw error;
         }
     }
+    async acknowledgeProviderSigner(providerAddress, providerSigner) {
+        try {
+            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner);
+            const receipt = await tx.wait();
+            if (!receipt || receipt.status !== 1) {
+                const error = new Error('Transaction failed');
+                throw error;
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getService(providerAddress) {
         try {
             return this.serving.getService(providerAddress);

@@ -6,7 +6,7 @@ const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const base_1 = require("./base");
 const fs = tslib_1.__importStar(require("fs/promises"));
-const automata_1 = require("../automata ");
+const automata_1 = require("../../common/automata ");
 const readline = tslib_1.__importStar(require("readline"));
 async function askUser(question) {
     const rl = readline.createInterface({

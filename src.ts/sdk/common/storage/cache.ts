@@ -92,7 +92,17 @@ export class Cache {
     }
 
     static createServiceStructOutput(
-        fields: [string, string, string, bigint, bigint, bigint, string, string]
+        fields: [
+            string,
+            string,
+            string,
+            bigint,
+            bigint,
+            bigint,
+            string,
+            string,
+            string
+        ]
     ): InferenceServiceStructOutput {
         const tuple: [
             string,
@@ -101,6 +111,7 @@ export class Cache {
             bigint,
             bigint,
             bigint,
+            string,
             string,
             string
         ] = fields
@@ -114,6 +125,7 @@ export class Cache {
             updatedAt: fields[5],
             model: fields[6],
             verifiability: fields[7],
+            additionalInfo: fields[8],
         }
 
         return Object.assign(tuple, object)

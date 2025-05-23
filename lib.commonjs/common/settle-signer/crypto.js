@@ -5,6 +5,7 @@ exports.babyJubJubGeneratePublicKey = babyJubJubGeneratePublicKey;
 exports.babyJubJubSignature = babyJubJubSignature;
 exports.packSignature = packSignature;
 exports.packPoint = packPoint;
+exports.pedersenHash = pedersenHash;
 const circomlibjs_1 = require("circomlibjs");
 let eddsa;
 let babyjubjub;
@@ -37,5 +38,9 @@ async function packSignature(signature) {
 async function packPoint(point) {
     await initBabyJub();
     return babyjubjub.packPoint(point);
+}
+async function pedersenHash(msg) {
+    const h = await (0, circomlibjs_1.buildPedersenHash)();
+    return h.hash(msg);
 }
 //# sourceMappingURL=crypto.js.map

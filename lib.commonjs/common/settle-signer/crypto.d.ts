@@ -9,5 +9,6 @@ declare function babyJubJubGeneratePublicKey(privateKey: PrivateKey): Promise<Po
 declare function babyJubJubSignature(msg: Message, privateKey: PrivateKey): Promise<Signature>;
 declare function packSignature(signature: Signature): Promise<SignatureBuffer>;
 declare function packPoint(point: Point): Promise<PointBuffer>;
-export { babyJubJubGeneratePrivateKey, babyJubJubGeneratePublicKey, babyJubJubSignature, packSignature, packPoint, PrivateKey, Message, Hash, Signature, SignatureBuffer, PointBuffer, };
+declare function pedersenHash(msg: Uint8Array): Promise<Uint8Array>;
+export { babyJubJubGeneratePrivateKey, babyJubJubGeneratePublicKey, babyJubJubSignature, packSignature, packPoint, PrivateKey, Message, Hash, Signature, SignatureBuffer, PointBuffer, pedersenHash, };
 //# sourceMappingURL=crypto.d.ts.map
