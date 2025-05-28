@@ -130,9 +130,8 @@ class ZGServingUserBrokerBase {
             const request = new settle_signer_1.Request(nonce.toString(), fee.toString(), userAddress, providerAddress);
             const settleSignature = await (0, settle_signer_1.signData)([request], privateKey);
             const sig = JSON.stringify(Array.from(settleSignature[0]));
-            const msg = ethers_1.ethers.solidityPacked(['uint64', 'address', 'address'], [BigInt(nonce), userAddress, providerAddress]);
-            const requestHash = (0, ethers_1.hexlify)(await (0, settle_signer_1.pedersenHash)((0, ethers_1.getBytes)(msg)));
-            console.log(`nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, msg ${msg}, hash ${requestHash}`);
+            const requestHash = await this.calculatePedersenHash(nonce, userAddress, providerAddress);
+            console.log(`nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`);
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: userAddress,
@@ -146,6 +145,19 @@ class ZGServingUserBrokerBase {
         catch (error) {
             throw error;
         }
+    }
+    async calculatePedersenHash(nonce, userAddress, providerAddress) {
+        const ADDR_LENGTH = 20;
+        const NONCE_LENGTH = 8;
+        const buffer = new ArrayBuffer(NONCE_LENGTH + ADDR_LENGTH * 2);
+        let offset = 0;
+        const nonceBytes = (0, settle_signer_1.bigintToBytes)(BigInt(nonce), NONCE_LENGTH);
+        new Uint8Array(buffer, offset, NONCE_LENGTH).set(nonceBytes);
+        offset += NONCE_LENGTH;
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set((0, settle_signer_1.bigintToBytes)(BigInt(userAddress), ADDR_LENGTH));
+        offset += ADDR_LENGTH;
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set((0, settle_signer_1.bigintToBytes)(BigInt(providerAddress), ADDR_LENGTH));
+        return (0, ethers_1.hexlify)(await (0, settle_signer_1.pedersenHash)(Buffer.from(buffer)));
     }
     async calculateInputFees(extractor, content) {
         const svc = await extractor.getSvcInfo();

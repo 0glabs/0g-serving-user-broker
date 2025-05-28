@@ -12,10 +12,11 @@ import {
     Request,
     signData,
     pedersenHash,
+    bigintToBytes,
 } from '../../common/settle-signer'
 import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
 import { LedgerBroker } from '../../ledger'
-import { ethers, getBytes, hexlify } from 'ethers'
+import { hexlify } from 'ethers'
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract
@@ -203,15 +204,14 @@ export abstract class ZGServingUserBrokerBase {
             )
             const sig = JSON.stringify(Array.from(settleSignature[0]))
 
-            const msg = ethers.solidityPacked(
-                ['uint64', 'address', 'address'],
-                [BigInt(nonce), userAddress, providerAddress]
+            const requestHash = await this.calculatePedersenHash(
+                nonce,
+                userAddress,
+                providerAddress
             )
-            const requestHash = hexlify(await pedersenHash(getBytes(msg)))
             console.log(
-                `nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, msg ${msg}, hash ${requestHash}`
+                `nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`
             )
-
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: userAddress,
@@ -224,6 +224,33 @@ export abstract class ZGServingUserBrokerBase {
         } catch (error) {
             throw error
         }
+    }
+
+    async calculatePedersenHash(
+        nonce: number,
+        userAddress: string,
+        providerAddress: string
+    ): Promise<string> {
+        const ADDR_LENGTH = 20
+        const NONCE_LENGTH = 8
+
+        const buffer = new ArrayBuffer(NONCE_LENGTH + ADDR_LENGTH * 2)
+        let offset = 0
+
+        const nonceBytes = bigintToBytes(BigInt(nonce), NONCE_LENGTH)
+        new Uint8Array(buffer, offset, NONCE_LENGTH).set(nonceBytes)
+        offset += NONCE_LENGTH
+
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set(
+            bigintToBytes(BigInt(userAddress), ADDR_LENGTH)
+        )
+        offset += ADDR_LENGTH
+
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set(
+            bigintToBytes(BigInt(providerAddress), ADDR_LENGTH)
+        )
+
+        return hexlify(await pedersenHash(Buffer.from(buffer)))
     }
 
     async calculateInputFees(extractor: Extractor, content: string) {
