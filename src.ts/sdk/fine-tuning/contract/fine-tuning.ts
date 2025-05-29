@@ -60,18 +60,6 @@ export class FineTuningServingContract {
         } else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice)
         }
-        const nonce = await this.signer.getNonce()
-        const pendingNonce = await this.signer.provider?.getTransactionCount(
-            this._userAddress,
-            'pending'
-        )
-
-        if (pendingNonce !== undefined && pendingNonce - nonce > 5) {
-            console.warn(
-            `Significant gap detected between pending nonce (${pendingNonce}) and current nonce (${nonce}). This may indicate skipped or missing transactions. Using the current confirmed nonce for the transaction.`
-            )
-            txOptions.nonce = nonce
-        }
 
         while (true) {
             try {
@@ -99,6 +87,28 @@ export class FineTuningServingContract {
                 this.checkReceipt(receipt)
                 break
             } catch (error: any) {
+                if (
+                    error.message ===
+                    'Get Receipt timeout, try set higher gas price'
+                ) {
+                    const nonce = await this.signer.getNonce()
+                    const pendingNonce =
+                        await this.signer.provider?.getTransactionCount(
+                            this._userAddress,
+                            'pending'
+                        )
+                    if (
+                        pendingNonce !== undefined &&
+                        pendingNonce - nonce > 5 &&
+                        txOptions.nonce === undefined
+                    ) {
+                        console.warn(
+                            `Significant gap detected between pending nonce (${pendingNonce}) and current nonce (${nonce}). This may indicate skipped or missing transactions. Using the current confirmed nonce for the transaction.`
+                        )
+                        txOptions.nonce = nonce
+                    }
+                }
+
                 if (this._maxGasPrice === undefined) {
                     throw error
                 }
