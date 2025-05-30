@@ -6,10 +6,11 @@
 2. deposit fund (optional)
 3. refund fund (optional)
 4. list services
-5. generate header
+5. acknowledge provider signer
+6. generate header
     1. transfer fund to sub account
-6. call openai SDK
-7. verify response
+7. call openai SDK
+8. verify response
 
 ## FineTuning
 

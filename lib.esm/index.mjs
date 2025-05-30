@@ -7279,7 +7279,6 @@ class ZGServingUserBrokerBase {
     }
     /**
      * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
-     * @param provider
      * @param svc
      */
     async shouldCheckAccount(svc) {
@@ -8874,6 +8873,14 @@ class InferenceBroker {
             throw error;
         }
     };
+    /**
+     * Acknowledge the given provider address.
+     *
+     * @param {string} providerAddress - The address of the provider identifying the account.
+     *
+     *
+     * @throws Will throw an error if failed to acknowledge.
+     */
     acknowledgeProviderSigner = async (providerAddress, gasPrice) => {
         try {
             return await this.requestProcessor.acknowledgeProviderSigner(providerAddress, gasPrice);
@@ -9022,7 +9029,7 @@ class InferenceBroker {
      * @param {string} providerAddress - provider address.
      * @param {string} chatID - ID of the chat.
      *
-     * @description To verify the chat signature, use the following code:
+     * @remarks To verify the chat signature, use the following code:
      *
      * ```typescript
      * const messageHash = ethers.hashMessage(messageToBeVerified)
@@ -34493,7 +34500,7 @@ class LedgerBroker {
      * @returns A promise that resolves when the refund is processed.
      * @throws Will throw an error if the refund process fails.
      *
-     * @note The amount should be a positive number.
+     * @remarks The amount should be a positive number.
      */
     refund = async (amount, gasPrice) => {
         try {
@@ -34564,7 +34571,7 @@ class LedgerBroker {
  * createLedgerBroker is used to initialize LedgerBroker
  *
  * @param signer - Signer from ethers.js.
- * @param contractAddress - Ledger contract address, use default address if not provided.
+ * @param ledgerCA - Ledger contract address, use default address if not provided.
  *
  * @returns broker instance.
  *

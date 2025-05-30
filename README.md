@@ -53,6 +53,8 @@ const broker = await createZGComputeNetworkBroker(signer)
  *   outputPrice: bigint;
  *   updatedAt: bigint;
  *   model: string;
+ *   verifiability: string; // Indicates how the service's outputs can be verified. 'TeeML' means it runs with verification in a Trusted Execution Environment. An empty value means no verification.
+ *   additionalInfo: string // Provider-defined metadata, currently used to store the provider's encrypted key, but can be extended to include other custom information in future.
  * };
  */
 const services = await broker.listService()
@@ -108,7 +110,22 @@ await broker.ledger.depositFund(amount)
 const { endpoint, model } = await broker.getServiceMetadata(providerAddress)
 ```
 
-#### 5.2 Get Request Headers
+### 5.2 Acknowledge Provider
+Before using a service provided by a provider, you must first acknowledge the provider on-chain by following API:
+
+```typescript
+/**
+ * Acknowledge the given provider address.
+ *
+ * @param {string} providerAddress - The address of the provider identifying the account.
+ * 
+ *  @throws Will throw an error if failed to acknowledge.
+ */
+await broker.inference.acknowledgeProviderSigner(providerAddress)
+```
+
+
+#### 5.3 Get Request Headers
 
 ```typescript
 /**
@@ -132,12 +149,12 @@ const headers = await broker.inference.getRequestHeaders(
 )
 ```
 
-#### 5.3 Send Request
+#### 5.4 Send Request
 
 After obtaining the `endpoint`, `model`, and `headers`, you can use client SDKs
 compatible with the OpenAI interface to make requests.
 
-**Note**: After receiving the response, you must use `processResponse` as demonstrated in step 5.4 to settle the response fee. Failure to do so will result in subsequent requests being denied due to unpaid fees. If this happens, you can manually settle the fee using `settleFee` as shown in step 5.5. The amount owed will be specified in the error message.
+**Note**: Fee settlement by the broker service occurs at scheduled intervals.
 
 **Note**: Generated `headers` are valid for a single use only and cannot be reused.
 
@@ -179,13 +196,13 @@ await fetch(`${endpoint}/chat/completions`, {
 })
 ```
 
-#### 5.4 Process Responses
+#### 5.5 Process Responses
 
 ```typescript
 /**
  * 'processResponse' is used after the user successfully obtains a response from the provider service.
  *
- * It will settle the fee for the response content. Additionally, if the service is verifiable,
+ * Additionally, if the service is verifiable,
  * input the chat ID from the response and 'processResponse' will determine the validity of the
  * returned content by checking the provider service's response and corresponding signature associated
  * with the chat ID.
@@ -206,26 +223,6 @@ const valid = await broker.inference.processResponse(
     content,
     chatID
 )
-```
-
-#### 5.5 Settle Fees Manually
-
-```typescript
-/**
- * 'settleFee' is used to settle the fee for the provider service.
- *
- * Normally, the fee for each request will be automatically settled in 'processResponse'.
- * However, if 'processResponse' fails due to network issues or other reasons,
- * you can manually call settleFee to settle the fee.
- *
- * @param {string} providerAddress - The address of the provider.
- * @param {number} fee - The fee to be settled. The unit is A0GI.
- *
- * @returns A promise that resolves when the fee settlement is successful.
- *
- * @throws An error if any issues occur during the fee settlement process.
- */
-await broker.inference.settleFee(providerAddress, fee)
 ```
 
 ## Interface
