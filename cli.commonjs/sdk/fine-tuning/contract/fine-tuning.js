@@ -50,6 +50,17 @@ class FineTuningServingContract {
                 break;
             }
             catch (error) {
+                if (error.message ===
+                    'Get Receipt timeout, try set higher gas price') {
+                    const nonce = await this.signer.getNonce();
+                    const pendingNonce = await this.signer.provider?.getTransactionCount(this._userAddress, 'pending');
+                    if (pendingNonce !== undefined &&
+                        pendingNonce - nonce > 5 &&
+                        txOptions.nonce === undefined) {
+                        console.warn(`Significant gap detected between pending nonce (${pendingNonce}) and current nonce (${nonce}). This may indicate skipped or missing transactions. Using the current confirmed nonce for the transaction.`);
+                        txOptions.nonce = nonce;
+                    }
+                }
                 if (this._maxGasPrice === undefined) {
                     throw error;
                 }
