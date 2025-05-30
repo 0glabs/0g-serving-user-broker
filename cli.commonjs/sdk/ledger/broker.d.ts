@@ -52,7 +52,7 @@ export declare class LedgerBroker {
      * @returns A promise that resolves when the refund is processed.
      * @throws Will throw an error if the refund process fails.
      *
-     * @note The amount should be a positive number.
+     * @remarks The amount should be a positive number.
      */
     refund: (amount: number, gasPrice?: number) => Promise<void>;
     /**
@@ -95,7 +95,7 @@ export declare class LedgerBroker {
  * createLedgerBroker is used to initialize LedgerBroker
  *
  * @param signer - Signer from ethers.js.
- * @param contractAddress - Ledger contract address, use default address if not provided.
+ * @param ledgerCA - Ledger contract address, use default address if not provided.
  *
  * @returns broker instance.
  *
