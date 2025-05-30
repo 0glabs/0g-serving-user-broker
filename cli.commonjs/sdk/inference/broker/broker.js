@@ -71,6 +71,14 @@ class InferenceBroker {
             throw error;
         }
     };
+    /**
+     * Acknowledge the given provider address.
+     *
+     * @param {string} providerAddress - The address of the provider identifying the account.
+     *
+     *
+     * @throws Will throw an error if failed to acknowledge.
+     */
     acknowledgeProviderSigner = async (providerAddress, gasPrice) => {
         try {
             return await this.requestProcessor.acknowledgeProviderSigner(providerAddress, gasPrice);
@@ -219,7 +227,7 @@ class InferenceBroker {
      * @param {string} providerAddress - provider address.
      * @param {string} chatID - ID of the chat.
      *
-     * @description To verify the chat signature, use the following code:
+     * @remarks To verify the chat signature, use the following code:
      *
      * ```typescript
      * const messageHash = ethers.hashMessage(messageToBeVerified)

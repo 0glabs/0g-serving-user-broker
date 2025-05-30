@@ -34,7 +34,6 @@ export declare abstract class ZGServingUserBrokerBase {
     private handleFirstRound;
     /**
      * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
-     * @param provider
      * @param svc
      */
     shouldCheckAccount(svc: ServiceStructOutput): Promise<boolean>;
