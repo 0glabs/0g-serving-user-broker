@@ -11,7 +11,7 @@ export declare abstract class ZGServingUserBrokerBase {
     private checkAccountThreshold;
     private topUpTriggerThreshold;
     private topUpTargetThreshold;
-    private ledger;
+    protected ledger: LedgerBroker;
     constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
     protected getProviderData(providerAddress: string): Promise<{
         settleSignerPrivateKey: bigint[] | null;
@@ -21,7 +21,9 @@ export declare abstract class ZGServingUserBrokerBase {
     protected createExtractor(svc: ServiceStructOutput): Extractor;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
+    protected userAcknowledged(providerAddress: string, userAddress: string): Promise<boolean>;
     getHeader(providerAddress: string, content: string, outputFee: bigint): Promise<ServingRequestHeaders>;
+    calculatePedersenHash(nonce: number, userAddress: string, providerAddress: string): Promise<string>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     updateCachedFee(provider: string, fee: bigint): Promise<void>;
     clearCacheFee(provider: string, fee: bigint): Promise<void>;

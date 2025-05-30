@@ -7,9 +7,16 @@ import {
     getNonceWithCache,
     strToPrivateKey,
 } from '../../common/utils'
-import { PackedPrivkey, Request, signData } from '../../common/settle-signer'
+import {
+    PackedPrivkey,
+    Request,
+    signData,
+    pedersenHash,
+    bigintToBytes,
+} from '../../common/settle-signer'
 import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
 import { LedgerBroker } from '../../ledger'
+import { hexlify } from 'ethers'
 
 export abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract
@@ -19,7 +26,7 @@ export abstract class ZGServingUserBrokerBase {
     private checkAccountThreshold = BigInt(1000)
     private topUpTriggerThreshold = BigInt(5000)
     private topUpTargetThreshold = BigInt(10000)
-    private ledger: LedgerBroker
+    protected ledger: LedgerBroker
 
     constructor(
         contract: InferenceServingContract,
@@ -120,17 +127,54 @@ export abstract class ZGServingUserBrokerBase {
         return Number(integerPart) + decimalPart
     }
 
+    protected async userAcknowledged(
+        providerAddress: string,
+        userAddress: string
+    ): Promise<boolean> {
+        const key = `${userAddress}_${providerAddress}_ack`
+        const cachedSvc = await this.cache.getItem(key)
+        if (cachedSvc) {
+            return true
+        }
+
+        try {
+            const account = await this.contract.getAccount(providerAddress)
+            if (
+                account.providerPubKey[0] !== 0n &&
+                account.providerPubKey[1] !== 0n
+            ) {
+                await this.cache.setItem(
+                    key,
+                    account.providerPubKey,
+                    1 * 60 * 1000,
+                    CacheValueTypeEnum.Other
+                )
+
+                return true
+            } else {
+                return false
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
     async getHeader(
         providerAddress: string,
         content: string,
         outputFee: bigint
     ): Promise<ServingRequestHeaders> {
         try {
+            const userAddress = this.contract.getUserAddress()
+            if (!(await this.userAcknowledged(providerAddress, userAddress))) {
+                throw new Error('Provider signer is not acknowledged')
+            }
+
             const extractor = await this.getExtractor(providerAddress)
             const { settleSignerPrivateKey } = await this.getProviderData(
                 providerAddress
             )
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`
+            const key = `${userAddress}_${providerAddress}`
 
             let privateKey = settleSignerPrivateKey
             if (!privateKey) {
@@ -151,7 +195,7 @@ export abstract class ZGServingUserBrokerBase {
             const request = new Request(
                 nonce.toString(),
                 fee.toString(),
-                this.contract.getUserAddress(),
+                userAddress,
                 providerAddress
             )
             const settleSignature = await signData(
@@ -160,18 +204,53 @@ export abstract class ZGServingUserBrokerBase {
             )
             const sig = JSON.stringify(Array.from(settleSignature[0]))
 
+            const requestHash = await this.calculatePedersenHash(
+                nonce,
+                userAddress,
+                providerAddress
+            )
+            console.log(
+                `nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`
+            )
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
-                Address: this.contract.getUserAddress(),
+                Address: userAddress,
                 Fee: fee.toString(),
                 'Input-Fee': inputFee.toString(),
                 Nonce: nonce.toString(),
-                'Previous-Output-Fee': outputFee.toString(),
+                'Request-Hash': requestHash,
                 Signature: sig,
             }
         } catch (error) {
             throw error
         }
+    }
+
+    async calculatePedersenHash(
+        nonce: number,
+        userAddress: string,
+        providerAddress: string
+    ): Promise<string> {
+        const ADDR_LENGTH = 20
+        const NONCE_LENGTH = 8
+
+        const buffer = new ArrayBuffer(NONCE_LENGTH + ADDR_LENGTH * 2)
+        let offset = 0
+
+        const nonceBytes = bigintToBytes(BigInt(nonce), NONCE_LENGTH)
+        new Uint8Array(buffer, offset, NONCE_LENGTH).set(nonceBytes)
+        offset += NONCE_LENGTH
+
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set(
+            bigintToBytes(BigInt(userAddress), ADDR_LENGTH)
+        )
+        offset += ADDR_LENGTH
+
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set(
+            bigintToBytes(BigInt(providerAddress), ADDR_LENGTH)
+        )
+
+        return hexlify(await pedersenHash(Buffer.from(buffer)))
     }
 
     async calculateInputFees(extractor: Extractor, content: string) {

@@ -5,6 +5,7 @@ const extractor_1 = require("../extractor");
 const utils_1 = require("../../common/utils");
 const settle_signer_1 = require("../../common/settle-signer");
 const storage_1 = require("../../common/storage");
+const ethers_1 = require("ethers");
 class ZGServingUserBrokerBase {
     contract;
     metadata;
@@ -86,11 +87,36 @@ class ZGServingUserBrokerBase {
         const decimalPart = Number(remainder) / Number(divisor);
         return Number(integerPart) + decimalPart;
     }
+    async userAcknowledged(providerAddress, userAddress) {
+        const key = `${userAddress}_${providerAddress}_ack`;
+        const cachedSvc = await this.cache.getItem(key);
+        if (cachedSvc) {
+            return true;
+        }
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.providerPubKey[0] !== 0n &&
+                account.providerPubKey[1] !== 0n) {
+                await this.cache.setItem(key, account.providerPubKey, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getHeader(providerAddress, content, outputFee) {
         try {
+            const userAddress = this.contract.getUserAddress();
+            if (!(await this.userAcknowledged(providerAddress, userAddress))) {
+                throw new Error('Provider signer is not acknowledged');
+            }
             const extractor = await this.getExtractor(providerAddress);
             const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
-            const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+            const key = `${userAddress}_${providerAddress}`;
             let privateKey = settleSignerPrivateKey;
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress);
@@ -101,22 +127,37 @@ class ZGServingUserBrokerBase {
             const nonce = await (0, utils_1.getNonceWithCache)(this.cache);
             const inputFee = await this.calculateInputFees(extractor, content);
             const fee = inputFee + outputFee;
-            const request = new settle_signer_1.Request(nonce.toString(), fee.toString(), this.contract.getUserAddress(), providerAddress);
+            const request = new settle_signer_1.Request(nonce.toString(), fee.toString(), userAddress, providerAddress);
             const settleSignature = await (0, settle_signer_1.signData)([request], privateKey);
             const sig = JSON.stringify(Array.from(settleSignature[0]));
+            const requestHash = await this.calculatePedersenHash(nonce, userAddress, providerAddress);
+            console.log(`nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`);
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
-                Address: this.contract.getUserAddress(),
+                Address: userAddress,
                 Fee: fee.toString(),
                 'Input-Fee': inputFee.toString(),
                 Nonce: nonce.toString(),
-                'Previous-Output-Fee': outputFee.toString(),
+                'Request-Hash': requestHash,
                 Signature: sig,
             };
         }
         catch (error) {
             throw error;
         }
+    }
+    async calculatePedersenHash(nonce, userAddress, providerAddress) {
+        const ADDR_LENGTH = 20;
+        const NONCE_LENGTH = 8;
+        const buffer = new ArrayBuffer(NONCE_LENGTH + ADDR_LENGTH * 2);
+        let offset = 0;
+        const nonceBytes = (0, settle_signer_1.bigintToBytes)(BigInt(nonce), NONCE_LENGTH);
+        new Uint8Array(buffer, offset, NONCE_LENGTH).set(nonceBytes);
+        offset += NONCE_LENGTH;
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set((0, settle_signer_1.bigintToBytes)(BigInt(userAddress), ADDR_LENGTH));
+        offset += ADDR_LENGTH;
+        new Uint8Array(buffer, offset, ADDR_LENGTH).set((0, settle_signer_1.bigintToBytes)(BigInt(providerAddress), ADDR_LENGTH));
+        return (0, ethers_1.hexlify)(await (0, settle_signer_1.pedersenHash)(Buffer.from(buffer)));
     }
     async calculateInputFees(extractor, content) {
         const svc = await extractor.getSvcInfo();

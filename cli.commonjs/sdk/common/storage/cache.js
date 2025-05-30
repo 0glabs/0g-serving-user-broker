@@ -80,6 +80,7 @@ class Cache {
             updatedAt: fields[5],
             model: fields[6],
             verifiability: fields[7],
+            additionalInfo: fields[8],
         };
         return Object.assign(tuple, object);
     }

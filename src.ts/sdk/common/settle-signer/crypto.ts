@@ -5,6 +5,7 @@ import {
     Point,
     buildBabyjub,
     buildEddsa,
+    buildPedersenHash,
 } from 'circomlibjs'
 
 type PrivateKey = Uint8Array
@@ -58,6 +59,11 @@ async function packPoint(point: Point): Promise<PointBuffer> {
     return babyjubjub.packPoint(point)
 }
 
+async function pedersenHash(msg: Uint8Array): Promise<Uint8Array> {
+    const h = await buildPedersenHash()
+    return h.hash(msg)
+}
+
 export {
     babyJubJubGeneratePrivateKey,
     babyJubJubGeneratePublicKey,
@@ -70,4 +76,5 @@ export {
     Signature,
     SignatureBuffer,
     PointBuffer,
+    pedersenHash,
 }

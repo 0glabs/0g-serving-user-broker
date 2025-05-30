@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Automata = void 0;
 const ethers_1 = require("ethers");
-const const_1 = require("../const");
+const const_1 = require("../../fine-tuning/const");
 class Automata {
     provider;
     contract;
