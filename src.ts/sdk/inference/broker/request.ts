@@ -177,6 +177,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             const url = service.url
             const endpoint = `${url}/v1/quote`
 
+            console.log(`Fetching quote from: ${endpoint}`)
             const quoteString = await this.fetchText(endpoint, {
                 method: 'GET',
             })

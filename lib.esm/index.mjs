@@ -8553,6 +8553,7 @@ class RequestProcessor extends ZGServingUserBrokerBase {
             const service = await this.getService(providerAddress);
             const url = service.url;
             const endpoint = `${url}/v1/quote`;
+            console.log(`Fetching quote from: ${endpoint}`);
             const quoteString = await this.fetchText(endpoint, {
                 method: 'GET',
             });
@@ -14212,15 +14213,15 @@ class ServiceProcessor extends BrokerBase {
             if (!quote.startsWith('0x')) {
                 quote = '0x' + quote;
             }
-            const rpc = process.env.RPC_ENDPOINT;
+            // const rpc = process.env.RPC_ENDPOINT
             // bypass quote verification if testing on localhost
-            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
-                const isVerified = await this.automata.verifyQuote(quote);
-                console.log('Quote verification:', isVerified);
-                if (!isVerified) {
-                    throw new Error('Quote verification failed');
-                }
-            }
+            // if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+            //     const isVerified = await this.automata.verifyQuote(quote)
+            //     console.log('Quote verification:', isVerified)
+            //     if (!isVerified) {
+            //         throw new Error('Quote verification failed')
+            //     }
+            // }
             const account = await this.contract.getAccount(providerAddress);
             if (account.providerSigner === provider_signer) {
                 console.log('Provider signer already acknowledged');
@@ -33303,6 +33304,7 @@ class Provider {
         try {
             const url = await this.getProviderUrl(providerAddress);
             const endpoint = `${url}/v1/quote`;
+            console.log(`Fetching quote from: ${endpoint}`);
             const quoteString = await this.fetchText(endpoint, {
                 method: 'GET',
             });

@@ -49,6 +49,7 @@ class Provider {
         try {
             const url = await this.getProviderUrl(providerAddress);
             const endpoint = `${url}/v1/quote`;
+            console.log(`Fetching quote from: ${endpoint}`);
             const quoteString = await this.fetchText(endpoint, {
                 method: 'GET',
             });
