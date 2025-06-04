@@ -57,6 +57,9 @@ export class FineTuningServingContract {
             txOptions.gasPrice = (
                 await this.signer.provider?.getFeeData()
             )?.gasPrice
+
+            // Add a delay to avoid too frequent RPC calls
+            await new Promise((resolve) => setTimeout(resolve, 1000))
         } else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice)
         }

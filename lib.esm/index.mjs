@@ -14188,10 +14188,6 @@ class ServiceProcessor extends BrokerBase {
             throw error;
         }
     }
-    // 5. acknowledge provider signer
-    //     1. [`call provider url/v1/quote`] call provider quote api to download quote (contains provider signer)
-    //     2. [`TBD`] verify the quote using third party service (TODO: discuss with Phala)
-    //     3. [`call contract`] acknowledge the provider signer in contract
     async acknowledgeProviderSigner(providerAddress, gasPrice) {
         try {
             try {
@@ -14232,11 +14228,6 @@ class ServiceProcessor extends BrokerBase {
             throw error;
         }
     }
-    // 7. create task
-    //     1. get preTrained model root hash based on the model
-    //     2. [`call contract`] calculate fee
-    //     3. [`call contract`] transfer fund from ledger to fine-tuning provider
-    //     4. [`call provider url/v1/task`]call provider task creation api to create task
     async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
         try {
             let preTrainedModelHash;
@@ -34247,6 +34238,8 @@ class LedgerManagerContract {
     async sendTx(name, txArgs, txOptions) {
         if (txOptions.gasPrice === undefined) {
             txOptions.gasPrice = (await this.signer.provider?.getFeeData())?.gasPrice;
+            // Add a delay to avoid too frequent RPC calls
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         else {
             txOptions.gasPrice = BigInt(txOptions.gasPrice);
