@@ -274,7 +274,6 @@ function fineTuning(program) {
         .action(async (options) => {
         let binaryDir = path.join(__dirname, '..', '..', 'binary');
         let executorDir = binaryDir;
-        const versionFile = path.join(executorDir, 'token_counter.ver');
         const binaryFile = path.join(executorDir, 'token_counter');
         const storageClient = path.join(binaryDir, '0g-storage-client');
         try {
@@ -286,7 +285,6 @@ function fineTuning(program) {
         }
         await (0, zg_storage_1.download)(binaryFile, const_2.TOKEN_COUNTER_MERKLE_ROOT);
         await fs.chmod(binaryFile, 0o755);
-        await fs.writeFile(versionFile, const_2.TOKEN_COUNTER_MERKLE_ROOT, 'utf8');
     });
 }
 //# sourceMappingURL=fine-tuning.js.map

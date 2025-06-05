@@ -8,40 +8,28 @@ const os = tslib_1.__importStar(require("os"));
 const path = tslib_1.__importStar(require("path"));
 const adm_zip_1 = tslib_1.__importDefault(require("adm-zip"));
 const child_process_1 = require("child_process");
+const crypto_1 = require("crypto");
+const fs_1 = require("fs");
 const zg_storage_1 = require("../zg-storage");
-async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot) {
+async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot, tokenCounterFileHash) {
     const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary');
-    const versionFile = path.join(executorDir, 'token_counter.ver');
     const binaryFile = path.join(executorDir, 'token_counter');
     let needDownload = false;
     try {
-        await fs.access(versionFile);
-        // Todo: calculate merkle root from file
-        const localRoot = await fs.readFile(versionFile, 'utf-8');
-        if (tokenCounterMerkleRoot !== localRoot) {
+        await fs.access(binaryFile);
+        console.log('calculating file Hash');
+        const hash = await calculateFileHash(binaryFile);
+        console.log('file hash: ', hash);
+        if (tokenCounterFileHash !== hash) {
+            console.log(`file hash mismatch, expected: `, tokenCounterFileHash);
             needDownload = true;
         }
     }
     catch (error) {
-        console.log(`File ${versionFile} does not exist.`);
+        console.log(`File ${binaryFile} does not exist.`);
         needDownload = true;
     }
-    if (!needDownload) {
-        try {
-            await fs.access(binaryFile);
-        }
-        catch (error) {
-            console.log(`File ${binaryFile} does not exist.`);
-            needDownload = true;
-        }
-    }
     if (needDownload) {
-        try {
-            await fs.unlink(versionFile);
-        }
-        catch (error) {
-            console.error(`Failed to delete ${versionFile}:`, error);
-        }
         try {
             await fs.unlink(binaryFile);
         }
@@ -51,7 +39,6 @@ async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetT
         console.log(`Downloading ${binaryFile}`);
         await (0, zg_storage_1.download)(binaryFile, tokenCounterMerkleRoot);
         await fs.chmod(binaryFile, 0o755);
-        await fs.writeFile(versionFile, tokenCounterMerkleRoot, 'utf8');
     }
     return await calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, binaryFile, []);
 }
@@ -218,5 +205,20 @@ async function getSubdirectories(dirPath) {
         console.error('Error reading directory:', error);
         return new Set();
     }
+}
+async function calculateFileHash(filePath, algorithm = 'sha256') {
+    return new Promise((resolve, reject) => {
+        const hash = (0, crypto_1.createHash)(algorithm);
+        const stream = (0, fs_1.createReadStream)(filePath);
+        stream.on('data', (chunk) => {
+            hash.update(chunk);
+        });
+        stream.on('end', () => {
+            resolve(hash.digest('hex'));
+        });
+        stream.on('error', (err) => {
+            reject(err);
+        });
+    });
 }
 //# sourceMappingURL=token.js.map
