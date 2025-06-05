@@ -23,7 +23,7 @@ export async function initBroker(
     )
 }
 
-export async function withLedgerBroker(
+export async function withBroker(
     options: any,
     action: (broker: ZGComputeNetworkBroker) => Promise<void>
 ) {

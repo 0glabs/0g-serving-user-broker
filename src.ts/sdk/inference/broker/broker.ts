@@ -103,6 +103,20 @@ export class InferenceBroker {
         }
     }
 
+    public getAccountWithDetail = async (
+        providerAddress: string
+    ): Promise<
+        [AccountStructOutput, { amount: bigint; remainTime: bigint }[]]
+    > => {
+        try {
+            return await this.accountProcessor.getAccountWithDetail(
+                providerAddress
+            )
+        } catch (error) {
+            throw error
+        }
+    }
+
     /**
      * Acknowledge the given provider address.
      *
