@@ -34,6 +34,14 @@ export declare class InferenceBroker {
      * @throws Will throw an error if the account retrieval process fails.
      */
     getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
+    /**
+     * Acknowledge the given provider address.
+     *
+     * @param {string} providerAddress - The address of the provider identifying the account.
+     *
+     *
+     * @throws Will throw an error if failed to acknowledge.
+     */
     acknowledgeProviderSigner: (providerAddress: string, gasPrice?: number) => Promise<void>;
     /**
      * Generates request metadata for the provider service.
@@ -143,7 +151,7 @@ export declare class InferenceBroker {
      * @param {string} providerAddress - provider address.
      * @param {string} chatID - ID of the chat.
      *
-     * @description To verify the chat signature, use the following code:
+     * @remarks To verify the chat signature, use the following code:
      *
      * ```typescript
      * const messageHash = ethers.hashMessage(messageToBeVerified)
