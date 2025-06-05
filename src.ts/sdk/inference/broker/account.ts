@@ -27,6 +27,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
             const now = BigInt(Math.floor(Date.now() / 1000))
             const refunds = account.refunds
                 .filter((refund) => !refund.processed)
+                .filter((refund) => refund.amount !== BigInt(0))
                 .map((refund) => ({
                     amount: refund.amount,
                     remainTime: lockTime - (now - refund.createdAt),
