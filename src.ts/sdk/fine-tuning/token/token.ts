@@ -3,6 +3,8 @@ import * as os from 'os'
 import * as path from 'path'
 import AdmZip from 'adm-zip'
 import { spawn, exec } from 'child_process'
+import { createHash } from 'crypto'
+import { createReadStream } from 'fs'
 
 import { download } from '../zg-storage'
 
@@ -10,41 +12,29 @@ export async function calculateTokenSizeViaExe(
     tokenizerRootHash: string,
     datasetPath: string,
     datasetType: string,
-    tokenCounterMerkleRoot: string
+    tokenCounterMerkleRoot: string,
+    tokenCounterFileHash: string
 ): Promise<number> {
     const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary')
-    const versionFile = path.join(executorDir, 'token_counter.ver')
     const binaryFile = path.join(executorDir, 'token_counter')
 
     let needDownload = false
     try {
-        await fs.access(versionFile)
-        // Todo: calculate merkle root from file
-        const localRoot = await fs.readFile(versionFile, 'utf-8')
-        if (tokenCounterMerkleRoot !== localRoot) {
+        await fs.access(binaryFile)
+
+        console.log('calculating file Hash')
+        const hash = await calculateFileHash(binaryFile)
+        console.log('file hash: ', hash)
+        if (tokenCounterFileHash !== hash) {
+            console.log(`file hash mismatch, expected: `, tokenCounterFileHash)
             needDownload = true
         }
     } catch (error) {
-        console.log(`File ${versionFile} does not exist.`)
+        console.log(`File ${binaryFile} does not exist.`)
         needDownload = true
     }
 
-    if (!needDownload) {
-        try {
-            await fs.access(binaryFile)
-        } catch (error) {
-            console.log(`File ${binaryFile} does not exist.`)
-            needDownload = true
-        }
-    }
-
     if (needDownload) {
-        try {
-            await fs.unlink(versionFile)
-        } catch (error) {
-            console.error(`Failed to delete ${versionFile}:`, error)
-        }
-
         try {
             await fs.unlink(binaryFile)
         } catch (error) {
@@ -54,7 +44,6 @@ export async function calculateTokenSizeViaExe(
         console.log(`Downloading ${binaryFile}`)
         await download(binaryFile, tokenCounterMerkleRoot)
         await fs.chmod(binaryFile, 0o755)
-        await fs.writeFile(versionFile, tokenCounterMerkleRoot, 'utf8')
     }
 
     return await calculateTokenSize(
@@ -262,4 +251,26 @@ async function getSubdirectories(dirPath: string): Promise<Set<string>> {
         console.error('Error reading directory:', error)
         return new Set()
     }
+}
+
+async function calculateFileHash(
+    filePath: string,
+    algorithm: string = 'sha256'
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const hash = createHash(algorithm)
+        const stream = createReadStream(filePath)
+
+        stream.on('data', (chunk) => {
+            hash.update(chunk)
+        })
+
+        stream.on('end', () => {
+            resolve(hash.digest('hex'))
+        })
+
+        stream.on('error', (err) => {
+            reject(err)
+        })
+    })
 }

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AUTOMATA_ABI = exports.AUTOMATA_CONTRACT_ADDRESS = exports.AUTOMATA_RPC = exports.MODEL_HASH_MAP = exports.TOKEN_COUNTER_MERKLE_ROOT = exports.INDEXER_URL_TURBO = exports.INDEXER_URL_STANDARD = exports.ZG_RPC_ENDPOINT_TESTNET = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
+exports.AUTOMATA_ABI = exports.AUTOMATA_CONTRACT_ADDRESS = exports.AUTOMATA_RPC = exports.MODEL_HASH_MAP = exports.TOKEN_COUNTER_FILE_HASH = exports.TOKEN_COUNTER_MERKLE_ROOT = exports.INDEXER_URL_TURBO = exports.INDEXER_URL_STANDARD = exports.ZG_RPC_ENDPOINT_TESTNET = exports.MESSAGE_FOR_ENCRYPTION_KEY = void 0;
 /**
  * MESSAGE_FOR_ENCRYPTION_KEY is a fixed message used to derive the encryption key.
  *
@@ -23,6 +23,7 @@ exports.ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 exports.INDEXER_URL_STANDARD = 'https://indexer-storage-testnet-standard.0g.ai';
 exports.INDEXER_URL_TURBO = 'http://47.251.40.189:12345';
 exports.TOKEN_COUNTER_MERKLE_ROOT = '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97';
+exports.TOKEN_COUNTER_FILE_HASH = 'cba0038a97cd02323d1c1222660dc909cf1334beee5fa38d77307ec67d6170f1';
 exports.MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',

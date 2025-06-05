@@ -50,7 +50,7 @@ class ModelProcessor extends base_1.BrokerBase {
             dataSize = await (0, token_1.calculateTokenSizeViaPython)(tokenizer, datasetPath, dataType);
         }
         else {
-            dataSize = await (0, token_1.calculateTokenSizeViaExe)(tokenizer, datasetPath, dataType, const_1.TOKEN_COUNTER_MERKLE_ROOT);
+            dataSize = await (0, token_1.calculateTokenSizeViaExe)(tokenizer, datasetPath, dataType, const_1.TOKEN_COUNTER_MERKLE_ROOT, const_1.TOKEN_COUNTER_FILE_HASH);
         }
         console.log(`The token size for the dataset ${datasetPath} is ${dataSize}`);
     }

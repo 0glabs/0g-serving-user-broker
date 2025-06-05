@@ -2,8 +2,8 @@ import { ethers, hexlify, ContractFactory, Interface, Contract, Wallet } from 'e
 import CryptoJS from 'crypto-js';
 import require$$1 from 'node:crypto';
 import * as crypto$2 from 'crypto';
-import crypto__default from 'crypto';
-import require$$0$1, { promises } from 'fs';
+import crypto__default, { createHash } from 'crypto';
+import require$$0$1, { promises, createReadStream } from 'fs';
 import { buildPedersenHash, buildBabyjub, buildEddsa } from 'circomlibjs';
 import { spawn, exec } from 'child_process';
 import * as path from 'path';
@@ -8379,6 +8379,7 @@ class InferenceServingContract {
 const ZG_RPC_ENDPOINT_TESTNET = 'https://evmrpc-testnet.0g.ai';
 const INDEXER_URL_TURBO = 'http://47.251.40.189:12345';
 const TOKEN_COUNTER_MERKLE_ROOT = '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97';
+const TOKEN_COUNTER_FILE_HASH = 'cba0038a97cd02323d1c1222660dc909cf1334beee5fa38d77307ec67d6170f1';
 const MODEL_HASH_MAP = {
     'distilbert-base-uncased': {
         turbo: '0x7f2244b25cd2219dfd9d14c052982ecce409356e0f08e839b79796e270d110a7',
@@ -13858,39 +13859,25 @@ function requireAdmZip () {
 var admZipExports = requireAdmZip();
 var AdmZip = /*@__PURE__*/getDefaultExportFromCjs(admZipExports);
 
-async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot) {
+async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot, tokenCounterFileHash) {
     const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary');
-    const versionFile = path.join(executorDir, 'token_counter.ver');
     const binaryFile = path.join(executorDir, 'token_counter');
     let needDownload = false;
     try {
-        await fs.access(versionFile);
-        // Todo: calculate merkle root from file
-        const localRoot = await fs.readFile(versionFile, 'utf-8');
-        if (tokenCounterMerkleRoot !== localRoot) {
+        await fs.access(binaryFile);
+        console.log('calculating file Hash');
+        const hash = await calculateFileHash(binaryFile);
+        console.log('file hash: ', hash);
+        if (tokenCounterFileHash !== hash) {
+            console.log(`file hash mismatch, expected: `, tokenCounterFileHash);
             needDownload = true;
         }
     }
     catch (error) {
-        console.log(`File ${versionFile} does not exist.`);
+        console.log(`File ${binaryFile} does not exist.`);
         needDownload = true;
     }
-    if (!needDownload) {
-        try {
-            await fs.access(binaryFile);
-        }
-        catch (error) {
-            console.log(`File ${binaryFile} does not exist.`);
-            needDownload = true;
-        }
-    }
     if (needDownload) {
-        try {
-            await fs.unlink(versionFile);
-        }
-        catch (error) {
-            console.error(`Failed to delete ${versionFile}:`, error);
-        }
         try {
             await fs.unlink(binaryFile);
         }
@@ -13900,7 +13887,6 @@ async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetT
         console.log(`Downloading ${binaryFile}`);
         await download(binaryFile, tokenCounterMerkleRoot);
         await fs.chmod(binaryFile, 0o755);
-        await fs.writeFile(versionFile, tokenCounterMerkleRoot, 'utf8');
     }
     return await calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, binaryFile, []);
 }
@@ -14068,6 +14054,21 @@ async function getSubdirectories(dirPath) {
         return new Set();
     }
 }
+async function calculateFileHash(filePath, algorithm = 'sha256') {
+    return new Promise((resolve, reject) => {
+        const hash = createHash(algorithm);
+        const stream = createReadStream(filePath);
+        stream.on('data', (chunk) => {
+            hash.update(chunk);
+        });
+        stream.on('end', () => {
+            resolve(hash.digest('hex'));
+        });
+        stream.on('error', (err) => {
+            reject(err);
+        });
+    });
+}
 
 class ModelProcessor extends BrokerBase {
     async listModel() {
@@ -14113,7 +14114,7 @@ class ModelProcessor extends BrokerBase {
             dataSize = await calculateTokenSizeViaPython(tokenizer, datasetPath, dataType);
         }
         else {
-            dataSize = await calculateTokenSizeViaExe(tokenizer, datasetPath, dataType, TOKEN_COUNTER_MERKLE_ROOT);
+            dataSize = await calculateTokenSizeViaExe(tokenizer, datasetPath, dataType, TOKEN_COUNTER_MERKLE_ROOT, TOKEN_COUNTER_FILE_HASH);
         }
         console.log(`The token size for the dataset ${datasetPath} is ${dataSize}`);
     }
