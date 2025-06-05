@@ -70,6 +70,7 @@ export class ServiceProcessor extends BrokerBase {
             const now = BigInt(Math.floor(Date.now() / 1000)) // Converts milliseconds to seconds
             const refunds = account.refunds
                 .filter((refund) => !refund.processed)
+                .filter((refund) => refund.amount !== BigInt(0))
                 .map((refund) => ({
                     amount: refund.amount,
                     remainTime: lockTime - (now - refund.createdAt),

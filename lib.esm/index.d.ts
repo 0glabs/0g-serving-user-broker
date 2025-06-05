@@ -1676,6 +1676,13 @@ declare abstract class ZGServingUserBrokerBase {
  */
 declare class AccountProcessor extends ZGServingUserBrokerBase {
     getAccount(provider: AddressLike): Promise<AccountStructOutput$1>;
+    getAccountWithDetail(provider: AddressLike): Promise<[
+        AccountStructOutput$1,
+        {
+            amount: bigint;
+            remainTime: bigint;
+        }[]
+    ]>;
     listAccount(): Promise<AccountStructOutput$1[]>;
 }
 
@@ -1769,6 +1776,10 @@ declare class InferenceBroker {
      * @throws Will throw an error if the account retrieval process fails.
      */
     getAccount: (providerAddress: string) => Promise<AccountStructOutput$1>;
+    getAccountWithDetail: (providerAddress: string) => Promise<[AccountStructOutput$1, {
+        amount: bigint;
+        remainTime: bigint;
+    }[]]>;
     /**
      * Acknowledge the given provider address.
      *

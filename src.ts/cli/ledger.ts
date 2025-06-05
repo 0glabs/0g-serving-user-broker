@@ -1,4 +1,4 @@
-import { neuronToA0gi, printTableWithTitle, withLedgerBroker } from './util'
+import { neuronToA0gi, printTableWithTitle, withBroker } from './util'
 import { Command } from 'commander'
 import Table from 'cli-table3'
 import { ZGComputeNetworkBroker } from '../sdk'
@@ -14,7 +14,7 @@ export default function ledger(program: Command) {
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
-            withLedgerBroker(options, async (broker) => {
+            withBroker(options, async (broker) => {
                 getLedgerTable(broker)
             })
         })
@@ -32,7 +32,7 @@ export default function ledger(program: Command) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-            withLedgerBroker(options, async (broker) => {
+            withBroker(options, async (broker) => {
                 console.log('Adding account...')
                 await broker.ledger.addLedger(parseFloat(options.amount))
                 console.log('Account Created!')
@@ -53,7 +53,7 @@ export default function ledger(program: Command) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-            withLedgerBroker(options, async (broker) => {
+            withBroker(options, async (broker) => {
                 console.log('Depositing...')
                 await broker.ledger.depositFund(parseFloat(options.amount))
                 console.log('Deposited funds:', options.amount, 'A0GI')
@@ -73,7 +73,7 @@ export default function ledger(program: Command) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-            withLedgerBroker(options, async (broker) => {
+            withBroker(options, async (broker) => {
                 console.log('Refunding...')
                 await broker.ledger.refund(parseFloat(options.amount))
                 console.log('Refunded amount:', options.amount, 'A0GI')
@@ -96,7 +96,7 @@ export default function ledger(program: Command) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options: any) => {
-            withLedgerBroker(options, async (broker) => {
+            withBroker(options, async (broker) => {
                 console.log('Retrieving funds from sub accounts...')
                 await broker.ledger.retrieveFund(
                     options.infer ? 'inference' : 'fine-tuning'

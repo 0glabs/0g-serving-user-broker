@@ -4,6 +4,7 @@ import { Command } from 'commander'
 import fineTuning from './fine-tuning'
 import ledger from './ledger'
 import common from './common'
+import inference from './inference'
 
 export const program = new Command()
 
@@ -13,6 +14,7 @@ program
     .version('dev')
 
 fineTuning(program)
+inference(program)
 ledger(program)
 common(program)
 

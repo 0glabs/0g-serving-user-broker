@@ -16,7 +16,7 @@ function ledger(program) {
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .action((options) => {
-        (0, util_1.withLedgerBroker)(options, async (broker) => {
+        (0, util_1.withBroker)(options, async (broker) => {
             (0, exports.getLedgerTable)(broker);
         });
     });
@@ -33,7 +33,7 @@ function ledger(program) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-        (0, util_1.withLedgerBroker)(options, async (broker) => {
+        (0, util_1.withBroker)(options, async (broker) => {
             console.log('Adding account...');
             await broker.ledger.addLedger(parseFloat(options.amount));
             console.log('Account Created!');
@@ -53,7 +53,7 @@ function ledger(program) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-        (0, util_1.withLedgerBroker)(options, async (broker) => {
+        (0, util_1.withBroker)(options, async (broker) => {
             console.log('Depositing...');
             await broker.ledger.depositFund(parseFloat(options.amount));
             console.log('Deposited funds:', options.amount, 'A0GI');
@@ -72,7 +72,7 @@ function ledger(program) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-        (0, util_1.withLedgerBroker)(options, async (broker) => {
+        (0, util_1.withBroker)(options, async (broker) => {
             console.log('Refunding...');
             await broker.ledger.refund(parseFloat(options.amount));
             console.log('Refunded amount:', options.amount, 'A0GI');
@@ -91,7 +91,7 @@ function ledger(program) {
         .option('--max-gas-price <price>', 'Max gas price for transactions')
         .option('--step <step>', 'Step for gas price calculation')
         .action((options) => {
-        (0, util_1.withLedgerBroker)(options, async (broker) => {
+        (0, util_1.withBroker)(options, async (broker) => {
             console.log('Retrieving funds from sub accounts...');
             await broker.ledger.retrieveFund(options.infer ? 'inference' : 'fine-tuning');
             console.log('Funds retrieved from sub accounts');
