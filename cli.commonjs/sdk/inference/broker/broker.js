@@ -71,6 +71,14 @@ class InferenceBroker {
             throw error;
         }
     };
+    getAccountWithDetail = async (providerAddress) => {
+        try {
+            return await this.accountProcessor.getAccountWithDetail(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
     /**
      * Acknowledge the given provider address.
      *

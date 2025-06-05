@@ -34,6 +34,10 @@ export declare class InferenceBroker {
      * @throws Will throw an error if the account retrieval process fails.
      */
     getAccount: (providerAddress: string) => Promise<AccountStructOutput>;
+    getAccountWithDetail: (providerAddress: string) => Promise<[AccountStructOutput, {
+        amount: bigint;
+        remainTime: bigint;
+    }[]]>;
     /**
      * Acknowledge the given provider address.
      *

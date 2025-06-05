@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.printTableWithTitle = exports.splitIntoChunks = exports.neuronToA0gi = void 0;
 exports.initBroker = initBroker;
-exports.withLedgerBroker = withLedgerBroker;
+exports.withBroker = withBroker;
 exports.withFineTuningBroker = withFineTuningBroker;
 const tslib_1 = require("tslib");
 const sdk_1 = require("../sdk");
@@ -14,7 +14,7 @@ async function initBroker(options) {
     const wallet = new ethers_1.ethers.Wallet(options.key, provider);
     return await (0, sdk_1.createZGComputeNetworkBroker)(wallet, options.ledgerCa || process.env.LEDGER_CA, options.inferenceCa || process.env.INFERENCE_CA, options.fineTuningCa || process.env.FINE_TUNING_CA, options.gasPrice, options.maxGasPrice, options.step);
 }
-async function withLedgerBroker(options, action) {
+async function withBroker(options, action) {
     try {
         const broker = await initBroker(options);
         await action(broker);
