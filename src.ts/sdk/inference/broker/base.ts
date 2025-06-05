@@ -63,7 +63,7 @@ export abstract class ZGServingUserBrokerBase {
             await this.cache.setItem(
                 key,
                 svc,
-                1 * 60 * 1000,
+                10 * 60 * 1000,
                 CacheValueTypeEnum.Service
             )
             return svc
@@ -146,7 +146,7 @@ export abstract class ZGServingUserBrokerBase {
                 await this.cache.setItem(
                     key,
                     account.providerPubKey,
-                    1 * 60 * 1000,
+                    10 * 60 * 1000,
                     CacheValueTypeEnum.Other
                 )
 

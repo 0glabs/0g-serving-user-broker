@@ -7075,7 +7075,7 @@ class ZGServingUserBrokerBase {
         }
         try {
             const svc = await this.contract.getService(providerAddress);
-            await this.cache.setItem(key, svc, 1 * 60 * 1000, CacheValueTypeEnum.Service);
+            await this.cache.setItem(key, svc, 10 * 60 * 1000, CacheValueTypeEnum.Service);
             return svc;
         }
         catch (error) {
@@ -7137,7 +7137,7 @@ class ZGServingUserBrokerBase {
             const account = await this.contract.getAccount(providerAddress);
             if (account.providerPubKey[0] !== 0n &&
                 account.providerPubKey[1] !== 0n) {
-                await this.cache.setItem(key, account.providerPubKey, 1 * 60 * 1000, CacheValueTypeEnum.Other);
+                await this.cache.setItem(key, account.providerPubKey, 10 * 60 * 1000, CacheValueTypeEnum.Other);
                 return true;
             }
             else {
