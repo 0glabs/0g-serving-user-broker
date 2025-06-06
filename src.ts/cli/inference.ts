@@ -15,7 +15,7 @@ export default function inference(program: Command) {
         )
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
-        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
         .action((options) => {
             withBroker(options, async (broker) => {
@@ -25,5 +25,33 @@ export default function inference(program: Command) {
                 )
                 console.log('Provider acknowledged successfully!')
             })
+        })
+
+    program
+        .command('serve')
+        .description('Start local inference service')
+        .requiredOption('--provider <address>', 'Provider address')
+        .option(
+            '--key <key>',
+            'Wallet private key, if not provided, ensure the default key is set in the environment',
+            process.env.ZG_PRIVATE_KEY
+        )
+        .option('--rpc <url>', '0G Chain RPC endpoint')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
+        .option(
+            '--port <port>',
+            'Port to run the local inference service on',
+            '3000'
+        )
+        .option(
+            '--host <host>',
+            'Host to bind the local inference service',
+            '0.0.0.0'
+        )
+        .action(async (options) => {
+            const { runInferenceServer } = await import('../example/inference-server')
+            await runInferenceServer(options)
         })
 }

@@ -32,7 +32,6 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(providerAddress)
             const outputFee = await this.calculateOutputFees(extractor, content)
-            console.log(`output fee ${outputFee}`)
             await this.updateCachedFee(providerAddress, outputFee)
 
             const svc = await extractor.getSvcInfo()

@@ -73,7 +73,6 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             if (!quote.startsWith('0x')) {
                 quote = '0x' + quote;
             }
-            console.log(`provider signer ${provider_signer}`);
             const rpc = process.env.RPC_ENDPOINT;
             // bypass quote verification if testing on localhost
             if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
