@@ -50,19 +50,17 @@ export async function runInferenceServer(options: InferenceServerOptions) {
         model = meta.model
     }
 
-    async function chatProxy(content: string, stream: boolean = false) {
+    async function chatProxy(body: any, stream: boolean = false) {
         const headers = await broker.inference.getRequestHeaders(
             providerAddress,
-            content
+            Array.isArray(body.messages) && body.messages.length > 0
+                ? body.messages.map((m: any) => m.content).join('\n')
+                : ''
         )
-        const body: any = {
-            messages: [{ role: 'system', content }],
-            model: model,
-        }
+        body.model = model
         if (stream) {
             body.stream = true
         }
-
         const response = await fetch(`${endpoint}/chat/completions`, {
             method: 'POST',
             headers: {
@@ -71,100 +69,104 @@ export async function runInferenceServer(options: InferenceServerOptions) {
             },
             body: JSON.stringify(body),
         })
-
         return response
     }
 
-    app.post('/chat/completions', async (req: any, res: any): Promise<void> => {
-        const content = req.body.content
-        const stream = req.body.stream === true
-        if (!content) {
-            res.status(400).json({
-                error: 'Missing content in request body',
-            })
-            return
-        }
-        try {
-            const result = await chatProxy(content, stream)
-            if (stream) {
-                res.setHeader(
-                    'Content-Type',
-                    result.headers.get('content-type') ||
-                        'application/octet-stream'
-                )
-                res.setHeader('Transfer-Encoding', 'chunked')
-                if (result.body) {
-                    // Decouple caching from response: forward while accumulating, then cache after completion
-                    let rawBody = ''
-                    const decoder = new TextDecoder()
-                    let buffer = ''
-                    const reader = result.body.getReader()
-                    while (true) {
-                        const { done, value } = await reader.read()
-                        if (done) break
-                        const chunk = decoder.decode(value, { stream: true })
-                        rawBody += chunk
-                        buffer += chunk
-                        let lines = buffer.split('\n')
-                        buffer = lines.pop() || ''
-                        for (const line of lines) {
-                            if (line.trim()) {
-                                res.write(line + '\n')
+    app.post(
+        '/v1/chat/completions',
+        async (req: any, res: any): Promise<void> => {
+            const body = req.body
+            const stream = body.stream === true
+            if (!Array.isArray(body.messages) || body.messages.length === 0) {
+                res.status(400).json({
+                    error: 'Missing or invalid messages in request body',
+                })
+                return
+            }
+            try {
+                const result = await chatProxy(body, stream)
+                if (stream) {
+                    res.setHeader(
+                        'Content-Type',
+                        result.headers.get('content-type') ||
+                            'application/octet-stream'
+                    )
+                    res.setHeader('Transfer-Encoding', 'chunked')
+                    if (result.body) {
+                        // Decouple caching from response: forward while accumulating, then cache after completion
+                        let rawBody = ''
+                        const decoder = new TextDecoder()
+                        let buffer = ''
+                        const reader = result.body.getReader()
+                        while (true) {
+                            const { done, value } = await reader.read()
+                            if (done) break
+                            const chunk = decoder.decode(value, {
+                                stream: true,
+                            })
+                            rawBody += chunk
+                            buffer += chunk
+                            let lines = buffer.split('\n')
+                            buffer = lines.pop() || ''
+                            for (const line of lines) {
+                                if (line.trim()) {
+                                    res.write(line + '\n')
+                                }
                             }
                         }
-                    }
-                    res.end()
-                    // Parse rawBody and cache it after the stream ends
-                    let completeContent = ''
-                    let id: string | undefined
-                    for (const line of rawBody.split('\n')) {
-                        const trimmed = line.trim()
-                        if (!trimmed) continue
-                        const jsonStr = trimmed.startsWith('data:')
-                            ? trimmed.slice(5).trim()
-                            : trimmed
-                        if (jsonStr === '[DONE]') continue
-                        try {
-                            const message = JSON.parse(jsonStr)
-                            if (!id && message.id) id = message.id
-                            const receivedContent =
-                                message.choices?.[0]?.delta?.content
-                            if (receivedContent) {
-                                completeContent += receivedContent
-                            }
-                        } catch (e) {}
-                    }
-                    if (id) {
-                        cache.setItem(
-                            id,
-                            completeContent,
-                            5 * 60 * 1000,
-                            CacheValueTypeEnum.Other
-                        )
+                        res.end()
+                        // Parse rawBody and cache it after the stream ends
+                        let completeContent = ''
+                        let id: string | undefined
+                        for (const line of rawBody.split('\n')) {
+                            const trimmed = line.trim()
+                            if (!trimmed) continue
+                            const jsonStr = trimmed.startsWith('data:')
+                                ? trimmed.slice(5).trim()
+                                : trimmed
+                            if (jsonStr === '[DONE]') continue
+                            try {
+                                const message = JSON.parse(jsonStr)
+                                if (!id && message.id) id = message.id
+                                const receivedContent =
+                                    message.choices?.[0]?.delta?.content
+                                if (receivedContent) {
+                                    completeContent += receivedContent
+                                }
+                            } catch (e) {}
+                        }
+                        if (id) {
+                            cache.setItem(
+                                id,
+                                completeContent,
+                                5 * 60 * 1000,
+                                CacheValueTypeEnum.Other
+                            )
+                        }
+                    } else {
+                        res.status(500).json({
+                            error: 'No stream body from remote server',
+                        })
                     }
                 } else {
-                    res.status(500).json({
-                        error: 'No stream body from remote server',
-                    })
+                    const data = await result.json()
+                    const key = data.id
+                    const value = data.choices?.[0]?.message?.content
+                    cache.setItem(
+                        key,
+                        value,
+                        5 * 60 * 1000,
+                        CacheValueTypeEnum.Other
+                    )
+                    res.json(data)
                 }
-            } else {
-                const data = await result.json()
-                const key = data.id
-                const value = data.choices?.[0]?.message?.content
-                cache.setItem(
-                    key,
-                    value,
-                    5 * 60 * 1000,
-                    CacheValueTypeEnum.Other
-                )
-                res.json(data)
+            } catch (err: any) {
+                res.status(500).json({ error: err.message })
             }
-        } catch (err: any) {
-            res.status(500).json({ error: err.message })
         }
-    })
+    )
 
-    app.post('/verify', async (req: any, res: any): Promise<void> => {
+    app.post('/v1/verify', async (req: any, res: any): Promise<void> => {
         const { id } = req.body
         if (!id) {
             res.status(400).json({ error: 'Missing id in request body' })
@@ -191,18 +193,22 @@ export async function runInferenceServer(options: InferenceServerOptions) {
 
     const port = options.port ? Number(options.port) : 3000
     const host = options.host || '0.0.0.0'
+
     app.listen(port, host, async () => {
         try {
             const fetch = (await import('node-fetch')).default
-            const res = await fetch(`http://${host}:${port}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    content: 'health check',
-                }),
-            })
+            const res = await fetch(
+                `http://${host}:${port}/v1/chat/completions`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [{ role: 'system', content: 'health check' }],
+                    }),
+                }
+            )
             if (res.ok) {
                 console.log(
                     `Health check passed\nInference service is running on ${host}:${port}`

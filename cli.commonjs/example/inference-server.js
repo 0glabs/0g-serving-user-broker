@@ -29,12 +29,11 @@ async function runInferenceServer(options) {
         endpoint = meta.endpoint;
         model = meta.model;
     }
-    async function chatProxy(content, stream = false) {
-        const headers = await broker.inference.getRequestHeaders(providerAddress, content);
-        const body = {
-            messages: [{ role: 'system', content }],
-            model: model,
-        };
+    async function chatProxy(body, stream = false) {
+        const headers = await broker.inference.getRequestHeaders(providerAddress, Array.isArray(body.messages) && body.messages.length > 0
+            ? body.messages.map((m) => m.content).join('\n')
+            : '');
+        body.model = model;
         if (stream) {
             body.stream = true;
         }
@@ -48,17 +47,17 @@ async function runInferenceServer(options) {
         });
         return response;
     }
-    app.post('/chat/completions', async (req, res) => {
-        const content = req.body.content;
-        const stream = req.body.stream === true;
-        if (!content) {
+    app.post('/v1/chat/completions', async (req, res) => {
+        const body = req.body;
+        const stream = body.stream === true;
+        if (!Array.isArray(body.messages) || body.messages.length === 0) {
             res.status(400).json({
-                error: 'Missing content in request body',
+                error: 'Missing or invalid messages in request body',
             });
             return;
         }
         try {
-            const result = await chatProxy(content, stream);
+            const result = await chatProxy(body, stream);
             if (stream) {
                 res.setHeader('Content-Type', result.headers.get('content-type') ||
                     'application/octet-stream');
@@ -73,7 +72,9 @@ async function runInferenceServer(options) {
                         const { done, value } = await reader.read();
                         if (done)
                             break;
-                        const chunk = decoder.decode(value, { stream: true });
+                        const chunk = decoder.decode(value, {
+                            stream: true,
+                        });
                         rawBody += chunk;
                         buffer += chunk;
                         let lines = buffer.split('\n');
@@ -130,7 +131,7 @@ async function runInferenceServer(options) {
             res.status(500).json({ error: err.message });
         }
     });
-    app.post('/verify', async (req, res) => {
+    app.post('/v1/verify', async (req, res) => {
         const { id } = req.body;
         if (!id) {
             res.status(400).json({ error: 'Missing id in request body' });
@@ -155,13 +156,13 @@ async function runInferenceServer(options) {
     app.listen(port, host, async () => {
         try {
             const fetch = (await Promise.resolve().then(() => tslib_1.__importStar(require('node-fetch')))).default;
-            const res = await fetch(`http://${host}:${port}/chat/completions`, {
+            const res = await fetch(`http://${host}:${port}/v1/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    content: 'health check',
+                    messages: [{ role: 'system', content: 'health check' }],
                 }),
             });
             if (res.ok) {
