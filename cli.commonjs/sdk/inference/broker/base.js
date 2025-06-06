@@ -131,7 +131,6 @@ class ZGServingUserBrokerBase {
             const settleSignature = await (0, settle_signer_1.signData)([request], privateKey);
             const sig = JSON.stringify(Array.from(settleSignature[0]));
             const requestHash = await this.calculatePedersenHash(nonce, userAddress, providerAddress);
-            console.log(`nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`);
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: userAddress,

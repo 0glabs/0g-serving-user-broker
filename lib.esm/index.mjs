@@ -7171,7 +7171,6 @@ class ZGServingUserBrokerBase {
             const settleSignature = await signData([request], privateKey);
             const sig = JSON.stringify(Array.from(settleSignature[0]));
             const requestHash = await this.calculatePedersenHash(nonce, userAddress, providerAddress);
-            console.log(`nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`);
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: userAddress,
@@ -8543,7 +8542,6 @@ class RequestProcessor extends ZGServingUserBrokerBase {
             if (!quote.startsWith('0x')) {
                 quote = '0x' + quote;
             }
-            console.log(`provider signer ${provider_signer}`);
             const rpc = process.env.RPC_ENDPOINT;
             // bypass quote verification if testing on localhost
             if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
@@ -8801,7 +8799,6 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(providerAddress);
             const outputFee = await this.calculateOutputFees(extractor, content);
-            console.log(`output fee ${outputFee}`);
             await this.updateCachedFee(providerAddress, outputFee);
             const svc = await extractor.getSvcInfo();
             if (!isVerifiability(svc.verifiability)) {

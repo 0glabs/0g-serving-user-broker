@@ -19,7 +19,6 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(providerAddress);
             const outputFee = await this.calculateOutputFees(extractor, content);
-            console.log(`output fee ${outputFee}`);
             await this.updateCachedFee(providerAddress, outputFee);
             const svc = await extractor.getSvcInfo();
             if (!(0, model_1.isVerifiability)(svc.verifiability)) {

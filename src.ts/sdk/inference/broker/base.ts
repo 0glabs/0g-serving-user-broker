@@ -209,9 +209,6 @@ export abstract class ZGServingUserBrokerBase {
                 userAddress,
                 providerAddress
             )
-            console.log(
-                `nonce ${nonce}, user ${userAddress}, provider ${providerAddress}, hash ${requestHash}`
-            )
             return {
                 'X-Phala-Signature-Type': 'StandaloneApi',
                 Address: userAddress,
