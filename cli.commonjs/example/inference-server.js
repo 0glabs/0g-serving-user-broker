@@ -59,31 +59,21 @@ async function runInferenceServer(options) {
         try {
             const result = await chatProxy(body, stream);
             if (stream) {
-                res.setHeader('Content-Type', result.headers.get('content-type') ||
-                    'application/octet-stream');
-                res.setHeader('Transfer-Encoding', 'chunked');
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
                 if (result.body) {
-                    // Decouple caching from response: forward while accumulating, then cache after completion
                     let rawBody = '';
                     const decoder = new TextDecoder();
-                    let buffer = '';
                     const reader = result.body.getReader();
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done)
                             break;
-                        const chunk = decoder.decode(value, {
+                        res.write(value);
+                        rawBody += decoder.decode(value, {
                             stream: true,
                         });
-                        rawBody += chunk;
-                        buffer += chunk;
-                        let lines = buffer.split('\n');
-                        buffer = lines.pop() || '';
-                        for (const line of lines) {
-                            if (line.trim()) {
-                                res.write(line + '\n');
-                            }
-                        }
                     }
                     res.end();
                     // Parse rawBody and cache it after the stream ends
@@ -109,8 +99,9 @@ async function runInferenceServer(options) {
                         }
                         catch (e) { }
                     }
+                    // Cache the complete content
                     if (id) {
-                        cache.setItem(id, completeContent, 5 * 60 * 1000, cache_1.CacheValueTypeEnum.Other);
+                        cache.setItem(id, completeContent, 1 * 10 * 1000, cache_1.CacheValueTypeEnum.Other);
                     }
                 }
                 else {
