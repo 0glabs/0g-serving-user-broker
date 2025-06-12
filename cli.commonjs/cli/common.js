@@ -49,18 +49,19 @@ function default_1(program) {
     });
     program
         .command('list-providers')
-        .description('List fine-tuning providers')
-        .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
+        .description('List providers')
+        .option('--key <key>', 'Wallet private key (required)')
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--infer', 'list inference providers, default is fine-tuning')
         .action((options) => {
-        if (options.infer) {
-            return;
+        if (!options.key) {
+            console.error("Error: --key is required. Please provide a valid private key (e.g. --key 0x...).");
+            process.exit(1);
         }
-        (0, util_1.withFineTuningBroker)(options, async (broker) => {
-            const services = await broker.fineTuning.listService();
+        const renderProviders = (services, isInference) => {
             const table = new cli_table3_1.default({
                 colWidths: [50, 50],
             });
@@ -70,13 +71,19 @@ function default_1(program) {
                     chalk_1.default.blue(service.provider),
                 ]);
                 let available = !service.occupied ? '\u2713' : `\u2717`;
-                if (service.providerSigner) {
-                }
                 table.push(['Available', available]);
-                table.push([
-                    'Price Per Byte in Dataset (A0GI)',
-                    (0, util_1.neuronToA0gi)(service.pricePerToken).toFixed(18),
-                ]);
+                if (isInference) {
+                    table.push([
+                        'Price Per Token (A0GI)',
+                        (0, util_1.neuronToA0gi)(service.pricePerToken).toFixed(18),
+                    ]);
+                }
+                else {
+                    table.push([
+                        'Price Per Byte in Dataset (A0GI)',
+                        (0, util_1.neuronToA0gi)(service.pricePerToken).toFixed(18),
+                    ]);
+                }
                 // TODO: Show quota when backend ready
                 // table.push([
                 //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',
@@ -84,7 +91,19 @@ function default_1(program) {
                 // ])
             });
             console.log(table.toString());
-        });
+        };
+        if (options.infer) {
+            (0, util_1.withBroker)(options, async (broker) => {
+                const services = await broker.inference.listService();
+                renderProviders(services, true);
+            });
+        }
+        else {
+            (0, util_1.withFineTuningBroker)(options, async (broker) => {
+                const services = await broker.fineTuning.listService();
+                renderProviders(services, false);
+            });
+        }
     });
 }
 function renderOverview(account) {

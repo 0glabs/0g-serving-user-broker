@@ -67,13 +67,17 @@ export default function (program: Command) {
     program
         .command('list-providers')
         .description('List providers')
-        .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
+        .option('--key <key>', 'Wallet private key (required)')
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--infer', 'list inference providers, default is fine-tuning')
         .action((options: any) => {
+            if (!options.key) {
+                console.error("Error: --key is required. Please provide a valid private key (e.g. --key 0x...).");
+                process.exit(1);
+            }
             const renderProviders = (services: any[], isInference: boolean) => {
                 const table = new Table({
                     colWidths: [50, 50],
@@ -91,10 +95,10 @@ export default function (program: Command) {
                             neuronToA0gi(service.pricePerToken).toFixed(18),
                         ])
                     } else {
-                        table.push([
-                            'Price Per Byte in Dataset (A0GI)',
-                            neuronToA0gi(service.pricePerToken).toFixed(18),
-                        ])
+                    table.push([
+                        'Price Per Byte in Dataset (A0GI)',
+                        neuronToA0gi(service.pricePerToken).toFixed(18),
+                    ])
                     }
                     // TODO: Show quota when backend ready
                     // table.push([
@@ -113,7 +117,7 @@ export default function (program: Command) {
                 withFineTuningBroker(options, async (broker) => {
                     const services = await broker.fineTuning!.listService()
                     renderProviders(services, false)
-                })
+            })
             }
         })
 }
