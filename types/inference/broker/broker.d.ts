@@ -73,6 +73,7 @@ export declare class InferenceBroker {
      *
      * @param {string} providerAddress - The address of the provider.
      * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
+     * @param {boolean} useProxy - Chat signature proxy, default is false
      *
      * @returns headers. Records information such as the request fee and user signature.
      *
@@ -106,7 +107,7 @@ export declare class InferenceBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestHeaders: (providerAddress: string, content: string) => Promise<import("./request").ServingRequestHeaders>;
+    getRequestHeaders: (providerAddress: string, content: string, useProxy?: boolean) => Promise<import("./request").ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
@@ -121,12 +122,13 @@ export declare class InferenceBroker {
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
+     * @param {boolean} useProxy - Chat signature proxy, default is falser verifiable services. You can provide the chat ID obtained from the response to
      *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
      *
      * @throws An error if any issues occur during the processing of the response.
      */
-    processResponse: (providerAddress: string, content: string, chatID?: string) => Promise<boolean | null>;
+    processResponse: (providerAddress: string, content: string, chatID?: string, useProxy?: boolean) => Promise<boolean | null>;
     /**
      * verifyService is used to verify the reliability of the service.
      *

@@ -44,10 +44,13 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
      *
      * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
      */
-    async getRequestHeaders(providerAddress, content) {
+    async getRequestHeaders(providerAddress, content, useProxy) {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content);
-            return await this.getHeader(providerAddress, content, BigInt(0));
+            if (!useProxy) {
+                useProxy = false;
+            }
+            return await this.getHeader(providerAddress, content, BigInt(0), useProxy);
         }
         catch (error) {
             throw error;

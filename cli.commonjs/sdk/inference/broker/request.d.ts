@@ -34,6 +34,10 @@ export interface ServingRequestHeaders {
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
     Signature: string;
+    /**
+     * Broker service use a proxy for chat signature
+     */
+    'Use-Proxy': string;
 }
 export interface QuoteResponse {
     quote: string;
@@ -52,7 +56,7 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
         endpoint: string;
         model: string;
     }>;
-    getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
+    getRequestHeaders(providerAddress: string, content: string, useProxy?: boolean): Promise<ServingRequestHeaders>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
     getQuote(providerAddress: string): Promise<QuoteResponse>;
     private fetchText;

@@ -138,11 +138,12 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             throw error;
         });
     }
-    static async fetSignatureByChatID(providerBrokerURL, chatID, model) {
+    static async fetSignatureByChatID(providerBrokerURL, chatID, model, useProxy) {
         return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}?model=${model}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'Use-Proxy': `${useProxy}`,
             },
         })
             .then((response) => {

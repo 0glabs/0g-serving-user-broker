@@ -162,7 +162,8 @@ export abstract class ZGServingUserBrokerBase {
     async getHeader(
         providerAddress: string,
         content: string,
-        outputFee: bigint
+        outputFee: bigint,
+        useProxy: boolean
     ): Promise<ServingRequestHeaders> {
         try {
             const userAddress = this.contract.getUserAddress()
@@ -217,6 +218,7 @@ export abstract class ZGServingUserBrokerBase {
                 Nonce: nonce.toString(),
                 'Request-Hash': requestHash,
                 Signature: sig,
+                'Use-Proxy': `${useProxy}`,
             }
         } catch (error) {
             throw error

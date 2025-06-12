@@ -7148,7 +7148,7 @@ class ZGServingUserBrokerBase {
             throw error;
         }
     }
-    async getHeader(providerAddress, content, outputFee) {
+    async getHeader(providerAddress, content, outputFee, useProxy) {
         try {
             const userAddress = this.contract.getUserAddress();
             if (!(await this.userAcknowledged(providerAddress, userAddress))) {
@@ -7179,6 +7179,7 @@ class ZGServingUserBrokerBase {
                 Nonce: nonce.toString(),
                 'Request-Hash': requestHash,
                 Signature: sig,
+                'Use-Proxy': `${useProxy}`,
             };
         }
         catch (error) {
@@ -8513,10 +8514,13 @@ class RequestProcessor extends ZGServingUserBrokerBase {
      *
      * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
      */
-    async getRequestHeaders(providerAddress, content) {
+    async getRequestHeaders(providerAddress, content, useProxy) {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content);
-            return await this.getHeader(providerAddress, content, BigInt(0));
+            if (!useProxy) {
+                useProxy = false;
+            }
+            return await this.getHeader(providerAddress, content, BigInt(0), useProxy);
         }
         catch (error) {
             throw error;
@@ -8757,11 +8761,12 @@ class Verifier extends ZGServingUserBrokerBase {
             throw error;
         });
     }
-    static async fetSignatureByChatID(providerBrokerURL, chatID, model) {
+    static async fetSignatureByChatID(providerBrokerURL, chatID, model, useProxy) {
         return fetch(`${providerBrokerURL}/v1/proxy/signature/${chatID}?model=${model}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'Use-Proxy': `${useProxy}`,
             },
         })
             .then((response) => {
@@ -8795,7 +8800,7 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
         super(contract, ledger, metadata, cache);
         this.verifier = new Verifier(contract, ledger, metadata, cache);
     }
-    async processResponse(providerAddress, content, chatID) {
+    async processResponse(providerAddress, content, chatID, useProxy) {
         try {
             const extractor = await this.getExtractor(providerAddress);
             const outputFee = await this.calculateOutputFees(extractor, content);
@@ -8815,7 +8820,10 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
             if (!singerRAVerificationResult.valid) {
                 throw new Error('Signing address is invalid');
             }
-            const ResponseSignature = await Verifier.fetSignatureByChatID(svc.url, chatID, svc.model);
+            if (!useProxy) {
+                useProxy = false;
+            }
+            const ResponseSignature = await Verifier.fetSignatureByChatID(svc.url, chatID, svc.model, useProxy);
             return Verifier.verifySignature(ResponseSignature.text, ResponseSignature.signature, singerRAVerificationResult.signingAddress);
         }
         catch (error) {
@@ -8945,6 +8953,7 @@ class InferenceBroker {
      *
      * @param {string} providerAddress - The address of the provider.
      * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
+     * @param {boolean} useProxy - Chat signature proxy, default is false
      *
      * @returns headers. Records information such as the request fee and user signature.
      *
@@ -8978,9 +8987,9 @@ class InferenceBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestHeaders = async (providerAddress, content) => {
+    getRequestHeaders = async (providerAddress, content, useProxy) => {
         try {
-            return await this.requestProcessor.getRequestHeaders(providerAddress, content);
+            return await this.requestProcessor.getRequestHeaders(providerAddress, content, useProxy);
         }
         catch (error) {
             throw error;
@@ -9000,14 +9009,15 @@ class InferenceBroker {
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
+     * @param {boolean} useProxy - Chat signature proxy, default is falser verifiable services. You can provide the chat ID obtained from the response to
      *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
      *
      * @throws An error if any issues occur during the processing of the response.
      */
-    processResponse = async (providerAddress, content, chatID) => {
+    processResponse = async (providerAddress, content, chatID, useProxy) => {
         try {
-            return await this.responseProcessor.processResponse(providerAddress, content, chatID);
+            return await this.responseProcessor.processResponse(providerAddress, content, chatID, useProxy);
         }
         catch (error) {
             throw error;
