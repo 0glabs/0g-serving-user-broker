@@ -27,7 +27,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
     async processResponse(
         providerAddress: string,
         content: string,
-        chatID?: string
+        chatID?: string,
+        useProxy?: boolean
     ): Promise<boolean | null> {
         try {
             const extractor = await this.getExtractor(providerAddress)
@@ -55,10 +56,14 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
                 throw new Error('Signing address is invalid')
             }
 
+            if (!useProxy) {
+                useProxy = false
+            }
             const ResponseSignature = await Verifier.fetSignatureByChatID(
                 svc.url,
                 chatID,
-                svc.model
+                svc.model,
+                useProxy
             )
 
             return Verifier.verifySignature(

@@ -108,7 +108,7 @@ class ZGServingUserBrokerBase {
             throw error;
         }
     }
-    async getHeader(providerAddress, content, outputFee) {
+    async getHeader(providerAddress, content, outputFee, vllmProxy) {
         try {
             const userAddress = this.contract.getUserAddress();
             if (!(await this.userAcknowledged(providerAddress, userAddress))) {
@@ -139,6 +139,7 @@ class ZGServingUserBrokerBase {
                 Nonce: nonce.toString(),
                 'Request-Hash': requestHash,
                 Signature: sig,
+                'VLLM-Proxy': `${vllmProxy}`,
             };
         }
         catch (error) {

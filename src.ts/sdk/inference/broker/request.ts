@@ -35,6 +35,10 @@ export interface ServingRequestHeaders {
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
     Signature: string
+    /**
+     * Broker service use a proxy for chat signature
+     */
+    'VLLM-Proxy': string
 }
 export interface QuoteResponse {
     quote: string
@@ -95,11 +99,20 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
      */
     async getRequestHeaders(
         providerAddress: string,
-        content: string
+        content: string,
+        vllmProxy?: boolean
     ): Promise<ServingRequestHeaders> {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content)
-            return await this.getHeader(providerAddress, content, BigInt(0))
+            if (!vllmProxy) {
+                vllmProxy = false
+            }
+            return await this.getHeader(
+                providerAddress,
+                content,
+                BigInt(0),
+                vllmProxy
+            )
         } catch (error) {
             throw error
         }

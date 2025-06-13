@@ -130,7 +130,7 @@ const ethers_1 = require("ethers");
             const url = 'https://example.com';
             const chatID = 'chat123';
             const model = 'test-model';
-            const result = await verifier_1.Verifier.fetSignatureByChatID(url, chatID, model);
+            const result = await verifier_1.Verifier.fetSignatureByChatID(url, chatID, model, true);
             (0, chai_1.expect)(fetchStub.calledOnce).to.be.true;
             (0, chai_1.expect)(fetchStub.firstCall.args[0]).to.equal(`${url}/v1/proxy/signature/${chatID}?model=${model}`);
             (0, chai_1.expect)(result.text).to.equal('message content');
@@ -145,7 +145,7 @@ const ethers_1 = require("ethers");
             };
             fetchStub.resolves(mockResponse);
             try {
-                await verifier_1.Verifier.fetSignatureByChatID('https://example.com', 'chat123', 'test-model');
+                await verifier_1.Verifier.fetSignatureByChatID('https://example.com', 'chat123', 'test-model', true);
                 // Should not reach here
                 chai_1.expect.fail('Should have thrown an error');
             }
