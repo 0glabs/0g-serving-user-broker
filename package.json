@@ -4,7 +4,7 @@
     "description": "TS SDK for 0G Compute Network",
     "main": "./lib.commonjs/index.js",
     "bin": {
-        "0g-compute-cli": "./cli.commonjs/cli/index.js"
+        "0g-serving-broker": "./cli.commonjs/cli/index.js"
     },
     "files": [
         "types",
