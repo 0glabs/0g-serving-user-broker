@@ -188,7 +188,7 @@ export class Verifier extends ZGServingUserBrokerBase {
         providerBrokerURL: string,
         chatID: string,
         model: string,
-        useProxy: boolean
+        vllmProxy: boolean
     ): Promise<ResponseSignature> {
         return fetch(
             `${providerBrokerURL}/v1/proxy/signature/${chatID}?model=${model}`,
@@ -196,7 +196,7 @@ export class Verifier extends ZGServingUserBrokerBase {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Use-Proxy': `${useProxy}`,
+                    'VLLM-Proxy': `${vllmProxy}`,
                 },
             }
         )

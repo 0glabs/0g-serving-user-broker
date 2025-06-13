@@ -22,7 +22,7 @@ export declare abstract class ZGServingUserBrokerBase {
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
     protected userAcknowledged(providerAddress: string, userAddress: string): Promise<boolean>;
-    getHeader(providerAddress: string, content: string, outputFee: bigint, useProxy: boolean): Promise<ServingRequestHeaders>;
+    getHeader(providerAddress: string, content: string, outputFee: bigint, vllmProxy: boolean): Promise<ServingRequestHeaders>;
     calculatePedersenHash(nonce: number, userAddress: string, providerAddress: string): Promise<string>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     updateCachedFee(provider: string, fee: bigint): Promise<void>;

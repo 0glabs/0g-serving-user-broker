@@ -38,7 +38,7 @@ export interface ServingRequestHeaders {
     /**
      * Broker service use a proxy for chat signature
      */
-    'Use-Proxy': string
+    'VLLM-Proxy': string
 }
 export interface QuoteResponse {
     quote: string
@@ -100,18 +100,18 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
     async getRequestHeaders(
         providerAddress: string,
         content: string,
-        useProxy?: boolean
+        vllmProxy?: boolean
     ): Promise<ServingRequestHeaders> {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content)
-            if (!useProxy) {
-                useProxy = false
+            if (!vllmProxy) {
+                vllmProxy = false
             }
             return await this.getHeader(
                 providerAddress,
                 content,
                 BigInt(0),
-                useProxy
+                vllmProxy
             )
         } catch (error) {
             throw error

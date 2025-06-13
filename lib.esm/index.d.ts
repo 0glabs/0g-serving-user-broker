@@ -1615,7 +1615,7 @@ interface ServingRequestHeaders {
     /**
      * Broker service use a proxy for chat signature
      */
-    'Use-Proxy': string;
+    'VLLM-Proxy': string;
 }
 interface QuoteResponse {
     quote: string;
@@ -1634,7 +1634,7 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
         endpoint: string;
         model: string;
     }>;
-    getRequestHeaders(providerAddress: string, content: string, useProxy?: boolean): Promise<ServingRequestHeaders>;
+    getRequestHeaders(providerAddress: string, content: string, vllmProxy?: boolean): Promise<ServingRequestHeaders>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
     getQuote(providerAddress: string): Promise<QuoteResponse>;
     private fetchText;
@@ -1658,7 +1658,7 @@ declare abstract class ZGServingUserBrokerBase {
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
     protected userAcknowledged(providerAddress: string, userAddress: string): Promise<boolean>;
-    getHeader(providerAddress: string, content: string, outputFee: bigint, useProxy: boolean): Promise<ServingRequestHeaders>;
+    getHeader(providerAddress: string, content: string, outputFee: bigint, vllmProxy: boolean): Promise<ServingRequestHeaders>;
     calculatePedersenHash(nonce: number, userAddress: string, providerAddress: string): Promise<string>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
     updateCachedFee(provider: string, fee: bigint): Promise<void>;
@@ -1744,7 +1744,7 @@ declare class Verifier extends ZGServingUserBrokerBase {
     getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
     static verifyRA(nvidia_payload: any): Promise<boolean>;
     static fetSignerRA(providerBrokerURL: string, model: string): Promise<SignerRA>;
-    static fetSignatureByChatID(providerBrokerURL: string, chatID: string, model: string, useProxy: boolean): Promise<ResponseSignature>;
+    static fetSignatureByChatID(providerBrokerURL: string, chatID: string, model: string, vllmProxy: boolean): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
 }
 
@@ -1819,7 +1819,7 @@ declare class InferenceBroker {
      *
      * @param {string} providerAddress - The address of the provider.
      * @param {string} content - The content being billed. For example, in a chatbot service, it is the text input by the user.
-     * @param {boolean} useProxy - Chat signature proxy, default is false
+     * @param {boolean} vllmProxy - Chat signature proxy, default is false
      *
      * @returns headers. Records information such as the request fee and user signature.
      *
@@ -1853,7 +1853,7 @@ declare class InferenceBroker {
      *
      * @throws An error if errors occur during the processing of the request.
      */
-    getRequestHeaders: (providerAddress: string, content: string, useProxy?: boolean) => Promise<ServingRequestHeaders>;
+    getRequestHeaders: (providerAddress: string, content: string, vllmProxy?: boolean) => Promise<ServingRequestHeaders>;
     /**
      * processResponse is used after the user successfully obtains a response from the provider service.
      *
@@ -1868,13 +1868,13 @@ declare class InferenceBroker {
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
-     * @param {boolean} useProxy - Chat signature proxy, default is falser verifiable services. You can provide the chat ID obtained from the response to
+     * @param {boolean} vllmProxy - Chat signature proxy, default is false
      *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
      *
      * @throws An error if any issues occur during the processing of the response.
      */
-    processResponse: (providerAddress: string, content: string, chatID?: string, useProxy?: boolean) => Promise<boolean | null>;
+    processResponse: (providerAddress: string, content: string, chatID?: string, vllmProxy?: boolean) => Promise<boolean | null>;
     /**
      * verifyService is used to verify the reliability of the service.
      *

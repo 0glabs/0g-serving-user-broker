@@ -163,7 +163,7 @@ export abstract class ZGServingUserBrokerBase {
         providerAddress: string,
         content: string,
         outputFee: bigint,
-        useProxy: boolean
+        vllmProxy: boolean
     ): Promise<ServingRequestHeaders> {
         try {
             const userAddress = this.contract.getUserAddress()
@@ -218,7 +218,7 @@ export abstract class ZGServingUserBrokerBase {
                 Nonce: nonce.toString(),
                 'Request-Hash': requestHash,
                 Signature: sig,
-                'Use-Proxy': `${useProxy}`,
+                'VLLM-Proxy': `${vllmProxy}`,
             }
         } catch (error) {
             throw error

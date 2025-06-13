@@ -37,7 +37,7 @@ export interface ServingRequestHeaders {
     /**
      * Broker service use a proxy for chat signature
      */
-    'Use-Proxy': string;
+    'VLLM-Proxy': string;
 }
 export interface QuoteResponse {
     quote: string;
@@ -56,7 +56,7 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
         endpoint: string;
         model: string;
     }>;
-    getRequestHeaders(providerAddress: string, content: string, useProxy?: boolean): Promise<ServingRequestHeaders>;
+    getRequestHeaders(providerAddress: string, content: string, vllmProxy?: boolean): Promise<ServingRequestHeaders>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
     getQuote(providerAddress: string): Promise<QuoteResponse>;
     private fetchText;
