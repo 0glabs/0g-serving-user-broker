@@ -92,12 +92,12 @@ export default function (program: Command) {
                     if (isInference) {
                         table.push([
                             'Price Per Token (A0GI)',
-                            neuronToA0gi(service.pricePerToken).toFixed(18),
+                            service.pricePerToken !== undefined ? neuronToA0gi(BigInt(service.pricePerToken)).toFixed(18) : 'N/A',
                         ])
                     } else {
                     table.push([
                         'Price Per Byte in Dataset (A0GI)',
-                        neuronToA0gi(service.pricePerToken).toFixed(18),
+                        service.pricePerToken !== undefined ? neuronToA0gi(BigInt(service.pricePerToken)).toFixed(18) : 'N/A',
                     ])
                     }
                     // TODO: Show quota when backend ready
