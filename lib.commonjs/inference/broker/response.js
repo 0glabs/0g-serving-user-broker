@@ -15,7 +15,7 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
         super(contract, ledger, metadata, cache);
         this.verifier = new verifier_1.Verifier(contract, ledger, metadata, cache);
     }
-    async processResponse(providerAddress, content, chatID, useProxy) {
+    async processResponse(providerAddress, content, chatID, vllmProxy) {
         try {
             const extractor = await this.getExtractor(providerAddress);
             const outputFee = await this.calculateOutputFees(extractor, content);
@@ -27,18 +27,18 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             if (!chatID) {
                 throw new Error('Chat ID does not exist');
             }
+            if (!vllmProxy) {
+                vllmProxy = false;
+            }
             let singerRAVerificationResult = await this.verifier.getSigningAddress(providerAddress);
             if (!singerRAVerificationResult.valid) {
                 singerRAVerificationResult =
-                    await this.verifier.getSigningAddress(providerAddress, true);
+                    await this.verifier.getSigningAddress(providerAddress, true, vllmProxy);
             }
             if (!singerRAVerificationResult.valid) {
                 throw new Error('Signing address is invalid');
             }
-            if (!useProxy) {
-                useProxy = false;
-            }
-            const ResponseSignature = await verifier_1.Verifier.fetSignatureByChatID(svc.url, chatID, svc.model, useProxy);
+            const ResponseSignature = await verifier_1.Verifier.fetSignatureByChatID(svc.url, chatID, svc.model, vllmProxy);
             return verifier_1.Verifier.verifySignature(ResponseSignature.text, ResponseSignature.signature, singerRAVerificationResult.signingAddress);
         }
         catch (error) {

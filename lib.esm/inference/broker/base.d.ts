@@ -4,6 +4,12 @@ import { ServiceStructOutput } from '../contract';
 import { ServingRequestHeaders } from './request';
 import { Cache, Metadata } from '../../common/storage';
 import { LedgerBroker } from '../../ledger';
+export interface QuoteResponse {
+    quote: string;
+    provider_signer: string;
+    key: [bigint, bigint];
+    nvidia_payload: string;
+}
 export declare abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract;
     protected metadata: Metadata;
@@ -17,6 +23,8 @@ export declare abstract class ZGServingUserBrokerBase {
         settleSignerPrivateKey: bigint[] | null;
     }>;
     protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput>;
+    getQuote(providerAddress: string): Promise<QuoteResponse>;
+    private fetchText;
     protected getExtractor(providerAddress: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput): Extractor;
     protected a0giToNeuron(value: number): bigint;

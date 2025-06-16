@@ -54,7 +54,8 @@ export class Verifier extends ZGServingUserBrokerBase {
      */
     async getSigningAddress(
         providerAddress: string,
-        verifyRA = false
+        verifyRA = false,
+        vllmProxy = false
     ): Promise<SingerRAVerificationResult> {
         const key = `${this.contract.getUserAddress()}_${providerAddress}`
         let signingKey = await this.metadata.getSigningKey(key)
@@ -69,9 +70,24 @@ export class Verifier extends ZGServingUserBrokerBase {
             const extractor = await this.getExtractor(providerAddress, false)
             const svc = await extractor.getSvcInfo()
 
-            const signerRA = await Verifier.fetSignerRA(svc.url, svc.model)
-            if (!signerRA?.signing_address) {
-                throw new Error('signing address does not exist')
+            let signerRA: SignerRA = {
+                signing_address: '',
+                nvidia_payload: '',
+                intel_quote: '',
+            }
+            if (vllmProxy) {
+                signerRA = await Verifier.fetSignerRA(svc.url, svc.model)
+                if (!signerRA?.signing_address) {
+                    throw new Error('signing address does not exist')
+                }
+            } else {
+                let { quote, provider_signer, nvidia_payload } =
+                    await this.getQuote(providerAddress)
+                signerRA = {
+                    signing_address: provider_signer,
+                    nvidia_payload: nvidia_payload,
+                    intel_quote: quote,
+                }
             }
 
             signingKey = `${this.contract.getUserAddress()}_${providerAddress}`

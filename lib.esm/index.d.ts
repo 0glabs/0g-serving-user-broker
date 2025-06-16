@@ -1617,11 +1617,6 @@ interface ServingRequestHeaders {
      */
     'VLLM-Proxy': string;
 }
-interface QuoteResponse {
-    quote: string;
-    provider_signer: string;
-    key: [bigint, bigint];
-}
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -1636,10 +1631,14 @@ declare class RequestProcessor extends ZGServingUserBrokerBase {
     }>;
     getRequestHeaders(providerAddress: string, content: string, vllmProxy?: boolean): Promise<ServingRequestHeaders>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
-    getQuote(providerAddress: string): Promise<QuoteResponse>;
-    private fetchText;
 }
 
+interface QuoteResponse {
+    quote: string;
+    provider_signer: string;
+    key: [bigint, bigint];
+    nvidia_payload: string;
+}
 declare abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract;
     protected metadata: Metadata;
@@ -1653,6 +1652,8 @@ declare abstract class ZGServingUserBrokerBase {
         settleSignerPrivateKey: bigint[] | null;
     }>;
     protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput$1>;
+    getQuote(providerAddress: string): Promise<QuoteResponse>;
+    private fetchText;
     protected getExtractor(providerAddress: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput$1): Extractor;
     protected a0giToNeuron(value: number): bigint;
@@ -1698,7 +1699,7 @@ declare class AccountProcessor extends ZGServingUserBrokerBase {
 declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
     constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
-    processResponse(providerAddress: string, content: string, chatID?: string, useProxy?: boolean): Promise<boolean | null>;
+    processResponse(providerAddress: string, content: string, chatID?: string, vllmProxy?: boolean): Promise<boolean | null>;
     private calculateOutputFees;
 }
 
@@ -1739,7 +1740,7 @@ declare class Verifier extends ZGServingUserBrokerBase {
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    getSigningAddress(providerAddress: string, verifyRA?: boolean): Promise<SingerRAVerificationResult>;
+    getSigningAddress(providerAddress: string, verifyRA?: boolean, vllmProxy?: boolean): Promise<SingerRAVerificationResult>;
     getSignerRaDownloadLink(providerAddress: string): Promise<string>;
     getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
     static verifyRA(nvidia_payload: any): Promise<boolean>;

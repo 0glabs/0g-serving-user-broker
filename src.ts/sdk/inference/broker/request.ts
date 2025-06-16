@@ -3,6 +3,7 @@ import { Cache, Metadata, CacheValueTypeEnum } from '../../common/storage'
 import { InferenceServingContract } from '../contract'
 import { LedgerBroker } from '../../ledger'
 import { Automata } from '../../common/automata '
+import { Verifier } from './verifier'
 
 /**
  * ServingRequestHeaders contains headers related to request billing.
@@ -39,11 +40,6 @@ export interface ServingRequestHeaders {
      * Broker service use a proxy for chat signature
      */
     'VLLM-Proxy': string
-}
-export interface QuoteResponse {
-    quote: string
-    provider_signer: string
-    key: [bigint, bigint]
 }
 
 /**
@@ -138,9 +134,8 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 }
             }
 
-            let { quote, provider_signer, key } = await this.getQuote(
-                providerAddress
-            )
+            let { quote, provider_signer, key, nvidia_payload } =
+                await this.getQuote(providerAddress)
             if (!quote || !provider_signer) {
                 throw new Error('Invalid quote')
             }
@@ -155,6 +150,15 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 console.log('Quote verification:', isVerified)
                 if (!isVerified) {
                     throw new Error('Quote verification failed')
+                }
+
+                if (nvidia_payload) {
+                    const valid = await Verifier.verifyRA(nvidia_payload)
+                    console.log('nvidia payload verification:', valid)
+
+                    if (!valid) {
+                        throw new Error('nvidia payload verify failed')
+                    }
                 }
             }
 
@@ -177,46 +181,6 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 1 * 60 * 1000,
                 CacheValueTypeEnum.Other
             )
-        } catch (error) {
-            throw error
-        }
-    }
-
-    async getQuote(providerAddress: string): Promise<QuoteResponse> {
-        try {
-            const service = await this.getService(providerAddress)
-
-            const url = service.url
-            const endpoint = `${url}/v1/quote`
-
-            const quoteString = await this.fetchText(endpoint, {
-                method: 'GET',
-            })
-
-            const ret = JSON.parse(quoteString, (_, value) => {
-                if (typeof value === 'string' && /^\d+$/.test(value)) {
-                    return BigInt(value)
-                }
-
-                return value
-            })
-            return ret
-        } catch (error) {
-            throw error
-        }
-    }
-
-    private async fetchText(
-        endpoint: string,
-        options: RequestInit
-    ): Promise<string> {
-        try {
-            const response = await fetch(endpoint, options)
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`)
-            }
-            const buffer = await response.arrayBuffer()
-            return Buffer.from(buffer).toString('utf-8')
         } catch (error) {
             throw error
         }

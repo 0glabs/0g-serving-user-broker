@@ -36,7 +36,7 @@ export declare class Verifier extends ZGServingUserBrokerBase {
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    getSigningAddress(providerAddress: string, verifyRA?: boolean): Promise<SingerRAVerificationResult>;
+    getSigningAddress(providerAddress: string, verifyRA?: boolean, vllmProxy?: boolean): Promise<SingerRAVerificationResult>;
     getSignerRaDownloadLink(providerAddress: string): Promise<string>;
     getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
     static verifyRA(nvidia_payload: any): Promise<boolean>;

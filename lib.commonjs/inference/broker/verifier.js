@@ -28,7 +28,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    async getSigningAddress(providerAddress, verifyRA = false) {
+    async getSigningAddress(providerAddress, verifyRA = false, vllmProxy = false) {
         const key = `${this.contract.getUserAddress()}_${providerAddress}`;
         let signingKey = await this.metadata.getSigningKey(key);
         if (!verifyRA && signingKey) {
@@ -40,9 +40,24 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
         try {
             const extractor = await this.getExtractor(providerAddress, false);
             const svc = await extractor.getSvcInfo();
-            const signerRA = await Verifier.fetSignerRA(svc.url, svc.model);
-            if (!signerRA?.signing_address) {
-                throw new Error('signing address does not exist');
+            let signerRA = {
+                signing_address: '',
+                nvidia_payload: '',
+                intel_quote: '',
+            };
+            if (vllmProxy) {
+                signerRA = await Verifier.fetSignerRA(svc.url, svc.model);
+                if (!signerRA?.signing_address) {
+                    throw new Error('signing address does not exist');
+                }
+            }
+            else {
+                let { quote, provider_signer, nvidia_payload } = await this.getQuote(providerAddress);
+                signerRA = {
+                    signing_address: provider_signer,
+                    nvidia_payload: nvidia_payload,
+                    intel_quote: quote,
+                };
             }
             signingKey = `${this.contract.getUserAddress()}_${providerAddress}`;
             await this.metadata.storeSigningKey(signingKey, signerRA.signing_address);

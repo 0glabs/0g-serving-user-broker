@@ -10,7 +10,7 @@ import { LedgerBroker } from '../../ledger';
 export declare class ResponseProcessor extends ZGServingUserBrokerBase {
     private verifier;
     constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
-    processResponse(providerAddress: string, content: string, chatID?: string, useProxy?: boolean): Promise<boolean | null>;
+    processResponse(providerAddress: string, content: string, chatID?: string, vllmProxy?: boolean): Promise<boolean | null>;
     private calculateOutputFees;
 }
 //# sourceMappingURL=response.d.ts.map

@@ -39,11 +39,6 @@ export interface ServingRequestHeaders {
      */
     'VLLM-Proxy': string;
 }
-export interface QuoteResponse {
-    quote: string;
-    provider_signer: string;
-    key: [bigint, bigint];
-}
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -58,7 +53,5 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
     }>;
     getRequestHeaders(providerAddress: string, content: string, vllmProxy?: boolean): Promise<ServingRequestHeaders>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
-    getQuote(providerAddress: string): Promise<QuoteResponse>;
-    private fetchText;
 }
 //# sourceMappingURL=request.d.ts.map

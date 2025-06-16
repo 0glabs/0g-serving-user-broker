@@ -42,6 +42,39 @@ class ZGServingUserBrokerBase {
             throw error;
         }
     }
+    async getQuote(providerAddress) {
+        try {
+            const service = await this.getService(providerAddress);
+            const url = service.url;
+            const endpoint = `${url}/v1/quote`;
+            const quoteString = await this.fetchText(endpoint, {
+                method: 'GET',
+            });
+            const ret = JSON.parse(quoteString, (_, value) => {
+                if (typeof value === 'string' && /^\d+$/.test(value)) {
+                    return BigInt(value);
+                }
+                return value;
+            });
+            return ret;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async fetchText(endpoint, options) {
+        try {
+            const response = await fetch(endpoint, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const buffer = await response.arrayBuffer();
+            return Buffer.from(buffer).toString('utf-8');
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async getExtractor(providerAddress, useCache = true) {
         try {
             const svc = await this.getService(providerAddress, useCache);
