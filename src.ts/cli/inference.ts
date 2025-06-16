@@ -51,9 +51,7 @@ export default function inference(program: Command) {
             '0.0.0.0'
         )
         .action(async (options) => {
-            const { runInferenceServer } = await import(
-                '../example/inference-server'
-            )
+            const { runInferenceServer } = await import('../example/inference-server')
             await runInferenceServer(options)
         })
 }
