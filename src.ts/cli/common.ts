@@ -67,7 +67,7 @@ export default function (program: Command) {
     program
         .command('list-providers')
         .description('List providers')
-        .requiredOption('--key <key>', 'Wallet private key (required)', process.env.ZG_PRIVATE_KEY)
+        .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
