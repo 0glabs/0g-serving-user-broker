@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 import { Command } from 'commander'
 import fineTuning from './fine-tuning'
@@ -9,7 +9,7 @@ import inference from './inference'
 export const program = new Command()
 
 program
-    .name('0g-serving-broker')
+    .name('0g-compute-cli')
     .description('CLI for interacting with ZG Compute Network')
     .version('dev')
 

@@ -50,47 +50,60 @@ function default_1(program) {
     program
         .command('list-providers')
         .description('List providers')
-        .option('--key <key>', 'Wallet private key (required)')
+        .requiredOption('--key <key>', 'Wallet private key (required)', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--infer', 'list inference providers, default is fine-tuning')
         .action((options) => {
-        if (!options.key) {
-            console.error("Error: --key is required. Please provide a valid private key (e.g. --key 0x...).");
-            process.exit(1);
-        }
         const renderProviders = (services, isInference) => {
-            const table = new cli_table3_1.default({
-                colWidths: [50, 50],
-            });
-            services.forEach((service, index) => {
-                table.push([
-                    chalk_1.default.blue(`Provider ${index + 1}`),
-                    chalk_1.default.blue(service.provider),
-                ]);
-                let available = !service.occupied ? '\u2713' : `\u2717`;
-                table.push(['Available', available]);
-                if (isInference) {
+            if (isInference) {
+                const table = new cli_table3_1.default({
+                    head: [
+                        'provider',
+                        'serviceType',
+                        'url',
+                        'inputPrice',
+                        'outputPrice',
+                        'updatedAt',
+                        'model',
+                        'verifiability',
+                    ],
+                    style: { head: ['cyan'] },
+                });
+                services.forEach((service) => {
                     table.push([
-                        'Price Per Token (A0GI)',
-                        service.pricePerToken !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.pricePerToken)).toFixed(18) : 'N/A',
+                        service.provider,
+                        service.serviceType,
+                        service.url,
+                        service.inputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.inputPrice)).toFixed(18) : 'N/A',
+                        service.outputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.outputPrice)).toFixed(18) : 'N/A',
+                        service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
+                        service.model,
+                        service.verifiability,
                     ]);
-                }
-                else {
+                });
+                console.log(table.toString());
+            }
+            else {
+                const table = new cli_table3_1.default({
+                    colWidths: [50, 50],
+                });
+                services.forEach((service, index) => {
+                    table.push([
+                        chalk_1.default.blue(`Provider ${index + 1}`),
+                        chalk_1.default.blue(service.provider),
+                    ]);
+                    let available = !service.occupied ? '\u2713' : `\u2717`;
+                    table.push(['Available', available]);
                     table.push([
                         'Price Per Byte in Dataset (A0GI)',
                         service.pricePerToken !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.pricePerToken)).toFixed(18) : 'N/A',
                     ]);
-                }
-                // TODO: Show quota when backend ready
-                // table.push([
-                //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',
-                //     service.quota.toString(),
-                // ])
-            });
-            console.log(table.toString());
+                });
+                console.log(table.toString());
+            }
         };
         if (options.infer) {
             (0, util_1.withBroker)(options, async (broker) => {

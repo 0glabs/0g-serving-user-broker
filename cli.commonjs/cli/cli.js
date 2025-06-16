@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.program = void 0;
@@ -10,7 +10,7 @@ const common_1 = tslib_1.__importDefault(require("./common"));
 const inference_1 = tslib_1.__importDefault(require("./inference"));
 exports.program = new commander_1.Command();
 exports.program
-    .name('0g-serving-broker')
+    .name('0g-compute-cli')
     .description('CLI for interacting with ZG Compute Network')
     .version('dev');
 (0, fine_tuning_1.default)(exports.program);
