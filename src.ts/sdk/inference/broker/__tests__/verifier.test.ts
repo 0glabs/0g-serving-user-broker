@@ -175,7 +175,8 @@ describe('Verifier', () => {
             const result = await Verifier.fetSignatureByChatID(
                 url,
                 chatID,
-                model
+                model,
+                true
             )
 
             expect(fetchStub.calledOnce).to.be.true
@@ -199,7 +200,8 @@ describe('Verifier', () => {
                 await Verifier.fetSignatureByChatID(
                     'https://example.com',
                     'chat123',
-                    'test-model'
+                    'test-model',
+                    true
                 )
                 // Should not reach here
                 expect.fail('Should have thrown an error')

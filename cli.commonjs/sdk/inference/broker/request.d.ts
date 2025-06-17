@@ -34,11 +34,10 @@ export interface ServingRequestHeaders {
      * By adding this information, the user gives the current request the characteristics of a settlement proof.
      */
     Signature: string;
-}
-export interface QuoteResponse {
-    quote: string;
-    provider_signer: string;
-    key: [bigint, bigint];
+    /**
+     * Broker service use a proxy for chat signature
+     */
+    'VLLM-Proxy': string;
 }
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
@@ -52,9 +51,7 @@ export declare class RequestProcessor extends ZGServingUserBrokerBase {
         endpoint: string;
         model: string;
     }>;
-    getRequestHeaders(providerAddress: string, content: string): Promise<ServingRequestHeaders>;
+    getRequestHeaders(providerAddress: string, content: string, vllmProxy?: boolean): Promise<ServingRequestHeaders>;
     acknowledgeProviderSigner(providerAddress: string, gasPrice?: number): Promise<void>;
-    getQuote(providerAddress: string): Promise<QuoteResponse>;
-    private fetchText;
 }
 //# sourceMappingURL=request.d.ts.map

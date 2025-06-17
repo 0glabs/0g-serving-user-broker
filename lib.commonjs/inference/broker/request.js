@@ -4,6 +4,7 @@ exports.RequestProcessor = void 0;
 const base_1 = require("./base");
 const storage_1 = require("../../common/storage");
 const automata_1 = require("../../common/automata ");
+const verifier_1 = require("./verifier");
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -44,10 +45,13 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
      *
      * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
      */
-    async getRequestHeaders(providerAddress, content) {
+    async getRequestHeaders(providerAddress, content, vllmProxy) {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content);
-            return await this.getHeader(providerAddress, content, BigInt(0));
+            if (!vllmProxy) {
+                vllmProxy = false;
+            }
+            return await this.getHeader(providerAddress, content, BigInt(0), vllmProxy);
         }
         catch (error) {
             throw error;
@@ -66,7 +70,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
                     await this.ledger.transferFund(providerAddress, 'inference', BigInt(0), gasPrice);
                 }
             }
-            let { quote, provider_signer, key } = await this.getQuote(providerAddress);
+            let { quote, provider_signer, key, nvidia_payload } = await this.getQuote(providerAddress);
             if (!quote || !provider_signer) {
                 throw new Error('Invalid quote');
             }
@@ -81,6 +85,13 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
                 if (!isVerified) {
                     throw new Error('Quote verification failed');
                 }
+                if (nvidia_payload) {
+                    const valid = await verifier_1.Verifier.verifyRA(nvidia_payload);
+                    console.log('nvidia payload verification:', valid);
+                    if (!valid) {
+                        throw new Error('nvidia payload verify failed');
+                    }
+                }
             }
             const account = await this.contract.getAccount(providerAddress);
             if (account.providerPubKey[0] === key[0] &&
@@ -92,39 +103,6 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             const userAddress = this.contract.getUserAddress();
             const cacheKey = `${userAddress}_${providerAddress}_ack`;
             await this.cache.setItem(cacheKey, key, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async getQuote(providerAddress) {
-        try {
-            const service = await this.getService(providerAddress);
-            const url = service.url;
-            const endpoint = `${url}/v1/quote`;
-            const quoteString = await this.fetchText(endpoint, {
-                method: 'GET',
-            });
-            const ret = JSON.parse(quoteString, (_, value) => {
-                if (typeof value === 'string' && /^\d+$/.test(value)) {
-                    return BigInt(value);
-                }
-                return value;
-            });
-            return ret;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async fetchText(endpoint, options) {
-        try {
-            const response = await fetch(endpoint, options);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const buffer = await response.arrayBuffer();
-            return Buffer.from(buffer).toString('utf-8');
         }
         catch (error) {
             throw error;
