@@ -57,78 +57,62 @@ function default_1(program) {
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--infer', 'list inference providers, default is fine-tuning')
         .action((options) => {
-        const renderProviders = (services, isInference) => {
-            if (isInference) {
-                // Table style output for inference providers, matching fine-tuning provider style
-                const table = new cli_table3_1.default({
-                    colWidths: [50, 50],
-                });
-                services.forEach((service, index) => {
-                    table.push([
-                        chalk_1.default.blue(`Provider ${index + 1}`),
-                        chalk_1.default.blue(service.provider),
-                    ]);
-                    // Do not output serviceType or url
-                    table.push([
-                        'Input Price Per Byte in Dataset (AOGI)',
-                        service.inputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.inputPrice)).toFixed(18) : 'N/A',
-                    ]);
-                    table.push([
-                        'Output Price Per Byte in Dataset (AOGI)',
-                        service.outputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.outputPrice)).toFixed(18) : 'N/A',
-                    ]);
-                    if (service.updatedAt) {
-                        table.push([
-                            'Updated At',
-                            service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
-                        ]);
-                    }
-                    if (service.model) {
-                        table.push([
-                            'Model',
-                            service.model,
-                        ]);
-                    }
-                    if (service.verifiability !== undefined) {
-                        table.push([
-                            'Verifiability',
-                            service.verifiability,
-                        ]);
-                    }
-                });
-                console.log(table.toString());
-            }
-            else {
-                const table = new cli_table3_1.default({
-                    colWidths: [50, 50],
-                });
-                services.forEach((service, index) => {
-                    table.push([
-                        chalk_1.default.blue(`Provider ${index + 1}`),
-                        chalk_1.default.blue(service.provider),
-                    ]);
-                    let available = !service.occupied ? '\u2713' : `\u2717`;
-                    table.push(['Available', available]);
-                    table.push([
-                        'Price Per Byte in Dataset (A0GI)',
-                        service.pricePerToken !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.pricePerToken)).toFixed(18) : 'N/A',
-                    ]);
-                });
-                console.log(table.toString());
-            }
-        };
+        const table = new cli_table3_1.default({
+            colWidths: [50, 50],
+        });
         if (options.infer) {
             (0, util_1.withBroker)(options, async (broker) => {
                 const services = await broker.inference.listService();
-                renderProviders(services, true);
+                services.forEach((service, index) => {
+                    table.push([
+                        chalk_1.default.blue(`Provider ${index + 1}`),
+                        chalk_1.default.blue(service.provider),
+                    ]);
+                    table.push(['Model', service.model || 'N/A']);
+                    table.push([
+                        'Input Price Per Byte (AOGI)',
+                        service.inputPrice
+                            ? (0, util_1.neuronToA0gi)(BigInt(service.inputPrice)).toFixed(18)
+                            : 'N/A',
+                    ]);
+                    table.push([
+                        'Output Price Per Byte (AOGI)',
+                        service.outputPrice
+                            ? (0, util_1.neuronToA0gi)(BigInt(service.outputPrice)).toFixed(18)
+                            : 'N/A',
+                    ]);
+                    table.push([
+                        'Verifiability',
+                        service.verifiability || 'N/A',
+                    ]);
+                });
+                console.log(table.toString());
             });
+            return;
         }
-        else {
-            (0, util_1.withFineTuningBroker)(options, async (broker) => {
-                const services = await broker.fineTuning.listService();
-                renderProviders(services, false);
+        (0, util_1.withFineTuningBroker)(options, async (broker) => {
+            const services = await broker.fineTuning.listService();
+            services.forEach((service, index) => {
+                table.push([
+                    chalk_1.default.blue(`Provider ${index + 1}`),
+                    chalk_1.default.blue(service.provider),
+                ]);
+                let available = !service.occupied ? '\u2713' : `\u2717`;
+                table.push(['Available', available]);
+                table.push([
+                    'Price Per Byte in Dataset (A0GI)',
+                    service.pricePerToken
+                        ? (0, util_1.neuronToA0gi)(BigInt(service.pricePerToken)).toFixed(18)
+                        : 'N/A',
+                ]);
+                // TODO: Show quota when backend ready
+                // table.push([
+                //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',
+                //     service.quota.toString(),
+                // ])
             });
-        }
+            console.log(table.toString());
+        });
     });
 }
 function renderOverview(account) {

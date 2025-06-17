@@ -74,76 +74,68 @@ export default function (program: Command) {
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
         .option('--infer', 'list inference providers, default is fine-tuning')
         .action((options: any) => {
-            const renderProviders = (services: any[], isInference: boolean) => {
-                if (isInference) {
-                    // Table style output for inference providers, matching fine-tuning provider style
-                    const table = new Table({
-                        colWidths: [50, 50],
-                    });
-                    services.forEach((service, index) => {
-                        table.push([
-                            chalk.blue(`Provider ${index + 1}`),
-                            chalk.blue(service.provider),
-                        ]);
-                        // Do not output serviceType or url
-                        table.push([
-                            'Input Price Per Byte in Dataset (AOGI)',
-                            service.inputPrice !== undefined ? neuronToA0gi(BigInt(service.inputPrice)).toFixed(18) : 'N/A',
-                        ]);
-                        table.push([
-                            'Output Price Per Byte in Dataset (AOGI)',
-                            service.outputPrice !== undefined ? neuronToA0gi(BigInt(service.outputPrice)).toFixed(18) : 'N/A',
-                        ]);
-                        if (service.updatedAt) {
-                            table.push([
-                                'Updated At',
-                                service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
-                            ]);
-                        }
-                        if (service.model) {
-                            table.push([
-                                'Model',
-                                service.model,
-                            ]);
-                        }
-                        if (service.verifiability !== undefined) {
-                            table.push([
-                                'Verifiability',
-                                service.verifiability,
-                            ]);
-                        }
-                    });
-                    console.log(table.toString());
-                } else {
-                    const table = new Table({
-                        colWidths: [50, 50],
-                    })
-                    services.forEach((service, index) => {
-                        table.push([
-                            chalk.blue(`Provider ${index + 1}`),
-                            chalk.blue(service.provider),
-                        ])
-                        let available = !service.occupied ? '\u2713' : `\u2717`
-                        table.push(['Available', available])
-                        table.push([
-                            'Price Per Byte in Dataset (A0GI)',
-                            service.pricePerToken !== undefined ? neuronToA0gi(BigInt(service.pricePerToken)).toFixed(18) : 'N/A',
-                        ])
-                    })
-                    console.log(table.toString())
-                }
-            }
+            const table = new Table({
+                colWidths: [50, 50],
+            })
             if (options.infer) {
                 withBroker(options, async (broker) => {
                     const services = await broker.inference.listService()
-                    renderProviders(services, true)
+                    services.forEach((service, index) => {
+                        table.push([
+                            chalk.blue(`Provider ${index + 1}`),
+                            chalk.blue(service.provider),
+                        ])
+                        table.push(['Model', service.model || 'N/A'])
+                        table.push([
+                            'Input Price Per Byte (AOGI)',
+                            service.inputPrice
+                                ? neuronToA0gi(
+                                      BigInt(service.inputPrice)
+                                  ).toFixed(18)
+                                : 'N/A',
+                        ])
+                        table.push([
+                            'Output Price Per Byte (AOGI)',
+                            service.outputPrice
+                                ? neuronToA0gi(
+                                      BigInt(service.outputPrice)
+                                  ).toFixed(18)
+                                : 'N/A',
+                        ])
+                        table.push([
+                            'Verifiability',
+                            service.verifiability || 'N/A',
+                        ])
+                    })
+                    console.log(table.toString())
                 })
-            } else {
-                withFineTuningBroker(options, async (broker) => {
-                    const services = await broker.fineTuning!.listService()
-                    renderProviders(services, false)
-                })
+                return
             }
+            withFineTuningBroker(options, async (broker) => {
+                const services = await broker.fineTuning!.listService()
+                services.forEach((service, index) => {
+                    table.push([
+                        chalk.blue(`Provider ${index + 1}`),
+                        chalk.blue(service.provider),
+                    ])
+                    let available = !service.occupied ? '\u2713' : `\u2717`
+                    table.push(['Available', available])
+                    table.push([
+                        'Price Per Byte in Dataset (A0GI)',
+                        service.pricePerToken
+                            ? neuronToA0gi(
+                                  BigInt(service.pricePerToken)
+                              ).toFixed(18)
+                            : 'N/A',
+                    ])
+                    // TODO: Show quota when backend ready
+                    // table.push([
+                    //     'Quota(CPU, Memory, GPU Count, Storage, CPU Type)',
+                    //     service.quota.toString(),
+                    // ])
+                })
+                console.log(table.toString())
+            })
         })
 }
 
