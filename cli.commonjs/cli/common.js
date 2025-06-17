@@ -59,30 +59,42 @@ function default_1(program) {
         .action((options) => {
         const renderProviders = (services, isInference) => {
             if (isInference) {
+                // Table style output for inference providers, matching fine-tuning provider style
                 const table = new cli_table3_1.default({
-                    head: [
-                        'provider',
-                        'serviceType',
-                        'url',
-                        'inputPrice',
-                        'outputPrice',
-                        'updatedAt',
-                        'model',
-                        'verifiability',
-                    ],
-                    style: { head: ['cyan'] },
+                    colWidths: [50, 50],
                 });
-                services.forEach((service) => {
+                services.forEach((service, index) => {
                     table.push([
-                        service.provider,
-                        service.serviceType,
-                        service.url,
-                        service.inputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.inputPrice)).toFixed(18) : 'N/A',
-                        service.outputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.outputPrice)).toFixed(18) : 'N/A',
-                        service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
-                        service.model,
-                        service.verifiability,
+                        chalk_1.default.blue(`Provider ${index + 1}`),
+                        chalk_1.default.blue(service.provider),
                     ]);
+                    // Do not output serviceType or url
+                    table.push([
+                        'Input Price Per Byte in Dataset (AOGI)',
+                        service.inputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.inputPrice)).toFixed(18) : 'N/A',
+                    ]);
+                    table.push([
+                        'Output Price Per Byte in Dataset (AOGI)',
+                        service.outputPrice !== undefined ? (0, util_1.neuronToA0gi)(BigInt(service.outputPrice)).toFixed(18) : 'N/A',
+                    ]);
+                    if (service.updatedAt) {
+                        table.push([
+                            'Updated At',
+                            service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
+                        ]);
+                    }
+                    if (service.model) {
+                        table.push([
+                            'Model',
+                            service.model,
+                        ]);
+                    }
+                    if (service.verifiability !== undefined) {
+                        table.push([
+                            'Verifiability',
+                            service.verifiability,
+                        ]);
+                    }
                 });
                 console.log(table.toString());
             }

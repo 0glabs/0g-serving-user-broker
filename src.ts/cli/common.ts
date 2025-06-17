@@ -76,32 +76,44 @@ export default function (program: Command) {
         .action((options: any) => {
             const renderProviders = (services: any[], isInference: boolean) => {
                 if (isInference) {
+                    // Table style output for inference providers, matching fine-tuning provider style
                     const table = new Table({
-                        head: [
-                            'provider',
-                            'serviceType',
-                            'url',
-                            'inputPrice',
-                            'outputPrice',
-                            'updatedAt',
-                            'model',
-                            'verifiability',
-                        ],
-                        style: { head: ['cyan'] },
-                    })
-                    services.forEach((service) => {
+                        colWidths: [50, 50],
+                    });
+                    services.forEach((service, index) => {
                         table.push([
-                            service.provider,
-                            service.serviceType,
-                            service.url,
+                            chalk.blue(`Provider ${index + 1}`),
+                            chalk.blue(service.provider),
+                        ]);
+                        // Do not output serviceType or url
+                        table.push([
+                            'Input Price Per Byte in Dataset (AOGI)',
                             service.inputPrice !== undefined ? neuronToA0gi(BigInt(service.inputPrice)).toFixed(18) : 'N/A',
+                        ]);
+                        table.push([
+                            'Output Price Per Byte in Dataset (AOGI)',
                             service.outputPrice !== undefined ? neuronToA0gi(BigInt(service.outputPrice)).toFixed(18) : 'N/A',
-                            service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
-                            service.model,
-                            service.verifiability,
-                        ])
-                    })
-                    console.log(table.toString())
+                        ]);
+                        if (service.updatedAt) {
+                            table.push([
+                                'Updated At',
+                                service.updatedAt ? new Date(Number(service.updatedAt) * 1000).toISOString() : 'N/A',
+                            ]);
+                        }
+                        if (service.model) {
+                            table.push([
+                                'Model',
+                                service.model,
+                            ]);
+                        }
+                        if (service.verifiability !== undefined) {
+                            table.push([
+                                'Verifiability',
+                                service.verifiability,
+                            ]);
+                        }
+                    });
+                    console.log(table.toString());
                 } else {
                     const table = new Table({
                         colWidths: [50, 50],
