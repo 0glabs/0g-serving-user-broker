@@ -66,35 +66,67 @@ export default function (program: Command) {
 
     program
         .command('list-providers')
-        .description('List fine-tuning providers')
+        .description('List providers')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--infer', 'list inference providers, default is fine-tuning')
         .action((options: any) => {
+            const table = new Table({
+                colWidths: [50, 50],
+            })
             if (options.infer) {
+                withBroker(options, async (broker) => {
+                    const services = await broker.inference.listService()
+                    services.forEach((service, index) => {
+                        table.push([
+                            chalk.blue(`Provider ${index + 1}`),
+                            chalk.blue(service.provider),
+                        ])
+                        table.push(['Model', service.model || 'N/A'])
+                        table.push([
+                            'Input Price Per Byte (AOGI)',
+                            service.inputPrice
+                                ? neuronToA0gi(
+                                      BigInt(service.inputPrice)
+                                  ).toFixed(18)
+                                : 'N/A',
+                        ])
+                        table.push([
+                            'Output Price Per Byte (AOGI)',
+                            service.outputPrice
+                                ? neuronToA0gi(
+                                      BigInt(service.outputPrice)
+                                  ).toFixed(18)
+                                : 'N/A',
+                        ])
+                        table.push([
+                            'Verifiability',
+                            service.verifiability || 'N/A',
+                        ])
+                    })
+                    console.log(table.toString())
+                })
                 return
             }
             withFineTuningBroker(options, async (broker) => {
                 const services = await broker.fineTuning!.listService()
-                const table = new Table({
-                    colWidths: [50, 50],
-                })
-
                 services.forEach((service, index) => {
                     table.push([
                         chalk.blue(`Provider ${index + 1}`),
                         chalk.blue(service.provider),
                     ])
                     let available = !service.occupied ? '\u2713' : `\u2717`
-
-                    if (service.providerSigner) {
-                    }
                     table.push(['Available', available])
                     table.push([
                         'Price Per Byte in Dataset (A0GI)',
-                        neuronToA0gi(service.pricePerToken).toFixed(18),
+                        service.pricePerToken
+                            ? neuronToA0gi(
+                                  BigInt(service.pricePerToken)
+                              ).toFixed(18)
+                            : 'N/A',
                     ])
                     // TODO: Show quota when backend ready
                     // table.push([
