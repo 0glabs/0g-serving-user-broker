@@ -82,6 +82,7 @@
         "dotenv": "16.4.7",
         "eciesjs": "^0.4.13",
         "express": "5.1.0",
+        "node-fetch": "^3.3.2",
         "open-jsonrpc-provider": "^0.2.1",
         "openai": "^4.78.1",
         "rollup-plugin-polyfill-node": "^0.13.0"
