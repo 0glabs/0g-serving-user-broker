@@ -27,7 +27,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
     async processResponse(
         providerAddress: string,
         content: string,
-        chatID?: string
+        chatID?: string,
+        vllmProxy?: boolean
     ): Promise<boolean | null> {
         try {
             const extractor = await this.getExtractor(providerAddress)
@@ -43,12 +44,20 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
                 throw new Error('Chat ID does not exist')
             }
 
+            if (!vllmProxy) {
+                vllmProxy = false
+            }
+
             let singerRAVerificationResult =
                 await this.verifier.getSigningAddress(providerAddress)
 
             if (!singerRAVerificationResult.valid) {
                 singerRAVerificationResult =
-                    await this.verifier.getSigningAddress(providerAddress, true)
+                    await this.verifier.getSigningAddress(
+                        providerAddress,
+                        true,
+                        vllmProxy
+                    )
             }
 
             if (!singerRAVerificationResult.valid) {
@@ -58,7 +67,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
             const ResponseSignature = await Verifier.fetSignatureByChatID(
                 svc.url,
                 chatID,
-                svc.model
+                svc.model,
+                vllmProxy
             )
 
             return Verifier.verifySignature(

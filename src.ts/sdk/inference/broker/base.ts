@@ -18,6 +18,13 @@ import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
 import { LedgerBroker } from '../../ledger'
 import { hexlify } from 'ethers'
 
+export interface QuoteResponse {
+    quote: string
+    provider_signer: string
+    key: [bigint, bigint]
+    nvidia_payload: string
+}
+
 export abstract class ZGServingUserBrokerBase {
     protected contract: InferenceServingContract
     protected metadata: Metadata
@@ -67,6 +74,46 @@ export abstract class ZGServingUserBrokerBase {
                 CacheValueTypeEnum.Service
             )
             return svc
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getQuote(providerAddress: string): Promise<QuoteResponse> {
+        try {
+            const service = await this.getService(providerAddress)
+
+            const url = service.url
+            const endpoint = `${url}/v1/quote`
+
+            const quoteString = await this.fetchText(endpoint, {
+                method: 'GET',
+            })
+
+            const ret = JSON.parse(quoteString, (_, value) => {
+                if (typeof value === 'string' && /^\d+$/.test(value)) {
+                    return BigInt(value)
+                }
+
+                return value
+            })
+            return ret
+        } catch (error) {
+            throw error
+        }
+    }
+
+    private async fetchText(
+        endpoint: string,
+        options: RequestInit
+    ): Promise<string> {
+        try {
+            const response = await fetch(endpoint, options)
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`)
+            }
+            const buffer = await response.arrayBuffer()
+            return Buffer.from(buffer).toString('utf-8')
         } catch (error) {
             throw error
         }
@@ -162,7 +209,8 @@ export abstract class ZGServingUserBrokerBase {
     async getHeader(
         providerAddress: string,
         content: string,
-        outputFee: bigint
+        outputFee: bigint,
+        vllmProxy: boolean
     ): Promise<ServingRequestHeaders> {
         try {
             const userAddress = this.contract.getUserAddress()
@@ -217,6 +265,7 @@ export abstract class ZGServingUserBrokerBase {
                 Nonce: nonce.toString(),
                 'Request-Hash': requestHash,
                 Signature: sig,
+                'VLLM-Proxy': `${vllmProxy}`,
             }
         } catch (error) {
             throw error

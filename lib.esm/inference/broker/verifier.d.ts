@@ -36,12 +36,12 @@ export declare class Verifier extends ZGServingUserBrokerBase {
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    getSigningAddress(providerAddress: string, verifyRA?: boolean): Promise<SingerRAVerificationResult>;
+    getSigningAddress(providerAddress: string, verifyRA?: boolean, vllmProxy?: boolean): Promise<SingerRAVerificationResult>;
     getSignerRaDownloadLink(providerAddress: string): Promise<string>;
     getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
     static verifyRA(nvidia_payload: any): Promise<boolean>;
     static fetSignerRA(providerBrokerURL: string, model: string): Promise<SignerRA>;
-    static fetSignatureByChatID(providerBrokerURL: string, chatID: string, model: string): Promise<ResponseSignature>;
+    static fetSignatureByChatID(providerBrokerURL: string, chatID: string, model: string, vllmProxy: boolean): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
 }
 //# sourceMappingURL=verifier.d.ts.map
