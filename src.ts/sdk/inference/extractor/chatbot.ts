@@ -17,13 +17,17 @@ export class ChatBot extends Extractor {
         if (!content) {
             return 0
         }
-        return content.split(/\s+/).length
+        const utf8Encoder = new TextEncoder()
+        const encoded = utf8Encoder.encode(content)
+        return encoded.length
     }
 
     async getOutputCount(content: string): Promise<number> {
         if (!content) {
             return 0
         }
-        return content.split(/\s+/).length
+        const utf8Encoder = new TextEncoder()
+        const encoded = utf8Encoder.encode(content)
+        return encoded.length
     }
 }
