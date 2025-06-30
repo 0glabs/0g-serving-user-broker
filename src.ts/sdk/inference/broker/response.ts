@@ -44,8 +44,8 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
                 throw new Error('Chat ID does not exist')
             }
 
-            if (!vllmProxy) {
-                vllmProxy = false
+            if (vllmProxy === undefined) {
+                vllmProxy = true
             }
 
             let singerRAVerificationResult =

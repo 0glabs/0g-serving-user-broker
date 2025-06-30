@@ -55,7 +55,7 @@ export class Verifier extends ZGServingUserBrokerBase {
     async getSigningAddress(
         providerAddress: string,
         verifyRA = false,
-        vllmProxy = false
+        vllmProxy = true
     ): Promise<SingerRAVerificationResult> {
         const key = `${this.contract.getUserAddress()}_${providerAddress}`
         let signingKey = await this.metadata.getSigningKey(key)

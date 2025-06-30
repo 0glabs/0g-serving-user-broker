@@ -100,8 +100,8 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
     ): Promise<ServingRequestHeaders> {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content)
-            if (!vllmProxy) {
-                vllmProxy = false
+            if (vllmProxy === undefined) {
+                vllmProxy = true
             }
             return await this.getHeader(
                 providerAddress,
