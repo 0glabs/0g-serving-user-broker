@@ -48,8 +48,8 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
     async getRequestHeaders(providerAddress, content, vllmProxy) {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content);
-            if (!vllmProxy) {
-                vllmProxy = false;
+            if (vllmProxy === undefined) {
+                vllmProxy = true;
             }
             return await this.getHeader(providerAddress, content, BigInt(0), vllmProxy);
         }

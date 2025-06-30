@@ -27,8 +27,8 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             if (!chatID) {
                 throw new Error('Chat ID does not exist');
             }
-            if (!vllmProxy) {
-                vllmProxy = false;
+            if (vllmProxy === undefined) {
+                vllmProxy = true;
             }
             let singerRAVerificationResult = await this.verifier.getSigningAddress(providerAddress);
             if (!singerRAVerificationResult.valid) {

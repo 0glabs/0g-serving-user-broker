@@ -28,7 +28,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    async getSigningAddress(providerAddress, verifyRA = false, vllmProxy = false) {
+    async getSigningAddress(providerAddress, verifyRA = false, vllmProxy = true) {
         const key = `${this.contract.getUserAddress()}_${providerAddress}`;
         let signingKey = await this.metadata.getSigningKey(key);
         if (!verifyRA && signingKey) {

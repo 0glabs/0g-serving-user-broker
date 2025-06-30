@@ -1869,7 +1869,7 @@ declare class InferenceBroker {
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
-     * @param {boolean} vllmProxy - Chat signature proxy, default is false
+     * @param {boolean} vllmProxy - Chat signature proxy, default is true
      *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
      *

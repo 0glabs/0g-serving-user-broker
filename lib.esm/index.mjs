@@ -37,13 +37,17 @@ class ChatBot extends Extractor {
         if (!content) {
             return 0;
         }
-        return content.split(/\s+/).length;
+        const utf8Encoder = new TextEncoder();
+        const encoded = utf8Encoder.encode(content);
+        return encoded.length;
     }
     async getOutputCount(content) {
         if (!content) {
             return 0;
         }
-        return content.split(/\s+/).length;
+        const utf8Encoder = new TextEncoder();
+        const encoded = utf8Encoder.encode(content);
+        return encoded.length;
     }
 }
 
@@ -8532,7 +8536,7 @@ class Verifier extends ZGServingUserBrokerBase {
      * @returns The first return value indicates whether the RA is valid,
      * and the second return value indicates the signing address of the RA.
      */
-    async getSigningAddress(providerAddress, verifyRA = false, vllmProxy = false) {
+    async getSigningAddress(providerAddress, verifyRA = false, vllmProxy = true) {
         const key = `${this.contract.getUserAddress()}_${providerAddress}`;
         let signingKey = await this.metadata.getSigningKey(key);
         if (!verifyRA && signingKey) {
@@ -8728,8 +8732,8 @@ class RequestProcessor extends ZGServingUserBrokerBase {
     async getRequestHeaders(providerAddress, content, vllmProxy) {
         try {
             await this.topUpAccountIfNeeded(providerAddress, content);
-            if (!vllmProxy) {
-                vllmProxy = false;
+            if (vllmProxy === undefined) {
+                vllmProxy = true;
             }
             return await this.getHeader(providerAddress, content, BigInt(0), vllmProxy);
         }
@@ -8834,8 +8838,8 @@ class ResponseProcessor extends ZGServingUserBrokerBase {
             if (!chatID) {
                 throw new Error('Chat ID does not exist');
             }
-            if (!vllmProxy) {
-                vllmProxy = false;
+            if (vllmProxy === undefined) {
+                vllmProxy = true;
             }
             let singerRAVerificationResult = await this.verifier.getSigningAddress(providerAddress);
             if (!singerRAVerificationResult.valid) {
@@ -9031,7 +9035,7 @@ class InferenceBroker {
      * @param {string} chatID - Only for verifiable services. You can provide the chat ID obtained from the response to
      * automatically download the response signature. The function will verify the reliability of the response
      * using the service's signing address.
-     * @param {boolean} vllmProxy - Chat signature proxy, default is false
+     * @param {boolean} vllmProxy - Chat signature proxy, default is true
      *
      * @returns A boolean value. True indicates the returned content is valid, otherwise it is invalid.
      *
@@ -34310,6 +34314,7 @@ class LedgerManagerContract {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
                 const tx = await this.ledger.getFunction(name)(...txArgs, txOptions);
+                console.log('tx hash:', tx.hash);
                 const receipt = (await Promise.race([
                     tx.wait(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout')), TIMEOUT_MS)),

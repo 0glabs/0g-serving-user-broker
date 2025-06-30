@@ -15,13 +15,17 @@ class ChatBot extends extractor_1.Extractor {
         if (!content) {
             return 0;
         }
-        return content.split(/\s+/).length;
+        const utf8Encoder = new TextEncoder();
+        const encoded = utf8Encoder.encode(content);
+        return encoded.length;
     }
     async getOutputCount(content) {
         if (!content) {
             return 0;
         }
-        return content.split(/\s+/).length;
+        const utf8Encoder = new TextEncoder();
+        const encoded = utf8Encoder.encode(content);
+        return encoded.length;
     }
 }
 exports.ChatBot = ChatBot;

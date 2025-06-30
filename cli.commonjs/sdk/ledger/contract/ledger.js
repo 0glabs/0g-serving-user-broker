@@ -32,6 +32,7 @@ class LedgerManagerContract {
             try {
                 console.log('sending tx with gas price', txOptions.gasPrice);
                 const tx = await this.ledger.getFunction(name)(...txArgs, txOptions);
+                console.log('tx hash:', tx.hash);
                 const receipt = (await Promise.race([
                     tx.wait(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Get Receipt timeout')), TIMEOUT_MS)),
