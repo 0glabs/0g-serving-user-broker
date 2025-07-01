@@ -16,6 +16,7 @@
         "binary/dcap-qvl-web_bg.wasm"
     ],
     "exports": {
+        "types": "./types/index.d.ts",
         "require": "./lib.commonjs/index.js",
         "import": "./lib.esm/index.mjs"
     },
