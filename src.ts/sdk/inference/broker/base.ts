@@ -30,9 +30,9 @@ export abstract class ZGServingUserBrokerBase {
     protected metadata: Metadata
     protected cache: Cache
 
-    private checkAccountThreshold = BigInt(1000)
-    private topUpTriggerThreshold = BigInt(5000)
-    private topUpTargetThreshold = BigInt(10000)
+    private checkAccountThreshold = BigInt(1000000)
+    private topUpTriggerThreshold = BigInt(5000000)
+    private topUpTargetThreshold = BigInt(10000000)
     protected ledger: LedgerBroker
 
     constructor(
@@ -337,7 +337,7 @@ export abstract class ZGServingUserBrokerBase {
     }
 
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a 5000000 * (inputPrice + outputPrice)
      */
     async topUpAccountIfNeeded(
         provider: string,

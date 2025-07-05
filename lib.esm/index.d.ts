@@ -1665,7 +1665,7 @@ declare abstract class ZGServingUserBrokerBase {
     updateCachedFee(provider: string, fee: bigint): Promise<void>;
     clearCacheFee(provider: string, fee: bigint): Promise<void>;
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a 5000000 * (inputPrice + outputPrice)
      */
     topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
     private handleFirstRound;
