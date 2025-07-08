@@ -1,10 +1,11 @@
-import { AddressLike } from 'ethers'
+import type { AddressLike } from 'ethers'
 import { genKeyPair } from '../common/settle-signer'
 import { encryptData, privateKeyToStr } from '../common/utils'
-import { LedgerManagerContract } from './contract'
-import { InferenceServingContract } from '../inference/contract'
-import { FineTuningServingContract } from '../fine-tuning/contract'
-import { Cache, CacheValueTypeEnum, Metadata } from '../common/storage'
+import type { LedgerManagerContract } from './contract'
+import type { InferenceServingContract } from '../inference/contract'
+import type { FineTuningServingContract } from '../fine-tuning/contract'
+import type { Cache, Metadata } from '../common/storage'
+import { CacheValueTypeEnum } from '../common/storage'
 
 export interface LedgerDetailStructOutput {
     ledgerInfo: bigint[]

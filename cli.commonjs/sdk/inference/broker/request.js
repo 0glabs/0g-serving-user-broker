@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestProcessor = void 0;
 const base_1 = require("./base");
-const storage_1 = require("../../common/storage");
 const automata_1 = require("../../common/automata ");
+const storage_1 = require("../../common/storage");
 const verifier_1 = require("./verifier");
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.

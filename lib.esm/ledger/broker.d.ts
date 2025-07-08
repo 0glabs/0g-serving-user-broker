@@ -1,5 +1,7 @@
-import { AddressLike, JsonRpcSigner, Wallet } from 'ethers';
-import { LedgerDetailStructOutput, LedgerProcessor } from './ledger';
+import type { AddressLike, JsonRpcSigner } from 'ethers';
+import { Wallet } from 'ethers';
+import type { LedgerDetailStructOutput } from './ledger';
+import { LedgerProcessor } from './ledger';
 export declare class LedgerBroker {
     ledger: LedgerProcessor;
     private signer;

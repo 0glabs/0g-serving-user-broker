@@ -1,6 +1,6 @@
-import { JsonRpcSigner, AddressLike, Wallet, BigNumberish } from 'ethers';
-import { InferenceServing } from './typechain';
-import { ServiceStructOutput } from './typechain/InferenceServing';
+import type { JsonRpcSigner, AddressLike, Wallet, BigNumberish } from 'ethers';
+import type { InferenceServing } from './typechain/InferenceServing';
+import type { ServiceStructOutput } from './typechain/InferenceServing';
 export declare class InferenceServingContract {
     serving: InferenceServing;
     signer: JsonRpcSigner | Wallet;

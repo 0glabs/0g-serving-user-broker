@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../contract'
+import type { ServiceStructOutput } from '../contract'
 import { Extractor } from './extractor'
 
 export class ChatBot extends Extractor {

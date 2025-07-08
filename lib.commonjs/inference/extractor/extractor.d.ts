@@ -1,4 +1,4 @@
-import { ServiceStructOutput } from '../contract';
+import type { ServiceStructOutput } from '../contract';
 export declare abstract class Extractor {
     abstract getSvcInfo(): Promise<ServiceStructOutput>;
     abstract getInputCount(content: string): Promise<number>;

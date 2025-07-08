@@ -1,5 +1,5 @@
-import { JsonRpcSigner, BigNumberish, AddressLike, Wallet, ContractTransactionReceipt, ContractMethodArgs } from 'ethers';
-import { LedgerManager } from './typechain';
+import type { JsonRpcSigner, BigNumberish, AddressLike, Wallet, ContractTransactionReceipt, ContractMethodArgs } from 'ethers';
+import type { LedgerManager } from './typechain';
 export declare class LedgerManagerContract {
     ledger: LedgerManager;
     signer: JsonRpcSigner | Wallet;

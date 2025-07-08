@@ -1,4 +1,4 @@
-import { FineTuningServingContract } from '../contract'
+import type { FineTuningServingContract } from '../contract'
 import axios from 'axios'
 import * as fs from 'fs/promises'
 import * as path from 'path'

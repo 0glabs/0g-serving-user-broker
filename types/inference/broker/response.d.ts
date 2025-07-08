@@ -1,7 +1,7 @@
-import { InferenceServingContract } from '../contract';
-import { Metadata, Cache } from '../../common/storage';
+import type { InferenceServingContract } from '../contract';
+import type { Metadata, Cache } from '../../common/storage';
 import { ZGServingUserBrokerBase } from './base';
-import { LedgerBroker } from '../../ledger';
+import type { LedgerBroker } from '../../ledger';
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker

@@ -1,7 +1,8 @@
-import { createZGComputeNetworkBroker, ZGComputeNetworkBroker } from '../sdk'
+import type { ZGComputeNetworkBroker } from '../sdk'
+import { createZGComputeNetworkBroker } from '../sdk'
 import { ethers } from 'ethers'
 import chalk from 'chalk'
-import { Table } from 'cli-table3'
+import type { Table } from 'cli-table3'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
 
 export async function initBroker(

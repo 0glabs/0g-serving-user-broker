@@ -1,5 +1,5 @@
-import { SignatureBuffer } from './crypto';
-import { Request } from './request';
+import type { SignatureBuffer } from './crypto';
+import type { Request } from './request';
 export type DoublePackedPubkey = [bigint, bigint];
 export type PackedPrivkey = [bigint, bigint];
 export type KeyPair = {

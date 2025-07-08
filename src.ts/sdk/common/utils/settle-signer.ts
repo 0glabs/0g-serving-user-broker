@@ -1,4 +1,4 @@
-import { PackedPrivkey } from '../settle-signer'
+import type { PackedPrivkey } from '../settle-signer'
 
 export function strToPrivateKey(str: string): PackedPrivkey {
     const parsed = JSON.parse(str)

@@ -1,9 +1,11 @@
 import { FineTuningServingContract } from '../contract'
-import { Wallet } from 'ethers'
+import type { Wallet } from 'ethers'
 import { ModelProcessor } from './model'
-import { FineTuningAccountDetail, ServiceProcessor } from './service'
-import { LedgerBroker } from '../../ledger'
-import { Provider, Task } from '../provider/provider'
+import type { FineTuningAccountDetail } from './service'
+import { ServiceProcessor } from './service'
+import type { LedgerBroker } from '../../ledger'
+import { Provider } from '../provider/provider'
+import type { Task } from '../provider/provider'
 
 export class FineTuningBroker {
     private signer: Wallet

@@ -1,7 +1,7 @@
-import { Wallet } from 'ethers';
-import { FineTuningAccountDetail } from './service';
-import { LedgerBroker } from '../../ledger';
-import { Task } from '../provider/provider';
+import type { Wallet } from 'ethers';
+import type { FineTuningAccountDetail } from './service';
+import type { LedgerBroker } from '../../ledger';
+import type { Task } from '../provider/provider';
 export declare class FineTuningBroker {
     private signer;
     private fineTuningCA;

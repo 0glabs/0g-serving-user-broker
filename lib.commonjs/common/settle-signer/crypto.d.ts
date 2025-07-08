@@ -1,4 +1,4 @@
-import { Signature, Point } from 'circomlibjs';
+import type { Signature, Point } from 'circomlibjs';
 type PrivateKey = Uint8Array;
 type Message = Uint8Array;
 type Hash = Uint8Array;

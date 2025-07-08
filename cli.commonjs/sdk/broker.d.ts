@@ -1,7 +1,8 @@
-import { JsonRpcSigner, Wallet } from 'ethers';
-import { LedgerBroker } from './ledger';
-import { FineTuningBroker } from './fine-tuning/broker';
-import { InferenceBroker } from './inference/broker/broker';
+import type { JsonRpcSigner } from 'ethers';
+import { Wallet } from 'ethers';
+import type { InferenceBroker } from './inference/broker/broker';
+import type { LedgerBroker } from './ledger';
+import type { FineTuningBroker } from './fine-tuning/broker';
 export declare class ZGComputeNetworkBroker {
     ledger: LedgerBroker;
     inference: InferenceBroker;

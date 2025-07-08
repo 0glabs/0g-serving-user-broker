@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { Command } from 'commander'
+import type { Command } from 'commander'
 import { splitIntoChunks, withFineTuningBroker } from './util'
 import Table from 'cli-table3'
 import chalk from 'chalk'

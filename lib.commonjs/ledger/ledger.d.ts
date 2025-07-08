@@ -1,8 +1,8 @@
-import { AddressLike } from 'ethers';
-import { LedgerManagerContract } from './contract';
-import { InferenceServingContract } from '../inference/contract';
-import { FineTuningServingContract } from '../fine-tuning/contract';
-import { Cache, Metadata } from '../common/storage';
+import type { AddressLike } from 'ethers';
+import type { LedgerManagerContract } from './contract';
+import type { InferenceServingContract } from '../inference/contract';
+import type { FineTuningServingContract } from '../fine-tuning/contract';
+import type { Cache, Metadata } from '../common/storage';
 export interface LedgerDetailStructOutput {
     ledgerInfo: bigint[];
     infers: [string, bigint, bigint][];

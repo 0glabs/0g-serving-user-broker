@@ -1,4 +1,4 @@
-import {
+import type {
     JsonRpcSigner,
     BigNumberish,
     AddressLike,
@@ -6,7 +6,8 @@ import {
     ContractTransactionReceipt,
     ContractMethodArgs,
 } from 'ethers'
-import { LedgerManager, LedgerManager__factory } from './typechain'
+import type { LedgerManager } from './typechain'
+import { LedgerManager__factory } from './typechain'
 import { RETRY_ERROR_SUBSTRINGS } from '../../common/utils/const'
 
 const TIMEOUT_MS = 300_000

@@ -1,10 +1,5 @@
-import {
-    AddressLike,
-    BigNumberish,
-    JsonRpcSigner,
-    Wallet,
-    ethers,
-} from 'ethers'
+import type { AddressLike, BigNumberish, JsonRpcSigner, Wallet } from 'ethers'
+import { ethers } from 'ethers'
 import { MESSAGE_FOR_ENCRYPTION_KEY } from './const'
 import CryptoJS from 'crypto-js'
 import { PrivateKey, decrypt } from 'eciesjs'

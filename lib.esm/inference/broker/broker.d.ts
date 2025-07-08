@@ -1,11 +1,11 @@
-import { AccountStructOutput } from '../contract';
-import { JsonRpcSigner, Wallet } from 'ethers';
+import type { AccountStructOutput } from '../contract';
+import type { JsonRpcSigner, Wallet } from 'ethers';
 import { RequestProcessor } from './request';
 import { ResponseProcessor } from './response';
 import { Verifier } from './verifier';
 import { AccountProcessor } from './account';
 import { ModelProcessor } from './model';
-import { LedgerBroker } from '../../ledger';
+import type { LedgerBroker } from '../../ledger';
 export declare class InferenceBroker {
     requestProcessor: RequestProcessor;
     responseProcessor: ResponseProcessor;

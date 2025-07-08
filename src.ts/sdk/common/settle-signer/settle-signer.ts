@@ -2,11 +2,11 @@ import {
     babyJubJubGeneratePrivateKey,
     babyJubJubGeneratePublicKey,
     packPoint,
-    SignatureBuffer,
 } from './crypto'
+import type { SignatureBuffer } from './crypto'
 import { bytesToBigint, bigintToBytes } from './utils'
 import { signRequests, FIELD_SIZE } from './helper'
-import { Request } from './request'
+import type { Request } from './request'
 
 const BIGINT_SIZE = 16
 export type DoublePackedPubkey = [bigint, bigint]

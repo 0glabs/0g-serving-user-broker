@@ -1,5 +1,5 @@
-import { ZGComputeNetworkBroker } from '../sdk';
-import { Table } from 'cli-table3';
+import type { ZGComputeNetworkBroker } from '../sdk';
+import type { Table } from 'cli-table3';
 export declare function initBroker(options: any): Promise<ZGComputeNetworkBroker>;
 export declare function withBroker(options: any, action: (broker: ZGComputeNetworkBroker) => Promise<void>): Promise<void>;
 export declare function withFineTuningBroker(options: any, action: (broker: ZGComputeNetworkBroker) => Promise<void>): Promise<void>;

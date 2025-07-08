@@ -1,4 +1,5 @@
-import { Cache, CacheValueTypeEnum } from '../storage'
+import type { Cache } from '../storage'
+import { CacheValueTypeEnum } from '../storage'
 
 export async function getNonceWithCache(cache: Cache): Promise<number> {
     const lockKey = 'nonce_lock'
