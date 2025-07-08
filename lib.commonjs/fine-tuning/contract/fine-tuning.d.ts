@@ -1,6 +1,5 @@
-import { BigNumberish, AddressLike, Wallet, ContractMethodArgs, ContractTransactionReceipt } from 'ethers';
-import { FineTuningServing } from './typechain';
-import { ServiceStructOutput, DeliverableStructOutput } from './typechain/FineTuningServing';
+import type { BigNumberish, AddressLike, Wallet, ContractMethodArgs, ContractTransactionReceipt } from 'ethers';
+import type { DeliverableStructOutput, ServiceStructOutput, FineTuningServing } from './typechain/FineTuningServing';
 export declare class FineTuningServingContract {
     serving: FineTuningServing;
     signer: Wallet;

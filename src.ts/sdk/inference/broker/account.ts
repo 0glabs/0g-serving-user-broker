@@ -1,6 +1,6 @@
-import { AccountStructOutput } from '../contract'
+import type { AccountStructOutput } from '../contract'
 import { ZGServingUserBrokerBase } from './base'
-import { AddressLike } from 'ethers'
+import type { AddressLike } from 'ethers'
 
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.

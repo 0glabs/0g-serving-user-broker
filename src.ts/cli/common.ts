@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { Command } from 'commander'
+import type { Command } from 'commander'
 import {
     splitIntoChunks,
     neuronToA0gi,
@@ -11,7 +11,7 @@ import {
 import Table from 'cli-table3'
 import chalk from 'chalk'
 import { hexToRoots } from '../sdk/common/utils'
-import { DeliverableStructOutput } from '../sdk/fine-tuning/contract/typechain/FineTuningServing'
+import type { DeliverableStructOutput } from '../sdk/fine-tuning/contract/typechain/FineTuningServing'
 
 export default function (program: Command) {
     program

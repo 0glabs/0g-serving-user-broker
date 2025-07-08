@@ -1,6 +1,6 @@
-import { FineTuningServingContract } from '../contract';
-import { LedgerBroker } from '../../ledger';
-import { Provider } from '../provider/provider';
+import type { FineTuningServingContract } from '../contract';
+import type { LedgerBroker } from '../../ledger';
+import type { Provider } from '../provider/provider';
 export declare abstract class BrokerBase {
     protected contract: FineTuningServingContract;
     protected ledger: LedgerBroker;

@@ -1,14 +1,15 @@
-import {
+import type {
     BigNumberish,
     AddressLike,
     Wallet,
     ContractMethodArgs,
     ContractTransactionReceipt,
 } from 'ethers'
-import { FineTuningServing, FineTuningServing__factory } from './typechain'
-import {
-    ServiceStructOutput,
+import { FineTuningServing__factory } from './typechain'
+import type {
     DeliverableStructOutput,
+    ServiceStructOutput,
+    FineTuningServing,
 } from './typechain/FineTuningServing'
 import { RETRY_ERROR_SUBSTRINGS } from '../../common/utils/const'
 

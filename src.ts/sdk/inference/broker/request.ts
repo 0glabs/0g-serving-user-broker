@@ -1,8 +1,9 @@
 import { ZGServingUserBrokerBase } from './base'
-import { Cache, Metadata, CacheValueTypeEnum } from '../../common/storage'
-import { InferenceServingContract } from '../contract'
-import { LedgerBroker } from '../../ledger'
+import type { Cache, Metadata } from '../../common/storage'
+import type { InferenceServingContract } from '../contract'
+import type { LedgerBroker } from '../../ledger'
 import { Automata } from '../../common/automata '
+import { CacheValueTypeEnum } from '../../common/storage'
 import { Verifier } from './verifier'
 
 /**

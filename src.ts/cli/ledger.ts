@@ -1,7 +1,7 @@
 import { neuronToA0gi, printTableWithTitle, withBroker } from './util'
-import { Command } from 'commander'
+import type { Command } from 'commander'
 import Table from 'cli-table3'
-import { ZGComputeNetworkBroker } from '../sdk'
+import type { ZGComputeNetworkBroker } from '../sdk'
 import chalk from 'chalk'
 
 export default function ledger(program: Command) {

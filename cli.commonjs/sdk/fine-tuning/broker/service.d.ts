@@ -1,8 +1,9 @@
-import { AddressLike } from 'ethers';
-import { AccountStructOutput, FineTuningServingContract, ServiceStructOutput } from '../contract';
-import { Provider, Task } from '../provider/provider';
+import type { AddressLike } from 'ethers';
+import type { AccountStructOutput, FineTuningServingContract } from '../contract';
+import type { ServiceStructOutput } from '../contract';
+import type { Provider, Task } from '../provider/provider';
 import { BrokerBase } from './base';
-import { LedgerBroker } from '../../ledger';
+import type { LedgerBroker } from '../../ledger';
 import { Automata } from '../../common/automata ';
 export interface FineTuningAccountDetail {
     account: AccountStructOutput;

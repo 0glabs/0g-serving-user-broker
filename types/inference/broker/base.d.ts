@@ -1,9 +1,9 @@
-import { InferenceServingContract } from '../contract';
-import { Extractor } from '../extractor';
-import { ServiceStructOutput } from '../contract';
-import { ServingRequestHeaders } from './request';
-import { Cache, Metadata } from '../../common/storage';
-import { LedgerBroker } from '../../ledger';
+import type { InferenceServingContract } from '../contract';
+import type { Extractor } from '../extractor';
+import type { ServiceStructOutput } from '../contract';
+import type { ServingRequestHeaders } from './request';
+import type { Cache, Metadata } from '../../common/storage';
+import type { LedgerBroker } from '../../ledger';
 export interface QuoteResponse {
     quote: string;
     provider_signer: string;

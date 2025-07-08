@@ -1,10 +1,6 @@
-import {
-    babyJubJubSignature,
-    packSignature,
-    SignatureBuffer,
-    PrivateKey,
-} from './crypto'
-import { Request } from './request'
+import { babyJubJubSignature, packSignature } from './crypto'
+import type { SignatureBuffer, PrivateKey } from './crypto'
+import type { Request } from './request'
 
 export const FIELD_SIZE = 32
 

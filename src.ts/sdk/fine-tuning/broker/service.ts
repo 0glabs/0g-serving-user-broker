@@ -1,15 +1,15 @@
-import { AddressLike } from 'ethers'
+import type { AddressLike } from 'ethers'
 import { getNonce, signRequest, signTaskID } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
-import {
+import type {
     AccountStructOutput,
     FineTuningServingContract,
-    ServiceStructOutput,
 } from '../contract'
-import { Provider, Task } from '../provider/provider'
+import type { ServiceStructOutput } from '../contract'
+import type { Provider, Task } from '../provider/provider'
 import { BrokerBase } from './base'
 import * as fs from 'fs/promises'
-import { LedgerBroker } from '../../ledger'
+import type { LedgerBroker } from '../../ledger'
 import { Automata } from '../../common/automata '
 import * as readline from 'readline'
 

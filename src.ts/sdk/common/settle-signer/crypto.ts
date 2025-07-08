@@ -1,12 +1,5 @@
-import {
-    BabyJub,
-    Eddsa,
-    Signature,
-    Point,
-    buildBabyjub,
-    buildEddsa,
-    buildPedersenHash,
-} from 'circomlibjs'
+import type { BabyJub, Eddsa, Signature, Point } from 'circomlibjs'
+import { buildBabyjub, buildEddsa, buildPedersenHash } from 'circomlibjs'
 
 type PrivateKey = Uint8Array
 type Message = Uint8Array

@@ -1,10 +1,11 @@
-import { JsonRpcSigner, Wallet } from 'ethers'
-import { createLedgerBroker, LedgerBroker } from './ledger'
-import { createFineTuningBroker, FineTuningBroker } from './fine-tuning/broker'
-import {
-    createInferenceBroker,
-    InferenceBroker,
-} from './inference/broker/broker'
+import type { JsonRpcSigner } from 'ethers'
+import { Wallet } from 'ethers'
+import { createLedgerBroker } from './ledger'
+import { createFineTuningBroker } from './fine-tuning/broker'
+import { createInferenceBroker } from './inference/broker/broker'
+import type { InferenceBroker } from './inference/broker/broker'
+import type { LedgerBroker } from './ledger'
+import type { FineTuningBroker } from './fine-tuning/broker'
 
 export class ZGComputeNetworkBroker {
     public ledger!: LedgerBroker

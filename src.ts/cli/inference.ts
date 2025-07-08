@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { Command } from 'commander'
+import type { Command } from 'commander'
 import { withBroker } from './util'
 
 export default function inference(program: Command) {

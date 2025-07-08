@@ -1,21 +1,23 @@
-import { InferenceServingContract } from '../contract'
-import { ChatBot, Extractor } from '../extractor'
-import { ServiceStructOutput } from '../contract'
-import { ServingRequestHeaders } from './request'
+import type { InferenceServingContract } from '../contract'
+import { ChatBot } from '../extractor'
+import type { Extractor } from '../extractor'
+import type { ServiceStructOutput } from '../contract'
+import type { ServingRequestHeaders } from './request'
 import {
     decryptData,
     getNonceWithCache,
     strToPrivateKey,
 } from '../../common/utils'
+import type { PackedPrivkey } from '../../common/settle-signer'
 import {
-    PackedPrivkey,
     Request,
     signData,
     pedersenHash,
     bigintToBytes,
 } from '../../common/settle-signer'
-import { Cache, CacheValueTypeEnum, Metadata } from '../../common/storage'
-import { LedgerBroker } from '../../ledger'
+import type { Cache, Metadata } from '../../common/storage'
+import { CacheValueTypeEnum } from '../../common/storage'
+import type { LedgerBroker } from '../../ledger'
 import { hexlify } from 'ethers'
 
 export interface QuoteResponse {

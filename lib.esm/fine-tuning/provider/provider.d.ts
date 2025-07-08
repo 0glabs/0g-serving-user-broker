@@ -1,4 +1,4 @@
-import { FineTuningServingContract } from '../contract';
+import type { FineTuningServingContract } from '../contract';
 export interface Task {
     readonly id?: string;
     readonly createdAt?: string;

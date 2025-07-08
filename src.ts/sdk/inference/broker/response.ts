@@ -1,10 +1,10 @@
-import { InferenceServingContract } from '../contract'
-import { Extractor } from '../extractor'
-import { Metadata, Cache } from '../../common/storage'
+import type { InferenceServingContract } from '../contract'
+import type { Extractor } from '../extractor'
+import type { Metadata, Cache } from '../../common/storage'
 import { ZGServingUserBrokerBase } from './base'
 import { isVerifiability } from './model'
 import { Verifier } from './verifier'
-import { LedgerBroker } from '../../ledger'
+import type { LedgerBroker } from '../../ledger'
 
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.

@@ -1,5 +1,5 @@
-import { Command } from 'commander';
-import { ZGComputeNetworkBroker } from '../sdk';
+import type { Command } from 'commander';
+import type { ZGComputeNetworkBroker } from '../sdk';
 export default function ledger(program: Command): void;
 export declare const getLedgerTable: (broker: ZGComputeNetworkBroker) => Promise<void>;
 //# sourceMappingURL=ledger.d.ts.map
