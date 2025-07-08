@@ -24,10 +24,10 @@ export const INDEXER_URL_STANDARD =
 export const INDEXER_URL_TURBO = 'http://47.251.40.189:12345'
 
 export const TOKEN_COUNTER_MERKLE_ROOT =
-    '0xd825a29c734b1cf562d6c92ce766bbc2ba196ec573cdd7484996673041a82b97'
+    '0x4e8ae3790920b9971397f088fcfacbb9dad0c28ec2831f37f3481933b1fdbdbc'
 
 export const TOKEN_COUNTER_FILE_HASH =
-    'cba0038a97cd02323d1c1222660dc909cf1334beee5fa38d77307ec67d6170f1'
+    '26ab266a12c9ce34611aba3f82baf056dc683181236d5fa15edb8eb8c8db3872'
 
 export const MODEL_HASH_MAP: {
     [key: string]: { [key: string]: string }
