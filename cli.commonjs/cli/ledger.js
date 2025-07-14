@@ -100,7 +100,7 @@ function ledger(program) {
 }
 const getLedgerTable = async (broker) => {
     // Ledger information
-    const { ledgerInfo, infers, fines } = await broker.ledger.getLedger();
+    const { ledgerInfo, infers, fines } = await broker.ledger.ledger.getLedgerWithDetail();
     let table = new cli_table3_1.default({
         head: [chalk_1.default.blue('Balance'), chalk_1.default.blue('Value (A0GI)')],
         colWidths: [50, 81],

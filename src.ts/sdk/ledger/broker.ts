@@ -1,6 +1,6 @@
 import type { AddressLike, JsonRpcSigner } from 'ethers'
 import { Wallet } from 'ethers'
-import type { LedgerDetailStructOutput } from './ledger'
+import type { LedgerStructOutput } from './contract/typechain/LedgerManager'
 import { LedgerProcessor } from './ledger'
 import { LedgerManagerContract } from './contract'
 import { InferenceServingContract } from '../inference/contract'
@@ -104,9 +104,9 @@ export class LedgerBroker {
      *
      * @throws Will throw an error if the ledger retrieval process fails.
      */
-    public getLedger = async (): Promise<LedgerDetailStructOutput> => {
+    public getLedger = async (): Promise<LedgerStructOutput> => {
         try {
-            return await this.ledger.getLedgerWithDetail()
+            return await this.ledger.getLedger()
         } catch (error) {
             throw error
         }
