@@ -73,7 +73,7 @@ class LedgerBroker {
      */
     getLedger = async () => {
         try {
-            return await this.ledger.getLedgerWithDetail();
+            return await this.ledger.getLedger();
         }
         catch (error) {
             throw error;

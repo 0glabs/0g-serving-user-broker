@@ -108,7 +108,7 @@ export default function ledger(program: Command) {
 
 export const getLedgerTable = async (broker: ZGComputeNetworkBroker) => {
     // Ledger information
-    const { ledgerInfo, infers, fines } = await broker.ledger.getLedger()
+    const { ledgerInfo, infers, fines } = await broker.ledger.ledger.getLedgerWithDetail()
 
     let table = new Table({
         head: [chalk.blue('Balance'), chalk.blue('Value (A0GI)')],

@@ -1502,7 +1502,7 @@ declare class LedgerBroker {
      *
      * @throws Will throw an error if the ledger retrieval process fails.
      */
-    getLedger: () => Promise<LedgerDetailStructOutput>;
+    getLedger: () => Promise<LedgerStructOutput>;
     /**
      * Deposits a specified amount of funds into Ledger corresponding to the current wallet address.
      *
