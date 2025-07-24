@@ -2019,4 +2019,57 @@ declare class ZGComputeNetworkBroker {
  */
 declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<ZGComputeNetworkBroker>;
 
-export { FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput$1 as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, LedgerBroker, ZGComputeNetworkBroker, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker };
+/**
+ * Environment detection utility
+ * Helps distinguish between Node.js and browser environments
+ */
+declare const isBrowser: () => boolean;
+declare const isNode: () => boolean;
+declare const isWebWorker: () => boolean;
+declare const hasWebCrypto: () => boolean;
+
+/**
+ * Crypto adapter that provides unified encryption/decryption interface
+ * for both Node.js and browser environments
+ */
+interface CryptoAdapter {
+    aesGCMEncrypt(key: Buffer, data: Buffer, iv: Buffer): Promise<{
+        encrypted: Buffer;
+        authTag: Buffer;
+    }>;
+    aesGCMDecrypt(key: Buffer, encryptedData: Buffer, iv: Buffer, authTag: Buffer): Promise<Buffer>;
+    randomBytes(length: number): Buffer;
+}
+declare function getCryptoAdapter(): CryptoAdapter;
+
+type SignatureBuffer = Uint8Array;
+declare function pedersenHash(msg: Uint8Array): Promise<Uint8Array>;
+//# sourceMappingURL=crypto.d.ts.map
+
+declare class Request {
+    private nonce;
+    private fee;
+    private userAddress;
+    private providerAddress;
+    constructor(nonce: string, fee: string, userAddress: string, // hexstring format with '0x' prefix
+    providerAddress: string);
+    serialize(): Uint8Array;
+    static deserialize(byteArray: Uint8Array): Request;
+    getNonce(): bigint;
+    getFee(): bigint;
+    getUserAddress(): bigint;
+    getProviderAddress(): bigint;
+}
+
+type DoublePackedPubkey = [bigint, bigint];
+type PackedPrivkey = [bigint, bigint];
+type KeyPair = {
+    packedPrivkey: PackedPrivkey;
+    doublePackedPubkey: DoublePackedPubkey;
+};
+declare function genKeyPair(): Promise<KeyPair>;
+declare function signData(data: Request[], packedPrivkey: PackedPrivkey): Promise<SignatureBuffer[]>;
+
+declare function bigintToBytes(bigint: bigint, length: number): Uint8Array;
+
+export { type CryptoAdapter, type DoublePackedPubkey, FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput$1 as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, type KeyPair, LedgerBroker, type PackedPrivkey, Request, ZGComputeNetworkBroker, bigintToBytes, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker, genKeyPair, getCryptoAdapter, hasWebCrypto, isBrowser, isNode, isWebWorker, pedersenHash, signData };

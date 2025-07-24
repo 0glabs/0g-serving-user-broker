@@ -23,7 +23,13 @@
     "module": "./lib.esm/index.mjs",
     "types": "./lib.esm/index.d.ts",
     "packageManager": "pnpm@9.15.4",
-    "browser": {},
+    "browser": {
+        "crypto": "crypto-browserify",
+        "stream": "stream-browserify",
+        "fs": false,
+        "path": false,
+        "os": false
+    },
     "scripts": {
         "format": "prettier --write \"src.ts/**/*.ts\"",
         "lint": "eslint \"src.ts/**/*.ts\"",
@@ -84,6 +90,7 @@
         "circomlibjs": "^0.1.6",
         "cli-table3": "^0.6.5",
         "commander": "^13.0.0",
+        "crypto-browserify": "^3.12.1",
         "crypto-js": "^4.2.0",
         "dotenv": "16.4.7",
         "eciesjs": "^0.4.13",
@@ -91,7 +98,9 @@
         "node-fetch": "^3.3.2",
         "open-jsonrpc-provider": "^0.2.1",
         "openai": "^4.78.1",
-        "rollup-plugin-polyfill-node": "^0.13.0"
+        "rollup-plugin-polyfill-node": "^0.13.0",
+        "stream-browserify": "^3.0.0",
+        "util": "^0.12.5"
     },
     "peerDependencies": {
         "@types/circomlibjs": "^0.1.6",

@@ -3,8 +3,8 @@ import { ethers } from 'ethers'
 import { MESSAGE_FOR_ENCRYPTION_KEY } from './const'
 import CryptoJS from 'crypto-js'
 import { PrivateKey, decrypt } from 'eciesjs'
-import * as crypto from 'crypto'
-import { promises as fs } from 'fs'
+import { getCryptoAdapter } from './crypto-adapter'
+import { isBrowser } from './env'
 
 const ivLength: number = 12
 const tagLength: number = 16
@@ -112,13 +112,13 @@ export async function aesGCMDecrypt(
     }
 
     const privateKey = Buffer.from(key, 'hex')
-    const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv)
-    decipher.setAuthTag(authTag)
-
-    let decrypted = Buffer.concat([
-        decipher.update(encryptedText),
-        decipher.final(),
-    ])
+    const cryptoAdapter = getCryptoAdapter()
+    const decrypted = await cryptoAdapter.aesGCMDecrypt(
+        privateKey,
+        Buffer.from(encryptedText),
+        Buffer.from(iv),
+        Buffer.from(authTag)
+    )
 
     return decrypted
 }
@@ -129,6 +129,13 @@ export async function aesGCMDecryptToFile(
     decryptedModelPath: string,
     providerSigner: string
 ) {
+    if (isBrowser()) {
+        throw new Error('File operations are not supported in browser environment. Use aesGCMDecrypt with ArrayBuffer instead.')
+    }
+
+    // Only import fs when in Node.js environment
+    const { promises: fs } = await import('fs')
+    
     const fd = await fs.open(encryptedModelPath, 'r')
 
     // read signature and nonce
@@ -147,6 +154,7 @@ export async function aesGCMDecryptToFile(
     let tagsBuffer = Buffer.from([])
 
     const writeFd = await fs.open(decryptedModelPath, 'w')
+    const cryptoAdapter = getCryptoAdapter()
 
     // read chunks
     while (true) {
@@ -155,14 +163,16 @@ export async function aesGCMDecryptToFile(
         if (chunkSize === 0) {
             break
         }
-        const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv)
+        
         const tag = buffer.subarray(chunkSize - tagLength, chunkSize)
-        decipher.setAuthTag(tag)
-
-        let decrypted = Buffer.concat([
-            decipher.update(buffer.subarray(0, chunkSize - tagLength)),
-            decipher.final(),
-        ])
+        const encryptedChunk = buffer.subarray(0, chunkSize - tagLength)
+        
+        const decrypted = await cryptoAdapter.aesGCMDecrypt(
+            privateKey,
+            Buffer.from(encryptedChunk),
+            Buffer.from(iv),
+            Buffer.from(tag)
+        )
 
         await writeFd.appendFile(decrypted)
 

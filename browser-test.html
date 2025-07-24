@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G Serving Broker - Browser Compatibility Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .pass { border-color: #4CAF50; background-color: #f0f8f0; }
+        .fail { border-color: #f44336; background-color: #fdf0f0; }
+        .error { border-color: #ff9800; background-color: #fff8f0; }
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .test-details {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #1976D2;
+        }
+        #status {
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #e3f2fd;
+        }
+        .code-block {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>0G Serving Broker - Browser Compatibility Test</h1>
+        <p>这个测试页面验证 0G Serving Broker SDK 在浏览器环境中的兼容性。</p>
+        
+        <div id="status">正在初始化...</div>
+        
+        <button id="testBtn" disabled>运行兼容性测试</button>
+        
+        <div id="build-instructions" style="display: none;">
+            <h3>构建说明</h3>
+            <p>请先构建项目：</p>
+            <div class="code-block">
+                pnpm run build
+            </div>
+            <p>然后在项目根目录启动一个 HTTP 服务器：</p>
+            <div class="code-block">
+                # 使用 Python
+                python -m http.server 8000
+                
+                # 或使用 Node.js serve
+                npx serve .
+                
+                # 或使用任何其他静态文件服务器
+            </div>
+            <p>然后访问 <code>http://localhost:8000/browser-test.html</code></p>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        async function runTests() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const testBtn = document.getElementById('testBtn');
+            
+            statusDiv.innerHTML = '正在运行测试...';
+            resultsDiv.innerHTML = '';
+            testBtn.disabled = true;
+
+            const results = [];
+
+            try {
+                // Test 1: Environment Detection
+                try {
+                    const { isBrowser, hasWebCrypto, isNode } = await import('./lib.esm/index.mjs');
+                    const browserCheck = isBrowser();
+                    const webCryptoCheck = hasWebCrypto();
+                    const nodeCheck = isNode();
+                    
+                    results.push({
+                        name: '环境检测',
+                        status: browserCheck && webCryptoCheck && !nodeCheck ? 'PASS' : 'FAIL',
+                        details: `浏览器环境: ${browserCheck}, Web Crypto 可用: ${webCryptoCheck}, Node.js 环境: ${nodeCheck}`
+                    });
+                } catch (error) {
+                    results.push({
+                        name: '环境检测',
+                        status: 'ERROR',
+                        details: `错误: ${error.message}`
+                    });
+                }
+
+                // Test 2: Crypto Adapter
+                try {
+                    const { getCryptoAdapter } = await import('./lib.esm/index.mjs');
+                    const cryptoAdapter = getCryptoAdapter();
+                    
+                    // Test encryption/decryption
+                    const testData = new TextEncoder().encode('Hello, Browser World!');
+                    const key = cryptoAdapter.randomBytes(32);
+                    const iv = cryptoAdapter.randomBytes(12);
+                    
+                    const { encrypted, authTag } = await cryptoAdapter.aesGCMEncrypt(
+                        Buffer.from(key), 
+                        Buffer.from(testData), 
+                        Buffer.from(iv)
+                    );
+                    
+                    const decrypted = await cryptoAdapter.aesGCMDecrypt(
+                        Buffer.from(key),
+                        encrypted,
+                        Buffer.from(iv),
+                        authTag
+                    );
+                    
+                    const decryptedText = new TextDecoder().decode(decrypted);
+                    results.push({
+                        name: '加密适配器',
+                        status: decryptedText === 'Hello, Browser World!' ? 'PASS' : 'FAIL',
+                        details: `加密/解密测试: "${decryptedText}" (预期: "Hello, Browser World!")`
+                    });
+                } catch (error) {
+                    results.push({
+                        name: '加密适配器',
+                        status: 'ERROR',
+                        details: `错误: ${error.message}`
+                    });
+                }
+
+                // Test 3: Settle Signer
+                try {
+                    const { genKeyPair } = await import('./lib.esm/index.mjs');
+                    const keyPair = await genKeyPair();
+                    
+                    const hasPrivateKey = keyPair && keyPair.packedPrivkey && Array.isArray(keyPair.packedPrivkey) && keyPair.packedPrivkey.length === 2;
+                    const hasPublicKey = keyPair && keyPair.doublePackedPubkey && Array.isArray(keyPair.doublePackedPubkey) && keyPair.doublePackedPubkey.length === 2;
+                    
+                    results.push({
+                        name: 'Settle Signer - 密钥生成',
+                        status: hasPrivateKey && hasPublicKey ? 'PASS' : 'FAIL',
+                        details: `生成的密钥对 - 私钥: ${hasPrivateKey ? '✓' : '✗'}, 公钥: ${hasPublicKey ? '✓' : '✗'}`
+                    });
+                } catch (error) {
+                    results.push({
+                        name: 'Settle Signer - 密钥生成',
+                        status: 'ERROR',
+                        details: `错误: ${error.message}`
+                    });
+                }
+
+                // Test 4: CryptoJS compatibility
+                try {
+                    // Test if CryptoJS works in browser
+                    const CryptoJS = (await import('crypto-js')).default;
+                    const testMessage = "Test message";
+                    const testKey = "test-key";
+                    const encrypted = CryptoJS.AES.encrypt(testMessage, testKey).toString();
+                    const decrypted = CryptoJS.AES.decrypt(encrypted, testKey).toString(CryptoJS.enc.Utf8);
+                    
+                    results.push({
+                        name: 'CryptoJS 兼容性',
+                        status: decrypted === testMessage ? 'PASS' : 'FAIL',
+                        details: `AES 加密/解密测试: "${decrypted}" (预期: "${testMessage}")`
+                    });
+                } catch (error) {
+                    results.push({
+                        name: 'CryptoJS 兼容性',
+                        status: 'ERROR',
+                        details: `错误: ${error.message}`
+                    });
+                }
+
+                // Test 5: CircomLibJS compatibility
+                try {
+                    const { pedersenHash } = await import('./lib.esm/index.mjs');
+                    const testData = new Uint8Array([1, 2, 3, 4, 5]);
+                    const hash = await pedersenHash(testData);
+                    
+                    results.push({
+                        name: 'CircomLibJS 兼容性',
+                        status: hash && hash.length > 0 ? 'PASS' : 'FAIL',
+                        details: `Pedersen 哈希测试: ${hash ? `生成了 ${hash.length} 字节哈希` : '哈希生成失败'}`
+                    });
+                } catch (error) {
+                    results.push({
+                        name: 'CircomLibJS 兼容性',
+                        status: 'ERROR',
+                        details: `错误: ${error.message}`
+                    });
+                }
+
+            } catch (error) {
+                results.push({
+                    name: '测试执行',
+                    status: 'ERROR',
+                    details: `测试执行失败: ${error.message}`
+                });
+            }
+
+            // Display results
+            const resultHtml = results.map(result => {
+                const statusClass = result.status === 'PASS' ? 'pass' : result.status === 'FAIL' ? 'fail' : 'error';
+                const statusEmoji = result.status === 'PASS' ? '✅' : result.status === 'FAIL' ? '❌' : '⚠️';
+                
+                return `
+                    <div class="test-result ${statusClass}">
+                        <div class="test-title">
+                            ${statusEmoji} ${result.name}: ${result.status}
+                        </div>
+                        <div class="test-details">${result.details}</div>
+                    </div>
+                `;
+            }).join('');
+
+            resultsDiv.innerHTML = resultHtml;
+            
+            const passCount = results.filter(r => r.status === 'PASS').length;
+            const totalCount = results.length;
+            statusDiv.innerHTML = `测试完成！通过: ${passCount}/${totalCount}`;
+            testBtn.disabled = false;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const testBtn = document.getElementById('testBtn');
+            const statusDiv = document.getElementById('status');
+            const buildInstructions = document.getElementById('build-instructions');
+            
+            // Check if the library is built
+            import('./lib.esm/index.mjs')
+                .then(() => {
+                    statusDiv.innerHTML = '准备就绪，可以开始测试';
+                    testBtn.disabled = false;
+                    testBtn.addEventListener('click', runTests);
+                })
+                .catch((error) => {
+                    statusDiv.innerHTML = `错误: 无法加载库文件。请先构建项目。`;
+                    buildInstructions.style.display = 'block';
+                    console.error('Import error:', error);
+                });
+        });
+    </script>
+</body>
+</html>
