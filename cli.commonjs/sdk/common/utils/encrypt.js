@@ -13,8 +13,8 @@ const ethers_1 = require("ethers");
 const const_1 = require("./const");
 const crypto_js_1 = tslib_1.__importDefault(require("crypto-js"));
 const eciesjs_1 = require("eciesjs");
-const crypto = tslib_1.__importStar(require("crypto"));
-const fs_1 = require("fs");
+const crypto_adapter_1 = require("./crypto-adapter");
+const env_1 = require("./env");
 const ivLength = 12;
 const tagLength = 16;
 const sigLength = 65;
@@ -70,16 +70,17 @@ async function aesGCMDecrypt(key, data, providerSigner) {
         throw new Error('Invalid tag signature');
     }
     const privateKey = Buffer.from(key, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = Buffer.concat([
-        decipher.update(encryptedText),
-        decipher.final(),
-    ]);
+    const cryptoAdapter = (0, crypto_adapter_1.getCryptoAdapter)();
+    const decrypted = await cryptoAdapter.aesGCMDecrypt(privateKey, Buffer.from(encryptedText), Buffer.from(iv), Buffer.from(authTag));
     return decrypted;
 }
 async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, providerSigner) {
-    const fd = await fs_1.promises.open(encryptedModelPath, 'r');
+    if ((0, env_1.isBrowser)()) {
+        throw new Error('File operations are not supported in browser environment. Use aesGCMDecrypt with ArrayBuffer instead.');
+    }
+    // Only import fs when in Node.js environment
+    const { promises: fs } = await Promise.resolve().then(() => tslib_1.__importStar(require('fs')));
+    const fd = await fs.open(encryptedModelPath, 'r');
     // read signature and nonce
     const tagSig = Buffer.alloc(sigLength);
     const iv = Buffer.alloc(ivLength);
@@ -91,7 +92,8 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
     const privateKey = Buffer.from(key, 'hex');
     const buffer = Buffer.alloc(chunkLength);
     let tagsBuffer = Buffer.from([]);
-    const writeFd = await fs_1.promises.open(decryptedModelPath, 'w');
+    const writeFd = await fs.open(decryptedModelPath, 'w');
+    const cryptoAdapter = (0, crypto_adapter_1.getCryptoAdapter)();
     // read chunks
     while (true) {
         readResult = await fd.read(buffer, 0, chunkLength, offset);
@@ -99,13 +101,9 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
         if (chunkSize === 0) {
             break;
         }
-        const decipher = crypto.createDecipheriv('aes-256-gcm', privateKey, iv);
         const tag = buffer.subarray(chunkSize - tagLength, chunkSize);
-        decipher.setAuthTag(tag);
-        let decrypted = Buffer.concat([
-            decipher.update(buffer.subarray(0, chunkSize - tagLength)),
-            decipher.final(),
-        ]);
+        const encryptedChunk = buffer.subarray(0, chunkSize - tagLength);
+        const decrypted = await cryptoAdapter.aesGCMDecrypt(privateKey, Buffer.from(encryptedChunk), Buffer.from(iv), Buffer.from(tag));
         await writeFd.appendFile(decrypted);
         tagsBuffer = Buffer.concat([tagsBuffer, tag]);
         offset += chunkSize;

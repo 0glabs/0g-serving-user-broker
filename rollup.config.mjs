@@ -3,6 +3,7 @@ import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import dts from 'rollup-plugin-dts'
 import json from '@rollup/plugin-json'
+import nodePolyfills from 'rollup-plugin-polyfill-node'
 
 export default [
     {
@@ -14,13 +15,19 @@ export default [
         },
         plugins: [
             json(),
-            resolve(),
+            resolve({
+                browser: true,
+                preferBuiltins: false
+            }),
             commonjs(),
+            nodePolyfills({
+                include: ['crypto', 'stream', 'util', 'buffer']
+            }),
             typescript({
                 tsconfig: './tsconfig.esm.json',
             }),
         ],
-        external: ['ethers', 'crypto-js', 'circomlibjs'],
+        external: ['ethers', 'crypto-js', 'circomlibjs', 'child_process', 'fs', 'fs/promises', 'path', 'os', 'crypto'],
     },
     {
         input: 'lib.esm/index.d.ts',
