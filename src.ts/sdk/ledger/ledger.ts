@@ -100,14 +100,14 @@ export class LedgerProcessor {
                             ' A0GI'
                     )
                 }
-            } catch (error) {
-                if (!(error as any).message.includes('LedgerNotExists')) {
-                    throw error
-                }
-            }
+            } catch (error) {}
 
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } =
                 await this.createSettleSignerKey()
+
+            console.log(
+                `Creating ledger with settle signer public key: ${settleSignerPublicKey} and encrypted private key: ${settleSignerEncryptedPrivateKey}`
+            )
 
             await this.ledgerContract.addLedger(
                 settleSignerPublicKey,

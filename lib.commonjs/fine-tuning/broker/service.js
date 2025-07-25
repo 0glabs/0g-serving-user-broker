@@ -1,24 +1,46 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceProcessor = void 0;
-const tslib_1 = require("tslib");
 const utils_1 = require("../../common/utils");
 const const_1 = require("../const");
 const base_1 = require("./base");
-const fs = tslib_1.__importStar(require("fs/promises"));
+const env_1 = require("../../common/utils/env");
 const automata_1 = require("../../common/automata ");
-const readline = tslib_1.__importStar(require("readline"));
+// Browser-safe function to avoid readline dependency
 async function askUser(question) {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-    return new Promise((resolve) => {
-        rl.question(question, (answer) => {
-            rl.close();
-            resolve(answer.trim());
+    if ((0, env_1.isBrowser)()) {
+        throw new Error('Interactive input operations are not available in browser environment. Please use these functions in a Node.js environment.');
+    }
+    // Only import readline in Node.js environment
+    try {
+        const readline = eval('require')('readline');
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
         });
-    });
+        return new Promise((resolve) => {
+            rl.question(question, (answer) => {
+                rl.close();
+                resolve(answer.trim());
+            });
+        });
+    }
+    catch (error) {
+        throw new Error('readline module is not available. This function can only be used in Node.js environment.');
+    }
+}
+// Browser-safe function to avoid fs dependency
+async function readFileContent(filePath) {
+    if ((0, env_1.isBrowser)()) {
+        throw new Error('File system operations are not available in browser environment. Please use these functions in a Node.js environment.');
+    }
+    try {
+        const fs = eval('require')('fs/promises');
+        return await fs.readFile(filePath, 'utf-8');
+    }
+    catch (error) {
+        throw new Error('fs module is not available. This function can only be used in Node.js environment.');
+    }
 }
 class ServiceProcessor extends base_1.BrokerBase {
     automata;
@@ -123,7 +145,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 console.log(`customized model hash: ${preTrainedModelHash}`);
             }
             const service = await this.contract.getService(providerAddress);
-            const trainingParams = await fs.readFile(trainingPath, 'utf-8');
+            const trainingParams = await readFileContent(trainingPath);
             const parsedParams = this.verifyTrainingParams(trainingParams);
             const trainEpochs = (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3;
             const fee = service.pricePerToken * BigInt(dataSize) * BigInt(trainEpochs);

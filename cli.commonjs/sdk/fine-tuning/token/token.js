@@ -1,17 +1,78 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateTokenSizeViaExe = calculateTokenSizeViaExe;
 exports.calculateTokenSizeViaPython = calculateTokenSizeViaPython;
-const tslib_1 = require("tslib");
-const fs = tslib_1.__importStar(require("fs/promises"));
-const os = tslib_1.__importStar(require("os"));
-const path = tslib_1.__importStar(require("path"));
-const adm_zip_1 = tslib_1.__importDefault(require("adm-zip"));
-const child_process_1 = require("child_process");
-const crypto_1 = require("crypto");
-const fs_1 = require("fs");
-const zg_storage_1 = require("../zg-storage");
+const env_1 = require("../../common/utils/env");
+// Dynamic imports for Node.js specific modules
+let fs;
+let os;
+let path;
+let AdmZip;
+let spawn;
+let exec;
+let createHash;
+let createReadStream;
+async function initNodeModules() {
+    if ((0, env_1.isBrowser)()) {
+        throw new Error('Token calculation functions are not available in browser environment. Please use these functions in a Node.js environment.');
+    }
+    if (!fs) {
+        fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default || await Promise.resolve().then(() => __importStar(require('fs/promises')));
+        os = (await Promise.resolve().then(() => __importStar(require('os')))).default || await Promise.resolve().then(() => __importStar(require('os')));
+        path = (await Promise.resolve().then(() => __importStar(require('path')))).default || await Promise.resolve().then(() => __importStar(require('path')));
+        AdmZip = (await Promise.resolve().then(() => __importStar(require('adm-zip')))).default;
+        const childProcess = await Promise.resolve().then(() => __importStar(require('child_process')));
+        spawn = childProcess.spawn;
+        exec = childProcess.exec;
+        const crypto = await Promise.resolve().then(() => __importStar(require('crypto')));
+        createHash = crypto.createHash;
+        createReadStream = (await Promise.resolve().then(() => __importStar(require('fs')))).createReadStream;
+    }
+}
+// Re-export download with browser check
+async function safeDynamicImport() {
+    if ((0, env_1.isBrowser)()) {
+        throw new Error('ZG Storage operations are not available in browser environment.');
+    }
+    const { download } = await Promise.resolve().then(() => __importStar(require('../zg-storage')));
+    return { download };
+}
 async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot, tokenCounterFileHash) {
+    await initNodeModules();
+    const { download } = await safeDynamicImport();
     const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary');
     const binaryFile = path.join(executorDir, 'token_counter');
     let needDownload = false;
@@ -37,12 +98,13 @@ async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetT
             console.error(`Failed to delete ${binaryFile}:`, error);
         }
         console.log(`Downloading ${binaryFile}`);
-        await (0, zg_storage_1.download)(binaryFile, tokenCounterMerkleRoot);
+        await download(binaryFile, tokenCounterMerkleRoot);
         await fs.chmod(binaryFile, 0o755);
     }
     return await calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, binaryFile, []);
 }
 async function calculateTokenSizeViaPython(tokenizerRootHash, datasetPath, datasetType) {
+    await initNodeModules();
     const isPythonInstalled = await checkPythonInstalled();
     if (!isPythonInstalled) {
         throw new Error('Python is required but not installed. Please install Python first.');
@@ -63,10 +125,11 @@ async function calculateTokenSizeViaPython(tokenizerRootHash, datasetPath, datas
     return await calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, 'python3', [path.join(projectRoot, 'token.counter', 'token_counter.py')]);
 }
 async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, executor, args) {
+    const { download } = await safeDynamicImport();
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
     console.log(`current temporary directory ${tmpDir}`);
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip');
-    await (0, zg_storage_1.download)(tokenizerPath, tokenizerRootHash);
+    await download(tokenizerPath, tokenizerRootHash);
     const subDirectories = await getSubdirectories(tmpDir);
     unzipFile(tokenizerPath, tmpDir);
     const newDirectories = new Set();
@@ -98,6 +161,9 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, e
     ])
         .then((output) => {
         console.log('token_counter script output:', output);
+        if (!output || typeof output !== 'string') {
+            throw new Error('Invalid output from token counter');
+        }
         const [num1, num2] = output
             .split(' ')
             .map((str) => parseInt(str, 10));
@@ -113,7 +179,7 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, e
 }
 function checkPythonInstalled() {
     return new Promise((resolve, reject) => {
-        (0, child_process_1.exec)('python3 --version', (error, stdout, stderr) => {
+        exec('python3 --version', (error, stdout, stderr) => {
             if (error) {
                 console.error('Python is not installed or not in PATH');
                 resolve(false);
@@ -126,7 +192,7 @@ function checkPythonInstalled() {
 }
 function checkPackageInstalled(packageName) {
     return new Promise((resolve, reject) => {
-        (0, child_process_1.exec)(`pip show ${packageName}`, (error, stdout, stderr) => {
+        exec(`pip show ${packageName}`, (error, stdout, stderr) => {
             if (error) {
                 resolve(false);
             }
@@ -138,7 +204,7 @@ function checkPackageInstalled(packageName) {
 }
 function installPackage(packageName) {
     return new Promise((resolve, reject) => {
-        (0, child_process_1.exec)(`pip install ${packageName}`, (error, stdout, stderr) => {
+        exec(`pip install ${packageName}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Failed to install ${packageName}`);
                 reject(error);
@@ -153,7 +219,7 @@ function installPackage(packageName) {
 function runExecutor(executor, args) {
     return new Promise((resolve, reject) => {
         console.log(`Run ${executor} ${args}`);
-        const pythonProcess = (0, child_process_1.spawn)(executor, [...args]);
+        const pythonProcess = spawn(executor, [...args]);
         let output = '';
         let errorOutput = '';
         pythonProcess.stdout.on('data', (data) => {
@@ -175,7 +241,7 @@ function runExecutor(executor, args) {
 }
 function unzipFile(zipFilePath, targetDir) {
     try {
-        const zip = new adm_zip_1.default(zipFilePath);
+        const zip = new AdmZip(zipFilePath);
         zip.extractAllTo(targetDir, true);
         console.log(`Successfully unzipped to ${targetDir}`);
     }
@@ -208,8 +274,8 @@ async function getSubdirectories(dirPath) {
 }
 async function calculateFileHash(filePath, algorithm = 'sha256') {
     return new Promise((resolve, reject) => {
-        const hash = (0, crypto_1.createHash)(algorithm);
-        const stream = (0, fs_1.createReadStream)(filePath);
+        const hash = createHash(algorithm);
+        const stream = createReadStream(filePath);
         stream.on('data', (chunk) => {
             hash.update(chunk);
         });

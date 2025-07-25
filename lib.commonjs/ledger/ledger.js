@@ -72,12 +72,9 @@ class LedgerProcessor {
                         ' A0GI');
                 }
             }
-            catch (error) {
-                if (!error.message.includes('LedgerNotExists')) {
-                    throw error;
-                }
-            }
+            catch (error) { }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
+            console.log(`Creating ledger with settle signer public key: ${settleSignerPublicKey} and encrypted private key: ${settleSignerEncryptedPrivateKey}`);
             await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey, gasPrice);
         }
         catch (error) {
