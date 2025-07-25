@@ -8,23 +8,47 @@ import type {
 import type { ServiceStructOutput } from '../contract'
 import type { Provider, Task } from '../provider/provider'
 import { BrokerBase } from './base'
-import * as fs from 'fs/promises'
+import { isBrowser } from '../../common/utils/env'
 import type { LedgerBroker } from '../../ledger'
 import { Automata } from '../../common/automata '
-import * as readline from 'readline'
 
+// Browser-safe function to avoid readline dependency
 async function askUser(question: string): Promise<string> {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    })
+    if (isBrowser()) {
+        throw new Error('Interactive input operations are not available in browser environment. Please use these functions in a Node.js environment.')
+    }
 
-    return new Promise((resolve) => {
-        rl.question(question, (answer) => {
-            rl.close()
-            resolve(answer.trim())
+    // Only import readline in Node.js environment
+    try {
+        const readline = eval('require')('readline')
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
         })
-    })
+
+        return new Promise((resolve: (value: string) => void) => {
+            rl.question(question, (answer: string) => {
+                rl.close()
+                resolve(answer.trim())
+            })
+        })
+    } catch (error) {
+        throw new Error('readline module is not available. This function can only be used in Node.js environment.')
+    }
+}
+
+// Browser-safe function to avoid fs dependency
+async function readFileContent(filePath: string): Promise<string> {
+    if (isBrowser()) {
+        throw new Error('File system operations are not available in browser environment. Please use these functions in a Node.js environment.')
+    }
+
+    try {
+        const fs = eval('require')('fs/promises')
+        return await fs.readFile(filePath, 'utf-8')
+    } catch (error) {
+        throw new Error('fs module is not available. This function can only be used in Node.js environment.')
+    }
 }
 
 export interface FineTuningAccountDetail {
@@ -168,7 +192,7 @@ export class ServiceProcessor extends BrokerBase {
             }
 
             const service = await this.contract.getService(providerAddress)
-            const trainingParams = await fs.readFile(trainingPath, 'utf-8')
+            const trainingParams = await readFileContent(trainingPath)
             const parsedParams = this.verifyTrainingParams(trainingParams)
             const trainEpochs =
                 (parsedParams.num_train_epochs || parsedParams.total_steps) ?? 3

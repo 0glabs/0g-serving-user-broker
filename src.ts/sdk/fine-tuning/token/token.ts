@@ -1,12 +1,42 @@
-import * as fs from 'fs/promises'
-import * as os from 'os'
-import * as path from 'path'
-import AdmZip from 'adm-zip'
-import { spawn, exec } from 'child_process'
-import { createHash } from 'crypto'
-import { createReadStream } from 'fs'
+import { isBrowser } from '../../common/utils/env'
 
-import { download } from '../zg-storage'
+// Dynamic imports for Node.js specific modules
+let fs: any
+let os: any 
+let path: any
+let AdmZip: any
+let spawn: any
+let exec: any
+let createHash: any
+let createReadStream: any
+
+async function initNodeModules() {
+    if (isBrowser()) {
+        throw new Error('Token calculation functions are not available in browser environment. Please use these functions in a Node.js environment.')
+    }
+    
+    if (!fs) {
+        fs = (await import('fs/promises')).default || await import('fs/promises')
+        os = (await import('os')).default || await import('os')
+        path = (await import('path')).default || await import('path')
+        AdmZip = (await import('adm-zip')).default
+        const childProcess = await import('child_process')
+        spawn = childProcess.spawn
+        exec = childProcess.exec
+        const crypto = await import('crypto')
+        createHash = crypto.createHash
+        createReadStream = (await import('fs')).createReadStream
+    }
+}
+
+// Re-export download with browser check
+async function safeDynamicImport() {
+    if (isBrowser()) {
+        throw new Error('ZG Storage operations are not available in browser environment.')
+    }
+    const { download } = await import('../zg-storage')
+    return { download }
+}
 
 export async function calculateTokenSizeViaExe(
     tokenizerRootHash: string,
@@ -15,6 +45,9 @@ export async function calculateTokenSizeViaExe(
     tokenCounterMerkleRoot: string,
     tokenCounterFileHash: string
 ): Promise<number> {
+    await initNodeModules()
+    const { download } = await safeDynamicImport()
+    
     const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary')
     const binaryFile = path.join(executorDir, 'token_counter')
 
@@ -60,6 +93,8 @@ export async function calculateTokenSizeViaPython(
     datasetPath: string,
     datasetType: string
 ): Promise<number> {
+    await initNodeModules()
+    
     const isPythonInstalled = await checkPythonInstalled()
     if (!isPythonInstalled) {
         throw new Error(
@@ -95,6 +130,8 @@ async function calculateTokenSize(
     executor: string,
     args: string[]
 ): Promise<number> {
+    const { download } = await safeDynamicImport()
+    
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`)
     console.log(`current temporary directory ${tmpDir}`)
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip')
@@ -133,6 +170,9 @@ async function calculateTokenSize(
     ])
         .then((output) => {
             console.log('token_counter script output:', output)
+            if (!output || typeof output !== 'string') {
+                throw new Error('Invalid output from token counter')
+            }
             const [num1, num2] = output
                 .split(' ')
                 .map((str) => parseInt(str, 10))
@@ -149,7 +189,7 @@ async function calculateTokenSize(
 
 function checkPythonInstalled(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-        exec('python3 --version', (error, stdout, stderr) => {
+        exec('python3 --version', (error: any, stdout: any, stderr: any) => {
             if (error) {
                 console.error('Python is not installed or not in PATH')
                 resolve(false)
@@ -162,7 +202,7 @@ function checkPythonInstalled(): Promise<boolean> {
 
 function checkPackageInstalled(packageName: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-        exec(`pip show ${packageName}`, (error, stdout, stderr) => {
+        exec(`pip show ${packageName}`, (error: any, stdout: any, stderr: any) => {
             if (error) {
                 resolve(false)
             } else {
@@ -174,7 +214,7 @@ function checkPackageInstalled(packageName: string): Promise<boolean> {
 
 function installPackage(packageName: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        exec(`pip install ${packageName}`, (error, stdout, stderr) => {
+        exec(`pip install ${packageName}`, (error: any, stdout: any, stderr: any) => {
             if (error) {
                 console.error(`Failed to install ${packageName}`)
                 reject(error)
@@ -194,16 +234,16 @@ function runExecutor(executor: string, args: string[]): Promise<string> {
         let output = ''
         let errorOutput = ''
 
-        pythonProcess.stdout.on('data', (data) => {
+        pythonProcess.stdout.on('data', (data: any) => {
             output += data.toString()
         })
 
-        pythonProcess.stderr.on('data', (data) => {
+        pythonProcess.stderr.on('data', (data: any) => {
             errorOutput += data.toString()
             console.error(`Python error: ${errorOutput}`)
         })
 
-        pythonProcess.on('close', (code) => {
+        pythonProcess.on('close', (code: any) => {
             if (code === 0) {
                 resolve(output.trim())
             } else {
@@ -240,16 +280,16 @@ async function isZipFile(targetPath: string): Promise<boolean> {
 async function getSubdirectories(dirPath: string): Promise<Set<string>> {
     try {
         const entries = await fs.readdir(dirPath, { withFileTypes: true })
-        const subdirectories = new Set(
+        const subdirectories = new Set<string>(
             entries
-                .filter((entry) => entry.isDirectory()) // Only keep directories
-                .map((entry) => entry.name)
+                .filter((entry: any) => entry.isDirectory()) // Only keep directories
+                .map((entry: any) => entry.name as string)
         )
 
         return subdirectories
     } catch (error) {
         console.error('Error reading directory:', error)
-        return new Set()
+        return new Set<string>()
     }
 }
 
@@ -261,7 +301,7 @@ async function calculateFileHash(
         const hash = createHash(algorithm)
         const stream = createReadStream(filePath)
 
-        stream.on('data', (chunk) => {
+        stream.on('data', (chunk: any) => {
             hash.update(chunk)
         })
 
@@ -269,7 +309,7 @@ async function calculateFileHash(
             resolve(hash.digest('hex'))
         })
 
-        stream.on('error', (err) => {
+        stream.on('error', (err: any) => {
             reject(err)
         })
     })

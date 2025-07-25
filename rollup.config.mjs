@@ -9,9 +9,10 @@ export default [
     {
         input: 'src.ts/sdk/index.ts',
         output: {
-            file: 'lib.esm/index.mjs',
+            dir: 'lib.esm',
             format: 'esm',
             sourcemap: true,
+            entryFileNames: 'index.mjs',
         },
         plugins: [
             json(),
@@ -27,7 +28,7 @@ export default [
                 tsconfig: './tsconfig.esm.json',
             }),
         ],
-        external: ['ethers', 'crypto-js', 'circomlibjs', 'child_process', 'fs', 'fs/promises', 'path', 'os', 'crypto'],
+        external: ['ethers', 'crypto-js', 'circomlibjs', 'child_process', 'fs', 'fs/promises', 'path', 'os', 'crypto', 'readline'],
     },
     {
         input: 'lib.esm/index.d.ts',
