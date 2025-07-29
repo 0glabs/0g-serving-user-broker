@@ -141,6 +141,7 @@ class LedgerProcessor {
             const keyPair = await (0, settle_signer_1.genKeyPair)();
             const key = `${this.ledgerContract.getUserAddress()}`;
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
+            console.log('Private key:', keyPair.packedPrivkey);
             const settleSignerEncryptedPrivateKey = await (0, utils_1.encryptData)(this.ledgerContract.signer, (0, utils_1.privateKeyToStr)(keyPair.packedPrivkey));
             return {
                 settleSignerEncryptedPrivateKey,

@@ -2,7 +2,7 @@ import { isBrowser } from '../../common/utils/env'
 
 // Dynamic imports for Node.js specific modules
 let fs: any
-let os: any 
+let os: any
 let path: any
 let AdmZip: any
 let spawn: any
@@ -12,13 +12,17 @@ let createReadStream: any
 
 async function initNodeModules() {
     if (isBrowser()) {
-        throw new Error('Token calculation functions are not available in browser environment. Please use these functions in a Node.js environment.')
+        throw new Error(
+            'Token calculation functions are not available in browser environment. Please use these functions in a Node.js environment.'
+        )
     }
-    
+
     if (!fs) {
-        fs = (await import('fs/promises')).default || await import('fs/promises')
-        os = (await import('os')).default || await import('os')
-        path = (await import('path')).default || await import('path')
+        fs =
+            (await import('fs/promises')).default ||
+            (await import('fs/promises'))
+        os = (await import('os')).default || (await import('os'))
+        path = (await import('path')).default || (await import('path'))
         AdmZip = (await import('adm-zip')).default
         const childProcess = await import('child_process')
         spawn = childProcess.spawn
@@ -32,7 +36,9 @@ async function initNodeModules() {
 // Re-export download with browser check
 async function safeDynamicImport() {
     if (isBrowser()) {
-        throw new Error('ZG Storage operations are not available in browser environment.')
+        throw new Error(
+            'ZG Storage operations are not available in browser environment.'
+        )
     }
     const { download } = await import('../zg-storage')
     return { download }
@@ -47,7 +53,7 @@ export async function calculateTokenSizeViaExe(
 ): Promise<number> {
     await initNodeModules()
     const { download } = await safeDynamicImport()
-    
+
     const executorDir = path.join(__dirname, '..', '..', '..', '..', 'binary')
     const binaryFile = path.join(executorDir, 'token_counter')
 
@@ -94,7 +100,7 @@ export async function calculateTokenSizeViaPython(
     datasetType: string
 ): Promise<number> {
     await initNodeModules()
-    
+
     const isPythonInstalled = await checkPythonInstalled()
     if (!isPythonInstalled) {
         throw new Error(
@@ -131,7 +137,7 @@ async function calculateTokenSize(
     args: string[]
 ): Promise<number> {
     const { download } = await safeDynamicImport()
-    
+
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`)
     console.log(`current temporary directory ${tmpDir}`)
     const tokenizerPath = path.join(tmpDir, 'tokenizer.zip')
@@ -202,27 +208,33 @@ function checkPythonInstalled(): Promise<boolean> {
 
 function checkPackageInstalled(packageName: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-        exec(`pip show ${packageName}`, (error: any, stdout: any, stderr: any) => {
-            if (error) {
-                resolve(false)
-            } else {
-                resolve(true)
+        exec(
+            `pip show ${packageName}`,
+            (error: any, stdout: any, stderr: any) => {
+                if (error) {
+                    resolve(false)
+                } else {
+                    resolve(true)
+                }
             }
-        })
+        )
     })
 }
 
 function installPackage(packageName: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        exec(`pip install ${packageName}`, (error: any, stdout: any, stderr: any) => {
-            if (error) {
-                console.error(`Failed to install ${packageName}`)
-                reject(error)
-            } else {
-                console.log(`${packageName} installed successfully`)
-                resolve()
+        exec(
+            `pip install ${packageName}`,
+            (error: any, stdout: any, stderr: any) => {
+                if (error) {
+                    console.error(`Failed to install ${packageName}`)
+                    reject(error)
+                } else {
+                    console.log(`${packageName} installed successfully`)
+                    resolve()
+                }
             }
-        })
+        )
     })
 }
 

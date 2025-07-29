@@ -105,6 +105,36 @@ export abstract class ZGServingUserBrokerBase {
         }
     }
 
+    async userAcknowledged(providerAddress: string): Promise<boolean> {
+        const userAddress = this.contract.getUserAddress()
+        const key = `${userAddress}_${providerAddress}_ack`
+        const cachedSvc = await this.cache.getItem(key)
+        if (cachedSvc) {
+            return true
+        }
+
+        try {
+            const account = await this.contract.getAccount(providerAddress)
+            if (
+                account.providerPubKey[0] !== 0n &&
+                account.providerPubKey[1] !== 0n
+            ) {
+                await this.cache.setItem(
+                    key,
+                    account.providerPubKey,
+                    10 * 60 * 1000,
+                    CacheValueTypeEnum.Other
+                )
+
+                return true
+            } else {
+                return false
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
     private async fetchText(
         endpoint: string,
         options: RequestInit
@@ -176,38 +206,6 @@ export abstract class ZGServingUserBrokerBase {
         return Number(integerPart) + decimalPart
     }
 
-    protected async userAcknowledged(
-        providerAddress: string,
-        userAddress: string
-    ): Promise<boolean> {
-        const key = `${userAddress}_${providerAddress}_ack`
-        const cachedSvc = await this.cache.getItem(key)
-        if (cachedSvc) {
-            return true
-        }
-
-        try {
-            const account = await this.contract.getAccount(providerAddress)
-            if (
-                account.providerPubKey[0] !== 0n &&
-                account.providerPubKey[1] !== 0n
-            ) {
-                await this.cache.setItem(
-                    key,
-                    account.providerPubKey,
-                    10 * 60 * 1000,
-                    CacheValueTypeEnum.Other
-                )
-
-                return true
-            } else {
-                return false
-            }
-        } catch (error) {
-            throw error
-        }
-    }
-
     async getHeader(
         providerAddress: string,
         content: string,
@@ -216,7 +214,7 @@ export abstract class ZGServingUserBrokerBase {
     ): Promise<ServingRequestHeaders> {
         try {
             const userAddress = this.contract.getUserAddress()
-            if (!(await this.userAcknowledged(providerAddress, userAddress))) {
+            if (!(await this.userAcknowledged(providerAddress))) {
                 throw new Error('Provider signer is not acknowledged')
             }
 
@@ -227,6 +225,7 @@ export abstract class ZGServingUserBrokerBase {
             const key = `${userAddress}_${providerAddress}`
 
             let privateKey = settleSignerPrivateKey
+            console.log('Private key:', privateKey)
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress)
                 const privateKeyStr = await decryptData(
@@ -234,6 +233,8 @@ export abstract class ZGServingUserBrokerBase {
                     account.additionalInfo
                 )
                 privateKey = strToPrivateKey(privateKeyStr)
+                console.log('Private key new:', privateKey)
+
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey)
             }
 
@@ -359,7 +360,6 @@ export abstract class ZGServingUserBrokerBase {
             // Check if it's the first round
             const isFirstRound =
                 (await this.cache.getItem('firstRound')) !== 'false'
-
             if (isFirstRound) {
                 await this.handleFirstRound(
                     provider,
@@ -401,30 +401,23 @@ export abstract class ZGServingUserBrokerBase {
         targetThreshold: bigint,
         gasPrice?: number
     ) {
+        let needTransfer = false
+
         try {
             const acc = await this.contract.getAccount(provider)
-
-            // Check if the account balance is below the trigger threshold
             const lockedFund = acc.balance - acc.pendingRefund
-            if (lockedFund < triggerThreshold) {
-                await this.ledger.transferFund(
-                    provider,
-                    'inference',
-                    targetThreshold,
-                    gasPrice
-                )
-            }
-        } catch (error) {
-            if ((error as any).message.includes('AccountNotExists')) {
-                await this.ledger.transferFund(
-                    provider,
-                    'inference',
-                    targetThreshold,
-                    gasPrice
-                )
-            } else {
-                throw error
-            }
+            needTransfer = lockedFund < triggerThreshold
+        } catch {
+            needTransfer = true
+        }
+
+        if (needTransfer) {
+            await this.ledger.transferFund(
+                provider,
+                'inference',
+                targetThreshold,
+                gasPrice
+            )
         }
 
         // Mark the first round as complete

@@ -50,9 +50,11 @@ async function initNodeModules() {
         throw new Error('Token calculation functions are not available in browser environment. Please use these functions in a Node.js environment.');
     }
     if (!fs) {
-        fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default || await Promise.resolve().then(() => __importStar(require('fs/promises')));
-        os = (await Promise.resolve().then(() => __importStar(require('os')))).default || await Promise.resolve().then(() => __importStar(require('os')));
-        path = (await Promise.resolve().then(() => __importStar(require('path')))).default || await Promise.resolve().then(() => __importStar(require('path')));
+        fs =
+            (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default ||
+                (await Promise.resolve().then(() => __importStar(require('fs/promises'))));
+        os = (await Promise.resolve().then(() => __importStar(require('os')))).default || (await Promise.resolve().then(() => __importStar(require('os'))));
+        path = (await Promise.resolve().then(() => __importStar(require('path')))).default || (await Promise.resolve().then(() => __importStar(require('path'))));
         AdmZip = (await Promise.resolve().then(() => __importStar(require('adm-zip')))).default;
         const childProcess = await Promise.resolve().then(() => __importStar(require('child_process')));
         spawn = childProcess.spawn;

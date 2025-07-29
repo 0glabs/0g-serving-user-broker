@@ -8387,20 +8387,21 @@ var distExports = requireDist();
  * Helps distinguish between Node.js and browser environments
  */
 const isBrowser = () => {
-    return typeof window !== 'undefined' && typeof window.document !== 'undefined';
+    return (typeof window !== 'undefined' && typeof window.document !== 'undefined');
 };
 const isNode = () => {
-    return typeof process !== 'undefined' &&
+    return (typeof process !== 'undefined' &&
         process.versions &&
-        process.versions.node !== undefined;
+        process.versions.node !== undefined);
 };
 const isWebWorker = () => {
-    return typeof globalThis.importScripts === 'function' && typeof navigator !== 'undefined';
+    return (typeof globalThis.importScripts === 'function' &&
+        typeof navigator !== 'undefined');
 };
 const hasWebCrypto = () => {
-    return isBrowser() &&
+    return (isBrowser() &&
         typeof window.crypto !== 'undefined' &&
-        typeof window.crypto.subtle !== 'undefined';
+        typeof window.crypto.subtle !== 'undefined');
 };
 
 class NodeCryptoAdapter {
@@ -8427,7 +8428,10 @@ class NodeCryptoAdapter {
         const crypto = await this.getCrypto();
         const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
         decipher.setAuthTag(authTag);
-        const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+        const decrypted = Buffer.concat([
+            decipher.update(encryptedData),
+            decipher.final(),
+        ]);
         return decrypted;
     }
     randomBytes(length) {
@@ -8469,13 +8473,13 @@ class BrowserCryptoAdapter {
         const result = await crypto.subtle.encrypt({
             name: 'AES-GCM',
             iv: iv,
-            tagLength: 128
+            tagLength: 128,
         }, cryptoKey, data);
         const encrypted = new Uint8Array(result.slice(0, -16));
         const authTag = new Uint8Array(result.slice(-16));
         return {
             encrypted: Buffer.from(encrypted),
-            authTag: Buffer.from(authTag)
+            authTag: Buffer.from(authTag),
         };
     }
     async aesGCMDecrypt(key, encryptedData, iv, authTag) {
@@ -8486,7 +8490,7 @@ class BrowserCryptoAdapter {
         const result = await crypto.subtle.decrypt({
             name: 'AES-GCM',
             iv: iv,
-            tagLength: 128
+            tagLength: 128,
         }, cryptoKey, combined);
         return Buffer.from(result);
     }
@@ -8520,6 +8524,7 @@ async function deriveEncryptionKey(signer) {
     return hash;
 }
 async function encryptData(signer, data) {
+    console.log('Encrypting data:', data);
     const key = await deriveEncryptionKey(signer);
     const encrypted = CryptoJS.AES.encrypt(data, key).toString();
     return encrypted;
@@ -8577,7 +8582,7 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
     // read chunks
     while (true) {
         readResult = await fd.read(buffer, 0, chunkLength, offset);
-        let chunkSize = readResult.bytesRead;
+        const chunkSize = readResult.bytesRead;
         if (chunkSize === 0) {
             break;
         }
@@ -9008,6 +9013,28 @@ class ZGServingUserBrokerBase {
             throw error;
         }
     }
+    async userAcknowledged(providerAddress) {
+        const userAddress = this.contract.getUserAddress();
+        const key = `${userAddress}_${providerAddress}_ack`;
+        const cachedSvc = await this.cache.getItem(key);
+        if (cachedSvc) {
+            return true;
+        }
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.providerPubKey[0] !== 0n &&
+                account.providerPubKey[1] !== 0n) {
+                await this.cache.setItem(key, account.providerPubKey, 10 * 60 * 1000, CacheValueTypeEnum.Other);
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async fetchText(endpoint, options) {
         try {
             const response = await fetch(endpoint, options);
@@ -9066,41 +9093,22 @@ class ZGServingUserBrokerBase {
         const decimalPart = Number(remainder) / Number(divisor);
         return Number(integerPart) + decimalPart;
     }
-    async userAcknowledged(providerAddress, userAddress) {
-        const key = `${userAddress}_${providerAddress}_ack`;
-        const cachedSvc = await this.cache.getItem(key);
-        if (cachedSvc) {
-            return true;
-        }
-        try {
-            const account = await this.contract.getAccount(providerAddress);
-            if (account.providerPubKey[0] !== 0n &&
-                account.providerPubKey[1] !== 0n) {
-                await this.cache.setItem(key, account.providerPubKey, 10 * 60 * 1000, CacheValueTypeEnum.Other);
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
     async getHeader(providerAddress, content, outputFee, vllmProxy) {
         try {
             const userAddress = this.contract.getUserAddress();
-            if (!(await this.userAcknowledged(providerAddress, userAddress))) {
+            if (!(await this.userAcknowledged(providerAddress))) {
                 throw new Error('Provider signer is not acknowledged');
             }
             const extractor = await this.getExtractor(providerAddress);
             const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
             const key = `${userAddress}_${providerAddress}`;
             let privateKey = settleSignerPrivateKey;
+            console.log('Private key:', privateKey);
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress);
                 const privateKeyStr = await decryptData(this.contract.signer, account.additionalInfo);
                 privateKey = strToPrivateKey(privateKeyStr);
+                console.log('Private key new:', privateKey);
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey);
             }
             const nonce = await getNonceWithCache(this.cache);
@@ -9197,21 +9205,17 @@ class ZGServingUserBrokerBase {
         }
     }
     async handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice) {
+        let needTransfer = false;
         try {
             const acc = await this.contract.getAccount(provider);
-            // Check if the account balance is below the trigger threshold
             const lockedFund = acc.balance - acc.pendingRefund;
-            if (lockedFund < triggerThreshold) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
+            needTransfer = lockedFund < triggerThreshold;
         }
-        catch (error) {
-            if (error.message.includes('AccountNotExists')) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
-            else {
-                throw error;
-            }
+        catch {
+            needTransfer = true;
+        }
+        if (needTransfer) {
+            await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
         }
         // Mark the first round as complete
         await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
@@ -10414,6 +10418,131 @@ class Automata {
 }
 
 /**
+ * RequestProcessor is a subclass of ZGServingUserBroker.
+ * It needs to be initialized with createZGServingUserBroker
+ * before use.
+ */
+class RequestProcessor extends ZGServingUserBrokerBase {
+    automata;
+    constructor(contract, metadata, cache, ledger) {
+        super(contract, ledger, metadata, cache);
+        this.automata = new Automata();
+    }
+    async getServiceMetadata(providerAddress) {
+        const service = await this.getService(providerAddress);
+        return {
+            endpoint: `${service.url}/v1/proxy`,
+            model: service.model,
+        };
+    }
+    /*
+     * 1. To Ensure No Insufficient Balance Occurs.
+     *
+     * The provider settles accounts regularly. In addition, we will add a rule to the provider's settlement logic:
+     * if the actual balance of the customer's account is less than 5000, settlement will be triggered immediately.
+     * The actual balance is defined as the customer's inference account balance minus any unsettled amounts.
+     *
+     * This way, if the customer checks their account and sees a balance greater than 5000, even if the provider settles
+     * immediately, the deduction will leave about 5000, ensuring that no insufficient balance situation occurs.
+     *
+     * 2. To Avoid Frequent Transfers
+     *
+     * On the customer's side, if the balance falls below 5000, it should be topped up to 10000. This is to avoid frequent
+     * transfers.
+     *
+     * 3. To Avoid Having to Check the Balance on Every Customer Request
+     *
+     * Record expenditures in processResponse and maintain a total consumption amount. Every time the total expenditure
+     * reaches 1000, recheck the balance and perform a transfer if necessary.
+     *
+     * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
+     */
+    async getRequestHeaders(providerAddress, content, vllmProxy) {
+        try {
+            await this.topUpAccountIfNeeded(providerAddress, content);
+            if (vllmProxy === undefined) {
+                vllmProxy = true;
+            }
+            return await this.getHeader(providerAddress, content, BigInt(0), vllmProxy);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+    async acknowledgeProviderSigner(providerAddress, gasPrice) {
+        try {
+            try {
+                await this.contract.getAccount(providerAddress);
+            }
+            catch {
+                await this.ledger.transferFund(providerAddress, 'inference', BigInt(0), gasPrice);
+            }
+            let { quote, provider_signer, key } = await this.getQuote(providerAddress);
+            if (!quote || !provider_signer) {
+                throw new Error('Invalid quote');
+            }
+            if (!quote.startsWith('0x')) {
+                quote = '0x' + quote;
+            }
+            // const rpc = process.env.RPC_ENDPOINT
+            // bypass quote verification if testing on localhost
+            // if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+            //     const isVerified = await this.automata.verifyQuote(quote)
+            //     console.log('Quote verification:', isVerified)
+            //     if (!isVerified) {
+            //         throw new Error('Quote verification failed')
+            //     }
+            //     if (nvidia_payload) {
+            //         const svc = await this.getService(providerAddress)
+            //         const valid = await Verifier.verifyRA(
+            //             svc.url,
+            //             nvidia_payload
+            //         )
+            //         console.log('nvidia payload verification:', valid)
+            //         if (!valid) {
+            //             throw new Error('nvidia payload verify failed')
+            //         }
+            //     }
+            // }
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.providerPubKey[0] === key[0] &&
+                account.providerPubKey[1] === key[1]) {
+                console.log('Provider signer already acknowledged');
+                return;
+            }
+            await this.contract.acknowledgeProviderSigner(providerAddress, key);
+            const userAddress = this.contract.getUserAddress();
+            const cacheKey = `${userAddress}_${providerAddress}_ack`;
+            this.cache.setItem(cacheKey, key, 1 * 60 * 1000, CacheValueTypeEnum.Other);
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+}
+
+var VerifiabilityEnum;
+(function (VerifiabilityEnum) {
+    VerifiabilityEnum["OpML"] = "OpML";
+    VerifiabilityEnum["TeeML"] = "TeeML";
+    VerifiabilityEnum["ZKML"] = "ZKML";
+})(VerifiabilityEnum || (VerifiabilityEnum = {}));
+let ModelProcessor$1 = class ModelProcessor extends ZGServingUserBrokerBase {
+    async listService() {
+        try {
+            const services = await this.contract.listService();
+            return services;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+};
+function isVerifiability(value) {
+    return Object.values(VerifiabilityEnum).includes(value);
+}
+
+/**
  * The Verifier class contains methods for verifying service reliability.
  */
 class Verifier extends ZGServingUserBrokerBase {
@@ -10462,7 +10591,7 @@ class Verifier extends ZGServingUserBrokerBase {
                 }
             }
             else {
-                let { quote, provider_signer, nvidia_payload } = await this.getQuote(providerAddress);
+                const { quote, provider_signer, nvidia_payload } = await this.getQuote(providerAddress);
                 signerRA = {
                     signing_address: provider_signer,
                     nvidia_payload: nvidia_payload,
@@ -10471,8 +10600,9 @@ class Verifier extends ZGServingUserBrokerBase {
             }
             signingKey = `${this.contract.getUserAddress()}_${providerAddress}`;
             await this.metadata.storeSigningKey(signingKey, signerRA.signing_address);
+            console.log('signerRa:', signerRA);
             // TODO: use intel_quote to verify signing address
-            const valid = await Verifier.verifyRA(signerRA.nvidia_payload);
+            const valid = await Verifier.verifyRA(svc.url, signerRA.nvidia_payload);
             return {
                 valid,
                 signingAddress: signerRA.signing_address,
@@ -10500,9 +10630,8 @@ class Verifier extends ZGServingUserBrokerBase {
             throw error;
         }
     }
-    // TODO: add test
-    static async verifyRA(nvidia_payload) {
-        return fetch('https://nras.attestation.nvidia.com/v3/attest/gpu', {
+    static async verifyRA(providerBrokerURL, nvidia_payload) {
+        return fetch(`${providerBrokerURL}/v1/quote/verify/gpu`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -10589,132 +10718,6 @@ class Verifier extends ZGServingUserBrokerBase {
         const recoveredAddress = ethers.recoverAddress(messageHash, signature);
         return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
     }
-}
-
-/**
- * RequestProcessor is a subclass of ZGServingUserBroker.
- * It needs to be initialized with createZGServingUserBroker
- * before use.
- */
-class RequestProcessor extends ZGServingUserBrokerBase {
-    automata;
-    constructor(contract, metadata, cache, ledger) {
-        super(contract, ledger, metadata, cache);
-        this.automata = new Automata();
-    }
-    async getServiceMetadata(providerAddress) {
-        const service = await this.getService(providerAddress);
-        return {
-            endpoint: `${service.url}/v1/proxy`,
-            model: service.model,
-        };
-    }
-    /*
-     * 1. To Ensure No Insufficient Balance Occurs.
-     *
-     * The provider settles accounts regularly. In addition, we will add a rule to the provider's settlement logic:
-     * if the actual balance of the customer's account is less than 5000, settlement will be triggered immediately.
-     * The actual balance is defined as the customer's inference account balance minus any unsettled amounts.
-     *
-     * This way, if the customer checks their account and sees a balance greater than 5000, even if the provider settles
-     * immediately, the deduction will leave about 5000, ensuring that no insufficient balance situation occurs.
-     *
-     * 2. To Avoid Frequent Transfers
-     *
-     * On the customer's side, if the balance falls below 5000, it should be topped up to 10000. This is to avoid frequent
-     * transfers.
-     *
-     * 3. To Avoid Having to Check the Balance on Every Customer Request
-     *
-     * Record expenditures in processResponse and maintain a total consumption amount. Every time the total expenditure
-     * reaches 1000, recheck the balance and perform a transfer if necessary.
-     *
-     * ps: The units for 5000 and 1000 can be (service.inputPricePerToken + service.outputPricePerToken).
-     */
-    async getRequestHeaders(providerAddress, content, vllmProxy) {
-        try {
-            await this.topUpAccountIfNeeded(providerAddress, content);
-            if (vllmProxy === undefined) {
-                vllmProxy = true;
-            }
-            return await this.getHeader(providerAddress, content, BigInt(0), vllmProxy);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async acknowledgeProviderSigner(providerAddress, gasPrice) {
-        try {
-            try {
-                await this.contract.getAccount(providerAddress);
-            }
-            catch (error) {
-                if (!error.message.includes('AccountNotExists')) {
-                    throw error;
-                }
-                else {
-                    await this.ledger.transferFund(providerAddress, 'inference', BigInt(0), gasPrice);
-                }
-            }
-            let { quote, provider_signer, key, nvidia_payload } = await this.getQuote(providerAddress);
-            if (!quote || !provider_signer) {
-                throw new Error('Invalid quote');
-            }
-            if (!quote.startsWith('0x')) {
-                quote = '0x' + quote;
-            }
-            const rpc = process.env.RPC_ENDPOINT;
-            // bypass quote verification if testing on localhost
-            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
-                const isVerified = await this.automata.verifyQuote(quote);
-                console.log('Quote verification:', isVerified);
-                if (!isVerified) {
-                    throw new Error('Quote verification failed');
-                }
-                if (nvidia_payload) {
-                    const valid = await Verifier.verifyRA(nvidia_payload);
-                    console.log('nvidia payload verification:', valid);
-                    if (!valid) {
-                        throw new Error('nvidia payload verify failed');
-                    }
-                }
-            }
-            const account = await this.contract.getAccount(providerAddress);
-            if (account.providerPubKey[0] === key[0] &&
-                account.providerPubKey[1] === key[1]) {
-                console.log('Provider signer already acknowledged');
-                return;
-            }
-            await this.contract.acknowledgeProviderSigner(providerAddress, key);
-            const userAddress = this.contract.getUserAddress();
-            const cacheKey = `${userAddress}_${providerAddress}_ack`;
-            await this.cache.setItem(cacheKey, key, 1 * 60 * 1000, CacheValueTypeEnum.Other);
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-}
-
-var VerifiabilityEnum;
-(function (VerifiabilityEnum) {
-    VerifiabilityEnum["OpML"] = "OpML";
-    VerifiabilityEnum["TeeML"] = "TeeML";
-    VerifiabilityEnum["ZKML"] = "ZKML";
-})(VerifiabilityEnum || (VerifiabilityEnum = {}));
-let ModelProcessor$1 = class ModelProcessor extends ZGServingUserBrokerBase {
-    async listService() {
-        try {
-            const services = await this.contract.listService();
-            return services;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-};
-function isVerifiability(value) {
-    return Object.values(VerifiabilityEnum).includes(value);
 }
 
 /**
@@ -10830,6 +10833,22 @@ class InferenceBroker {
     getAccountWithDetail = async (providerAddress) => {
         try {
             return await this.accountProcessor.getAccountWithDetail(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    /**
+     * checks if the user has acknowledged the provider signer.
+     *
+     * @param {string} providerAddress - The address of the provider.
+     * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the user
+     * has acknowledged the provider signer.
+     * @throws Will throw an error if the acknowledgment check fails.
+     */
+    userAcknowledged = async (providerAddress) => {
+        try {
+            return await this.requestProcessor.userAcknowledged(providerAddress);
         }
         catch (error) {
             throw error;
@@ -12480,9 +12499,11 @@ async function initNodeModules() {
         throw new Error('Token calculation functions are not available in browser environment. Please use these functions in a Node.js environment.');
     }
     if (!fs) {
-        fs = (await import('fs/promises')).default || await import('fs/promises');
-        os = (await import('os')).default || await import('os');
-        path = (await import('path')).default || await import('path');
+        fs =
+            (await import('fs/promises')).default ||
+                (await import('fs/promises'));
+        os = (await import('os')).default || (await import('os'));
+        path = (await import('path')).default || (await import('path'));
         AdmZip = (await import('./adm-zip-86f30d47.js').then(function (n) { return n.a; })).default;
         const childProcess = await import('child_process');
         spawn = childProcess.spawn;
@@ -12497,7 +12518,7 @@ async function safeDynamicImport() {
     if (isBrowser()) {
         throw new Error('ZG Storage operations are not available in browser environment.');
     }
-    const { download } = await import('./index-d402d63b.js');
+    const { download } = await import('./index-f0e79886.js');
     return { download };
 }
 async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot, tokenCounterFileHash) {
@@ -12898,13 +12919,8 @@ class ServiceProcessor extends BrokerBase {
             try {
                 await this.contract.getAccount(providerAddress);
             }
-            catch (error) {
-                if (!error.message.includes('AccountNotExists')) {
-                    throw error;
-                }
-                else {
-                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
-                }
+            catch {
+                await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
             }
             let { quote, provider_signer } = await this.servingProvider.getQuote(providerAddress);
             if (!quote || !provider_signer) {
@@ -12940,7 +12956,7 @@ class ServiceProcessor extends BrokerBase {
                 preTrainedModelHash = MODEL_HASH_MAP[preTrainedModelName].turbo;
             }
             else {
-                let model = await this.servingProvider.getCustomizedModel(providerAddress, preTrainedModelName);
+                const model = await this.servingProvider.getCustomizedModel(providerAddress, preTrainedModelName);
                 preTrainedModelHash = model.hash;
                 console.log(`customized model hash: ${preTrainedModelHash}`);
             }
@@ -17292,6 +17308,7 @@ class LedgerProcessor {
             const keyPair = await genKeyPair();
             const key = `${this.ledgerContract.getUserAddress()}`;
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
+            console.log('Private key:', keyPair.packedPrivkey);
             const settleSignerEncryptedPrivateKey = await encryptData(this.ledgerContract.signer, privateKeyToStr(keyPair.packedPrivkey));
             return {
                 settleSignerEncryptedPrivateKey,
@@ -18145,4 +18162,4 @@ async function createZGComputeNetworkBroker(signer, ledgerCA = '0x1a85Dd32da10c1
 }
 
 export { AccountProcessor as A, FineTuningBroker as F, InferenceBroker as I, LedgerBroker as L, ModelProcessor$1 as M, RequestProcessor as R, Verifier as V, ZGComputeNetworkBroker as Z, ResponseProcessor as a, createFineTuningBroker as b, createInferenceBroker as c, download as d, createLedgerBroker as e, createZGComputeNetworkBroker as f, isNode as g, isWebWorker as h, isBrowser as i, hasWebCrypto as j, getCryptoAdapter as k, bigintToBytes as l, genKeyPair as m, Request$1 as n, pedersenHash as p, signData as s, upload as u };
-//# sourceMappingURL=index-89b00a35.js.map
+//# sourceMappingURL=index-70ba5d39.js.map

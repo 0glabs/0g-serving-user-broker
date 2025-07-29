@@ -59,7 +59,10 @@ class NodeCryptoAdapter {
         const crypto = await this.getCrypto();
         const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
         decipher.setAuthTag(authTag);
-        const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+        const decrypted = Buffer.concat([
+            decipher.update(encryptedData),
+            decipher.final(),
+        ]);
         return decrypted;
     }
     randomBytes(length) {
@@ -101,13 +104,13 @@ class BrowserCryptoAdapter {
         const result = await crypto.subtle.encrypt({
             name: 'AES-GCM',
             iv: iv,
-            tagLength: 128
+            tagLength: 128,
         }, cryptoKey, data);
         const encrypted = new Uint8Array(result.slice(0, -16));
         const authTag = new Uint8Array(result.slice(-16));
         return {
             encrypted: Buffer.from(encrypted),
-            authTag: Buffer.from(authTag)
+            authTag: Buffer.from(authTag),
         };
     }
     async aesGCMDecrypt(key, encryptedData, iv, authTag) {
@@ -118,7 +121,7 @@ class BrowserCryptoAdapter {
         const result = await crypto.subtle.decrypt({
             name: 'AES-GCM',
             iv: iv,
-            tagLength: 128
+            tagLength: 128,
         }, cryptoKey, combined);
         return Buffer.from(result);
     }

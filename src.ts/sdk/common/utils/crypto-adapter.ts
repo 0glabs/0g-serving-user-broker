@@ -6,8 +6,17 @@ import { isBrowser, hasWebCrypto } from './env'
  */
 
 export interface CryptoAdapter {
-    aesGCMEncrypt(key: Buffer, data: Buffer, iv: Buffer): Promise<{ encrypted: Buffer; authTag: Buffer }>
-    aesGCMDecrypt(key: Buffer, encryptedData: Buffer, iv: Buffer, authTag: Buffer): Promise<Buffer>
+    aesGCMEncrypt(
+        key: Buffer,
+        data: Buffer,
+        iv: Buffer
+    ): Promise<{ encrypted: Buffer; authTag: Buffer }>
+    aesGCMDecrypt(
+        key: Buffer,
+        encryptedData: Buffer,
+        iv: Buffer,
+        authTag: Buffer
+    ): Promise<Buffer>
     randomBytes(length: number): Buffer
 }
 
@@ -16,7 +25,9 @@ class NodeCryptoAdapter implements CryptoAdapter {
 
     constructor() {
         if (isBrowser()) {
-            throw new Error('NodeCryptoAdapter can only be used in Node.js environment')
+            throw new Error(
+                'NodeCryptoAdapter can only be used in Node.js environment'
+            )
         }
     }
 
@@ -27,7 +38,11 @@ class NodeCryptoAdapter implements CryptoAdapter {
         return this.crypto
     }
 
-    async aesGCMEncrypt(key: Buffer, data: Buffer, iv: Buffer): Promise<{ encrypted: Buffer; authTag: Buffer }> {
+    async aesGCMEncrypt(
+        key: Buffer,
+        data: Buffer,
+        iv: Buffer
+    ): Promise<{ encrypted: Buffer; authTag: Buffer }> {
         const crypto = await this.getCrypto()
         const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
         const encrypted = Buffer.concat([cipher.update(data), cipher.final()])
@@ -35,11 +50,19 @@ class NodeCryptoAdapter implements CryptoAdapter {
         return { encrypted, authTag }
     }
 
-    async aesGCMDecrypt(key: Buffer, encryptedData: Buffer, iv: Buffer, authTag: Buffer): Promise<Buffer> {
+    async aesGCMDecrypt(
+        key: Buffer,
+        encryptedData: Buffer,
+        iv: Buffer,
+        authTag: Buffer
+    ): Promise<Buffer> {
         const crypto = await this.getCrypto()
         const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
         decipher.setAuthTag(authTag)
-        const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()])
+        const decrypted = Buffer.concat([
+            decipher.update(encryptedData),
+            decipher.final(),
+        ])
         return decrypted
     }
 
@@ -47,11 +70,11 @@ class NodeCryptoAdapter implements CryptoAdapter {
         if (this.crypto) {
             return this.crypto.randomBytes(length)
         }
-        
+
         // For synchronous random bytes in Node.js, we'll need to handle this differently
         // This is a limitation - ideally this should be async
         const array = new Uint8Array(length)
-        
+
         // Use Node.js crypto if available (simplified fallback)
         // In production, this should ideally be async
         try {
@@ -64,9 +87,11 @@ class NodeCryptoAdapter implements CryptoAdapter {
         } catch {
             // Crypto not available
         }
-        
+
         // Fallback to Math.random (not cryptographically secure, but functional)
-        console.warn('Using Math.random for random bytes - not cryptographically secure')
+        console.warn(
+            'Using Math.random for random bytes - not cryptographically secure'
+        )
         for (let i = 0; i < length; i++) {
             array[i] = Math.floor(Math.random() * 256)
         }
@@ -81,7 +106,11 @@ class BrowserCryptoAdapter implements CryptoAdapter {
         }
     }
 
-    async aesGCMEncrypt(key: Buffer, data: Buffer, iv: Buffer): Promise<{ encrypted: Buffer; authTag: Buffer }> {
+    async aesGCMEncrypt(
+        key: Buffer,
+        data: Buffer,
+        iv: Buffer
+    ): Promise<{ encrypted: Buffer; authTag: Buffer }> {
         const cryptoKey = await crypto.subtle.importKey(
             'raw',
             key,
@@ -94,7 +123,7 @@ class BrowserCryptoAdapter implements CryptoAdapter {
             {
                 name: 'AES-GCM',
                 iv: iv,
-                tagLength: 128
+                tagLength: 128,
             },
             cryptoKey,
             data
@@ -105,11 +134,16 @@ class BrowserCryptoAdapter implements CryptoAdapter {
 
         return {
             encrypted: Buffer.from(encrypted),
-            authTag: Buffer.from(authTag)
+            authTag: Buffer.from(authTag),
         }
     }
 
-    async aesGCMDecrypt(key: Buffer, encryptedData: Buffer, iv: Buffer, authTag: Buffer): Promise<Buffer> {
+    async aesGCMDecrypt(
+        key: Buffer,
+        encryptedData: Buffer,
+        iv: Buffer,
+        authTag: Buffer
+    ): Promise<Buffer> {
         const cryptoKey = await crypto.subtle.importKey(
             'raw',
             key,
@@ -126,7 +160,7 @@ class BrowserCryptoAdapter implements CryptoAdapter {
             {
                 name: 'AES-GCM',
                 iv: iv,
-                tagLength: 128
+                tagLength: 128,
             },
             cryptoKey,
             combined

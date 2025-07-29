@@ -52,7 +52,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
                 }
             }
             else {
-                let { quote, provider_signer, nvidia_payload } = await this.getQuote(providerAddress);
+                const { quote, provider_signer, nvidia_payload } = await this.getQuote(providerAddress);
                 signerRA = {
                     signing_address: provider_signer,
                     nvidia_payload: nvidia_payload,
@@ -61,8 +61,9 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             }
             signingKey = `${this.contract.getUserAddress()}_${providerAddress}`;
             await this.metadata.storeSigningKey(signingKey, signerRA.signing_address);
+            console.log('signerRa:', signerRA);
             // TODO: use intel_quote to verify signing address
-            const valid = await Verifier.verifyRA(signerRA.nvidia_payload);
+            const valid = await Verifier.verifyRA(svc.url, signerRA.nvidia_payload);
             return {
                 valid,
                 signingAddress: signerRA.signing_address,
@@ -90,9 +91,8 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             throw error;
         }
     }
-    // TODO: add test
-    static async verifyRA(nvidia_payload) {
-        return fetch('https://nras.attestation.nvidia.com/v3/attest/gpu', {
+    static async verifyRA(providerBrokerURL, nvidia_payload) {
+        return fetch(`${providerBrokerURL}/v1/quote/verify/gpu`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

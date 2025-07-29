@@ -216,6 +216,8 @@ export class LedgerProcessor {
                 keyPair.packedPrivkey
             )
 
+            console.log('Private key:', keyPair.packedPrivkey)
+
             const settleSignerEncryptedPrivateKey = await encryptData(
                 this.ledgerContract.signer,
                 privateKeyToStr(keyPair.packedPrivkey)

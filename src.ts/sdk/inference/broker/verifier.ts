@@ -81,7 +81,7 @@ export class Verifier extends ZGServingUserBrokerBase {
                     throw new Error('signing address does not exist')
                 }
             } else {
-                let { quote, provider_signer, nvidia_payload } =
+                const { quote, provider_signer, nvidia_payload } =
                     await this.getQuote(providerAddress)
                 signerRA = {
                     signing_address: provider_signer,
@@ -95,9 +95,13 @@ export class Verifier extends ZGServingUserBrokerBase {
                 signingKey,
                 signerRA.signing_address
             )
+            console.log('signerRa:', signerRA)
 
             // TODO: use intel_quote to verify signing address
-            const valid = await Verifier.verifyRA(signerRA.nvidia_payload)
+            const valid = await Verifier.verifyRA(
+                svc.url,
+                signerRA.nvidia_payload
+            )
 
             return {
                 valid,
@@ -129,9 +133,11 @@ export class Verifier extends ZGServingUserBrokerBase {
         }
     }
 
-    // TODO: add test
-    static async verifyRA(nvidia_payload: any): Promise<boolean> {
-        return fetch('https://nras.attestation.nvidia.com/v3/attest/gpu', {
+    static async verifyRA(
+        providerBrokerURL: string,
+        nvidia_payload: any
+    ): Promise<boolean> {
+        return fetch(`${providerBrokerURL}/v1/quote/verify/gpu`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -4,7 +4,6 @@ exports.RequestProcessor = void 0;
 const base_1 = require("./base");
 const automata_1 = require("../../common/automata ");
 const storage_1 = require("../../common/storage");
-const verifier_1 = require("./verifier");
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -62,37 +61,36 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             try {
                 await this.contract.getAccount(providerAddress);
             }
-            catch (error) {
-                if (!error.message.includes('AccountNotExists')) {
-                    throw error;
-                }
-                else {
-                    await this.ledger.transferFund(providerAddress, 'inference', BigInt(0), gasPrice);
-                }
+            catch {
+                await this.ledger.transferFund(providerAddress, 'inference', BigInt(0), gasPrice);
             }
-            let { quote, provider_signer, key, nvidia_payload } = await this.getQuote(providerAddress);
+            let { quote, provider_signer, key } = await this.getQuote(providerAddress);
             if (!quote || !provider_signer) {
                 throw new Error('Invalid quote');
             }
             if (!quote.startsWith('0x')) {
                 quote = '0x' + quote;
             }
-            const rpc = process.env.RPC_ENDPOINT;
+            // const rpc = process.env.RPC_ENDPOINT
             // bypass quote verification if testing on localhost
-            if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
-                const isVerified = await this.automata.verifyQuote(quote);
-                console.log('Quote verification:', isVerified);
-                if (!isVerified) {
-                    throw new Error('Quote verification failed');
-                }
-                if (nvidia_payload) {
-                    const valid = await verifier_1.Verifier.verifyRA(nvidia_payload);
-                    console.log('nvidia payload verification:', valid);
-                    if (!valid) {
-                        throw new Error('nvidia payload verify failed');
-                    }
-                }
-            }
+            // if (!rpc || !/localhost|127\.0\.0\.1/.test(rpc)) {
+            //     const isVerified = await this.automata.verifyQuote(quote)
+            //     console.log('Quote verification:', isVerified)
+            //     if (!isVerified) {
+            //         throw new Error('Quote verification failed')
+            //     }
+            //     if (nvidia_payload) {
+            //         const svc = await this.getService(providerAddress)
+            //         const valid = await Verifier.verifyRA(
+            //             svc.url,
+            //             nvidia_payload
+            //         )
+            //         console.log('nvidia payload verification:', valid)
+            //         if (!valid) {
+            //             throw new Error('nvidia payload verify failed')
+            //         }
+            //     }
+            // }
             const account = await this.contract.getAccount(providerAddress);
             if (account.providerPubKey[0] === key[0] &&
                 account.providerPubKey[1] === key[1]) {
@@ -102,7 +100,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             await this.contract.acknowledgeProviderSigner(providerAddress, key);
             const userAddress = this.contract.getUserAddress();
             const cacheKey = `${userAddress}_${providerAddress}_ack`;
-            await this.cache.setItem(cacheKey, key, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+            this.cache.setItem(cacheKey, key, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
         }
         catch (error) {
             throw error;
