@@ -62,6 +62,28 @@ class ZGServingUserBrokerBase {
             throw error;
         }
     }
+    async userAcknowledged(providerAddress) {
+        const userAddress = this.contract.getUserAddress();
+        const key = `${userAddress}_${providerAddress}_ack`;
+        const cachedSvc = await this.cache.getItem(key);
+        if (cachedSvc) {
+            return true;
+        }
+        try {
+            const account = await this.contract.getAccount(providerAddress);
+            if (account.providerPubKey[0] !== 0n &&
+                account.providerPubKey[1] !== 0n) {
+                await this.cache.setItem(key, account.providerPubKey, 10 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async fetchText(endpoint, options) {
         try {
             const response = await fetch(endpoint, options);
@@ -120,41 +142,22 @@ class ZGServingUserBrokerBase {
         const decimalPart = Number(remainder) / Number(divisor);
         return Number(integerPart) + decimalPart;
     }
-    async userAcknowledged(providerAddress, userAddress) {
-        const key = `${userAddress}_${providerAddress}_ack`;
-        const cachedSvc = await this.cache.getItem(key);
-        if (cachedSvc) {
-            return true;
-        }
-        try {
-            const account = await this.contract.getAccount(providerAddress);
-            if (account.providerPubKey[0] !== 0n &&
-                account.providerPubKey[1] !== 0n) {
-                await this.cache.setItem(key, account.providerPubKey, 10 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        catch (error) {
-            throw error;
-        }
-    }
     async getHeader(providerAddress, content, outputFee, vllmProxy) {
         try {
             const userAddress = this.contract.getUserAddress();
-            if (!(await this.userAcknowledged(providerAddress, userAddress))) {
+            if (!(await this.userAcknowledged(providerAddress))) {
                 throw new Error('Provider signer is not acknowledged');
             }
             const extractor = await this.getExtractor(providerAddress);
             const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
             const key = `${userAddress}_${providerAddress}`;
             let privateKey = settleSignerPrivateKey;
+            console.log('Private key:', privateKey);
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress);
                 const privateKeyStr = await (0, utils_1.decryptData)(this.contract.signer, account.additionalInfo);
                 privateKey = (0, utils_1.strToPrivateKey)(privateKeyStr);
+                console.log('Private key new:', privateKey);
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey);
             }
             const nonce = await (0, utils_1.getNonceWithCache)(this.cache);
@@ -251,21 +254,17 @@ class ZGServingUserBrokerBase {
         }
     }
     async handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice) {
+        let needTransfer = false;
         try {
             const acc = await this.contract.getAccount(provider);
-            // Check if the account balance is below the trigger threshold
             const lockedFund = acc.balance - acc.pendingRefund;
-            if (lockedFund < triggerThreshold) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
+            needTransfer = lockedFund < triggerThreshold;
         }
-        catch (error) {
-            if (error.message.includes('AccountNotExists')) {
-                await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
-            }
-            else {
-                throw error;
-            }
+        catch {
+            needTransfer = true;
+        }
+        if (needTransfer) {
+            await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
         }
         // Mark the first round as complete
         await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);

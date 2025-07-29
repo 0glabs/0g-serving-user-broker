@@ -98,13 +98,8 @@ class ServiceProcessor extends base_1.BrokerBase {
             try {
                 await this.contract.getAccount(providerAddress);
             }
-            catch (error) {
-                if (!error.message.includes('AccountNotExists')) {
-                    throw error;
-                }
-                else {
-                    await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
-                }
+            catch {
+                await this.ledger.transferFund(providerAddress, 'fine-tuning', BigInt(0), gasPrice);
             }
             let { quote, provider_signer } = await this.servingProvider.getQuote(providerAddress);
             if (!quote || !provider_signer) {
@@ -140,7 +135,7 @@ class ServiceProcessor extends base_1.BrokerBase {
                 preTrainedModelHash = const_1.MODEL_HASH_MAP[preTrainedModelName].turbo;
             }
             else {
-                let model = await this.servingProvider.getCustomizedModel(providerAddress, preTrainedModelName);
+                const model = await this.servingProvider.getCustomizedModel(providerAddress, preTrainedModelName);
                 preTrainedModelHash = model.hash;
                 console.log(`customized model hash: ${preTrainedModelHash}`);
             }

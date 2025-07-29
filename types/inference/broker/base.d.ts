@@ -24,12 +24,12 @@ export declare abstract class ZGServingUserBrokerBase {
     }>;
     protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput>;
     getQuote(providerAddress: string): Promise<QuoteResponse>;
+    userAcknowledged(providerAddress: string): Promise<boolean>;
     private fetchText;
     protected getExtractor(providerAddress: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput): Extractor;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
-    protected userAcknowledged(providerAddress: string, userAddress: string): Promise<boolean>;
     getHeader(providerAddress: string, content: string, outputFee: bigint, vllmProxy: boolean): Promise<ServingRequestHeaders>;
     calculatePedersenHash(nonce: number, userAddress: string, providerAddress: string): Promise<string>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;

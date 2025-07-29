@@ -15,7 +15,9 @@ import { Automata } from '../../common/automata '
 // Browser-safe function to avoid readline dependency
 async function askUser(question: string): Promise<string> {
     if (isBrowser()) {
-        throw new Error('Interactive input operations are not available in browser environment. Please use these functions in a Node.js environment.')
+        throw new Error(
+            'Interactive input operations are not available in browser environment. Please use these functions in a Node.js environment.'
+        )
     }
 
     // Only import readline in Node.js environment
@@ -33,21 +35,27 @@ async function askUser(question: string): Promise<string> {
             })
         })
     } catch (error) {
-        throw new Error('readline module is not available. This function can only be used in Node.js environment.')
+        throw new Error(
+            'readline module is not available. This function can only be used in Node.js environment.'
+        )
     }
 }
 
 // Browser-safe function to avoid fs dependency
 async function readFileContent(filePath: string): Promise<string> {
     if (isBrowser()) {
-        throw new Error('File system operations are not available in browser environment. Please use these functions in a Node.js environment.')
+        throw new Error(
+            'File system operations are not available in browser environment. Please use these functions in a Node.js environment.'
+        )
     }
 
     try {
         const fs = eval('require')('fs/promises')
         return await fs.readFile(filePath, 'utf-8')
     } catch (error) {
-        throw new Error('fs module is not available. This function can only be used in Node.js environment.')
+        throw new Error(
+            'fs module is not available. This function can only be used in Node.js environment.'
+        )
     }
 }
 
@@ -122,17 +130,13 @@ export class ServiceProcessor extends BrokerBase {
         try {
             try {
                 await this.contract.getAccount(providerAddress)
-            } catch (error) {
-                if (!(error as any).message.includes('AccountNotExists')) {
-                    throw error
-                } else {
-                    await this.ledger.transferFund(
-                        providerAddress,
-                        'fine-tuning',
-                        BigInt(0),
-                        gasPrice
-                    )
-                }
+            } catch {
+                await this.ledger.transferFund(
+                    providerAddress,
+                    'fine-tuning',
+                    BigInt(0),
+                    gasPrice
+                )
             }
 
             let { quote, provider_signer } =
@@ -183,7 +187,7 @@ export class ServiceProcessor extends BrokerBase {
             if (preTrainedModelName in MODEL_HASH_MAP) {
                 preTrainedModelHash = MODEL_HASH_MAP[preTrainedModelName].turbo
             } else {
-                let model = await this.servingProvider.getCustomizedModel(
+                const model = await this.servingProvider.getCustomizedModel(
                     providerAddress,
                     preTrainedModelName
                 )

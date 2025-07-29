@@ -80,6 +80,22 @@ class InferenceBroker {
         }
     };
     /**
+     * checks if the user has acknowledged the provider signer.
+     *
+     * @param {string} providerAddress - The address of the provider.
+     * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the user
+     * has acknowledged the provider signer.
+     * @throws Will throw an error if the acknowledgment check fails.
+     */
+    userAcknowledged = async (providerAddress) => {
+        try {
+            return await this.requestProcessor.userAcknowledged(providerAddress);
+        }
+        catch (error) {
+            throw error;
+        }
+    };
+    /**
      * Acknowledge the given provider address.
      *
      * @param {string} providerAddress - The address of the provider identifying the account.

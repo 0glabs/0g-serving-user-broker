@@ -26,6 +26,7 @@ async function deriveEncryptionKey(signer) {
     return hash;
 }
 async function encryptData(signer, data) {
+    console.log('Encrypting data:', data);
     const key = await deriveEncryptionKey(signer);
     const encrypted = crypto_js_1.default.AES.encrypt(data, key).toString();
     return encrypted;
@@ -97,7 +98,7 @@ async function aesGCMDecryptToFile(key, encryptedModelPath, decryptedModelPath, 
     // read chunks
     while (true) {
         readResult = await fd.read(buffer, 0, chunkLength, offset);
-        let chunkSize = readResult.bytesRead;
+        const chunkSize = readResult.bytesRead;
         if (chunkSize === 0) {
             break;
         }

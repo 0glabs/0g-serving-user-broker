@@ -1653,12 +1653,12 @@ declare abstract class ZGServingUserBrokerBase {
     }>;
     protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput$1>;
     getQuote(providerAddress: string): Promise<QuoteResponse>;
+    userAcknowledged(providerAddress: string): Promise<boolean>;
     private fetchText;
     protected getExtractor(providerAddress: string, useCache?: boolean): Promise<Extractor>;
     protected createExtractor(svc: ServiceStructOutput$1): Extractor;
     protected a0giToNeuron(value: number): bigint;
     protected neuronToA0gi(value: bigint): number;
-    protected userAcknowledged(providerAddress: string, userAddress: string): Promise<boolean>;
     getHeader(providerAddress: string, content: string, outputFee: bigint, vllmProxy: boolean): Promise<ServingRequestHeaders>;
     calculatePedersenHash(nonce: number, userAddress: string, providerAddress: string): Promise<string>;
     calculateInputFees(extractor: Extractor, content: string): Promise<bigint>;
@@ -1743,7 +1743,7 @@ declare class Verifier extends ZGServingUserBrokerBase {
     getSigningAddress(providerAddress: string, verifyRA?: boolean, vllmProxy?: boolean): Promise<SingerRAVerificationResult>;
     getSignerRaDownloadLink(providerAddress: string): Promise<string>;
     getChatSignatureDownloadLink(providerAddress: string, chatID: string): Promise<string>;
-    static verifyRA(nvidia_payload: any): Promise<boolean>;
+    static verifyRA(providerBrokerURL: string, nvidia_payload: any): Promise<boolean>;
     static fetSignerRA(providerBrokerURL: string, model: string): Promise<SignerRA>;
     static fetSignatureByChatID(providerBrokerURL: string, chatID: string, model: string, vllmProxy: boolean): Promise<ResponseSignature>;
     static verifySignature(message: string, signature: string, expectedAddress: string): boolean;
@@ -1785,6 +1785,15 @@ declare class InferenceBroker {
         amount: bigint;
         remainTime: bigint;
     }[]]>;
+    /**
+     * checks if the user has acknowledged the provider signer.
+     *
+     * @param {string} providerAddress - The address of the provider.
+     * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the user
+     * has acknowledged the provider signer.
+     * @throws Will throw an error if the acknowledgment check fails.
+     */
+    userAcknowledged: (providerAddress: string) => Promise<boolean>;
     /**
      * Acknowledge the given provider address.
      *

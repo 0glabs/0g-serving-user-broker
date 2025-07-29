@@ -24,6 +24,7 @@ export async function encryptData(
     signer: JsonRpcSigner | Wallet,
     data: string
 ): Promise<string> {
+    console.log('Encrypting data:', data)
     const key = await deriveEncryptionKey(signer)
     const encrypted = CryptoJS.AES.encrypt(data, key).toString()
     return encrypted
@@ -130,12 +131,14 @@ export async function aesGCMDecryptToFile(
     providerSigner: string
 ) {
     if (isBrowser()) {
-        throw new Error('File operations are not supported in browser environment. Use aesGCMDecrypt with ArrayBuffer instead.')
+        throw new Error(
+            'File operations are not supported in browser environment. Use aesGCMDecrypt with ArrayBuffer instead.'
+        )
     }
 
     // Only import fs when in Node.js environment
     const { promises: fs } = await import('fs')
-    
+
     const fd = await fs.open(encryptedModelPath, 'r')
 
     // read signature and nonce
@@ -159,14 +162,14 @@ export async function aesGCMDecryptToFile(
     // read chunks
     while (true) {
         readResult = await fd.read(buffer, 0, chunkLength, offset)
-        let chunkSize = readResult.bytesRead
+        const chunkSize = readResult.bytesRead
         if (chunkSize === 0) {
             break
         }
-        
+
         const tag = buffer.subarray(chunkSize - tagLength, chunkSize)
         const encryptedChunk = buffer.subarray(0, chunkSize - tagLength)
-        
+
         const decrypted = await cryptoAdapter.aesGCMDecrypt(
             privateKey,
             Buffer.from(encryptedChunk),
