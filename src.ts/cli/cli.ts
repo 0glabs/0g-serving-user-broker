@@ -5,6 +5,7 @@ import fineTuning from './fine-tuning'
 import ledger from './ledger'
 import common from './common'
 import inference from './inference'
+import webUIEmbedded from './web-ui-embedded'
 
 export const program = new Command()
 
@@ -17,5 +18,6 @@ fineTuning(program)
 inference(program)
 ledger(program)
 common(program)
+webUIEmbedded(program)
 
 program.parse(process.argv)
