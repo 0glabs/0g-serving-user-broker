@@ -1,8 +1,10 @@
 node_modules
 *.tsbuildinfo
-*.json
+# *.json
 .qodo
 .env
 
 token_counter
 token_counter.*
+
+.next
