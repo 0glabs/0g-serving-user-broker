@@ -6,6 +6,21 @@ const tslib_1 = require("tslib");
 const child_process_1 = require("child_process");
 const path_1 = tslib_1.__importDefault(require("path"));
 const fs_1 = require("fs");
+function detectPackageManager() {
+    try {
+        (0, child_process_1.execSync)('pnpm --version', { stdio: 'ignore' });
+        return 'pnpm';
+    }
+    catch {
+        try {
+            (0, child_process_1.execSync)('yarn --version', { stdio: 'ignore' });
+            return 'yarn';
+        }
+        catch {
+            return 'npm';
+        }
+    }
+}
 function webUIEmbedded(program) {
     program
         .command('start-web')
@@ -13,12 +28,14 @@ function webUIEmbedded(program) {
         .option('--port <port>', 'Port to run the web UI on', '3000')
         .option('--host <host>', 'Host to bind the web UI', 'localhost')
         .action(async (options) => {
+        // 检测包管理器
+        const packageManager = detectPackageManager();
         // 查找嵌入的 Web UI
         const embeddedUIPath = path_1.default.join(__dirname, '../../web-ui');
         if (!(0, fs_1.existsSync)(embeddedUIPath)) {
             console.error('❌ Embedded Web UI not found.');
             console.error('This usually means the package was not built correctly.');
-            console.error('Please run: npm run build');
+            console.error(`Please run: ${packageManager} run build`);
             process.exit(1);
         }
         if (!(0, fs_1.existsSync)(path_1.default.join(embeddedUIPath, 'package.json'))) {
@@ -27,6 +44,7 @@ function webUIEmbedded(program) {
         }
         console.log('🚀 Starting embedded 0G Compute Web UI...');
         console.log(`📁 Using embedded UI at: ${embeddedUIPath}`);
+        console.log(`📦 Using package manager: ${packageManager}`);
         console.log(`🌐 Starting server on http://${options.host}:${options.port}`);
         // 检查 node_modules 是否存在，如果不存在则安装依赖
         const nodeModulesPath = path_1.default.join(embeddedUIPath, 'node_modules');
@@ -34,7 +52,7 @@ function webUIEmbedded(program) {
             console.log('📦 Installing dependencies for embedded UI...');
             try {
                 await new Promise((resolve, reject) => {
-                    const installProcess = (0, child_process_1.spawn)('npm', ['install'], {
+                    const installProcess = (0, child_process_1.spawn)(packageManager, ['install'], {
                         cwd: embeddedUIPath,
                         stdio: 'inherit'
                     });
@@ -42,7 +60,7 @@ function webUIEmbedded(program) {
                         if (code === 0)
                             resolve(undefined);
                         else
-                            reject(new Error(`npm install failed with code ${code}`));
+                            reject(new Error(`${packageManager} install failed with code ${code}`));
                     });
                 });
             }
@@ -52,7 +70,11 @@ function webUIEmbedded(program) {
             }
         }
         // 启动 Next.js 开发服务器
-        const nextProcess = (0, child_process_1.spawn)('npx', ['next', 'dev', '--port', options.port, '--hostname', options.host], {
+        const runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx';
+        const runArgs = packageManager === 'pnpm'
+            ? ['next', 'dev', '--port', options.port, '--hostname', options.host]
+            : ['next', 'dev', '--port', options.port, '--hostname', options.host];
+        const nextProcess = (0, child_process_1.spawn)(runCommand, runArgs, {
             cwd: embeddedUIPath,
             stdio: 'inherit'
         });

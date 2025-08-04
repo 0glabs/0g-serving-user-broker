@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "0g-serving-broker": "0.2.16",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@tanstack/react-query": "^5.83.0",
     "@types/crypto-js": "4.2.2",
@@ -16,7 +17,7 @@
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
     "crypto-js": "4.2.0",
-    "ethers": "^6.13.1",
+    "ethers": "^6.15.0",
     "https-browserify": "^1.0.0",
     "next": "15.4.3",
     "os-browserify": "^0.3.0",
@@ -40,11 +41,5 @@
     "eslint-config-next": "15.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "overrides": {
-    "ethers": "^6.13.1"
-  },
-  "resolutions": {
-    "ethers": "^6.13.1"
   }
 }
