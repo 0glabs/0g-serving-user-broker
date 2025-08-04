@@ -42,10 +42,6 @@ function webUIEmbedded(program) {
             console.error('❌ Invalid embedded Web UI structure.');
             process.exit(1);
         }
-        console.log('🚀 Starting embedded 0G Compute Web UI...');
-        console.log(`📁 Using embedded UI at: ${embeddedUIPath}`);
-        console.log(`📦 Using package manager: ${packageManager}`);
-        console.log(`🌐 Starting server on http://${options.host}:${options.port}`);
         // 检查 node_modules 是否存在，如果不存在则安装依赖
         const nodeModulesPath = path_1.default.join(embeddedUIPath, 'node_modules');
         if (!(0, fs_1.existsSync)(nodeModulesPath)) {
@@ -69,6 +65,16 @@ function webUIEmbedded(program) {
                 process.exit(1);
             }
         }
+        // 设置环境变量
+        const env = {
+            ...process.env,
+            NODE_ENV: 'development',
+            NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+            PORT: options.port,
+            HOSTNAME: options.host
+        };
+        console.log('🚀 Starting embedded 0G Compute Web UI...');
+        console.log(`🌐 Server will start on http://${options.host}:${options.port}`);
         // 启动 Next.js 开发服务器
         const runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx';
         const runArgs = packageManager === 'pnpm'
@@ -76,7 +82,8 @@ function webUIEmbedded(program) {
             : ['next', 'dev', '--port', options.port, '--hostname', options.host];
         const nextProcess = (0, child_process_1.spawn)(runCommand, runArgs, {
             cwd: embeddedUIPath,
-            stdio: 'inherit'
+            stdio: 'inherit',
+            env: env
         });
         nextProcess.on('error', (err) => {
             console.error('❌ Failed to start Web UI:', err);
