@@ -32,9 +32,9 @@ export abstract class ZGServingUserBrokerBase {
     protected metadata: Metadata
     protected cache: Cache
 
-    private checkAccountThreshold = BigInt(10000)
-    private topUpTriggerThreshold = BigInt(50000)
-    private topUpTargetThreshold = BigInt(100000)
+    private checkAccountThreshold = BigInt(100)
+    private topUpTriggerThreshold = BigInt(500)
+    private topUpTargetThreshold = BigInt(1000)
     protected ledger: LedgerBroker
 
     constructor(
@@ -222,10 +222,9 @@ export abstract class ZGServingUserBrokerBase {
             const { settleSignerPrivateKey } = await this.getProviderData(
                 providerAddress
             )
-            const key = `${userAddress}_${providerAddress}`
+            const key = userAddress
 
             let privateKey = settleSignerPrivateKey
-            console.log('Private key:', privateKey)
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress)
                 const privateKeyStr = await decryptData(

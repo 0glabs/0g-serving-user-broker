@@ -19,7 +19,6 @@ export class Metadata {
     private async setItem(key: string, value: string) {
         await this.initialize()
         const fullKey = this.storagePrefix + key
-        console.log("isBrowser:", this.isBrowser, "Setting key:", fullKey, "Value:", value)
         if (this.isBrowser) {
             try {
                 console.log('Setting localStorage item:', fullKey, value)
@@ -49,7 +48,6 @@ export class Metadata {
     }
 
     async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
-        console.log('Storing settle signer private key:', key, value)
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
         await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString)

@@ -10,9 +10,9 @@ class ZGServingUserBrokerBase {
     contract;
     metadata;
     cache;
-    checkAccountThreshold = BigInt(10000);
-    topUpTriggerThreshold = BigInt(50000);
-    topUpTargetThreshold = BigInt(100000);
+    checkAccountThreshold = BigInt(100);
+    topUpTriggerThreshold = BigInt(500);
+    topUpTargetThreshold = BigInt(1000);
     ledger;
     constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
