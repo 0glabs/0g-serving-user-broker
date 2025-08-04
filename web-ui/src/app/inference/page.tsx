@@ -13,6 +13,32 @@ const neuronToA0gi = (value: bigint): number => {
   const decimalPart = Number(remainder) / Number(divisor);
   return Number(integerPart) + decimalPart;
 };
+
+// Convert A0GI to neuron
+const a0giToNeuron = (value: number): bigint => {
+  const valueStr = value.toFixed(18);
+  const parts = valueStr.split('.');
+  
+  // Handle integer part
+  const integerPart = parts[0];
+  let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18);
+  
+  // Handle fractional part if it exists
+  if (parts.length > 1) {
+    let fractionalPart = parts[1];
+    while (fractionalPart.length < 18) {
+      fractionalPart += '0';
+    }
+    if (fractionalPart.length > 18) {
+      fractionalPart = fractionalPart.slice(0, 18); // Truncate to avoid overflow
+    }
+    
+    const fractionalPartAsBigInt = BigInt(fractionalPart);
+    integerPartAsBigInt += fractionalPartAsBigInt;
+  }
+  
+  return integerPartAsBigInt;
+};
 import ReactMarkdown from "react-markdown";
 
 interface Message {
@@ -61,7 +87,7 @@ const OFFICIAL_PROVIDERS: Provider[] = [
 
 export default function InferencePage() {
   const { isConnected } = useAccount();
-  const { broker, isInitializing } = use0GBroker();
+  const { broker, isInitializing, ledgerInfo, refreshLedgerInfo } = use0GBroker();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
     null
@@ -77,6 +103,7 @@ export default function InferencePage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [serviceMetadata, setServiceMetadata] = useState<{
     endpoint: string;
@@ -93,7 +120,38 @@ export default function InferencePage() {
   const [providerBalanceNeuron, setProviderBalanceNeuron] = useState<bigint | null>(null);
   const [showFundingAlert, setShowFundingAlert] = useState(false);
   const [fundingAlertMessage, setFundingAlertMessage] = useState("");
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [isTopping, setIsTopping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Custom setError function with auto-hide after 8 seconds
+  const setErrorWithTimeout = (errorMessage: string | null) => {
+    // Clear existing timeout
+    if (errorTimeoutRef.current) {
+      clearTimeout(errorTimeoutRef.current);
+      errorTimeoutRef.current = null;
+    }
+    
+    setError(errorMessage);
+    
+    // Set timeout to clear error after 8 seconds
+    if (errorMessage) {
+      errorTimeoutRef.current = setTimeout(() => {
+        setError(null);
+        errorTimeoutRef.current = null;
+      }, 8000);
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -212,6 +270,14 @@ export default function InferencePage() {
 
     checkLedger();
   }, [broker, isConnected]);
+
+  // Refresh ledger info when broker is available
+  useEffect(() => {
+    if (broker && refreshLedgerInfo) {
+      console.log("Refreshing ledger info...");
+      refreshLedgerInfo();
+    }
+  }, [broker, refreshLedgerInfo]);
 
   // Fetch service metadata when provider is selected
   useEffect(() => {
@@ -346,7 +412,7 @@ export default function InferencePage() {
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
     setIsLoading(true);
-    setError(null);
+    setErrorWithTimeout(null);
     setShowFundingAlert(false);
     
     // Reset textarea height
@@ -392,11 +458,19 @@ export default function InferencePage() {
       setFundingAlertMessage("Checking provider account balance and auto-funding if needed. You may see a wallet signature request for provider funding.");
       setShowFundingAlert(true);
       
+      // Prepare the actual messages array that will be sent to the API
+      const messagesToSend = [
+        ...messages
+          .filter((m) => m.role !== "system")
+          .map((m) => ({ role: m.role, content: m.content })),
+        { role: userMessage.role, content: userMessage.content },
+      ];
+      
       let headers;
       try {
         headers = await broker.inference.getRequestHeaders(
           selectedProvider.address,
-          userMessage.content
+          JSON.stringify(messagesToSend)
         );
         
         // Hide the funding alert after successful operation
@@ -434,7 +508,24 @@ export default function InferencePage() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get detailed error message from response body
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorBody = await response.text();
+          if (errorBody) {
+            // Try to parse as JSON first
+            try {
+              const errorJson = JSON.parse(errorBody);
+              errorMessage = JSON.stringify(errorJson, null, 2);
+            } catch {
+              // If not JSON, use the raw text
+              errorMessage = errorBody;
+            }
+          }
+        } catch {
+          // If can't read body, keep original message
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = response.body?.getReader();
@@ -539,11 +630,21 @@ export default function InferencePage() {
       }
     } catch (err: unknown) {
       console.error("Error with real API:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to send message. Please try again.";
-      setError(`Chat error: ${errorMessage}`);
+      let errorMessage = "Failed to send message. Please try again.";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        try {
+          errorMessage = JSON.stringify(err, null, 2);
+        } catch {
+          errorMessage = String(err);
+        }
+      }
+      
+      setErrorWithTimeout(`Chat error: ${errorMessage}`);
 
       // Hide funding alert in case of error
       setShowFundingAlert(false);
@@ -647,7 +748,7 @@ export default function InferencePage() {
         timestamp: Date.now(),
       },
     ]);
-    setError(null);
+    setErrorWithTimeout(null);
   };
 
   const verifyProvider = async () => {
@@ -657,7 +758,7 @@ export default function InferencePage() {
     }
 
     setIsVerifyingProvider(true);
-    setError(null);
+    setErrorWithTimeout(null);
 
     try {
       console.log("Acknowledging provider:", selectedProvider.address);
@@ -678,7 +779,7 @@ export default function InferencePage() {
         err instanceof Error
           ? err.message
           : "Failed to verify provider. Please try again.";
-      setError(`Verification error: ${errorMessage}`);
+      setErrorWithTimeout(`Verification error: ${errorMessage}`);
     } finally {
       setIsVerifyingProvider(false);
     }
@@ -691,7 +792,7 @@ export default function InferencePage() {
     }
 
     setIsDepositing(true);
-    setError(null);
+    setErrorWithTimeout(null);
 
     try {
       console.log("Depositing:", depositAmount);
@@ -710,9 +811,55 @@ export default function InferencePage() {
         err instanceof Error
           ? err.message
           : "Failed to deposit. Please try again.";
-      setError(`Deposit error: ${errorMessage}`);
+      setErrorWithTimeout(`Deposit error: ${errorMessage}`);
     } finally {
       setIsDepositing(false);
+    }
+  };
+
+  const handleTopUp = async () => {
+    if (!broker || !selectedProvider || !topUpAmount || parseFloat(topUpAmount) <= 0) {
+      console.log("Invalid top up amount or missing requirements");
+      return;
+    }
+
+    setIsTopping(true);
+    setErrorWithTimeout(null);
+
+    try {
+      console.log("Topping up:", topUpAmount, "A0GI to provider:", selectedProvider.address);
+      const amountInA0gi = parseFloat(topUpAmount);
+      const amountInNeuron = a0giToNeuron(amountInA0gi);
+      
+      console.log("Amount in neuron:", amountInNeuron.toString());
+      
+      // Call the transfer function with neuron amount
+      await broker.ledger.transferFund(
+        selectedProvider.address,
+        'inference',
+        amountInNeuron
+      );
+
+      console.log("Top up successful");
+      setShowTopUpModal(false);
+      setTopUpAmount("");
+
+      // Refresh provider balance
+      const account = await broker.inference.getAccount(selectedProvider.address);
+      if (account && account.balance) {
+        const balanceInA0gi = neuronToA0gi(account.balance);
+        setProviderBalance(balanceInA0gi);
+        setProviderBalanceNeuron(account.balance);
+      }
+    } catch (err: unknown) {
+      console.error("Error topping up:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to top up. Please try again.";
+      setErrorWithTimeout(`Top up error: ${errorMessage}`);
+    } finally {
+      setIsTopping(false);
     }
   };
 
@@ -775,8 +922,30 @@ export default function InferencePage() {
             </svg>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1 break-words whitespace-pre-wrap">{error}</p>
+              <p className="text-sm text-red-700 mt-1 break-words whitespace-pre-wrap">
+                {(() => {
+                  try {
+                    // Try to parse as JSON if it looks like JSON
+                    if (error.trim().startsWith('{') && error.trim().endsWith('}')) {
+                      const parsed = JSON.parse(error);
+                      return JSON.stringify(parsed, null, 2);
+                    }
+                    return error;
+                  } catch {
+                    return error;
+                  }
+                })()}
+              </p>
             </div>
+            <button
+              onClick={() => setErrorWithTimeout(null)}
+              className="ml-2 text-red-400 hover:text-red-600 flex-shrink-0"
+              title="Close error message"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -1006,50 +1175,71 @@ export default function InferencePage() {
                     </div>
                   )}
                   {/* Provider Balance */}
-                  {providerBalance !== null && (
-                    <div 
-                      className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 relative group"
-                      title="Sub-account balance for this provider"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                      <span>Balance: {providerBalance.toFixed(2)} A0GI</span>
+                  <div 
+                    className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 relative group"
+                    title="Sub-account balance for this provider"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span>Balance: {(providerBalance ?? 0).toFixed(2)} A0GI</span>
                       
-                      {/* Low Balance Warning */}
-                      {providerBalanceNeuron !== null &&
-                       selectedProvider.inputPriceNeuron !== undefined && 
-                       selectedProvider.outputPriceNeuron !== undefined && 
-                       providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) && (
-                        <div className="relative group/warning">
-                          <svg 
-                            className="w-3.5 h-3.5 text-yellow-600" 
-                            fill="currentColor" 
-                            viewBox="0 0 20 20"
-                          >
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          
-                          {/* Warning Tooltip */}
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                            Balance is low. Provider may refuse to reply.
-                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                            </div>
+                    {/* Low Balance Warning */}
+                    {providerBalanceNeuron !== null &&
+                     selectedProvider.inputPriceNeuron !== undefined && 
+                     selectedProvider.outputPriceNeuron !== undefined && 
+                     providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) && (
+                      <div className="relative group/warning">
+                        <svg 
+                          className="w-3.5 h-3.5 text-yellow-600" 
+                          fill="currentColor" 
+                          viewBox="0 0 20 20"
+                        >
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        
+                        {/* Warning Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                          Balance is low. Provider may refuse to reply.
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                           </div>
                         </div>
-                      )}
-                      
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10" style={{ width: '280px', marginLeft: '-140px' }}>
-                        <div>
-                          This is a sub-account specifically for spending with the current provider. The system automatically determines and transfers amounts from the main account.
-                        </div>
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10" style={{ width: '280px', marginLeft: '-140px' }}>
+                      <div>
+                        This is a sub-account specifically for spending with the current provider. The system automatically determines and transfers amounts from the main account.
+                      </div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                       </div>
                     </div>
+                  </div>
+                  {/* Top Up Button */}
+                  {selectedProvider && (
+                    <button
+                      onClick={() => setShowTopUpModal(true)}
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                      title="Top up provider account"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                      <span>Top Up</span>
+                    </button>
                   )}
                   <button
                     onClick={() =>
@@ -1499,6 +1689,119 @@ export default function InferencePage() {
                     </span>
                   ) : (
                     "Deposit"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Up Modal */}
+      {showTopUpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop with blur effect */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.5)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+            }}
+            onClick={() => {
+              if (!isTopping) {
+                setShowTopUpModal(false);
+                setTopUpAmount("");
+              }
+            }}
+          />
+
+          {/* Modal content */}
+          <div className="relative z-10 mx-auto p-8 w-96 bg-white rounded-xl shadow-2xl border border-gray-100">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Top Up Provider Account
+                </h3>
+                <button
+                  onClick={() => {
+                    if (!isTopping) {
+                      setShowTopUpModal(false);
+                      setTopUpAmount("");
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                  disabled={isTopping}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Total Balance Display */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-sm text-gray-600 mb-1">Main Account Balance</div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {ledgerInfo ? (
+                      <span>{ledgerInfo.totalBalance} A0GI</span>
+                    ) : (
+                      <span className="text-gray-400">Loading...</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Provider Balance Display */}
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="text-sm text-blue-600 mb-1">Provider Account Balance</div>
+                  <div className="text-lg font-semibold text-blue-900">
+                    <span>{(providerBalance ?? 0).toFixed(6)} A0GI</span>
+                  </div>
+                </div>
+
+                {/* Transfer Amount Input */}
+                <div>
+                  <label
+                    htmlFor="top-up-amount"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Transfer Amount (A0GI)
+                  </label>
+                  <input
+                    type="number"
+                    id="top-up-amount"
+                    value={topUpAmount}
+                    onChange={(e) => setTopUpAmount(e.target.value)}
+                    placeholder="Enter amount to transfer"
+                    min="0"
+                    step="0.000001"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                    disabled={isTopping}
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Transfer funds from your main account to the provider sub-account
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleTopUp}
+                  disabled={
+                    isTopping ||
+                    !topUpAmount ||
+                    parseFloat(topUpAmount) <= 0 ||
+                    !ledgerInfo ||
+                    parseFloat(topUpAmount) > parseFloat(ledgerInfo.totalBalance)
+                  }
+                  className="w-full px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isTopping ? (
+                    <span className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                      Processing...
+                    </span>
+                  ) : (
+                    "Transfer"
                   )}
                 </button>
               </div>
