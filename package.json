@@ -1,6 +1,6 @@
 {
-    "name": "@0glabs/0g-serving-broker",
-    "version": "0.2.14",
+    "name": "0g-serving-broker",
+    "version": "0.2.15-dev4",
     "description": "TS SDK for 0G Compute Network",
     "main": "./lib.commonjs/index.js",
     "bin": {
@@ -12,7 +12,10 @@
         "lib.esm",
         "cli.commonjs",
         "library",
-        "web-ui",
+        "web-ui/**/*",
+        "!web-ui/node_modules",
+        "!web-ui/.next",
+        "!web-ui/**/node_modules",
         "binary/0g-storage-client",
         "binary/dcap-qvl-web_bg.wasm"
     ],

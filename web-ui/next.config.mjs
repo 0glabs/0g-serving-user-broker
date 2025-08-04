@@ -13,9 +13,7 @@ const nextConfig = {
         }
         return config
     },
-    experimental: {
-        esmExternals: 'loose',
-    }
+    transpilePackages: ['0g-serving-broker'],
 }
 
 export default nextConfig
