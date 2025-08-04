@@ -1,6 +1,8 @@
 export declare class Metadata {
     private nodeStorage;
     private initialized;
+    private isBrowser;
+    private storagePrefix;
     constructor();
     initialize(): Promise<void>;
     private setItem;

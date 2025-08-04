@@ -33,6 +33,8 @@ interface Provider {
   endpoint?: string;
   inputPrice?: number;
   outputPrice?: number;
+  inputPriceNeuron?: bigint;
+  outputPriceNeuron?: bigint;
 }
 
 // Official providers based on the documentation
@@ -88,6 +90,7 @@ export default function InferencePage() {
   const [depositAmount, setDepositAmount] = useState("");
   const [isDepositing, setIsDepositing] = useState(false);
   const [providerBalance, setProviderBalance] = useState<number | null>(null);
+  const [providerBalanceNeuron, setProviderBalanceNeuron] = useState<bigint | null>(null);
   const [showFundingAlert, setShowFundingAlert] = useState(false);
   const [fundingAlertMessage, setFundingAlertMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -159,6 +162,8 @@ export default function InferencePage() {
                 url: serviceUrl,
                 inputPrice,
                 outputPrice,
+                inputPriceNeuron: serviceObj.inputPrice,
+                outputPriceNeuron: serviceObj.outputPrice,
               };
             }
           );
@@ -259,12 +264,15 @@ export default function InferencePage() {
             const balanceInA0gi = neuronToA0gi(account.balance);
             console.log("Provider balance:", balanceInA0gi);
             setProviderBalance(balanceInA0gi);
+            setProviderBalanceNeuron(account.balance);
           } else {
             setProviderBalance(0);
+            setProviderBalanceNeuron(BigInt(0));
           }
         } catch (err: unknown) {
           console.error("Error fetching provider balance:", err);
           setProviderBalance(null);
+          setProviderBalanceNeuron(null);
         }
       }
     };
@@ -1007,6 +1015,30 @@ export default function InferencePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                       </svg>
                       <span>Balance: {providerBalance.toFixed(2)} A0GI</span>
+                      
+                      {/* Low Balance Warning */}
+                      {providerBalanceNeuron !== null &&
+                       selectedProvider.inputPriceNeuron !== undefined && 
+                       selectedProvider.outputPriceNeuron !== undefined && 
+                       providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) && (
+                        <div className="relative group/warning">
+                          <svg 
+                            className="w-3.5 h-3.5 text-yellow-600" 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                          >
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          
+                          {/* Warning Tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                            Balance is low. Provider may refuse to reply.
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       
                       {/* Tooltip */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10" style={{ width: '280px', marginLeft: '-140px' }}>

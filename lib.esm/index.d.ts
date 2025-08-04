@@ -541,6 +541,8 @@ declare abstract class Extractor {
 declare class Metadata {
     private nodeStorage;
     private initialized;
+    private isBrowser;
+    private storagePrefix;
     constructor();
     initialize(): Promise<void>;
     private setItem;
@@ -560,12 +562,18 @@ type CacheValueType = CacheValueTypeEnum.Service | CacheValueTypeEnum.BigInt | C
 declare class Cache {
     private nodeStorage;
     private initialized;
+    private isBrowser;
+    private storagePrefix;
     constructor();
     setLock(key: string, value: string, ttl: number, type: CacheValueType): boolean;
     removeLock(key: string): void;
     setItem(key: string, value: any, ttl: number, type: CacheValueType): void;
     getItem(key: string): any | null;
     private initialize;
+    private setStorageItem;
+    private getStorageItem;
+    private removeStorageItem;
+    private cleanupExpiredItems;
     static encodeValue(value: any): string;
     static decodeValue(encodedValue: string, type: CacheValueType): any;
     static createServiceStructOutput(fields: [

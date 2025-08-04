@@ -18,7 +18,7 @@ import {
 import type { Cache, Metadata } from '../../common/storage'
 import { CacheValueTypeEnum } from '../../common/storage'
 import type { LedgerBroker } from '../../ledger'
-import { hexlify } from 'ethers'
+import { hexlify, Wallet } from 'ethers'
 
 export interface QuoteResponse {
     quote: string
@@ -32,9 +32,9 @@ export abstract class ZGServingUserBrokerBase {
     protected metadata: Metadata
     protected cache: Cache
 
-    private checkAccountThreshold = BigInt(1000000)
-    private topUpTriggerThreshold = BigInt(5000000)
-    private topUpTargetThreshold = BigInt(10000000)
+    private checkAccountThreshold = BigInt(10000)
+    private topUpTriggerThreshold = BigInt(50000)
+    private topUpTargetThreshold = BigInt(100000)
     protected ledger: LedgerBroker
 
     constructor(
@@ -348,6 +348,11 @@ export abstract class ZGServingUserBrokerBase {
         gasPrice?: number
     ) {
         try {
+            // Exit early if signer is not a Wallet (i.e., it's a JsonRpcSigner from browser)
+            if (!(this.contract.signer instanceof Wallet)) {
+                return
+            }
+
             const extractor = await this.getExtractor(provider)
             const svc = await extractor.getSvcInfo()
 
