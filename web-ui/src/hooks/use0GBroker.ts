@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
-import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
-import type { ZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
+import { createZGComputeNetworkBroker } from "0g-serving-broker";
+import type { ZGComputeNetworkBroker } from "0g-serving-broker";
 import { BrowserProvider } from "ethers";
 
 export const neuronToA0gi = (value: bigint): number => {
