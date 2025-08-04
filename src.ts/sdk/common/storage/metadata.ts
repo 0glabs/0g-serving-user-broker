@@ -1,6 +1,8 @@
 export class Metadata {
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
+    private isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+    private storagePrefix = '0g_metadata_'
 
     constructor() {}
 
@@ -8,21 +10,46 @@ export class Metadata {
         if (this.initialized) {
             return
         }
-        this.nodeStorage = {}
+        if (!this.isBrowser) {
+            this.nodeStorage = {}
+        }
         this.initialized = true
     }
 
     private async setItem(key: string, value: string) {
         await this.initialize()
-        this.nodeStorage[key] = value
+        const fullKey = this.storagePrefix + key
+        console.log("isBrowser:", this.isBrowser, "Setting key:", fullKey, "Value:", value)
+        if (this.isBrowser) {
+            try {
+                console.log('Setting localStorage item:', fullKey, value)
+                window.localStorage.setItem(fullKey, value)
+            } catch (e) {
+                console.warn('Failed to set localStorage item:', e)
+                this.nodeStorage[key] = value
+            }
+        } else {
+            this.nodeStorage[key] = value
+        }
     }
 
     private async getItem(key: string): Promise<string | null> {
         await this.initialize()
-        return this.nodeStorage[key] ?? null
+        const fullKey = this.storagePrefix + key
+        if (this.isBrowser) {
+            try {
+                return window.localStorage.getItem(fullKey)
+            } catch (e) {
+                console.warn('Failed to get localStorage item:', e)
+                return this.nodeStorage[key] ?? null
+            }
+        } else {
+            return this.nodeStorage[key] ?? null
+        }
     }
 
     async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
+        console.log('Storing settle signer private key:', key, value)
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
         await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString)

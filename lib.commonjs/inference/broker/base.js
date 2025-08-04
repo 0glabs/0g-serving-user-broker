@@ -10,9 +10,9 @@ class ZGServingUserBrokerBase {
     contract;
     metadata;
     cache;
-    checkAccountThreshold = BigInt(1000000);
-    topUpTriggerThreshold = BigInt(5000000);
-    topUpTargetThreshold = BigInt(10000000);
+    checkAccountThreshold = BigInt(10000);
+    topUpTriggerThreshold = BigInt(50000);
+    topUpTargetThreshold = BigInt(100000);
     ledger;
     constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
@@ -224,6 +224,10 @@ class ZGServingUserBrokerBase {
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
+            // Exit early if signer is not a Wallet (i.e., it's a JsonRpcSigner from browser)
+            if (!(this.contract.signer instanceof ethers_1.Wallet)) {
+                return;
+            }
             const extractor = await this.getExtractor(provider);
             const svc = await extractor.getSvcInfo();
             // Calculate target and trigger thresholds

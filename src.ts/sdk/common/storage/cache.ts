@@ -14,6 +14,8 @@ export type CacheValueType =
 export class Cache {
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
+    private isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+    private storagePrefix = '0g_cache_'
 
     constructor() {}
 
@@ -24,7 +26,7 @@ export class Cache {
         type: CacheValueType
     ): boolean {
         this.initialize()
-        if (this.nodeStorage[key]) {
+        if (this.getStorageItem(key)) {
             return false
         }
         this.setItem(key, value, ttl, type)
@@ -33,7 +35,7 @@ export class Cache {
 
     public removeLock(key: string): void {
         this.initialize()
-        delete this.nodeStorage[key]
+        this.removeStorageItem(key)
     }
 
     public setItem(key: string, value: any, ttl: number, type: CacheValueType) {
@@ -44,19 +46,19 @@ export class Cache {
             value: Cache.encodeValue(value),
             expiry: now.getTime() + ttl,
         }
-        this.nodeStorage[key] = JSON.stringify(item)
+        this.setStorageItem(key, JSON.stringify(item))
     }
 
     public getItem(key: string): any | null {
         this.initialize()
-        const itemStr = this.nodeStorage[key] ?? null
+        const itemStr = this.getStorageItem(key)
         if (!itemStr) {
             return null
         }
         const item = JSON.parse(itemStr)
         const now = new Date()
         if (now.getTime() > item.expiry) {
-            delete this.nodeStorage[key]
+            this.removeStorageItem(key)
             return null
         }
         return Cache.decodeValue(item.value, item.type)
@@ -66,8 +68,81 @@ export class Cache {
         if (this.initialized) {
             return
         }
-        this.nodeStorage = {}
+        if (!this.isBrowser) {
+            this.nodeStorage = {}
+        } else {
+            this.cleanupExpiredItems()
+        }
         this.initialized = true
+    }
+
+    private setStorageItem(key: string, value: string): void {
+        const fullKey = this.storagePrefix + key
+        if (this.isBrowser) {
+            try {
+                window.localStorage.setItem(fullKey, value)
+            } catch (e) {
+                console.warn('Failed to set localStorage item:', e)
+                this.nodeStorage[key] = value
+            }
+        } else {
+            this.nodeStorage[key] = value
+        }
+    }
+
+    private getStorageItem(key: string): string | null {
+        const fullKey = this.storagePrefix + key
+        if (this.isBrowser) {
+            try {
+                return window.localStorage.getItem(fullKey)
+            } catch (e) {
+                console.warn('Failed to get localStorage item:', e)
+                return this.nodeStorage[key] ?? null
+            }
+        } else {
+            return this.nodeStorage[key] ?? null
+        }
+    }
+
+    private removeStorageItem(key: string): void {
+        const fullKey = this.storagePrefix + key
+        if (this.isBrowser) {
+            try {
+                window.localStorage.removeItem(fullKey)
+            } catch (e) {
+                console.warn('Failed to remove localStorage item:', e)
+                delete this.nodeStorage[key]
+            }
+        } else {
+            delete this.nodeStorage[key]
+        }
+    }
+
+    private cleanupExpiredItems(): void {
+        if (!this.isBrowser) return
+        
+        try {
+            const keysToRemove: string[] = []
+            for (let i = 0; i < window.localStorage.length; i++) {
+                const key = window.localStorage.key(i)
+                if (key && key.startsWith(this.storagePrefix)) {
+                    const itemStr = window.localStorage.getItem(key)
+                    if (itemStr) {
+                        try {
+                            const item = JSON.parse(itemStr)
+                            if (new Date().getTime() > item.expiry) {
+                                keysToRemove.push(key)
+                            }
+                        } catch (e) {
+                            keysToRemove.push(key)
+                        }
+                    }
+                }
+            }
+            keysToRemove.forEach(key => window.localStorage.removeItem(key))
+        } catch (e) {
+            console.warn('Failed to cleanup expired items:', e)
+        }
     }
 
     static encodeValue(value: any): string {
