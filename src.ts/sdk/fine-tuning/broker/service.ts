@@ -22,7 +22,7 @@ async function askUser(question: string): Promise<string> {
 
     // Only import readline in Node.js environment
     try {
-        const readline = eval('require')('readline')
+        const readline = await import('readline')
         const rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
@@ -50,7 +50,7 @@ async function readFileContent(filePath: string): Promise<string> {
     }
 
     try {
-        const fs = eval('require')('fs/promises')
+        const fs = await import('fs/promises')
         return await fs.readFile(filePath, 'utf-8')
     } catch (error) {
         throw new Error(
