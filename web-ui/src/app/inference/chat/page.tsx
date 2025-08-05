@@ -128,6 +128,10 @@ export default function InferencePage() {
   const [topUpAmount, setTopUpAmount] = useState("");
   const [isTopping, setIsTopping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<'verify' | 'topup' | null>(null);
 
   // Custom setError function with auto-hide after 8 seconds
   const setErrorWithTimeout = (errorMessage: string | null) => {
@@ -343,6 +347,15 @@ export default function InferencePage() {
           );
           console.log("Provider acknowledged:", acknowledged);
           setProviderAcknowledged(acknowledged);
+          
+          // Check if we should show tutorial
+          const tutorialKey = `tutorial_seen_${selectedProvider.address}`;
+          if (!localStorage.getItem(tutorialKey) && showTutorial) {
+            // If provider is already acknowledged, skip to topup step
+            if (acknowledged) {
+              setTutorialStep('topup');
+            }
+          }
         } catch (err: unknown) {
           console.error("Error fetching provider acknowledgment:", err);
           setProviderAcknowledged(false);
@@ -351,7 +364,7 @@ export default function InferencePage() {
     };
 
     fetchProviderAcknowledgment();
-  }, [broker, selectedProvider]);
+  }, [broker, selectedProvider, showTutorial]);
 
   // Fetch provider balance when provider is selected
   useEffect(() => {
@@ -378,6 +391,38 @@ export default function InferencePage() {
 
     fetchProviderBalance();
   }, [broker, selectedProvider]);
+
+  // Initialize tutorial when provider changes
+  useEffect(() => {
+    if (selectedProvider) {
+      const tutorialKey = `tutorial_seen_${selectedProvider.address}`;
+      const hasSeenTutorial = localStorage.getItem(tutorialKey);
+      
+      console.log('Tutorial check:', {
+        provider: selectedProvider.address,
+        hasSeenTutorial,
+        providerAcknowledged
+      });
+      
+      if (!hasSeenTutorial) {
+        // Small delay to ensure UI is ready
+        const timer = setTimeout(() => {
+          console.log('Starting tutorial');
+          setShowTutorial(true);
+          // If provider is already acknowledged, start with topup step
+          if (providerAcknowledged === true) {
+            console.log('Provider already acknowledged, showing topup step');
+            setTutorialStep('topup');
+          } else {
+            console.log('Provider not acknowledged, showing verify step');
+            setTutorialStep('verify');
+          }
+        }, 800);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [selectedProvider, providerAcknowledged]);
 
   // Auto scroll to bottom when messages change (but not for verification updates)
   const previousMessagesRef = useRef<Message[]>([]);
@@ -800,6 +845,11 @@ export default function InferencePage() {
       setProviderAcknowledged(acknowledged);
 
       console.log("Provider verification completed:", acknowledged);
+      
+      // Progress tutorial to top-up step if tutorial is active
+      if (showTutorial && tutorialStep === 'verify' && acknowledged) {
+        setTutorialStep('topup');
+      }
     } catch (err: unknown) {
       console.error("Error verifying provider:", err);
       const errorMessage =
@@ -877,6 +927,14 @@ export default function InferencePage() {
         const balanceInA0gi = neuronToA0gi(account.balance);
         setProviderBalance(balanceInA0gi);
         setProviderBalanceNeuron(account.balance);
+      }
+      
+      // Complete tutorial if active
+      if (showTutorial && tutorialStep === 'topup') {
+        setShowTutorial(false);
+        setTutorialStep(null);
+        // Mark tutorial as seen for this provider
+        localStorage.setItem(`tutorial_seen_${selectedProvider.address}`, 'true');
       }
     } catch (err: unknown) {
       console.error("Error topping up:", err);
@@ -1288,8 +1346,23 @@ export default function InferencePage() {
                   {selectedProvider && (
                     <div className="relative group">
                       <button
-                        onClick={() => setShowTopUpModal(true)}
-                        className="p-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                        onClick={() => {
+                          setShowTopUpModal(true);
+                          // Close tutorial when top-up button is clicked
+                          if (showTutorial && tutorialStep === 'topup') {
+                            setShowTutorial(false);
+                            setTutorialStep(null);
+                            // Mark tutorial as completed for this provider
+                            if (selectedProvider) {
+                              localStorage.setItem(`tutorial_seen_${selectedProvider.address}`, 'true');
+                            }
+                          }
+                        }}
+                        className={`p-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors ${
+                          showTutorial && tutorialStep === 'topup'
+                            ? 'ring-4 ring-blue-400 ring-opacity-75 animate-pulse relative z-50'
+                            : ''
+                        }`}
                         title="Top up"
                       >
                         <svg
@@ -1640,6 +1713,11 @@ export default function InferencePage() {
               onClick={() => {
                 if (providerAcknowledged === false) {
                   console.log("Verifying provider...");
+                  // Close tutorial when verify button is clicked
+                  if (showTutorial && tutorialStep === 'verify') {
+                    setShowTutorial(false);
+                    setTutorialStep(null);
+                  }
                   verifyProvider();
                 } else {
                   console.log("Button clicked!");
@@ -1655,7 +1733,11 @@ export default function InferencePage() {
                 providerAcknowledged === false
                   ? "bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400"
                   : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
-              } text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center space-x-2`}
+              } text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center space-x-2 ${
+                showTutorial && tutorialStep === 'verify' && providerAcknowledged === false
+                  ? 'ring-4 ring-yellow-400 ring-opacity-75 animate-pulse relative z-50'
+                  : ''
+              }`}
               title={
                 providerAcknowledged === false
                   ? "Verify provider to enable messaging"
@@ -1891,6 +1973,55 @@ export default function InferencePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tutorial Overlay */}
+      {showTutorial && tutorialStep && (
+        <>
+          {/* Dark overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => {
+              setShowTutorial(false);
+              setTutorialStep(null);
+            }}
+          />
+          
+          {/* Floating tutorial message */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4">
+              {tutorialStep === 'verify' && (
+                <>
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    Verify Provider
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Verify that the provider is running in a verifiable TEE environment
+                  </p>
+                </>
+              )}
+              {tutorialStep === 'topup' && (
+                <>
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    Top Up Provider
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Fund the provider with a certain amount (excess funds can be refunded)
+                  </p>
+                </>
+              )}
+              <button
+                onClick={() => {
+                  setShowTutorial(false);
+                  setTutorialStep(null);
+                }}
+                className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
