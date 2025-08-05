@@ -118,9 +118,7 @@ export default function InferencePage() {
     boolean | null
   >(null);
   const [isVerifyingProvider, setIsVerifyingProvider] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [depositAmount, setDepositAmount] = useState("");
-  const [isDepositing, setIsDepositing] = useState(false);
+  // Note: Deposit modal is now handled globally in LayoutContent
   const [providerBalance, setProviderBalance] = useState<number | null>(null);
   const [providerBalanceNeuron, setProviderBalanceNeuron] = useState<bigint | null>(null);
   const [showFundingAlert, setShowFundingAlert] = useState(false);
@@ -311,30 +309,7 @@ export default function InferencePage() {
     fetchProviders();
   }, [broker, selectedProvider]);
 
-  // Check ledger when wallet is connected
-  useEffect(() => {
-    const checkLedger = async () => {
-      if (broker && isConnected) {
-        try {
-          console.log("Checking ledger...");
-          const ledger = await broker.ledger.getLedger();
-          console.log("Ledger:", ledger);
-
-          // If ledger doesn't exist, show deposit modal
-          if (!ledger) {
-            console.log("No ledger found, showing deposit modal");
-            setShowDepositModal(true);
-          }
-        } catch (err: unknown) {
-          console.error("Error checking ledger:", err);
-          // If error occurs, assume no ledger exists
-          setShowDepositModal(true);
-        }
-      }
-    };
-
-    checkLedger();
-  }, [broker, isConnected]);
+  // Note: Global ledger check is now handled in LayoutContent component
 
   // Refresh ledger info when broker is available
   useEffect(() => {
@@ -1014,37 +989,7 @@ export default function InferencePage() {
     }
   };
 
-  const handleDeposit = async () => {
-    if (!broker || !depositAmount || parseFloat(depositAmount) <= 0) {
-      console.log("Invalid deposit amount or missing broker");
-      return;
-    }
-
-    setIsDepositing(true);
-    setErrorWithTimeout(null);
-
-    try {
-      console.log("Depositing:", depositAmount);
-      // Convert to proper format if needed (e.g., wei)
-      const balance = parseFloat(depositAmount);
-      await broker.ledger.addLedger(balance);
-
-      console.log("Deposit successful");
-      setShowDepositModal(false);
-      setDepositAmount("");
-
-      // Optionally refresh the page or update state
-    } catch (err: unknown) {
-      console.error("Error depositing:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to deposit. Please try again.";
-      setErrorWithTimeout(`Deposit error: ${errorMessage}`);
-    } finally {
-      setIsDepositing(false);
-    }
-  };
+  // Note: handleDeposit is now handled globally in LayoutContent
 
   const handleTopUp = async () => {
     if (!broker || !selectedProvider || !topUpAmount || parseFloat(topUpAmount) <= 0) {
@@ -2060,87 +2005,7 @@ export default function InferencePage() {
         </div>
       </div>
 
-      {/* Deposit Modal */}
-      {showDepositModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop with blur effect */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: "rgba(255, 255, 255, 0.5)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-            }}
-          />
-
-          {/* Modal content */}
-          <div className="relative z-10 mx-auto p-8 w-96 bg-white rounded-xl shadow-2xl border border-gray-100">
-            <div className="flex flex-col items-center">
-              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 mb-6">
-                <svg
-                  className="h-8 w-8 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-
-              <p className="text-gray-600 mb-6">
-                Please make your first deposit to create an account on the 0G
-                Compute Network.
-              </p>
-
-              <div className="w-full space-y-4">
-                <div>
-                  <label
-                    htmlFor="deposit-amount"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Deposit Amount (0G Tokens)
-                  </label>
-                  <input
-                    type="number"
-                    id="deposit-amount"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    min="0"
-                    step="0.000001"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                    disabled={isDepositing}
-                  />
-                </div>
-
-                <button
-                  onClick={handleDeposit}
-                  disabled={
-                    isDepositing ||
-                    !depositAmount ||
-                    parseFloat(depositAmount) <= 0
-                  }
-                  className="w-full px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isDepositing ? (
-                    <span className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                      Processing...
-                    </span>
-                  ) : (
-                    "Deposit"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Note: Deposit modal is now handled globally in LayoutContent */}
 
       {/* Top Up Modal */}
       {showTopUpModal && (
