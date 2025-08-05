@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useSearchParams, useRouter } from "next/navigation";
 import { use0GBroker } from "../../../hooks/use0GBroker";
@@ -142,6 +142,24 @@ export default function InferencePage() {
     providerAddress: selectedProvider?.address || '',
     autoSave: true,
   });
+
+  // Handle provider change - clear current session to start fresh
+  const previousProviderRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (selectedProvider?.address && 
+        previousProviderRef.current !== undefined && 
+        previousProviderRef.current !== selectedProvider.address) {
+      // Only clear when we actually switch providers, not on initial load
+      setMessages([
+        {
+          role: "system",
+          content: "You are a helpful assistant that provides accurate information.",
+          timestamp: Date.now(),
+        },
+      ]);
+    }
+    previousProviderRef.current = selectedProvider?.address;
+  }, [selectedProvider?.address]);
 
   // Custom setError function with auto-hide after 8 seconds
   const setErrorWithTimeout = (errorMessage: string | null) => {
@@ -434,9 +452,60 @@ export default function InferencePage() {
     }
   }, [selectedProvider, providerAcknowledged]);
 
-  // Sync chat history messages with UI messages
+  // Simple function to handle history clicks
+  const handleHistoryClick = useCallback(async (sessionId: string) => {
+    if (isLoading || isStreaming) return;
+    
+    try {
+      // Set the flag to prevent unwanted syncing
+      hasManuallyLoadedSession.current = true;
+      
+      // Load the session in the chat history hook first
+      await chatHistory.loadSession(sessionId);
+      
+      // Then manually load and set the messages to ensure we get all data
+      const { dbManager } = await import('../../../lib/database');
+      const dbMessages = await dbManager.getMessages(sessionId);
+      
+      const historyMessages: Message[] = dbMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        chatId: msg.chat_id,
+        isVerified: msg.is_verified,
+        isVerifying: msg.is_verifying,
+      }));
+
+      // Only add system message if history doesn't contain one
+      const hasSystemMessage = historyMessages.some(msg => msg.role === 'system');
+      if (!hasSystemMessage) {
+        historyMessages.unshift({
+          role: "system",
+          content: "You are a helpful assistant that provides accurate information.",
+          timestamp: Date.now(),
+        });
+      }
+
+      setMessages(historyMessages);
+      
+      // Reset the flag after setting messages
+      hasManuallyLoadedSession.current = false;
+    } catch (err) {
+      console.error('Failed to load session:', err);
+    }
+  }, [chatHistory, isLoading, isStreaming]);
+
+  // Track sessions to prevent unwanted syncing
+  const lastLoadedSessionRef = useRef<string | null>(null);
+  const hasManuallyLoadedSession = useRef(false);
+  
+  // Only sync when we've manually loaded a session via history click
   useEffect(() => {
-    if (chatHistory.messages.length > 0) {
+    // Only sync if we've manually loaded a session AND it's different from before
+    if (hasManuallyLoadedSession.current && 
+        chatHistory.currentSessionId && 
+        lastLoadedSessionRef.current !== chatHistory.currentSessionId) {
+      
       const historyMessages: Message[] = chatHistory.messages.map(msg => ({
         role: msg.role,
         content: msg.content,
@@ -457,8 +526,12 @@ export default function InferencePage() {
       }
 
       setMessages(historyMessages);
+      hasManuallyLoadedSession.current = false; // Reset flag
     }
-  }, [chatHistory.messages]);
+    
+    // Update the tracking ref
+    lastLoadedSessionRef.current = chatHistory.currentSessionId;
+  }, [chatHistory.currentSessionId, chatHistory.messages]);
 
   // Auto scroll to bottom when messages change (but not for verification updates)
   const previousMessagesRef = useRef<Message[]>([]);
@@ -523,16 +596,22 @@ export default function InferencePage() {
       timestamp: Date.now(),
     };
 
-    // Save user message to database
-    await chatHistory.addMessage({
-      role: userMessage.role,
-      content: userMessage.content,
-      chat_id: undefined,
-      is_verified: null,
-      is_verifying: false,
-    });
-
+    // Add user message to UI immediately
     setMessages((prev) => [...prev, userMessage]);
+    
+    // Save user message to database and get session ID (await to ensure session is created)
+    let currentSessionForAssistant: string | null = null;
+    try {
+      currentSessionForAssistant = await chatHistory.addMessage({
+        role: userMessage.role,
+        content: userMessage.content,
+        chat_id: undefined,
+        is_verified: null,
+        is_verifying: false,
+      });
+    } catch (err) {
+      console.error('Failed to save user message:', err);
+    }
     setInputMessage("");
     setIsLoading(true);
     setIsStreaming(true);
@@ -739,15 +818,23 @@ export default function InferencePage() {
         )
       );
 
-      // Save assistant message to database
-      if (completeContent.trim()) {
-        await chatHistory.addMessage({
-          role: "assistant",
-          content: completeContent,
-          chat_id: chatId,
-          is_verified: null,
-          is_verifying: false,
-        });
+      // Save assistant message to database in the background using the same session
+      if (completeContent.trim() && currentSessionForAssistant) {
+        // Directly save to database using the session ID we got from user message
+        try {
+          const { dbManager } = await import('../../../lib/database');
+          await dbManager.saveMessage(currentSessionForAssistant, {
+            role: "assistant",
+            content: completeContent,
+            timestamp: Date.now(),
+            chat_id: chatId,
+            is_verified: null,
+            is_verifying: false,
+            provider_address: selectedProvider?.address || '',
+          });
+        } catch (err) {
+          console.error('Failed to save assistant message:', err);
+        }
       }
 
       // Ensure loading is stopped even if no content was received
@@ -867,23 +954,13 @@ export default function InferencePage() {
     }
   };
 
-  const clearChat = async () => {
-    if (chatHistory.currentSessionId) {
-      await chatHistory.clearCurrentSession();
-    }
-    setMessages([
-      {
-        role: "system",
-        content:
-          "You are a helpful assistant that provides accurate information.",
-        timestamp: Date.now(),
-      },
-    ]);
-    setErrorWithTimeout(null);
-  };
+  // Remove clearChat function since we removed the Clear Chat button
 
   const startNewChat = async () => {
-    const sessionId = await chatHistory.createNewSession();
+    // Create new session (this won't trigger sync due to hasManuallyLoadedSession flag)
+    await chatHistory.createNewSession();
+    
+    // Reset UI to clean state
     setMessages([
       {
         role: "system",
@@ -893,7 +970,9 @@ export default function InferencePage() {
       },
     ]);
     setErrorWithTimeout(null);
-    return sessionId;
+    
+    // Update tracking to prevent sync on this new session
+    lastLoadedSessionRef.current = chatHistory.currentSessionId;
   };
 
   const verifyProvider = async () => {
@@ -1191,29 +1270,54 @@ export default function InferencePage() {
               ) : (
                 <div className="space-y-1 p-2">
                   {chatHistory.sessions.map((session) => (
-                    <button
+                    <div
                       key={session.session_id}
-                      onClick={() => {
-                        if (!isLoading && !isStreaming) {
-                          chatHistory.loadSession(session.session_id);
-                        }
-                      }}
-                      disabled={isLoading || isStreaming}
-                      className={`w-full text-left p-3 rounded-lg text-sm transition-colors ${
+                      className={`relative group rounded-lg text-sm transition-colors ${
                         chatHistory.currentSessionId === session.session_id
                           ? 'bg-blue-50 border border-blue-200'
                           : isLoading || isStreaming
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          ? 'bg-gray-100 border border-transparent'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
                     >
-                      <div className="font-medium text-gray-900 truncate">
-                        {session.title || 'Untitled Chat'}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {new Date(session.updated_at).toLocaleDateString()}
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => handleHistoryClick(session.session_id)}
+                        disabled={isLoading || isStreaming}
+                        className={`w-full text-left p-3 pr-10 rounded-lg transition-colors ${
+                          isLoading || isStreaming
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : ''
+                        }`}
+                      >
+                        <div className="font-medium text-gray-900 truncate">
+                          {session.title || 'Untitled Chat'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(session.updated_at).toLocaleDateString()}
+                        </div>
+                      </button>
+                      
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isLoading && !isStreaming) {
+                            chatHistory.deleteSession(session.session_id);
+                          }
+                        }}
+                        disabled={isLoading || isStreaming}
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100 ${
+                          isLoading || isStreaming
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                        }`}
+                        title="Delete chat history"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1601,21 +1705,6 @@ export default function InferencePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 <span>New</span>
-              </button>
-              <button
-                onClick={() => {
-                  if (!isLoading && !isStreaming) {
-                    clearChat();
-                  }
-                }}
-                disabled={isLoading || isStreaming}
-                className={`px-3 py-1 rounded-md text-sm transition-colors ${
-                  isLoading || isStreaming
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Clear Chat
               </button>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { createZGComputeNetworkBroker } from "0g-serving-broker";
-import { BrowserProvider, Signer } from "ethers";
+import type { Signer } from "ethers";
+import { BrowserProvider } from "ethers";
 
 // Define the broker type to avoid import issues
 type ZGComputeNetworkBroker = any;

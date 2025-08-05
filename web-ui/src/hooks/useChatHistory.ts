@@ -19,7 +19,7 @@ export interface UseChatHistoryReturn {
   updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
   
   // Message management
-  addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<void>;
+  addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<string | null>;
   updateMessage: (index: number, updates: Partial<ChatMessage>) => void;
   clearCurrentSession: () => Promise<void>;
   
@@ -101,11 +101,15 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
       await dbManager.deleteChatSession(sessionId);
+      
+      // If we deleted the current session, clear it
       if (currentSessionId === sessionId) {
         setCurrentSessionId(null);
         setMessages([]);
       }
-      await loadSessions(); // Refresh sessions list
+      
+      // Refresh sessions list
+      await loadSessions();
     } catch (err) {
       console.error('Failed to delete session:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete session');
@@ -123,13 +127,26 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
     }
   }, [loadSessions]);
 
+  // Generate chat title from first user message
+  const generateChatTitle = useCallback((content: string): string => {
+    // Take first 30 characters and add ellipsis if longer
+    const maxLength = 30;
+    const cleanContent = content.trim().replace(/\n/g, ' ');
+    if (cleanContent.length <= maxLength) {
+      return cleanContent;
+    }
+    return cleanContent.substring(0, maxLength).trim() + '...';
+  }, []);
+
   // Add message to current session
-  const addMessage = useCallback(async (messageData: Omit<ChatMessage, 'id' | 'timestamp'>) => {
+  const addMessage = useCallback(async (messageData: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<string | null> => {
     try {
       // If no current session, create one
       let sessionId = currentSessionId;
       if (!sessionId) {
         sessionId = await createNewSession();
+        // Update the current session ID immediately
+        setCurrentSessionId(sessionId);
       }
 
       const message: Omit<ChatMessage, 'id'> = {
@@ -142,20 +159,39 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
       let messageId: number | undefined;
       if (autoSave) {
         messageId = await dbManager.saveMessage(sessionId, message);
+        
+        // If this is the first user message, update session title
+        if (messageData.role === 'user') {
+          // Check if session already has a title by checking messages in database
+          const existingMessages = await dbManager.getMessages(sessionId);
+          const userMessages = existingMessages.filter(m => m.role === 'user');
+          
+          // Only set title if this is the first user message
+          if (userMessages.length === 1) { // Just saved one user message
+            const title = generateChatTitle(messageData.content);
+            await dbManager.updateChatSessionTitle(sessionId, title);
+            await loadSessions(); // Refresh sessions to show new title
+          }
+        }
       }
 
-      // Update local state
+      // Update local state with the database ID
       const fullMessage: ChatMessage = {
         ...message,
         id: messageId,
       };
       
-      setMessages(prev => [...prev, fullMessage]);
+      // Only update messages state when explicitly loading a session
+      // For normal message saving, don't update the local state to avoid conflicts
+      
+      // Return the session ID for the caller to use
+      return sessionId;
     } catch (err) {
       console.error('Failed to add message:', err);
       setError(err instanceof Error ? err.message : 'Failed to add message');
+      return null;
     }
-  }, [currentSessionId, providerAddress, autoSave, createNewSession]);
+  }, [currentSessionId, providerAddress, autoSave, createNewSession, messages, generateChatTitle, loadSessions]);
 
   // Update message in current session
   const updateMessage = useCallback((index: number, updates: Partial<ChatMessage>) => {
