@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 import { use0GBroker } from "../../hooks/use0GBroker";
 
 // Convert neuron to A0GI (1 A0GI = 10^18 neuron)
@@ -13,42 +14,6 @@ const neuronToA0gi = (value: bigint): number => {
   const decimalPart = Number(remainder) / Number(divisor);
   return Number(integerPart) + decimalPart;
 };
-
-// Convert A0GI to neuron
-const a0giToNeuron = (value: number): bigint => {
-  const valueStr = value.toFixed(18);
-  const parts = valueStr.split('.');
-  
-  // Handle integer part
-  const integerPart = parts[0];
-  let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18);
-  
-  // Handle fractional part if it exists
-  if (parts.length > 1) {
-    let fractionalPart = parts[1];
-    while (fractionalPart.length < 18) {
-      fractionalPart += '0';
-    }
-    if (fractionalPart.length > 18) {
-      fractionalPart = fractionalPart.slice(0, 18); // Truncate to avoid overflow
-    }
-    
-    const fractionalPartAsBigInt = BigInt(fractionalPart);
-    integerPartAsBigInt += fractionalPartAsBigInt;
-  }
-  
-  return integerPartAsBigInt;
-};
-import ReactMarkdown from "react-markdown";
-
-interface Message {
-  role: "system" | "user" | "assistant";
-  content: string;
-  timestamp?: number;
-  chatId?: string;
-  isVerified?: boolean | null;
-  isVerifying?: boolean;
-}
 
 interface Provider {
   address: string;
@@ -85,94 +50,17 @@ const OFFICIAL_PROVIDERS: Provider[] = [
   },
 ];
 
-export default function InferencePage() {
+export default function InferenceOverviewPage() {
   const { isConnected } = useAccount();
-  const { broker, isInitializing, ledgerInfo, refreshLedgerInfo } = use0GBroker();
+  const { broker, isInitializing } = use0GBroker();
+  const router = useRouter();
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
-    null
-  );
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "system",
-      content:
-        "You are a helpful assistant that provides accurate information.",
-      timestamp: Date.now(),
-    },
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [serviceMetadata, setServiceMetadata] = useState<{
-    endpoint: string;
-    model: string;
-  } | null>(null);
-  const [providerAcknowledged, setProviderAcknowledged] = useState<
-    boolean | null
-  >(null);
-  const [isVerifyingProvider, setIsVerifyingProvider] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [depositAmount, setDepositAmount] = useState("");
-  const [isDepositing, setIsDepositing] = useState(false);
-  const [providerBalance, setProviderBalance] = useState<number | null>(null);
-  const [providerBalanceNeuron, setProviderBalanceNeuron] = useState<bigint | null>(null);
-  const [showFundingAlert, setShowFundingAlert] = useState(false);
-  const [fundingAlertMessage, setFundingAlertMessage] = useState("");
-  const [showTopUpModal, setShowTopUpModal] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState("");
-  const [isTopping, setIsTopping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [selectedProviderForBuild, setSelectedProviderForBuild] = useState<Provider | null>(null);
 
-  // Custom setError function with auto-hide after 8 seconds
-  const setErrorWithTimeout = (errorMessage: string | null) => {
-    // Clear existing timeout
-    if (errorTimeoutRef.current) {
-      clearTimeout(errorTimeoutRef.current);
-      errorTimeoutRef.current = null;
-    }
-    
-    setError(errorMessage);
-    
-    // Set timeout to clear error after 8 seconds
-    if (errorMessage) {
-      errorTimeoutRef.current = setTimeout(() => {
-        setError(null);
-        errorTimeoutRef.current = null;
-      }, 8000);
-    }
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (errorTimeoutRef.current) {
-        clearTimeout(errorTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest(".provider-dropdown")) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownOpen]);
-
-  // Fetch real providers when broker is available
+  // Fetch providers when broker is available
   useEffect(() => {
     const fetchProviders = async () => {
       if (broker) {
@@ -194,16 +82,13 @@ export default function InferencePage() {
                 inputPrice?: bigint;
                 outputPrice?: bigint;
               };
-              // Type guard to ensure service has the required properties
+              
               const providerAddress = serviceObj.provider || "";
               const modelName = serviceObj.model || "Unknown Model";
               const providerName =
                 serviceObj.name || serviceObj.model || "Unknown Provider";
               const verifiability = serviceObj.verifiability || "TEE";
               const serviceUrl = serviceObj.url || "";
-
-              console.log("serviceObj.inputPrice", serviceObj.inputPrice);
-              console.log("serviceObj.outputPrice", serviceObj.outputPrice);
 
               // Convert prices from neuron to A0GI per million tokens
               const inputPrice = serviceObj.inputPrice
@@ -228,634 +113,41 @@ export default function InferencePage() {
           );
 
           setProviders(transformedProviders);
-
-          // Set the first provider as selected if none is selected
-          if (!selectedProvider && transformedProviders.length > 0) {
-            setSelectedProvider(transformedProviders[0]);
-          }
         } catch (err: unknown) {
           console.error("Error fetching providers:", err);
           // Fallback to mock data if real data fetch fails
           setProviders(OFFICIAL_PROVIDERS);
-          if (!selectedProvider && OFFICIAL_PROVIDERS.length > 0) {
-            setSelectedProvider(OFFICIAL_PROVIDERS[0]);
-          }
+          setError("Failed to fetch live provider data. Showing fallback providers.");
         }
       }
     };
 
     fetchProviders();
-  }, [broker, selectedProvider]);
+  }, [broker]);
 
-  // Check ledger when wallet is connected
-  useEffect(() => {
-    const checkLedger = async () => {
-      if (broker && isConnected) {
-        try {
-          console.log("Checking ledger...");
-          const ledger = await broker.ledger.getLedger();
-          console.log("Ledger:", ledger);
+  const handleChatWithProvider = (provider: Provider) => {
+    // Navigate to chat page with provider info
+    router.push(`/inference/chat?provider=${encodeURIComponent(provider.address)}`);
+  };
 
-          // If ledger doesn't exist, show deposit modal
-          if (!ledger) {
-            console.log("No ledger found, showing deposit modal");
-            setShowDepositModal(true);
-          }
-        } catch (err: unknown) {
-          console.error("Error checking ledger:", err);
-          // If error occurs, assume no ledger exists
-          setShowDepositModal(true);
-        }
-      }
-    };
+  const handleBuildWithProvider = (provider: Provider) => {
+    setSelectedProviderForBuild(provider);
+    setIsDrawerVisible(true);
+    // Trigger animation after DOM update
+    setTimeout(() => setIsDrawerOpen(true), 10);
+  };
 
-    checkLedger();
-  }, [broker, isConnected]);
-
-  // Refresh ledger info when broker is available
-  useEffect(() => {
-    if (broker && refreshLedgerInfo) {
-      console.log("Refreshing ledger info...");
-      refreshLedgerInfo();
-    }
-  }, [broker, refreshLedgerInfo]);
-
-  // Fetch service metadata when provider is selected
-  useEffect(() => {
-    const fetchServiceMetadata = async () => {
-      if (broker && selectedProvider) {
-        try {
-          // Step 5.1: Get the request metadata
-          const metadata = await broker.inference.getServiceMetadata(
-            selectedProvider.address
-          );
-          console.log("Service metadata:", metadata);
-          setServiceMetadata(metadata);
-        } catch (err: unknown) {
-          console.error("Error fetching service metadata:", err);
-          setServiceMetadata(null);
-        }
-      }
-    };
-
-    fetchServiceMetadata();
-  }, [broker, selectedProvider]);
-
-  // Fetch provider acknowledgment status when provider is selected
-  useEffect(() => {
-    const fetchProviderAcknowledgment = async () => {
-      if (broker && selectedProvider) {
-        try {
-          const acknowledged = await broker.inference.userAcknowledged(
-            selectedProvider.address
-          );
-          console.log("Provider acknowledged:", acknowledged);
-          setProviderAcknowledged(acknowledged);
-        } catch (err: unknown) {
-          console.error("Error fetching provider acknowledgment:", err);
-          setProviderAcknowledged(false);
-        }
-      }
-    };
-
-    fetchProviderAcknowledgment();
-  }, [broker, selectedProvider]);
-
-  // Fetch provider balance when provider is selected
-  useEffect(() => {
-    const fetchProviderBalance = async () => {
-      if (broker && selectedProvider) {
-        try {
-          const account = await broker.inference.getAccount(selectedProvider.address);
-          if (account && account.balance) {
-            const balanceInA0gi = neuronToA0gi(account.balance);
-            console.log("Provider balance:", balanceInA0gi);
-            setProviderBalance(balanceInA0gi);
-            setProviderBalanceNeuron(account.balance);
-          } else {
-            setProviderBalance(0);
-            setProviderBalanceNeuron(BigInt(0));
-          }
-        } catch (err: unknown) {
-          console.error("Error fetching provider balance:", err);
-          setProviderBalance(null);
-          setProviderBalanceNeuron(null);
-        }
-      }
-    };
-
-    fetchProviderBalance();
-  }, [broker, selectedProvider]);
-
-  // Auto scroll to bottom when messages change (but not for verification updates)
-  const previousMessagesRef = useRef<Message[]>([]);
-  
-  useEffect(() => {
-    const scrollToBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    // Check if this is just a verification status update
-    const isVerificationUpdate = () => {
-      const prev = previousMessagesRef.current;
-      if (prev.length !== messages.length) return false;
-      
-      // Check if only verification fields changed
-      for (let i = 0; i < messages.length; i++) {
-        const current = messages[i];
-        const previous = prev[i];
-        
-        // If content, role, or timestamp changed, it's not just verification
-        if (current.content !== previous.content || 
-            current.role !== previous.role ||
-            current.timestamp !== previous.timestamp ||
-            current.chatId !== previous.chatId) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    // Only scroll if it's not just a verification update
-    if (!isVerificationUpdate()) {
-      const timeoutId = setTimeout(scrollToBottom, 100);
-      // Update the ref after scrolling decision
-      previousMessagesRef.current = [...messages];
-      return () => clearTimeout(timeoutId);
-    }
-    
-    // Update the ref even if we don't scroll
-    previousMessagesRef.current = [...messages];
-  }, [messages, isLoading]);
-
-  const sendMessage = async () => {
-    console.log("sendMessage called:", {
-      inputMessage: inputMessage.trim(),
-      selectedProvider: !!selectedProvider,
-      broker: !!broker,
-      serviceMetadata: !!serviceMetadata,
-      selectedProviderAddress: selectedProvider?.address,
-    });
-
-    if (!inputMessage.trim() || !selectedProvider || !broker) {
-      console.log("Early return due to missing requirements");
-      return;
-    }
-
-    // For now, let's add a simple demo response to test if the function works
-    console.log("Adding demo response...");
-    const userMessage: Message = {
-      role: "user",
-      content: inputMessage,
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage("");
-    setIsLoading(true);
-    setIsStreaming(true);
-    setErrorWithTimeout(null);
-    
-    // Reset textarea height
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+    // Hide the drawer after animation completes
     setTimeout(() => {
-      const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.style.height = '40px';
-      }
-    }, 0);
-    
-    let firstContentReceived = false;
-
-    // Demo response commented out - using real API
-    // setTimeout(() => {
-    //   const assistantMessage: Message = {
-    //     role: "assistant",
-    //     content: "Demo response - real API integration is being debugged.",
-    //     timestamp: Date.now(),
-    //   };
-    //   setMessages((prev) => [...prev, assistantMessage]);
-    //   setIsLoading(false);
-    // }, 1000);
-
-    // Continue with real API call
-    try {
-      // If serviceMetadata is not available, try to fetch it first
-      let currentMetadata = serviceMetadata;
-      if (!currentMetadata) {
-        console.log("Fetching service metadata...");
-        currentMetadata = await broker.inference.getServiceMetadata(
-          selectedProvider.address
-        );
-        setServiceMetadata(currentMetadata);
-        if (!currentMetadata) {
-          throw new Error("Failed to get service metadata");
-        }
-      }
-
-      // Step 5.2: Get the request headers (may trigger auto-funding)
-      console.log("Getting request headers...");
-      
-      // Funding operations removed
-      
-      // Prepare the actual messages array that will be sent to the API
-      const messagesToSend = [
-        ...messages
-          .filter((m) => m.role !== "system")
-          .map((m) => ({ role: m.role, content: m.content })),
-        { role: userMessage.role, content: userMessage.content },
-      ];
-      
-      let headers;
-      try {
-        headers = await broker.inference.getRequestHeaders(
-          selectedProvider.address,
-          JSON.stringify(messagesToSend)
-        );
-        
-        
-        console.log("Request headers obtained successfully");
-      } catch (headerError) {
-        throw headerError;
-      }
-
-      // Step 6: Send a request to the service use stream
-      console.log("Sending request to:", currentMetadata.endpoint);
-      const { endpoint, model } = currentMetadata;
-
-      const response = await fetch(`${endpoint}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...headers,
-        },
-        body: JSON.stringify({
-          messages: [
-            ...messages
-              .filter((m) => m.role !== "system")
-              .map((m) => ({ role: m.role, content: m.content })),
-            { role: userMessage.role, content: userMessage.content },
-          ],
-          model: model,
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        // Try to get detailed error message from response body
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorBody = await response.text();
-          if (errorBody) {
-            // Try to parse as JSON first
-            try {
-              const errorJson = JSON.parse(errorBody);
-              errorMessage = JSON.stringify(errorJson, null, 2);
-            } catch {
-              // If not JSON, use the raw text
-              errorMessage = errorBody;
-            }
-          }
-        } catch {
-          // If can't read body, keep original message
-        }
-        throw new Error(errorMessage);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Failed to get response reader");
-      }
-
-      // Initialize streaming response
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: "",
-        timestamp: Date.now(),
-        isVerified: null,
-        isVerifying: false,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let chatId = "";
-      let completeContent = "";
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                if (!chatId && parsed.id) {
-                  chatId = parsed.id;
-                }
-
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                  // Hide loading indicator on first content received
-                  if (!firstContentReceived) {
-                    setIsLoading(false);
-                    firstContentReceived = true;
-                  }
-                  
-                  completeContent += content;
-                  setMessages((prev) =>
-                    prev.map((msg, index) =>
-                      index === prev.length - 1
-                        ? {
-                            ...msg,
-                            content: completeContent,
-                            chatId,
-                            isVerified: msg.isVerified,
-                            isVerifying: msg.isVerifying,
-                          }
-                        : msg
-                    )
-                  );
-
-                  // Trigger auto-scroll during streaming
-                  setTimeout(() => {
-                    messagesEndRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                  }, 50);
-                }
-              } catch {
-                // Skip invalid JSON
-              }
-            }
-          }
-        }
-      } finally {
-        reader.releaseLock();
-      }
-
-      // Update final message with complete content and chatId
-      setMessages((prev) =>
-        prev.map((msg, index) =>
-          index === prev.length - 1
-            ? {
-                ...msg,
-                content: completeContent,
-                chatId,
-                isVerified: msg.isVerified || null,
-                isVerifying: msg.isVerifying || false,
-              }
-            : msg
-        )
-      );
-
-      // Ensure loading is stopped even if no content was received
-      if (!firstContentReceived) {
-        setIsLoading(false);
-      }
-      // Always stop streaming when done
-      setIsStreaming(false);
-    } catch (err: unknown) {
-      console.error("Error with real API:", err);
-      let errorMessage = "Failed to send message. Please try again.";
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      } else if (err && typeof err === 'object') {
-        try {
-          errorMessage = JSON.stringify(err, null, 2);
-        } catch {
-          errorMessage = String(err);
-        }
-      }
-      
-      setErrorWithTimeout(`Chat error: ${errorMessage}`);
-
-
-      // Remove the loading message if it exists
-      setMessages((prev) =>
-        prev.filter((msg) => msg.role !== "assistant" || msg.content !== "")
-      );
-      
-      // Ensure loading is stopped in case of error
-      if (!firstContentReceived) {
-        setIsLoading(false);
-      }
-      // Always stop streaming in case of error
-      setIsStreaming(false);
-    }
+      setIsDrawerVisible(false);
+      setSelectedProviderForBuild(null);
+    }, 300);
   };
 
-  // Step 7: Process the response (verification function)
-  const verifyResponse = async (message: Message, messageIndex: number) => {
-    console.log("🔍 verifyResponse called:", { message, messageIndex });
-
-    if (!broker || !selectedProvider || !message.chatId) {
-      console.log("❌ Verification cancelled - missing requirements:", {
-        broker: !!broker,
-        selectedProvider: !!selectedProvider,
-        chatId: !!message.chatId,
-      });
-      return;
-    }
-
-    // Set verifying state and reset previous verification result
-    console.log("⏳ Setting verifying state to TRUE...");
-    setMessages((prev) => {
-      const updated = prev.map((msg, index) =>
-        index === messageIndex
-          ? { ...msg, isVerifying: true, isVerified: null }
-          : msg
-      );
-      console.log("📝 Updated messages:", updated[messageIndex]);
-      return updated;
-    });
-
-    // Force a re-render to ensure state change is visible
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    try {
-      console.log("Calling broker.inference.processResponse...");
-
-      // Add minimum loading time to ensure user sees the loading effect
-      const [isValid] = await Promise.all([
-        broker.inference.processResponse(
-          selectedProvider.address,
-          message.content,
-          message.chatId
-        ),
-        new Promise((resolve) => setTimeout(resolve, 1000)), // Minimum 1 second loading
-      ]);
-
-      console.log("Verification result:", isValid);
-
-      // Update verification result with visual feedback
-      console.log("✅ Setting verification result:", isValid);
-      setMessages((prev) => {
-        const updated = prev.map((msg, index) =>
-          index === messageIndex
-            ? { ...msg, isVerified: isValid, isVerifying: false }
-            : msg
-        );
-        console.log("📝 Final updated message:", updated[messageIndex]);
-        return updated;
-      });
-
-      // Show visual feedback notification
-      if (isValid) {
-        console.log("✅ Response verified successfully!");
-      } else {
-        console.log("❌ Response verification failed!");
-      }
-    } catch (err: unknown) {
-      console.error("❌ Error verifying response:", err);
-      // Mark as verification failed with minimum loading time
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("❌ Setting verification failed state");
-      setMessages((prev) => {
-        const updated = prev.map((msg, index) =>
-          index === messageIndex
-            ? { ...msg, isVerified: false, isVerifying: false }
-            : msg
-        );
-        console.log("📝 Error updated message:", updated[messageIndex]);
-        return updated;
-      });
-    }
-  };
-
-  const clearChat = () => {
-    setMessages([
-      {
-        role: "system",
-        content:
-          "You are a helpful assistant that provides accurate information.",
-        timestamp: Date.now(),
-      },
-    ]);
-    setErrorWithTimeout(null);
-  };
-
-  const verifyProvider = async () => {
-    if (!broker || !selectedProvider) {
-      console.log("Cannot verify - missing broker or provider");
-      return;
-    }
-
-    setIsVerifyingProvider(true);
-    setErrorWithTimeout(null);
-
-    try {
-      console.log("Acknowledging provider:", selectedProvider.address);
-      await broker.inference.acknowledgeProviderSigner(
-        selectedProvider.address
-      );
-
-      // Refresh the acknowledgment status
-      const acknowledged = await broker.inference.userAcknowledged(
-        selectedProvider.address
-      );
-      setProviderAcknowledged(acknowledged);
-
-      console.log("Provider verification completed:", acknowledged);
-    } catch (err: unknown) {
-      console.error("Error verifying provider:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to verify provider. Please try again.";
-      setErrorWithTimeout(`Verification error: ${errorMessage}`);
-    } finally {
-      setIsVerifyingProvider(false);
-    }
-  };
-
-  const handleDeposit = async () => {
-    if (!broker || !depositAmount || parseFloat(depositAmount) <= 0) {
-      console.log("Invalid deposit amount or missing broker");
-      return;
-    }
-
-    setIsDepositing(true);
-    setErrorWithTimeout(null);
-
-    try {
-      console.log("Depositing:", depositAmount);
-      // Convert to proper format if needed (e.g., wei)
-      const balance = parseFloat(depositAmount);
-      await broker.ledger.addLedger(balance);
-
-      console.log("Deposit successful");
-      setShowDepositModal(false);
-      setDepositAmount("");
-
-      // Optionally refresh the page or update state
-    } catch (err: unknown) {
-      console.error("Error depositing:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to deposit. Please try again.";
-      setErrorWithTimeout(`Deposit error: ${errorMessage}`);
-    } finally {
-      setIsDepositing(false);
-    }
-  };
-
-  const handleTopUp = async () => {
-    if (!broker || !selectedProvider || !topUpAmount || parseFloat(topUpAmount) <= 0) {
-      console.log("Invalid top up amount or missing requirements");
-      return;
-    }
-
-    setIsTopping(true);
-    setErrorWithTimeout(null);
-
-    try {
-      console.log("Topping up:", topUpAmount, "A0GI to provider:", selectedProvider.address);
-      const amountInA0gi = parseFloat(topUpAmount);
-      const amountInNeuron = a0giToNeuron(amountInA0gi);
-      
-      console.log("Amount in neuron:", amountInNeuron.toString());
-      
-      // Call the transfer function with neuron amount
-      await broker.ledger.transferFund(
-        selectedProvider.address,
-        'inference',
-        amountInNeuron
-      );
-
-      console.log("Top up successful");
-      setShowTopUpModal(false);
-      setTopUpAmount("");
-
-      // Refresh provider balance
-      const account = await broker.inference.getAccount(selectedProvider.address);
-      if (account && account.balance) {
-        const balanceInA0gi = neuronToA0gi(account.balance);
-        setProviderBalance(balanceInA0gi);
-        setProviderBalanceNeuron(account.balance);
-      }
-    } catch (err: unknown) {
-      console.error("Error topping up:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to top up. Please try again.";
-      setErrorWithTimeout(`Top up error: ${errorMessage}`);
-    } finally {
-      setIsTopping(false);
-    }
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
   };
 
   if (!isConnected) {
@@ -895,15 +187,15 @@ export default function InferencePage() {
       <div className="mb-3">
         <h1 className="text-lg font-semibold text-gray-900">Inference</h1>
         <p className="text-xs text-gray-500">
-          Chat with AI models from decentralized providers
+          Choose from decentralized AI providers to start chatting with powerful language models
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
           <div className="flex items-start">
             <svg
-              className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0"
+              className="w-5 h-5 text-yellow-500 mr-3 mt-0.5 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -912,44 +204,146 @@ export default function InferencePage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
               />
             </svg>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1 break-words whitespace-pre-wrap">
-                {(() => {
-                  try {
-                    // Try to parse as JSON if it looks like JSON
-                    if (error.trim().startsWith('{') && error.trim().endsWith('}')) {
-                      const parsed = JSON.parse(error);
-                      return JSON.stringify(parsed, null, 2);
-                    }
-                    return error;
-                  } catch {
-                    return error;
-                  }
-                })()}
-              </p>
+              <h3 className="text-sm font-medium text-yellow-800">Notice</h3>
+              <p className="text-sm text-yellow-700 mt-1">{error}</p>
             </div>
-            <button
-              onClick={() => setErrorWithTimeout(null)}
-              className="ml-2 text-red-400 hover:text-red-600 flex-shrink-0"
-              title="Close error message"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
       )}
 
-      {showFundingAlert && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-          <div className="flex items-start">
+      {isInitializing ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+          </div>
+          <p className="text-gray-600">Loading providers...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {providers.map((provider) => {
+            const isOfficial = OFFICIAL_PROVIDERS.some(
+              (op) => op.address === provider.address
+            );
+            
+            return (
+              <div
+                key={provider.address}
+                className="bg-white rounded-xl border border-gray-300 p-5 hover:shadow-lg transition-shadow"
+              >
+                {/* Header with name, badges and address */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                        {provider.name}
+                      </h3>
+                      {isOfficial && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
+                          0G
+                        </span>
+                      )}
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 flex-shrink-0">
+                        {provider.verifiability}
+                      </span>
+                    </div>
+                    
+                    {/* Pricing and address with copy button */}
+                    <div className="flex items-center space-x-2 mb-2 min-h-[28px]">
+                      {/* Pricing section first */}
+                      {(provider.inputPrice !== undefined || provider.outputPrice !== undefined) && (
+                        <div className="flex items-center space-x-2 text-xs h-full">
+                          {provider.inputPrice !== undefined && (
+                            <div className="flex items-center space-x-1">
+                              <span className="text-gray-600">In:</span>
+                              <span className="font-semibold text-gray-900">
+                                {provider.inputPrice.toFixed(4)}
+                              </span>
+                            </div>
+                          )}
+                          {provider.outputPrice !== undefined && (
+                            <div className="flex items-center space-x-1">
+                              <span className="text-gray-600">Out:</span>
+                              <span className="font-semibold text-gray-900">
+                                {provider.outputPrice.toFixed(4)}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-gray-500">A0GI</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center space-x-1 h-full">
+                        <div className="relative group flex items-center">
+                          <code className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded cursor-default flex items-center">
+                            {provider.address.slice(0, 8)}...{provider.address.slice(-6)}
+                          </code>
+                          {/* Tooltip showing full address */}
+                          <div className="absolute bottom-full left-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                            {provider.address}
+                            <div className="absolute top-full left-4 -mt-1">
+                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="relative group flex items-center">
+                          <button
+                            onClick={() => navigator.clipboard.writeText(provider.address)}
+                            className="text-gray-400 hover:text-gray-600 p-1 cursor-pointer flex items-center justify-center"
+                            title="Copy address"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                          {/* Copy tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                            Copy address
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex space-x-1 mt-1">
+                  <button
+                    onClick={() => handleChatWithProvider(provider)}
+                    className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors rounded-md px-2 py-1.5 cursor-pointer text-xs flex items-center justify-center space-x-1 border border-gray-200 hover:border-blue-200"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span>Chat</span>
+                  </button>
+                  <button
+                    onClick={() => handleBuildWithProvider(provider)}
+                    className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors rounded-md px-2 py-1.5 cursor-pointer text-xs flex items-center justify-center space-x-1 border border-gray-200 hover:border-blue-200"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    <span>Build</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!isInitializing && providers.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <div className="flex items-center justify-center mb-4">
             <svg
-              className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0"
+              className="w-12 h-12 text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -958,881 +352,231 @@ export default function InferencePage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.034 0-3.9.785-5.291 2.067m-.709 3.316l3.578-3.578m0 0L10 18.184m0 0L8.184 16.5M18.816 16.5L17 18.184m0 0l1.416 1.416m0 0l-1.416-1.416"
               />
             </svg>
-            <div>
-              <h3 className="text-sm font-medium text-blue-800">Provider Funding</h3>
-              <p className="text-sm text-blue-700 mt-1">{fundingAlertMessage}</p>
-            </div>
           </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Providers Available
+          </h3>
+          <p className="text-gray-600">
+            There are currently no AI inference providers available. Please try again later.
+          </p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 flex flex-col" style={{ height: 'calc(100vh - 175px)' }}>
-        {/* Chat Header with Provider Selection */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-          <div className="flex justify-between items-center flex-wrap gap-2 sm:flex-nowrap">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {/* Provider Selection Dropdown */}
-              <div className="relative min-w-[200px] sm:min-w-[400px] lg:min-w-[500px] provider-dropdown">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full bg-white border border-gray-300 rounded-md pl-3 pr-10 py-3 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  disabled={isInitializing || providers.length === 0}
-                >
-                  {isInitializing ? (
-                    <span className="text-gray-500">Loading providers...</span>
-                  ) : providers.length === 0 ? (
-                    <span className="text-gray-500">
-                      No providers available
-                    </span>
-                  ) : selectedProvider ? (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-sm">
-                          {selectedProvider.name}
-                        </span>
-                        <span className="text-gray-500">•</span>
-                        <span className="text-gray-600 text-xs">
-                          {selectedProvider.address.slice(0, 8)}...
-                          {selectedProvider.address.slice(-6)}
-                        </span>
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                          {selectedProvider.verifiability}
-                        </span>
-                        {OFFICIAL_PROVIDERS.some(
-                          (op) => op.address === selectedProvider.address
-                        ) && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            0G
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-gray-500">Select a provider</span>
-                  )}
-                </button>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <svg
-                    className={`h-4 w-4 text-gray-400 transition-transform ${
-                      isDropdownOpen ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-
-                {/* Dropdown Menu */}
-                {isDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                    {providers.map((provider) => {
-                      const isOfficial = OFFICIAL_PROVIDERS.some(
-                        (op) => op.address === provider.address
-                      );
-                      return (
-                        <div
-                          key={provider.address}
-                          onClick={() => {
-                            setSelectedProvider(provider);
-                            setIsDropdownOpen(false);
-                          }}
-                          className="px-3 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="flex flex-col space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium text-sm">
-                                {provider.name}
-                              </span>
-                              <span className="text-gray-500">•</span>
-                              <span className="text-gray-600 text-xs">
-                                {provider.address.slice(0, 8)}...
-                                {provider.address.slice(-6)}
-                              </span>
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                {provider.verifiability}
-                              </span>
-                              {isOfficial && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  0G
-                                </span>
-                              )}
-                            </div>
-                            {(provider.inputPrice !== undefined ||
-                              provider.outputPrice !== undefined) && (
-                              <div className="text-xs text-gray-500 pl-0">
-                                {provider.inputPrice !== undefined && (
-                                  <span>
-                                    Input: {provider.inputPrice.toFixed(2)}{" "}
-                                    A0GI
-                                  </span>
-                                )}
-                                {provider.inputPrice !== undefined &&
-                                  provider.outputPrice !== undefined && (
-                                    <span className="mx-1">·</span>
-                                  )}
-                                {provider.outputPrice !== undefined && (
-                                  <span>
-                                    Output: {provider.outputPrice.toFixed(2)}{" "}
-                                    A0GI
-                                  </span>
-                                )}
-                                <span className="ml-1">/ million tokens</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Provider Info - Copy Address Only */}
-              {selectedProvider && (
-                <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap sm:flex-nowrap gap-1">
-                  {providerAcknowledged !== null && (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        providerAcknowledged
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      <svg
-                        className="w-3 h-3 mr-1"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        {providerAcknowledged ? (
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        ) : (
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        )}
-                      </svg>
-                      {providerAcknowledged ? "Verified" : "Not Verified"}
-                    </span>
-                  )}
-                  {/* Price Information */}
-                  {(selectedProvider.inputPrice !== undefined ||
-                    selectedProvider.outputPrice !== undefined) && (
-                    <div className="relative group/price">
-                      <div className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <span className="flex items-center">
-                          {selectedProvider.inputPrice !== undefined && (
-                            <span>
-                              {selectedProvider.inputPrice.toFixed(2)}
-                            </span>
-                          )}
-                          {selectedProvider.inputPrice !== undefined &&
-                            selectedProvider.outputPrice !== undefined && (
-                              <span className="mx-1">/</span>
-                            )}
-                          {selectedProvider.outputPrice !== undefined && (
-                            <span>
-                              {selectedProvider.outputPrice.toFixed(2)}
-                            </span>
-                          )}
-                          <span className="ml-1 text-gray-500 hidden sm:inline">
-                            A0GI/M
-                          </span>
-                        </span>
-                      </div>
-                      {/* Price Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/price:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                        <div className="font-semibold mb-1">Price per Million Tokens</div>
-                        {selectedProvider.inputPrice !== undefined && (
-                          <div>Input: {selectedProvider.inputPrice.toFixed(2)} A0GI</div>
-                        )}
-                        {selectedProvider.outputPrice !== undefined && (
-                          <div>Output: {selectedProvider.outputPrice.toFixed(2)} A0GI</div>
-                        )}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Provider Balance */}
-                  <div className="inline-flex items-center space-x-1">
-                    <div className="relative group/balance">
-                      <div 
-                        className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        <span>{(providerBalance ?? 0).toFixed(2)} A0GI</span>
-                      </div>
-                      
-                      {/* Full Balance Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/balance:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                        <div className="font-semibold mb-1">Balance: {providerBalance?.toFixed(18) ?? '0'} A0GI</div>
-                        <div className="text-gray-400 text-[10px] mt-1">Sub-account for this provider</div>
-                        <div className="text-gray-400 text-[10px]">Auto-transfers from main account</div>
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Low Balance Warning */}
-                    {providerBalanceNeuron !== null &&
-                     selectedProvider.inputPriceNeuron !== undefined && 
-                     selectedProvider.outputPriceNeuron !== undefined && 
-                     providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) && (
-                      <div className="relative group/warning">
-                        <svg 
-                          className="w-3.5 h-3.5 text-yellow-600" 
-                          fill="currentColor" 
-                          viewBox="0 0 20 20"
-                        >
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        
-                        {/* Warning Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-30 whitespace-nowrap">
-                          Balance is low. Provider may refuse to reply.
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {/* Top Up Button */}
-                  {selectedProvider && (
-                    <div className="relative group">
-                      <button
-                        onClick={() => setShowTopUpModal(true)}
-                        className="p-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                        title="Top up"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      </button>
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
-                        Top up provider account
-                        <div className="absolute top-full right-2 -mt-1">
-                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="relative group">
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(selectedProvider.address)
-                      }
-                      className="p-1.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                      title="Copy address"
-                    >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </button>
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
-                      Copy address
-                      <div className="absolute top-full right-2 -mt-1">
-                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={clearChat}
-              className="text-gray-500 hover:text-gray-700 px-3 py-1 rounded-md text-sm transition-colors"
-            >
-              Clear Chat
-            </button>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages
-            .map((message, originalIndex) => ({ message, originalIndex }))
-            .filter(({ message }) => message.role !== "system")
-            .map(({ message, originalIndex }, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div className="flex items-start space-x-2 max-w-[80%]">
-                  <div
-                    className={`rounded-lg px-4 py-2 break-words ${
-                      message.role === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-900"
-                    }`}
-                    style={{ maxWidth: '100%', overflowWrap: 'break-word' }}
-                  >
-                    <div className="text-sm">
-                      {message.role === "assistant" ? (
-                        <div className="markdown-content">
-                          <ReactMarkdown
-                            components={{
-                              h1: ({ children }) => (
-                                <h1 className="text-xl font-bold mb-3 mt-4 text-gray-900">
-                                  {children}
-                                </h1>
-                              ),
-                              h2: ({ children }) => (
-                                <h2 className="text-lg font-semibold mb-2 mt-3 text-gray-900">
-                                  {children}
-                                </h2>
-                              ),
-                              h3: ({ children }) => (
-                                <h3 className="text-base font-semibold mb-2 mt-3 text-gray-900">
-                                  {children}
-                                </h3>
-                              ),
-                              p: ({ children }) => (
-                                <p className="mb-2 text-gray-800 leading-relaxed">
-                                  {children}
-                                </p>
-                              ),
-                              strong: ({ children }) => (
-                                <strong className="font-semibold text-gray-900">
-                                  {children}
-                                </strong>
-                              ),
-                              em: ({ children }) => (
-                                <em className="italic text-gray-800">
-                                  {children}
-                                </em>
-                              ),
-                              code: ({ children }) => (
-                                <code className="bg-blue-50 text-blue-600 px-1 py-0.5 rounded text-xs font-mono">
-                                  {children}
-                                </code>
-                              ),
-                              pre: ({ children }) => (
-                                <pre className="bg-gray-50 border border-gray-200 rounded-md p-3 my-3 overflow-x-auto text-sm">
-                                  {children}
-                                </pre>
-                              ),
-                              ul: ({ children }) => (
-                                <ul className="list-disc list-inside mb-2 text-gray-800">
-                                  {children}
-                                </ul>
-                              ),
-                              ol: ({ children }) => (
-                                <ol className="list-decimal list-inside mb-2 text-gray-800">
-                                  {children}
-                                </ol>
-                              ),
-                              li: ({ children }) => (
-                                <li className="mb-1 text-gray-800">
-                                  {children}
-                                </li>
-                              ),
-                              blockquote: ({ children }) => (
-                                <blockquote className="border-l-4 border-blue-500 pl-4 my-3 text-gray-700 italic">
-                                  {children}
-                                </blockquote>
-                              ),
-                              a: ({ href, children }) => (
-                                <a
-                                  href={href}
-                                  className="text-blue-600 hover:underline"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {children}
-                                </a>
-                              ),
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
-                        </div>
-                      ) : (
-                        <div className="whitespace-pre-wrap break-words" style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', maxWidth: '100%' }}>
-                          {message.content}
-                        </div>
-                      )}
-                    </div>
-                    {message.timestamp && (
-                      <div
-                        className={`flex items-center justify-between text-xs mt-1 ${
-                          message.role === "user"
-                            ? "text-blue-100"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        <span>
-                          {new Date(message.timestamp).toLocaleTimeString()}
-                        </span>
-
-                        {/* Verification controls - only show for assistant messages that are complete */}
-                        {message.role === "assistant" &&
-                          message.chatId &&
-                          !isLoading &&
-                          !isStreaming &&
-                          (() => {
-                            const isExpired =
-                              message.timestamp &&
-                              Date.now() - message.timestamp > 20 * 60 * 1000; // 20 minutes
-                            return (
-                              <div className="flex items-center">
-                                {/* Verification button for initial verification */}
-                                {!message.isVerifying &&
-                                  (message.isVerified === null ||
-                                    message.isVerified === undefined) && (
-                                    <button
-                                      onClick={() => {
-                                        if (!isExpired) {
-                                          console.log(
-                                            "🖱️ Verify button clicked!",
-                                            { message, originalIndex }
-                                          );
-                                          verifyResponse(
-                                            message,
-                                            originalIndex
-                                          );
-                                        }
-                                      }}
-                                      className={`px-1.5 py-0.5 rounded-full border transition-colors text-xs ${
-                                        isExpired
-                                          ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-                                          : "bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200"
-                                      }`}
-                                      title={
-                                        isExpired
-                                          ? "Verification information is only retained for 20 minutes"
-                                          : "Verify response authenticity with TEE"
-                                      }
-                                      disabled={!!isExpired}
-                                    >
-                                      Verify
-                                    </button>
-                                  )}
-
-                                {/* Verification loading indicator */}
-                                {message.isVerifying && (
-                                  <div className="inline-flex items-center px-1.5 py-0.5 bg-blue-50 rounded-full border border-blue-200">
-                                    <div className="animate-spin rounded-full h-2.5 w-2.5 border border-blue-400 border-t-transparent mr-1"></div>
-                                    <span className="text-xs text-blue-600">
-                                      Verifying...
-                                    </span>
-                                  </div>
-                                )}
-
-                                {/* Verification status display */}
-                                {!message.isVerifying &&
-                                  message.isVerified !== null &&
-                                  message.isVerified !== undefined && (
-                                    <button
-                                      onClick={() => {
-                                        if (!isExpired) {
-                                          verifyResponse(
-                                            message,
-                                            originalIndex
-                                          );
-                                        }
-                                      }}
-                                      className={`px-1.5 py-0.5 rounded-full border transition-all duration-300 group relative text-xs ${
-                                        isExpired
-                                          ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-                                          : message.isVerified
-                                          ? "bg-green-50 hover:bg-blue-100 text-green-600 hover:text-blue-600 border-green-200 hover:border-blue-200"
-                                          : "bg-red-50 hover:bg-blue-100 text-red-600 hover:text-blue-600 border-red-200 hover:border-blue-200"
-                                      }`}
-                                      title={
-                                        isExpired
-                                          ? "Verification information is only retained for 20 minutes"
-                                          : message.isVerified
-                                          ? "TEE Verified - Click to verify again"
-                                          : "TEE Verification Failed - Click to retry"
-                                      }
-                                      disabled={!!isExpired}
-                                    >
-                                      {/* Default text - shown when not hovering */}
-                                      <span
-                                        className={
-                                          isExpired ? "" : "group-hover:hidden"
-                                        }
-                                      >
-                                        {isExpired
-                                          ? "Expired"
-                                          : message.isVerified
-                                          ? "Valid"
-                                          : "Invalid"}
-                                      </span>
-
-                                      {/* Hover text - shown when hovering and not expired */}
-                                      {!isExpired && (
-                                        <span className="hidden group-hover:inline">
-                                          Verify
-                                        </span>
-                                      )}
-                                    </button>
-                                  )}
-                              </div>
-                            );
-                          })()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg px-4 py-2">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
-                  <span className="text-sm text-gray-600">
-                    AI is thinking...
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Invisible element for auto-scroll */}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex space-x-3 items-end">
-            <textarea
-              value={inputMessage}
-              onChange={(e) => {
-                setInputMessage(e.target.value);
-                // Auto-resize textarea
-                const textarea = e.target as HTMLTextAreaElement;
-                textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  if (providerAcknowledged === false) {
-                    verifyProvider();
-                  } else if (inputMessage.trim() && !isLoading && !isStreaming) {
-                    sendMessage();
-                  }
-                }
-              }}
-              placeholder={isLoading || isStreaming ? "AI is responding..." : "Type your message... (Shift+Enter for new line)"}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-              style={{ minHeight: '40px', maxHeight: '120px' }}
-              rows={1}
-              disabled={isLoading || isStreaming}
-            />
-            <button
-              onClick={() => {
-                if (providerAcknowledged === false) {
-                  console.log("Verifying provider...");
-                  verifyProvider();
-                } else {
-                  console.log("Button clicked!");
-                  sendMessage();
-                }
-              }}
-              disabled={
-                providerAcknowledged === false
-                  ? isVerifyingProvider
-                  : !inputMessage.trim() || isLoading || isStreaming
-              }
-              className={`${
-                providerAcknowledged === false
-                  ? "bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400"
-                  : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
-              } text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center space-x-2`}
-              title={
-                providerAcknowledged === false
-                  ? "Verify provider to enable messaging"
-                  : `Button status: ${
-                      !inputMessage.trim() || isLoading || isStreaming ? "disabled" : "enabled"
-                    }`
-              }
-            >
-              {isLoading || isStreaming || isVerifyingProvider ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              ) : (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {providerAcknowledged === false ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  )}
-                </svg>
-              )}
-              <span>
-                {providerAcknowledged === false ? "Verify Provider" : "Send"}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Deposit Modal */}
-      {showDepositModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop with blur effect */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: "rgba(255, 255, 255, 0.5)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-            }}
+      {/* Build Guide Drawer */}
+      {isDrawerVisible && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Transparent Backdrop */}
+          <div 
+            className="absolute inset-0 transition-opacity duration-300"
+            onClick={handleCloseDrawer}
           />
-
-          {/* Modal content */}
-          <div className="relative z-10 mx-auto p-8 w-96 bg-white rounded-xl shadow-2xl border border-gray-100">
-            <div className="flex flex-col items-center">
-              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 mb-6">
-                <svg
-                  className="h-8 w-8 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-
-              <p className="text-gray-600 mb-6">
-                Please make your first deposit to create an account on the 0G
-                Compute Network.
-              </p>
-
-              <div className="w-full space-y-4">
+          
+          {/* Drawer */}
+          <div className={`absolute right-0 top-0 h-full w-1/2 min-w-[600px] bg-white/95 backdrop-blur-sm shadow-2xl border-l border-gray-200 transform transition-all duration-300 ease-out ${
+            isDrawerOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+          }`}>
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between py-4 px-6 border-b border-gray-200">
                 <div>
-                  <label
-                    htmlFor="deposit-amount"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Deposit Amount (0G Tokens)
-                  </label>
-                  <input
-                    type="number"
-                    id="deposit-amount"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    min="0"
-                    step="0.000001"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                    disabled={isDepositing}
-                  />
+                  <h2 className="text-xl font-semibold text-gray-900">Build with Provider</h2>
                 </div>
-
                 <button
-                  onClick={handleDeposit}
-                  disabled={
-                    isDepositing ||
-                    !depositAmount ||
-                    parseFloat(depositAmount) <= 0
-                  }
-                  className="w-full px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  onClick={handleCloseDrawer}
+                  className="p-2 rounded-md hover:bg-gray-100 transition-colors"
                 >
-                  {isDepositing ? (
-                    <span className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                      Processing...
-                    </span>
-                  ) : (
-                    "Deposit"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Top Up Modal */}
-      {showTopUpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop with blur effect */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: "rgba(255, 255, 255, 0.5)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-            }}
-            onClick={() => {
-              if (!isTopping) {
-                setShowTopUpModal(false);
-                setTopUpAmount("");
-              }
-            }}
-          />
-
-          {/* Modal content */}
-          <div className="relative z-10 mx-auto p-8 w-96 bg-white rounded-xl shadow-2xl border border-gray-100">
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Top Up Provider Account
-                </h3>
-                <button
-                  onClick={() => {
-                    if (!isTopping) {
-                      setShowTopUpModal(false);
-                      setTopUpAmount("");
-                    }
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                  disabled={isTopping}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {/* Total Balance Display */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">Main Account Balance</div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    {ledgerInfo ? (
-                      <span>{ledgerInfo.totalBalance} A0GI</span>
-                    ) : (
-                      <span className="text-gray-400">Loading...</span>
-                    )}
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-6">
+                  <div className="mb-8">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Start with CLI</h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">1. Install the 0G CLI</h3>
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-gray-800 text-sm font-mono">
+                              pnpm install @0glabs/0g-serving-broker -g
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard('pnpm install @0glabs/0g-serving-broker -g')}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">2. Set environment variables</h3>
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-gray-800 text-sm font-mono">
+                              export ZG_PRIVATE_KEY=&lt;YOUR_PRIVATE_KEY&gt;
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard('export ZG_PRIVATE_KEY=<YOUR_PRIVATE_KEY>')}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">3. Start the server</h3>
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-gray-800 text-sm font-mono">
+                              {selectedProviderForBuild 
+                                ? `0g-compute-cli serve --provider ${selectedProviderForBuild.address} --port <YOUR_PORT>`
+                                : '0g-compute-cli serve --provider <PROVIDER_ADDRESS> --port <YOUR_PORT>'
+                              }
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(selectedProviderForBuild 
+                              ? `0g-compute-cli serve --provider ${selectedProviderForBuild.address} --port <YOUR_PORT>`
+                              : '0g-compute-cli serve --provider <PROVIDER_ADDRESS> --port <YOUR_PORT>'
+                            )}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">4. Use OpenAI API format</h3>
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-gray-800 text-sm font-mono whitespace-pre">
+{`curl http://127.0.0.1:<YOUR_PORT>/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ]
+  }'`}
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(`curl http://127.0.0.1:<YOUR_PORT>/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ]
+  }'`)}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Integrate into Your App</h2>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="text-base font-medium text-blue-800 mb-2">📚 SDK Documentation</h3>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Comprehensive guides for integrating 0G Compute Network into your applications.
+                      </p>
+                      <a 
+                        href="https://docs.0g.ai/developer-hub/building-on-0g/compute-network/sdk"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        View Documentation
+                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h3 className="text-base font-medium text-green-800 mb-2">🚀 Starter Kit</h3>
+                      <p className="text-sm text-green-700 mb-3">
+                        Ready-to-use TypeScript starter kit with examples and best practices.
+                      </p>
+                      <a 
+                        href="https://github.com/0glabs/0g-compute-ts-starter-kit"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800 transition-colors"
+                      >
+                        View on GitHub
+                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Not satisfied with existing providers?</h2>
+                    
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <p className="text-sm text-orange-700 mb-3">
+                        Learn how to add your own inference provider to the 0G Compute Network through our comprehensive documentation.
+                      </p>
+                      <a 
+                        href="https://docs.0g.ai/developer-hub/building-on-0g/compute-network/inference-provider"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-sm font-medium text-orange-600 hover:text-orange-800 transition-colors"
+                      >
+                        View Provider Documentation
+                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
                   </div>
                 </div>
-
-                {/* Provider Balance Display */}
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-sm text-blue-600 mb-1">Provider Account Balance</div>
-                  <div className="text-lg font-semibold text-blue-900">
-                    <span>{(providerBalance ?? 0).toFixed(6)} A0GI</span>
-                  </div>
-                </div>
-
-                {/* Transfer Amount Input */}
-                <div>
-                  <label
-                    htmlFor="top-up-amount"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Transfer Amount (A0GI)
-                  </label>
-                  <input
-                    type="number"
-                    id="top-up-amount"
-                    value={topUpAmount}
-                    onChange={(e) => setTopUpAmount(e.target.value)}
-                    placeholder="Enter amount to transfer"
-                    min="0"
-                    step="0.000001"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                    disabled={isTopping}
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    Transfer funds from your main account to the provider sub-account
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleTopUp}
-                  disabled={
-                    isTopping ||
-                    !topUpAmount ||
-                    parseFloat(topUpAmount) <= 0 ||
-                    !ledgerInfo ||
-                    parseFloat(topUpAmount) > parseFloat(ledgerInfo.totalBalance)
-                  }
-                  className="w-full px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isTopping ? (
-                    <span className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                      Processing...
-                    </span>
-                  ) : (
-                    "Transfer"
-                  )}
-                </button>
               </div>
             </div>
           </div>

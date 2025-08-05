@@ -45,6 +45,9 @@ export const Sidebar: React.FC = () => {
   ];
 
   const isActive = (href: string) => {
+    if (href === "/inference") {
+      return pathname === "/inference" || pathname.startsWith("/inference");
+    }
     if (href === "/ledger") {
       return pathname === "/ledger" || pathname.startsWith("/ledger");
     }
