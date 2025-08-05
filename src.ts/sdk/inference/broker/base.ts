@@ -49,8 +49,8 @@ export abstract class ZGServingUserBrokerBase {
         this.cache = cache
     }
 
-    protected async getProviderData(providerAddress: string) {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`
+    protected async getProviderData() {
+        const key = `${this.contract.getUserAddress()}`
         const [settleSignerPrivateKey] = await Promise.all([
             this.metadata.getSettleSignerPrivateKey(key),
         ])
@@ -219,9 +219,7 @@ export abstract class ZGServingUserBrokerBase {
             }
 
             const extractor = await this.getExtractor(providerAddress)
-            const { settleSignerPrivateKey } = await this.getProviderData(
-                providerAddress
-            )
+            const { settleSignerPrivateKey } = await this.getProviderData()
             const key = userAddress
 
             let privateKey = settleSignerPrivateKey
