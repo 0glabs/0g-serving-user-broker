@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { useSearchParams, useRouter } from "next/navigation";
 import { use0GBroker } from "../../../hooks/use0GBroker";
+import { useChatHistory } from "../../../hooks/useChatHistory";
 
 // Convert neuron to A0GI (1 A0GI = 10^18 neuron)
 const neuronToA0gi = (value: bigint): number => {
@@ -132,6 +133,15 @@ export default function InferencePage() {
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState<'verify' | 'topup' | null>(null);
+  
+  // Chat history state
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  
+  // Initialize chat history hook
+  const chatHistory = useChatHistory({
+    providerAddress: selectedProvider?.address || '',
+    autoSave: true,
+  });
 
   // Custom setError function with auto-hide after 8 seconds
   const setErrorWithTimeout = (errorMessage: string | null) => {
@@ -424,6 +434,32 @@ export default function InferencePage() {
     }
   }, [selectedProvider, providerAcknowledged]);
 
+  // Sync chat history messages with UI messages
+  useEffect(() => {
+    if (chatHistory.messages.length > 0) {
+      const historyMessages: Message[] = chatHistory.messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        chatId: msg.chat_id,
+        isVerified: msg.is_verified,
+        isVerifying: msg.is_verifying,
+      }));
+
+      // Only add system message if history doesn't contain one
+      const hasSystemMessage = historyMessages.some(msg => msg.role === 'system');
+      if (!hasSystemMessage) {
+        historyMessages.unshift({
+          role: "system",
+          content: "You are a helpful assistant that provides accurate information.",
+          timestamp: Date.now(),
+        });
+      }
+
+      setMessages(historyMessages);
+    }
+  }, [chatHistory.messages]);
+
   // Auto scroll to bottom when messages change (but not for verification updates)
   const previousMessagesRef = useRef<Message[]>([]);
   
@@ -486,6 +522,15 @@ export default function InferencePage() {
       content: inputMessage,
       timestamp: Date.now(),
     };
+
+    // Save user message to database
+    await chatHistory.addMessage({
+      role: userMessage.role,
+      content: userMessage.content,
+      chat_id: undefined,
+      is_verified: null,
+      is_verifying: false,
+    });
 
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
@@ -694,6 +739,17 @@ export default function InferencePage() {
         )
       );
 
+      // Save assistant message to database
+      if (completeContent.trim()) {
+        await chatHistory.addMessage({
+          role: "assistant",
+          content: completeContent,
+          chat_id: chatId,
+          is_verified: null,
+          is_verifying: false,
+        });
+      }
+
       // Ensure loading is stopped even if no content was received
       if (!firstContentReceived) {
         setIsLoading(false);
@@ -811,7 +867,10 @@ export default function InferencePage() {
     }
   };
 
-  const clearChat = () => {
+  const clearChat = async () => {
+    if (chatHistory.currentSessionId) {
+      await chatHistory.clearCurrentSession();
+    }
     setMessages([
       {
         role: "system",
@@ -821,6 +880,20 @@ export default function InferencePage() {
       },
     ]);
     setErrorWithTimeout(null);
+  };
+
+  const startNewChat = async () => {
+    const sessionId = await chatHistory.createNewSession();
+    setMessages([
+      {
+        role: "system",
+        content:
+          "You are a helpful assistant that provides accurate information.",
+        timestamp: Date.now(),
+      },
+    ]);
+    setErrorWithTimeout(null);
+    return sessionId;
   };
 
   const verifyProvider = async () => {
@@ -1081,7 +1154,75 @@ export default function InferencePage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 flex flex-col" style={{ height: 'calc(100vh - 175px)' }}>
+      <div className="flex bg-white rounded-xl border border-gray-200" style={{ height: 'calc(100vh - 175px)' }}>
+        {/* History Sidebar */}
+        {showHistorySidebar && (
+          <div className="w-80 border-r border-gray-200 flex flex-col">
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900">Chat History</h3>
+                {(isLoading || isStreaming) && (
+                  <div className="flex items-center text-xs text-orange-600">
+                    <div className="animate-spin rounded-full h-3 w-3 border border-orange-400 border-t-transparent mr-1"></div>
+                    <span>AI responding...</span>
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search messages..."
+                  disabled={isLoading || isStreaming}
+                  className={`w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                    isLoading || isStreaming ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''
+                  }`}
+                />
+                <svg className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
+              {chatHistory.sessions.length === 0 ? (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  No chat history yet
+                </div>
+              ) : (
+                <div className="space-y-1 p-2">
+                  {chatHistory.sessions.map((session) => (
+                    <button
+                      key={session.session_id}
+                      onClick={() => {
+                        if (!isLoading && !isStreaming) {
+                          chatHistory.loadSession(session.session_id);
+                        }
+                      }}
+                      disabled={isLoading || isStreaming}
+                      className={`w-full text-left p-3 rounded-lg text-sm transition-colors ${
+                        chatHistory.currentSessionId === session.session_id
+                          ? 'bg-blue-50 border border-blue-200'
+                          : isLoading || isStreaming
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'hover:bg-gray-50 border border-transparent'
+                      }`}
+                    >
+                      <div className="font-medium text-gray-900 truncate">
+                        {session.title || 'Untitled Chat'}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {new Date(session.updated_at).toLocaleDateString()}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
         {/* Chat Header with Provider Selection */}
         <div className="p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
           <div className="flex justify-between items-center flex-wrap gap-2 sm:flex-nowrap">
@@ -1422,12 +1563,61 @@ export default function InferencePage() {
               )}
             </div>
 
-            <button
-              onClick={clearChat}
-              className="text-gray-500 hover:text-gray-700 px-3 py-1 rounded-md text-sm transition-colors"
-            >
-              Clear Chat
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  if (!isLoading && !isStreaming) {
+                    setShowHistorySidebar(!showHistorySidebar);
+                  }
+                }}
+                disabled={isLoading || isStreaming}
+                className={`px-3 py-1 rounded-md text-sm transition-colors flex items-center space-x-1 ${
+                  isLoading || isStreaming
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Toggle chat history"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>History</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (!isLoading && !isStreaming) {
+                    startNewChat();
+                  }
+                }}
+                disabled={isLoading || isStreaming}
+                className={`px-3 py-1 rounded-md text-sm transition-colors flex items-center space-x-1 ${
+                  isLoading || isStreaming
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Start new chat"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>New</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (!isLoading && !isStreaming) {
+                    clearChat();
+                  }
+                }}
+                disabled={isLoading || isStreaming}
+                className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                  isLoading || isStreaming
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Clear Chat
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1777,6 +1967,7 @@ export default function InferencePage() {
               </span>
             </button>
           </div>
+        </div>
         </div>
       </div>
 
