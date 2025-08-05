@@ -126,7 +126,33 @@ class DatabaseManager {
 
   async deleteChatSession(sessionId: string): Promise<void> {
     const db = await this.ensureInit();
-    await db.query('DELETE FROM chat_sessions WHERE session_id = $1', [sessionId]);
+    
+    try {
+      // Start a transaction
+      await db.exec('BEGIN');
+      
+      // First, check if the session exists
+      const checkResult = await db.query('SELECT * FROM chat_sessions WHERE session_id = $1', [sessionId]);
+      
+      if (checkResult.rows.length === 0) {
+        await db.exec('ROLLBACK');
+        return;
+      }
+      
+      // Delete messages first (even though CASCADE should handle this)
+      await db.query('DELETE FROM chat_messages WHERE session_id = $1', [sessionId]);
+      
+      // Delete the session
+      await db.query('DELETE FROM chat_sessions WHERE session_id = $1', [sessionId]);
+      
+      // Commit the transaction
+      await db.exec('COMMIT');
+      
+    } catch (error) {
+      console.error('Error during session deletion:', error);
+      await db.exec('ROLLBACK');
+      throw error;
+    }
   }
 
   // Chat message methods
