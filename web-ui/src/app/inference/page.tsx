@@ -102,6 +102,7 @@ export default function InferencePage() {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -412,8 +413,8 @@ export default function InferencePage() {
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
     setIsLoading(true);
+    setIsStreaming(true);
     setErrorWithTimeout(null);
-    setShowFundingAlert(false);
     
     // Reset textarea height
     setTimeout(() => {
@@ -454,9 +455,7 @@ export default function InferencePage() {
       // Step 5.2: Get the request headers (may trigger auto-funding)
       console.log("Getting request headers...");
       
-      // Monitor for potential funding operations
-      setFundingAlertMessage("Checking provider account balance and auto-funding if needed. You may see a wallet signature request for provider funding.");
-      setShowFundingAlert(true);
+      // Funding operations removed
       
       // Prepare the actual messages array that will be sent to the API
       const messagesToSend = [
@@ -473,15 +472,9 @@ export default function InferencePage() {
           JSON.stringify(messagesToSend)
         );
         
-        // Hide the funding alert after successful operation
-        setTimeout(() => {
-          setShowFundingAlert(false);
-        }, 2000);
         
         console.log("Request headers obtained successfully");
       } catch (headerError) {
-        // Hide funding alert and re-throw error
-        setShowFundingAlert(false);
         throw headerError;
       }
 
@@ -628,6 +621,8 @@ export default function InferencePage() {
       if (!firstContentReceived) {
         setIsLoading(false);
       }
+      // Always stop streaming when done
+      setIsStreaming(false);
     } catch (err: unknown) {
       console.error("Error with real API:", err);
       let errorMessage = "Failed to send message. Please try again.";
@@ -646,8 +641,6 @@ export default function InferencePage() {
       
       setErrorWithTimeout(`Chat error: ${errorMessage}`);
 
-      // Hide funding alert in case of error
-      setShowFundingAlert(false);
 
       // Remove the loading message if it exists
       setMessages((prev) =>
@@ -658,6 +651,8 @@ export default function InferencePage() {
       if (!firstContentReceived) {
         setIsLoading(false);
       }
+      // Always stop streaming in case of error
+      setIsStreaming(false);
     }
   };
 
@@ -977,10 +972,10 @@ export default function InferencePage() {
       <div className="bg-white rounded-xl border border-gray-200 flex flex-col" style={{ height: 'calc(100vh - 175px)' }}>
         {/* Chat Header with Provider Selection */}
         <div className="p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
+          <div className="flex justify-between items-center flex-wrap gap-2 sm:flex-nowrap">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Provider Selection Dropdown */}
-              <div className="relative min-w-[500px] provider-dropdown">
+              <div className="relative min-w-[200px] sm:min-w-[400px] lg:min-w-[500px] provider-dropdown">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-full bg-white border border-gray-300 rounded-md pl-3 pr-10 py-3 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
@@ -1104,7 +1099,7 @@ export default function InferencePage() {
 
               {/* Provider Info - Copy Address Only */}
               {selectedProvider && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap sm:flex-nowrap gap-1">
                   {providerAcknowledged !== null && (
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -1138,52 +1133,79 @@ export default function InferencePage() {
                   {/* Price Information */}
                   {(selectedProvider.inputPrice !== undefined ||
                     selectedProvider.outputPrice !== undefined) && (
-                    <div className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span>
-                        {selectedProvider.inputPrice !== undefined && (
-                          <span>
-                            In: {selectedProvider.inputPrice.toFixed(2)} A0GI
-                          </span>
-                        )}
-                        {selectedProvider.inputPrice !== undefined &&
-                          selectedProvider.outputPrice !== undefined && (
-                            <span className="mx-1">|</span>
+                    <div className="relative group/price">
+                      <div className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <span className="flex items-center">
+                          {selectedProvider.inputPrice !== undefined && (
+                            <span>
+                              {selectedProvider.inputPrice.toFixed(2)}
+                            </span>
                           )}
-                        {selectedProvider.outputPrice !== undefined && (
-                          <span>
-                            Out: {selectedProvider.outputPrice.toFixed(2)}{" "}
-                            A0GI
+                          {selectedProvider.inputPrice !== undefined &&
+                            selectedProvider.outputPrice !== undefined && (
+                              <span className="mx-1">/</span>
+                            )}
+                          {selectedProvider.outputPrice !== undefined && (
+                            <span>
+                              {selectedProvider.outputPrice.toFixed(2)}
+                            </span>
+                          )}
+                          <span className="ml-1 text-gray-500 hidden sm:inline">
+                            A0GI/M
                           </span>
-                        )}
-                        <span className="ml-1 text-gray-500">
-                          / million tokens
                         </span>
-                      </span>
+                      </div>
+                      {/* Price Tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/price:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                        <div className="font-semibold mb-1">Price per Million Tokens</div>
+                        {selectedProvider.inputPrice !== undefined && (
+                          <div>Input: {selectedProvider.inputPrice.toFixed(2)} A0GI</div>
+                        )}
+                        {selectedProvider.outputPrice !== undefined && (
+                          <div>Output: {selectedProvider.outputPrice.toFixed(2)} A0GI</div>
+                        )}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {/* Provider Balance */}
-                  <div 
-                    className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 relative group"
-                    title="Sub-account balance for this provider"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    <span>Balance: {(providerBalance ?? 0).toFixed(2)} A0GI</span>
+                  <div className="inline-flex items-center space-x-1">
+                    <div className="relative group/balance">
+                      <div 
+                        className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span>{(providerBalance ?? 0).toFixed(2)} A0GI</span>
+                      </div>
                       
+                      {/* Full Balance Tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/balance:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                        <div className="font-semibold mb-1">Balance: {providerBalance?.toFixed(18) ?? '0'} A0GI</div>
+                        <div className="text-gray-400 text-[10px] mt-1">Sub-account for this provider</div>
+                        <div className="text-gray-400 text-[10px]">Auto-transfers from main account</div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     {/* Low Balance Warning */}
                     {providerBalanceNeuron !== null &&
                      selectedProvider.inputPriceNeuron !== undefined && 
@@ -1199,7 +1221,7 @@ export default function InferencePage() {
                         </svg>
                         
                         {/* Warning Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-30 whitespace-nowrap">
                           Balance is low. Provider may refuse to reply.
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                             <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
@@ -1207,26 +1229,48 @@ export default function InferencePage() {
                         </div>
                       </div>
                     )}
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10" style={{ width: '280px', marginLeft: '-140px' }}>
-                      <div>
-                        This is a sub-account specifically for spending with the current provider. The system automatically determines and transfers amounts from the main account.
-                      </div>
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
-                    </div>
                   </div>
                   {/* Top Up Button */}
                   {selectedProvider && (
+                    <div className="relative group">
+                      <button
+                        onClick={() => setShowTopUpModal(true)}
+                        className="p-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                        title="Top up"
+                      >
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                      </button>
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                        Top up provider account
+                        <div className="absolute top-full right-2 -mt-1">
+                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="relative group">
                     <button
-                      onClick={() => setShowTopUpModal(true)}
-                      className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                      title="Top up provider account"
+                      onClick={() =>
+                        navigator.clipboard.writeText(selectedProvider.address)
+                      }
+                      className="p-1.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                      title="Copy address"
                     >
                       <svg
-                        className="w-3 h-3"
+                        className="w-3.5 h-3.5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1235,34 +1279,18 @@ export default function InferencePage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M12 4v16m8-8H4"
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                         />
                       </svg>
-                      <span>Top Up</span>
                     </button>
-                  )}
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(selectedProvider.address)
-                    }
-                    className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                    title="Copy full address"
-                  >
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span>Copy address</span>
-                  </button>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                      Copy address
+                      <div className="absolute top-full right-2 -mt-1">
+                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1399,6 +1427,7 @@ export default function InferencePage() {
                         {message.role === "assistant" &&
                           message.chatId &&
                           !isLoading &&
+                          !isStreaming &&
                           (() => {
                             const isExpired =
                               message.timestamp &&
@@ -1542,16 +1571,16 @@ export default function InferencePage() {
                   e.preventDefault();
                   if (providerAcknowledged === false) {
                     verifyProvider();
-                  } else if (inputMessage.trim() && !isLoading) {
+                  } else if (inputMessage.trim() && !isLoading && !isStreaming) {
                     sendMessage();
                   }
                 }
               }}
-              placeholder="Type your message... (Shift+Enter for new line)"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto"
+              placeholder={isLoading || isStreaming ? "AI is responding..." : "Type your message... (Shift+Enter for new line)"}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
               style={{ minHeight: '40px', maxHeight: '120px' }}
               rows={1}
-              disabled={isLoading}
+              disabled={isLoading || isStreaming}
             />
             <button
               onClick={() => {
@@ -1566,7 +1595,7 @@ export default function InferencePage() {
               disabled={
                 providerAcknowledged === false
                   ? isVerifyingProvider
-                  : !inputMessage.trim() || isLoading
+                  : !inputMessage.trim() || isLoading || isStreaming
               }
               className={`${
                 providerAcknowledged === false
@@ -1577,11 +1606,11 @@ export default function InferencePage() {
                 providerAcknowledged === false
                   ? "Verify provider to enable messaging"
                   : `Button status: ${
-                      !inputMessage.trim() || isLoading ? "disabled" : "enabled"
+                      !inputMessage.trim() || isLoading || isStreaming ? "disabled" : "enabled"
                     }`
               }
             >
-              {isLoading || isVerifyingProvider ? (
+              {isLoading || isStreaming || isVerifyingProvider ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
               ) : (
                 <svg

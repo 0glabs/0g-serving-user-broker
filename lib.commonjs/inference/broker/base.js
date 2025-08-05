@@ -20,8 +20,8 @@ class ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.cache = cache;
     }
-    async getProviderData(providerAddress) {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+    async getProviderData() {
+        const key = `${this.contract.getUserAddress()}`;
         const [settleSignerPrivateKey] = await Promise.all([
             this.metadata.getSettleSignerPrivateKey(key),
         ]);
@@ -149,10 +149,9 @@ class ZGServingUserBrokerBase {
                 throw new Error('Provider signer is not acknowledged');
             }
             const extractor = await this.getExtractor(providerAddress);
-            const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
-            const key = `${userAddress}_${providerAddress}`;
+            const { settleSignerPrivateKey } = await this.getProviderData();
+            const key = userAddress;
             let privateKey = settleSignerPrivateKey;
-            console.log('Private key:', privateKey);
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress);
                 const privateKeyStr = await (0, utils_1.decryptData)(this.contract.signer, account.additionalInfo);

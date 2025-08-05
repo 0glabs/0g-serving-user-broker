@@ -1656,7 +1656,7 @@ declare abstract class ZGServingUserBrokerBase {
     private topUpTargetThreshold;
     protected ledger: LedgerBroker;
     constructor(contract: InferenceServingContract, ledger: LedgerBroker, metadata: Metadata, cache: Cache);
-    protected getProviderData(providerAddress: string): Promise<{
+    protected getProviderData(): Promise<{
         settleSignerPrivateKey: bigint[] | null;
     }>;
     protected getService(providerAddress: string, useCache?: boolean): Promise<ServiceStructOutput$1>;

@@ -19,7 +19,6 @@ class Metadata {
     async setItem(key, value) {
         await this.initialize();
         const fullKey = this.storagePrefix + key;
-        console.log("isBrowser:", this.isBrowser, "Setting key:", fullKey, "Value:", value);
         if (this.isBrowser) {
             try {
                 console.log('Setting localStorage item:', fullKey, value);
@@ -51,7 +50,6 @@ class Metadata {
         }
     }
     async storeSettleSignerPrivateKey(key, value) {
-        console.log('Storing settle signer private key:', key, value);
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
         await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
