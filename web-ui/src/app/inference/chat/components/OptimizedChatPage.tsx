@@ -6,41 +6,9 @@ import { useAccount } from "wagmi";
 import { useSearchParams, useRouter } from "next/navigation";
 import { use0GBroker } from "../../../../hooks/use0GBroker";
 import { useChatHistory } from "../../../../hooks/useChatHistory";
+import { a0giToNeuron, neuronToA0gi } from "../../../../utils/currency";
 
-// Convert neuron to A0GI (1 A0GI = 10^18 neuron)
-const neuronToA0gi = (value: bigint): number => {
-  const divisor = BigInt(10 ** 18);
-  const integerPart = value / divisor;
-  const remainder = value % divisor;
-  const decimalPart = Number(remainder) / Number(divisor);
-  return Number(integerPart) + decimalPart;
-};
 
-// Convert A0GI to neuron
-const a0giToNeuron = (value: number): bigint => {
-  const valueStr = value.toFixed(18);
-  const parts = valueStr.split('.');
-  
-  // Handle integer part
-  const integerPart = parts[0];
-  let integerPartAsBigInt = BigInt(integerPart) * BigInt(10 ** 18);
-  
-  // Handle fractional part if it exists
-  if (parts.length > 1) {
-    let fractionalPart = parts[1];
-    while (fractionalPart.length < 18) {
-      fractionalPart += '0';
-    }
-    if (fractionalPart.length > 18) {
-      fractionalPart = fractionalPart.slice(0, 18); // Truncate to avoid overflow
-    }
-    
-    const fractionalPartAsBigInt = BigInt(fractionalPart);
-    integerPartAsBigInt += fractionalPartAsBigInt;
-  }
-  
-  return integerPartAsBigInt;
-};
 import ReactMarkdown from "react-markdown";
 
 interface Message {
@@ -333,7 +301,14 @@ export function OptimizedChatPage() {
             selectedProvider.address
           );
           console.log("Service metadata:", metadata);
-          setServiceMetadata(metadata);
+          if (metadata?.endpoint && metadata?.model) {
+            setServiceMetadata({
+              endpoint: metadata.endpoint,
+              model: metadata.model
+            });
+          } else {
+            setServiceMetadata(null);
+          }
         } catch (err: unknown) {
           console.error("Error fetching service metadata:", err);
           setServiceMetadata(null);
@@ -380,7 +355,7 @@ export function OptimizedChatPage() {
         try {
           const account = await broker.inference.getAccount(selectedProvider.address);
           if (account && account.balance) {
-            const balanceInA0gi = neuronToA0gi(account.balance);
+            const balanceInA0gi = neuronToA0gi(account.balance - account.pendingRefund);
             console.log("Provider balance:", balanceInA0gi);
             setProviderBalance(balanceInA0gi);
             setProviderBalanceNeuron(account.balance);
@@ -716,7 +691,14 @@ export function OptimizedChatPage() {
         currentMetadata = await broker.inference.getServiceMetadata(
           selectedProvider.address
         );
-        setServiceMetadata(currentMetadata);
+        if (currentMetadata?.endpoint && currentMetadata?.model) {
+          setServiceMetadata({
+            endpoint: currentMetadata.endpoint,
+            model: currentMetadata.model
+          });
+        } else {
+          setServiceMetadata(null);
+        }
         if (!currentMetadata) {
           throw new Error("Failed to get service metadata");
         }

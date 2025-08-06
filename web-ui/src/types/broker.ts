@@ -40,45 +40,6 @@ export interface Provider {
 }
 
 /**
- * Broker interface with properly typed methods
- */
-export interface ZGComputeNetworkBroker {
-  ledger: {
-    addLedger: (amount: number) => Promise<void>;
-    depositFund: (amount: number) => Promise<void>;
-    getLedger: () => Promise<any>;
-    ledger: {
-      getLedgerWithDetail: () => Promise<LedgerInfo>;
-    };
-  };
-  inference: {
-    listService: () => Promise<ServiceInfo[]>;
-    getServiceMetadata: (address: string) => Promise<ServiceMetadata>;
-    userAcknowledged: (address: string) => Promise<boolean>;
-    request: (
-      address: string,
-      fee: bigint,
-      inputData: string,
-      onChunk: (chunk: string) => void,
-      verifyBrokerSignature?: boolean
-    ) => Promise<{ chatId: string; signature: string }>;
-    acknowledgeFee: (address: string, chatId: string) => Promise<void>;
-    withdrawFee: (address: string, chatId: string) => Promise<void>;
-    withdrawAll: () => Promise<void>;
-    disputeResponseFromProvider: (
-      providerAddress: string,
-      chatId: string,
-      evidence: Uint8Array
-    ) => Promise<void>;
-    verifyModelResponse: (
-      response: string,
-      signature: string,
-      signer: string
-    ) => Promise<boolean>;
-  };
-}
-
-/**
  * Message interface with strict typing
  */
 export interface Message {

@@ -4,19 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
-interface NavigationItem {
-  href: string;
-  label: string;
-  preload: boolean;
-}
 
-const navigationItems: NavigationItem[] = [
-  { href: "/", label: "Home", preload: true },
-  { href: "/inference", label: "Inference", preload: true },
-  { href: "/inference/chat", label: "Chat", preload: true },
-  { href: "/ledger", label: "Ledger", preload: true },
-  { href: "/fine-tuning", label: "Fine-tuning", preload: true },
-];
 
 interface OptimizedLinkProps {
   href: string;
@@ -24,7 +12,6 @@ interface OptimizedLinkProps {
   children: React.ReactNode;
   preload?: boolean;
   onNavigationStart?: () => void;
-  pageType?: string;
 }
 
 export const OptimizedLink: React.FC<OptimizedLinkProps> = ({
@@ -33,10 +20,9 @@ export const OptimizedLink: React.FC<OptimizedLinkProps> = ({
   children,
   preload = true,
   onNavigationStart,
-  pageType,
 }) => {
   const router = useRouter();
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isNavigating] = useState(false);
 
   useEffect(() => {
     // 预加载页面资源
