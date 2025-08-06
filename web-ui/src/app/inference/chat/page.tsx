@@ -134,6 +134,9 @@ export default function InferencePage() {
   
   // Chat history state
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<(Message & { sessionId: string })[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Initialize chat history hook
   const chatHistory = useChatHistory({
@@ -470,6 +473,39 @@ export default function InferencePage() {
       console.error('Failed to load session:', err);
     }
   }, [chatHistory, isLoading, isStreaming]);
+
+  // Simple debounced search using useEffect and setTimeout
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const results = await chatHistory.searchMessages(searchQuery);
+        const searchMessages: (Message & { sessionId: string })[] = results.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          chatId: msg.chat_id,
+          isVerified: msg.is_verified,
+          isVerifying: msg.is_verifying,
+          sessionId: msg.session_id || '', // Add session_id from database result
+        }));
+        setSearchResults(searchMessages);
+      } catch (err) {
+        console.error('Search failed:', err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]); // Only depend on searchQuery
 
   // Track sessions to prevent unwanted syncing
   const lastLoadedSessionRef = useRef<string | null>(null);
@@ -1197,6 +1233,8 @@ export default function InferencePage() {
                 <input
                   type="text"
                   placeholder="Search messages..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   disabled={isLoading || isStreaming}
                   className={`w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     isLoading || isStreaming ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''
@@ -1209,13 +1247,78 @@ export default function InferencePage() {
             </div>
             
             <div className="flex-1 overflow-y-auto">
-              {chatHistory.sessions.length === 0 ? (
-                <div className="p-4 text-center text-gray-500 text-sm">
-                  No chat history yet
+              {/* Search Results */}
+              {searchQuery ? (
+                <div className="p-2">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-gray-500 text-sm flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600 mr-2"></div>
+                      Searching...
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No messages found for "{searchQuery}"
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="text-xs text-gray-500 font-medium px-2 py-1">
+                        {searchResults.length} result(s) found
+                      </div>
+                      {searchResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 bg-white border border-gray-200 rounded-lg transition-colors ${
+                            isLoading || isStreaming 
+                              ? 'opacity-50 cursor-not-allowed' 
+                              : 'hover:bg-blue-50 hover:border-blue-200 cursor-pointer'
+                          }`}
+                          onClick={async () => {
+                            if (result.sessionId && !isLoading && !isStreaming) {
+                              try {
+                                // Clear search first
+                                setSearchQuery('');
+                                setSearchResults([]);
+                                
+                                // Load the session containing this message
+                                await handleHistoryClick(result.sessionId);
+                              } catch (err) {
+                                console.error('Failed to load session from search result:', err);
+                              }
+                            }
+                          }}
+                        >
+                          <div className="text-xs text-gray-500 mb-1 flex items-center justify-between">
+                            <span>
+                              {result.role === 'user' ? 'You' : 'Assistant'} • {' '}
+                              {result.timestamp ? new Date(result.timestamp).toLocaleDateString() : 'Unknown date'}
+                            </span>
+                            <span className="text-blue-500 hover:text-blue-600 font-medium">
+                              View →
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-900 overflow-hidden" style={{ 
+                            display: '-webkit-box', 
+                            WebkitLineClamp: 2, 
+                            WebkitBoxOrient: 'vertical' 
+                          }}>
+                            {result.content.length > 100 
+                              ? result.content.substring(0, 100) + '...' 
+                              : result.content}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="space-y-1 p-2">
-                  {chatHistory.sessions.map((session) => (
+                /* Session List */
+                chatHistory.sessions.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No chat history yet
+                  </div>
+                ) : (
+                  <div className="space-y-1 p-2">
+                    {chatHistory.sessions.map((session) => (
                     <div
                       key={session.session_id}
                       className={`relative group rounded-lg text-sm transition-colors ${
@@ -1264,8 +1367,9 @@ export default function InferencePage() {
                         </svg>
                       </button>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )
               )}
             </div>
           </div>

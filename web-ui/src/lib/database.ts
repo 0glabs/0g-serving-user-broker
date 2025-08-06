@@ -1,7 +1,10 @@
 import { PGlite } from '@electric-sql/pglite';
+import { APP_CONSTANTS } from '../constants/app';
+import { errorHandler, withErrorHandling } from '../utils/errorHandling';
 
 export interface ChatMessage {
   id?: number;
+  session_id?: string;
   role: 'system' | 'user' | 'assistant';
   content: string;
   timestamp: number;
@@ -38,7 +41,7 @@ class DatabaseManager {
     try {
       // Initialize PGlite with IndexedDB persistence
       this.db = new PGlite({
-        dataDir: 'idb://chat-history-db',
+        dataDir: APP_CONSTANTS.DATABASE.DB_NAME,
       });
 
       // Create tables
@@ -71,6 +74,11 @@ class DatabaseManager {
         CREATE INDEX IF NOT EXISTS idx_chat_sessions_provider ON chat_sessions(provider_address);
         CREATE INDEX IF NOT EXISTS idx_chat_sessions_wallet ON chat_sessions(wallet_address);
         CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated ON chat_sessions(updated_at);
+        
+        -- Composite indexes for common queries
+        CREATE INDEX IF NOT EXISTS idx_chat_sessions_wallet_provider ON chat_sessions(wallet_address, provider_address);
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_session_timestamp ON chat_messages(session_id, timestamp);
+        CREATE INDEX IF NOT EXISTS idx_chat_sessions_wallet_updated ON chat_sessions(wallet_address, updated_at);
       `);
 
       // Migration: Add wallet_address column if it doesn't exist
@@ -119,7 +127,7 @@ class DatabaseManager {
     const db = await this.ensureInit();
     
     let query = 'SELECT * FROM chat_sessions';
-    let params: any[] = [];
+    const params: (string | number)[] = [];
     const conditions: string[] = [];
     
     if (walletAddress) {
@@ -257,14 +265,14 @@ class DatabaseManager {
   }
 
   // Get recent sessions for wallet
-  async getRecentSessions(walletAddress: string, providerAddress?: string, limit: number = 10): Promise<ChatSession[]> {
+  async getRecentSessions(walletAddress: string, providerAddress?: string, limit: number = APP_CONSTANTS.LIMITS.SESSION_HISTORY_LIMIT): Promise<ChatSession[]> {
     const db = await this.ensureInit();
     
     let query = `
       SELECT * FROM chat_sessions 
       WHERE wallet_address = $1
     `;
-    const params: any[] = [walletAddress];
+    const params: (string | number)[] = [walletAddress];
     
     if (providerAddress) {
       query += ` AND provider_address = $${params.length + 1}`;
