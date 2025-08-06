@@ -337,7 +337,7 @@ export abstract class ZGServingUserBrokerBase {
     }
 
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000000 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a 500 * (inputPrice + outputPrice)
      */
     async topUpAccountIfNeeded(
         provider: string,

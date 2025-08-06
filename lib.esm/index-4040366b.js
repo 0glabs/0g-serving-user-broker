@@ -9080,8 +9080,8 @@ class ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.cache = cache;
     }
-    async getProviderData(providerAddress) {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+    async getProviderData() {
+        const key = `${this.contract.getUserAddress()}`;
         const [settleSignerPrivateKey] = await Promise.all([
             this.metadata.getSettleSignerPrivateKey(key),
         ]);
@@ -9209,7 +9209,7 @@ class ZGServingUserBrokerBase {
                 throw new Error('Provider signer is not acknowledged');
             }
             const extractor = await this.getExtractor(providerAddress);
-            const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
+            const { settleSignerPrivateKey } = await this.getProviderData();
             const key = userAddress;
             let privateKey = settleSignerPrivateKey;
             if (!privateKey) {
@@ -9279,7 +9279,7 @@ class ZGServingUserBrokerBase {
         }
     }
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 5000000 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a 500 * (inputPrice + outputPrice)
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
@@ -10559,7 +10559,7 @@ class RequestProcessor extends ZGServingUserBrokerBase {
      *
      * 2. To Avoid Frequent Transfers
      *
-     * On the customer's side, if the balance falls below 500, it should be topped up to 10000. This is to avoid frequent
+     * On the customer's side, if the balance falls below 500, it should be topped up to 1000. This is to avoid frequent
      * transfers.
      *
      * 3. To Avoid Having to Check the Balance on Every Customer Request
@@ -12630,7 +12630,7 @@ async function safeDynamicImport() {
     if (isBrowser()) {
         throw new Error('ZG Storage operations are not available in browser environment.');
     }
-    const { download } = await import('./index-406c64e7.js');
+    const { download } = await import('./index-2bebd45a.js');
     return { download };
 }
 async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot, tokenCounterFileHash) {
@@ -18274,4 +18274,4 @@ async function createZGComputeNetworkBroker(signer, ledgerCA = '0x1a85Dd32da10c1
 }
 
 export { AccountProcessor as A, FineTuningBroker as F, InferenceBroker as I, LedgerBroker as L, ModelProcessor$1 as M, RequestProcessor as R, Verifier as V, ZGComputeNetworkBroker as Z, ResponseProcessor as a, createFineTuningBroker as b, createInferenceBroker as c, download as d, createLedgerBroker as e, createZGComputeNetworkBroker as f, isNode as g, isWebWorker as h, isBrowser as i, hasWebCrypto as j, getCryptoAdapter as k, bigintToBytes as l, genKeyPair as m, Request$1 as n, pedersenHash as p, signData as s, upload as u };
-//# sourceMappingURL=index-bc1b58c0.js.map
+//# sourceMappingURL=index-4040366b.js.map
