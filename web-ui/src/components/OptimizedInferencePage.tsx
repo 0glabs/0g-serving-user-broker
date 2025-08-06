@@ -6,6 +6,7 @@ import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { use0GBroker } from "../hooks/use0GBroker";
 import { useOptimizedDataFetching } from "../hooks/useOptimizedDataFetching";
+import { useNavigation } from "./OptimizedNavigation";
 
 // Convert neuron to A0GI (1 A0GI = 10^18 neuron)
 const neuronToA0gi = (value: bigint): number => {
@@ -55,6 +56,7 @@ export function OptimizedInferencePage() {
   const { isConnected } = useAccount();
   const { broker, isInitializing } = use0GBroker();
   const router = useRouter();
+  const { setIsNavigating, setTargetRoute, setTargetPageType } = useNavigation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [selectedProviderForBuild, setSelectedProviderForBuild] = useState<Provider | null>(null);
@@ -124,6 +126,12 @@ export function OptimizedInferencePage() {
   });
 
   const handleChatWithProvider = (provider: Provider) => {
+    // 触发导航 loading 状态
+    setIsNavigating(true);
+    setTargetRoute('Chat');
+    setTargetPageType('chat');
+    
+    // 导航到 chat 页面
     router.push(`/inference/chat?provider=${encodeURIComponent(provider.address)}`);
   };
 
