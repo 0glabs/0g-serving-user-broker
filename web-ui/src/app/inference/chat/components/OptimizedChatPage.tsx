@@ -1067,6 +1067,11 @@ export function OptimizedChatPage() {
 
       console.log("Provider verification completed:", acknowledged);
       
+      // Refresh ledger info after successful verification
+      if (acknowledged) {
+        await refreshLedgerInfo();
+      }
+      
       // Progress tutorial to top-up step if tutorial is active
       if (showTutorial && tutorialStep === 'verify' && acknowledged) {
         setTutorialStep('top-up');
