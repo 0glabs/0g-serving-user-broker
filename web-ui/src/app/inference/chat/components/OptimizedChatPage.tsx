@@ -1109,11 +1109,14 @@ export function OptimizedChatPage() {
       );
 
       console.log("Top up successful");
-      setShowTopUpModal(false);
-      setTopUpAmount("");
-
-      // Refresh provider balance
-      const account = await broker.inference.getAccount(selectedProvider.address);
+      
+      // Refresh both ledger info and provider balance in parallel for better performance
+      const [, account] = await Promise.all([
+        refreshLedgerInfo(), // Refresh ledger info to update available balance
+        broker.inference.getAccount(selectedProvider.address) // Get updated provider account
+      ]);
+      
+      // Update provider balance state
       if (account && account.balance) {
         const balanceInA0gi = neuronToA0gi(account.balance - account.pendingRefund);
         const pendingRefundInA0gi = neuronToA0gi(account.pendingRefund);
@@ -1121,6 +1124,10 @@ export function OptimizedChatPage() {
         setProviderBalanceNeuron(account.balance);
         setProviderPendingRefund(pendingRefundInA0gi);
       }
+      
+      // Close modal and reset amount
+      setShowTopUpModal(false);
+      setTopUpAmount("");
       
       // Complete tutorial if active
       if (showTutorial && tutorialStep === 'topup') {
@@ -1563,46 +1570,76 @@ export function OptimizedChatPage() {
                 )}
               </div>
 
-              {/* Provider Info - Copy Address Only */}
+              {/* Provider Info Bar - Redesigned */}
               {selectedProvider && (
-                <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap sm:flex-nowrap gap-1">
-                  {providerAcknowledged !== null && (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        providerAcknowledged
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      <svg
-                        className="w-3 h-3 mr-1"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
+                <div className="flex items-center gap-2">
+                  {/* Left Section: Provider Status and Address */}
+                  <div className="flex items-center gap-2 flex-1">
+                    {/* Verification Status */}
+                    {providerAcknowledged !== null && (
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          providerAcknowledged
+                            ? "bg-green-100 text-green-700 border border-green-200"
+                            : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                        }`}
                       >
-                        {providerAcknowledged ? (
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          {providerAcknowledged ? (
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          ) : (
+                            <path
+                              fillRule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          )}
+                        </svg>
+                        {providerAcknowledged ? "Verified" : "Not Verified"}
+                      </span>
+                    )}
+                    
+                    {/* Provider Address with Copy */}
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500 font-mono">
+                        {selectedProvider.address.slice(0, 6)}...{selectedProvider.address.slice(-4)}
+                      </span>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(selectedProvider.address)}
+                        className="p-1 rounded hover:bg-gray-200 transition-colors group"
+                        title="Copy provider address"
+                      >
+                        <svg
+                          className="w-3 h-3 text-gray-400 group-hover:text-gray-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                           />
-                        ) : (
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        )}
-                      </svg>
-                      {providerAcknowledged ? "Verified" : "Not Verified"}
-                    </span>
-                  )}
-                  {/* Price Information */}
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {/* Center Section: Price Info */}
                   {(selectedProvider.inputPrice !== undefined ||
                     selectedProvider.outputPrice !== undefined) && (
-                    <div className="relative group/price">
-                      <div className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                    <div className="relative group">
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-gray-200">
                         <svg
-                          className="w-3 h-3"
+                          className="w-3.5 h-3.5 text-gray-500"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1614,28 +1651,22 @@ export function OptimizedChatPage() {
                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        <span className="flex items-center">
+                        <span className="text-xs font-medium text-gray-700">
                           {selectedProvider.inputPrice !== undefined && (
-                            <span>
-                              {selectedProvider.inputPrice.toFixed(2)}
-                            </span>
+                            <span>{selectedProvider.inputPrice.toFixed(2)}</span>
                           )}
                           {selectedProvider.inputPrice !== undefined &&
                             selectedProvider.outputPrice !== undefined && (
-                              <span className="mx-1">/</span>
+                              <span className="mx-0.5">/</span>
                             )}
                           {selectedProvider.outputPrice !== undefined && (
-                            <span>
-                              {selectedProvider.outputPrice.toFixed(2)}
-                            </span>
+                            <span>{selectedProvider.outputPrice.toFixed(2)}</span>
                           )}
-                          <span className="ml-1 text-gray-500 hidden sm:inline">
-                            A0GI/M
-                          </span>
+                          <span className="ml-1 text-gray-500">A0GI/M</span>
                         </span>
                       </div>
                       {/* Price Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/price:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
                         <div className="font-semibold mb-1">Price per Million Tokens</div>
                         {selectedProvider.inputPrice !== undefined && (
                           <div>Input: {selectedProvider.inputPrice.toFixed(2)} A0GI</div>
@@ -1649,104 +1680,112 @@ export function OptimizedChatPage() {
                       </div>
                     </div>
                   )}
-                  {/* Provider Balance */}
-                  <div className="inline-flex items-center space-x-1">
-                    <div className="relative group/balance">
+                  {/* Right Section: Funds and Actions */}
+                  <div className="flex items-center gap-2">
+                    {/* Available Funds Display */}
+                    <div className="relative group">
                       <div 
-                        className="inline-flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
+                          (providerBalanceNeuron !== null && providerBalanceNeuron === BigInt(0)) || (providerBalance ?? 0) === 0
+                            ? 'bg-red-50 border-red-200'
+                            : providerBalanceNeuron !== null &&
+                              selectedProvider.inputPriceNeuron !== undefined && 
+                              selectedProvider.outputPriceNeuron !== undefined && 
+                              providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron)
+                            ? 'bg-yellow-50 border-yellow-200'
+                            : 'bg-white border-gray-200'
+                        }`}
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        <span>{(providerBalance ?? 0).toFixed(2)} A0GI</span>
+                        {/* Icon based on fund status */}
+                        {(providerBalanceNeuron !== null && providerBalanceNeuron === BigInt(0)) || (providerBalance ?? 0) === 0 ? (
+                          <svg 
+                            className="w-3.5 h-3.5 text-red-500 animate-pulse" 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                          >
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        ) : providerBalanceNeuron !== null &&
+                          selectedProvider.inputPriceNeuron !== undefined && 
+                          selectedProvider.outputPriceNeuron !== undefined && 
+                          providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) ? (
+                          <svg 
+                            className="w-3.5 h-3.5 text-yellow-500" 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                          >
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                        )}
+                        <span className={`text-xs font-semibold ${
+                          (providerBalanceNeuron !== null && providerBalanceNeuron === BigInt(0)) || (providerBalance ?? 0) === 0
+                            ? 'text-red-700'
+                            : providerBalanceNeuron !== null &&
+                              selectedProvider.inputPriceNeuron !== undefined && 
+                              selectedProvider.outputPriceNeuron !== undefined && 
+                              providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron)
+                            ? 'text-yellow-700'
+                            : 'text-gray-700'
+                        }`}>
+                          {(providerBalance ?? 0).toFixed(2)} A0GI
+                        </span>
                       </div>
                       
-                      {/* Full Balance Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/balance:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                        <div className="font-semibold mb-1">{providerBalance?.toFixed(18) ?? '0'} A0GI</div>
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Low Balance Warning */}
-                    {providerBalanceNeuron !== null &&
-                     selectedProvider.inputPriceNeuron !== undefined && 
-                     selectedProvider.outputPriceNeuron !== undefined && 
-                     providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) && (
-                      <div className="relative group/warning">
-                        <svg 
-                          className="w-3.5 h-3.5 text-yellow-600" 
-                          fill="currentColor" 
-                          viewBox="0 0 20 20"
-                        >
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        
-                        {/* Warning Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/warning:opacity-100 transition-opacity duration-200 pointer-events-none z-30 whitespace-nowrap">
-                          Balance is low. Provider may refuse to reply.
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {/* Top Up Button */}
-                  {selectedProvider && (
-                    <div className="relative group">
-                      <button
-                        onClick={() => {
-                          setShowTopUpModal(true);
-                          // Close tutorial when top-up button is clicked
-                          if (showTutorial && tutorialStep === 'topup') {
-                            setShowTutorial(false);
-                            setTutorialStep(null);
-                            // Mark tutorial as completed for this provider
-                            if (selectedProvider) {
-                              localStorage.setItem(`tutorial_seen_${selectedProvider.address}`, 'true');
-                            }
-                          }
-                        }}
-                        className={`p-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors ${
-                          showTutorial && tutorialStep === 'topup'
-                            ? 'ring-4 ring-blue-400 ring-opacity-75 animate-pulse relative z-50'
-                            : ''
-                        }`}
-                        title="Top up"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      </button>
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
-                        Top up provider account
+                      {/* Funds Tooltip */}
+                      <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                        <div className="font-semibold mb-1">Available Funds</div>
+                        <div className="text-gray-300">{providerBalance?.toFixed(18) ?? '0'} A0GI</div>
+                        {(providerBalanceNeuron !== null && providerBalanceNeuron === BigInt(0)) || (providerBalance ?? 0) === 0 ? (
+                          <div className="text-red-300 mt-1">❌ No funds - Add funds to use this provider</div>
+                        ) : providerBalanceNeuron !== null &&
+                          selectedProvider.inputPriceNeuron !== undefined && 
+                          selectedProvider.outputPriceNeuron !== undefined && 
+                          providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron) ? (
+                          <div className="text-yellow-300 mt-1">⚠️ Low funds - Provider may refuse service</div>
+                        ) : providerBalanceNeuron !== null ? (
+                          <div className="text-green-300 mt-1">✅ Sufficient funds</div>
+                        ) : (
+                          <div className="text-gray-300 mt-1">Loading funds...</div>
+                        )}
                         <div className="absolute top-full right-2 -mt-1">
                           <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                         </div>
                       </div>
                     </div>
-                  )}
-                  <div className="relative group">
+
+                    {/* Add Funds Button */}
                     <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(selectedProvider.address)
-                      }
-                      className="p-1.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                      title="Copy address"
+                      onClick={() => {
+                        setShowTopUpModal(true);
+                        // Close tutorial when top-up button is clicked
+                        if (showTutorial && tutorialStep === 'topup') {
+                          setShowTutorial(false);
+                          setTutorialStep(null);
+                          // Mark tutorial as completed for this provider
+                          if (selectedProvider) {
+                            localStorage.setItem(`tutorial_seen_${selectedProvider.address}`, 'true');
+                          }
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        (providerBalanceNeuron !== null && providerBalanceNeuron === BigInt(0)) || (providerBalance ?? 0) === 0
+                          ? 'bg-red-500 text-white hover:bg-red-600 shadow-md animate-pulse'
+                          : providerBalanceNeuron !== null &&
+                            selectedProvider.inputPriceNeuron !== undefined && 
+                            selectedProvider.outputPriceNeuron !== undefined && 
+                            providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron)
+                          ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                      } ${
+                        showTutorial && tutorialStep === 'topup'
+                          ? 'ring-4 ring-blue-400 ring-opacity-75 animate-pulse relative z-50'
+                          : ''
+                      }`}
+                      title="Add funds for provider services"
                     >
                       <svg
                         className="w-3.5 h-3.5"
@@ -1757,18 +1796,12 @@ export function OptimizedChatPage() {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          strokeWidth={2.5}
+                          d="M12 4v16m8-8H4"
                         />
                       </svg>
+                      <span>Add Funds</span>
                     </button>
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
-                      Copy address
-                      <div className="absolute top-full right-2 -mt-1">
-                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
@@ -2216,10 +2249,10 @@ export function OptimizedChatPage() {
                 {/* Transfer Amount Input */}
                 <div>
                   <p className="mb-3 text-sm text-gray-600">
-                    Transfer funds from your available balance to pay for this provider's services. Current: <span className="font-semibold">{(providerBalance ?? 0).toFixed(6)} A0GI</span>
+                    Transfer funds from your available balance to pay for this provider's services. Current funds: <span className="font-semibold">{(providerBalance ?? 0).toFixed(6)} A0GI</span>
                   </p>
                   <div className="text-xs text-gray-500 mb-3">
-                    Available for Top-up: {ledgerInfo && providerPendingRefund !== null ? (
+                    Available for Transfer: {ledgerInfo && providerPendingRefund !== null ? (
                       <span className="font-medium">{(parseFloat(ledgerInfo.availableBalance) + (providerPendingRefund || 0)).toFixed(6)} A0GI</span>
                     ) : (
                       <span>Loading...</span>

@@ -5,7 +5,7 @@ interface DataFetchingOptions<T> {
   cacheKey?: string;
   cacheTTL?: number; // Time to live in milliseconds
   dependencies?: unknown[];
-  initialData?: T;
+  initialData?: T | null;
   skip?: boolean;
 }
 
