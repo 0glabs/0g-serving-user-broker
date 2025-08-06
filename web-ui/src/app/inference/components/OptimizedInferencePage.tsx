@@ -195,7 +195,7 @@ export function OptimizedInferencePage() {
       <div className="mb-3">
         <h1 className="text-lg font-semibold text-gray-900">Inference</h1>
         <p className="text-xs text-gray-500">
-          Choose from decentralized AI providers to start chatting with powerful language models
+        Choose from decentralized AI providers to start chatting or integrate the service into your own application
         </p>
       </div>
 
