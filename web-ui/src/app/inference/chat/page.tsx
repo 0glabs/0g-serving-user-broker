@@ -431,33 +431,67 @@ export default function InferencePage() {
     }
   }, [selectedProvider, providerAcknowledged]);
 
-  // Simple function to handle history clicks
-  const handleHistoryClick = useCallback(async (sessionId: string) => {
-    if (isLoading || isStreaming) return;
+  // Function to scroll to a specific message
+  const scrollToMessage = useCallback((targetContent: string) => {
+    const messageElements = document.querySelectorAll('[data-message-content]');
+    for (const element of messageElements) {
+      if (element.getAttribute('data-message-content')?.includes(targetContent.substring(0, 50))) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight the message temporarily
+        element.classList.add('bg-yellow-100');
+        setTimeout(() => {
+          element.classList.remove('bg-yellow-100');
+        }, 2000);
+        break;
+      }
+    }
+  }, []);
+
+  // Function to handle history clicks with optional message targeting
+  const handleHistoryClick = useCallback(async (sessionId: string, targetMessageContent?: string) => {
+    console.log('handleHistoryClick called:', { sessionId, targetMessageContent });
+    
+    // Clear any previous message targeting when clicking regular history
+    if (!targetMessageContent) {
+      lastTargetMessageRef.current = null;
+    }
     
     try {
-      // Set the flag to prevent unwanted syncing
-      hasManuallyLoadedSession.current = true;
+      // Reset loading/streaming states for history navigation
+      setIsLoading(false);
+      setIsStreaming(false);
       
-      // Load the session in the chat history hook first
+      // Set flag to prevent auto-scrolling to bottom
+      isLoadingHistoryRef.current = true;
+      
+      console.log('Loading session:', sessionId);
+      
+      // Load session and get messages directly from database
       await chatHistory.loadSession(sessionId);
       
-      // Then manually load and set the messages to ensure we get all data
+      // Import dbManager directly to get fresh data
       const { dbManager } = await import('../../../lib/database');
-      const dbMessages = await dbManager.getMessages(sessionId);
+      const sessionMessages = await dbManager.getMessages(sessionId);
       
-      const historyMessages: Message[] = dbMessages.map(msg => ({
+      console.log('Session loaded successfully:', { 
+        sessionId, 
+        messagesCount: sessionMessages.length,
+        firstMessage: sessionMessages[0]?.content?.substring(0, 50)
+      });
+      
+      // Convert database messages to UI format
+      const historyMessages: Message[] = sessionMessages.map(msg => ({
         role: msg.role,
         content: msg.content,
         timestamp: msg.timestamp,
-        chatId: msg.chat_id,
+        chatId: msg.session_id, // Use session_id for chatId
         isVerified: msg.is_verified,
         isVerifying: msg.is_verifying,
       }));
 
-      // Only add system message if history doesn't contain one
+      // Add system message if needed
       const hasSystemMessage = historyMessages.some(msg => msg.role === 'system');
-      if (!hasSystemMessage) {
+      if (!hasSystemMessage && historyMessages.length > 0) {
         historyMessages.unshift({
           role: "system",
           content: "You are a helpful assistant that provides accurate information.",
@@ -467,12 +501,31 @@ export default function InferencePage() {
 
       setMessages(historyMessages);
       
-      // Reset the flag after setting messages
-      hasManuallyLoadedSession.current = false;
+      // If we have a target message, scroll to it after a delay
+      if (targetMessageContent) {
+        lastTargetMessageRef.current = targetMessageContent;
+        setTimeout(() => {
+          scrollToMessage(targetMessageContent);
+        }, 300);
+      } else {
+        // Clear highlighting from previous targeted messages
+        setTimeout(() => {
+          const highlightedElements = document.querySelectorAll('.bg-yellow-100');
+          highlightedElements.forEach(el => el.classList.remove('bg-yellow-100'));
+        }, 100);
+      }
+      
+      // Reset flags
+      setTimeout(() => {
+        isLoadingHistoryRef.current = false;
+        isUserScrollingRef.current = false;
+      }, 200);
+      
     } catch (err) {
       console.error('Failed to load session:', err);
+      isLoadingHistoryRef.current = false;
     }
-  }, [chatHistory, isLoading, isStreaming]);
+  }, [chatHistory, scrollToMessage]);
 
   // Simple debounced search using useEffect and setTimeout
   useEffect(() => {
@@ -507,49 +560,50 @@ export default function InferencePage() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]); // Only depend on searchQuery
 
-  // Track sessions to prevent unwanted syncing
+  // Track sessions for reference
   const lastLoadedSessionRef = useRef<string | null>(null);
-  const hasManuallyLoadedSession = useRef(false);
-  
-  // Only sync when we've manually loaded a session via history click
-  useEffect(() => {
-    // Only sync if we've manually loaded a session AND it's different from before
-    if (hasManuallyLoadedSession.current && 
-        chatHistory.currentSessionId && 
-        lastLoadedSessionRef.current !== chatHistory.currentSessionId) {
-      
-      const historyMessages: Message[] = chatHistory.messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp,
-        chatId: msg.chat_id,
-        isVerified: msg.is_verified,
-        isVerifying: msg.is_verifying,
-      }));
 
-      // Only add system message if history doesn't contain one
-      const hasSystemMessage = historyMessages.some(msg => msg.role === 'system');
-      if (!hasSystemMessage) {
-        historyMessages.unshift({
-          role: "system",
-          content: "You are a helpful assistant that provides accurate information.",
-          timestamp: Date.now(),
-        });
-      }
-
-      setMessages(historyMessages);
-      hasManuallyLoadedSession.current = false; // Reset flag
-    }
-    
-    // Update the tracking ref
-    lastLoadedSessionRef.current = chatHistory.currentSessionId;
-  }, [chatHistory.currentSessionId, chatHistory.messages]);
-
-  // Auto scroll to bottom when messages change (but not for verification updates)
+  // Auto scroll to bottom when messages change (but not for verification updates or history navigation)
   const previousMessagesRef = useRef<Message[]>([]);
+  const isUserScrollingRef = useRef(false);
+  const isLoadingHistoryRef = useRef(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const lastTargetMessageRef = useRef<string | null>(null);
+  const lastClickTimeRef = useRef<number>(0);
+  const lastClickedSessionRef = useRef<string | null>(null);
+  
+  // Initialize click tracking on component mount
+  useEffect(() => {
+    lastClickTimeRef.current = 0;
+    lastClickedSessionRef.current = null;
+    lastTargetMessageRef.current = null;
+  }, []);
+  
+  // Track user scroll behavior to stop auto-scroll when user manually scrolls up
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+    if (!messagesContainer) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      
+      if (!isNearBottom && isStreaming) {
+        // User scrolled up during streaming, stop auto-scroll
+        isUserScrollingRef.current = true;
+      } else if (isNearBottom) {
+        // User is back near bottom, resume auto-scroll
+        isUserScrollingRef.current = false;
+      }
+    };
+
+    messagesContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => messagesContainer.removeEventListener('scroll', handleScroll);
+  }, [isStreaming]);
   
   useEffect(() => {
     const scrollToBottom = () => {
+      if (isUserScrollingRef.current) return; // Don't scroll if user is manually scrolling
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
@@ -574,8 +628,11 @@ export default function InferencePage() {
       return true;
     };
 
-    // Only scroll if it's not just a verification update
-    if (!isVerificationUpdate()) {
+    // Don't auto-scroll if:
+    // 1. It's just a verification update
+    // 2. It's a history navigation (loading history)
+    // 3. User is manually scrolling during streaming
+    if (!isVerificationUpdate() && !isLoadingHistoryRef.current && !isUserScrollingRef.current) {
       const timeoutId = setTimeout(scrollToBottom, 100);
       // Update the ref after scrolling decision
       previousMessagesRef.current = [...messages];
@@ -584,7 +641,7 @@ export default function InferencePage() {
     
     // Update the ref even if we don't scroll
     previousMessagesRef.current = [...messages];
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isStreaming]);
 
   const sendMessage = async () => {
     console.log("sendMessage called:", {
@@ -798,11 +855,13 @@ export default function InferencePage() {
                     )
                   );
 
-                  // Trigger auto-scroll during streaming
+                  // Trigger auto-scroll during streaming only if user isn't manually scrolling
                   setTimeout(() => {
-                    messagesEndRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                    });
+                    if (!isUserScrollingRef.current) {
+                      messagesEndRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                      });
+                    }
                   }, 50);
                 }
               } catch {
@@ -982,6 +1041,11 @@ export default function InferencePage() {
       },
     ]);
     setErrorWithTimeout(null);
+    
+    // Reset click tracking to ensure first history click works
+    lastClickTimeRef.current = 0;
+    lastClickedSessionRef.current = null;
+    lastTargetMessageRef.current = null;
     
     // Update tracking to prevent sync on this new session
     lastLoadedSessionRef.current = chatHistory.currentSessionId;
@@ -1279,8 +1343,8 @@ export default function InferencePage() {
                                 setSearchQuery('');
                                 setSearchResults([]);
                                 
-                                // Load the session containing this message
-                                await handleHistoryClick(result.sessionId);
+                                // Load the session and scroll to the specific message
+                                await handleHistoryClick(result.sessionId, result.content);
                               } catch (err) {
                                 console.error('Failed to load session from search result:', err);
                               }
@@ -1761,7 +1825,7 @@ export default function InferencePage() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages
             .map((message, originalIndex) => ({ message, originalIndex }))
             .filter(({ message }) => message.role !== "system")
@@ -1774,12 +1838,13 @@ export default function InferencePage() {
               >
                 <div className="flex items-start space-x-2 max-w-[80%]">
                   <div
-                    className={`rounded-lg px-4 py-2 break-words ${
+                    className={`rounded-lg px-4 py-2 break-words transition-colors ${
                       message.role === "user"
                         ? "bg-blue-600 text-white"
                         : "bg-gray-100 text-gray-900"
                     }`}
                     style={{ maxWidth: '100%', overflowWrap: 'break-word' }}
+                    data-message-content={message.content.substring(0, 100)}
                   >
                     <div className="text-sm">
                       {message.role === "assistant" ? (
