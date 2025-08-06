@@ -99,7 +99,7 @@ export function OptimizedChatPage() {
   
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
-  const [tutorialStep, setTutorialStep] = useState<'verify' | 'topup' | null>(null);
+  const [tutorialStep, setTutorialStep] = useState<'verify' | 'top-up' | null>(null);
   
   // Chat history state
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
@@ -334,9 +334,9 @@ export function OptimizedChatPage() {
           // Check if we should show tutorial
           const tutorialKey = `tutorial_seen_${selectedProvider.address}`;
           if (!localStorage.getItem(tutorialKey) && showTutorial) {
-            // If provider is already acknowledged, skip to topup step
+            // If provider is already acknowledged, skip to top-up step
             if (acknowledged) {
-              setTutorialStep('topup');
+              setTutorialStep('top-up');
             }
           }
         } catch (err: unknown) {
@@ -402,10 +402,10 @@ export function OptimizedChatPage() {
         const timer = setTimeout(() => {
           console.log('Starting tutorial');
           setShowTutorial(true);
-          // If provider is already acknowledged, start with topup step
+          // If provider is already acknowledged, start with top-up step
           if (providerAcknowledged === true) {
-            console.log('Provider already acknowledged, showing topup step');
-            setTutorialStep('topup');
+            console.log('Provider already acknowledged, showing top-up step');
+            setTutorialStep('top-up');
           } else {
             console.log('Provider not acknowledged, showing verify step');
             setTutorialStep('verify');
@@ -1069,7 +1069,7 @@ export function OptimizedChatPage() {
       
       // Progress tutorial to top-up step if tutorial is active
       if (showTutorial && tutorialStep === 'verify' && acknowledged) {
-        setTutorialStep('topup');
+        setTutorialStep('top-up');
       }
     } catch (err: unknown) {
       console.error("Error verifying provider:", err);
@@ -1130,7 +1130,7 @@ export function OptimizedChatPage() {
       setTopUpAmount("");
       
       // Complete tutorial if active
-      if (showTutorial && tutorialStep === 'topup') {
+      if (showTutorial && tutorialStep === 'top-up') {
         setShowTutorial(false);
         setTutorialStep(null);
         // Mark tutorial as seen for this provider
@@ -1762,7 +1762,7 @@ export function OptimizedChatPage() {
                       onClick={() => {
                         setShowTopUpModal(true);
                         // Close tutorial when top-up button is clicked
-                        if (showTutorial && tutorialStep === 'topup') {
+                        if (showTutorial && tutorialStep === 'top-up') {
                           setShowTutorial(false);
                           setTutorialStep(null);
                           // Mark tutorial as completed for this provider
@@ -1781,7 +1781,7 @@ export function OptimizedChatPage() {
                           ? 'bg-yellow-500 text-white hover:bg-yellow-600'
                           : 'bg-blue-500 text-white hover:bg-blue-600'
                       } ${
-                        showTutorial && tutorialStep === 'topup'
+                        showTutorial && tutorialStep === 'top-up'
                           ? 'ring-4 ring-blue-400 ring-opacity-75 animate-pulse relative z-50'
                           : ''
                       }`}
@@ -2251,6 +2251,30 @@ export function OptimizedChatPage() {
                   <p className="mb-3 text-sm text-gray-600">
                     Transfer funds from your available balance to pay for this provider's services. Current funds: <span className="font-semibold">{(providerBalance ?? 0).toFixed(6)} A0GI</span>
                   </p>
+                  
+                  {/* Check if there's pending refund */}
+                  {providerPendingRefund && providerPendingRefund > 0 ? (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="text-sm text-yellow-800">
+                        <p className="mb-2">
+                          <span className="font-semibold">Pending Refund: {providerPendingRefund.toFixed(6)} A0GI</span>
+                        </p>
+                        <p className="text-xs mb-3">
+                          You previously requested to withdraw funds from this provider. Please cancel the withdrawal request to replenish the fund.
+                        </p>
+                        <button
+                          onClick={() => {
+                            setTopUpAmount(providerPendingRefund.toFixed(6));
+                          }}
+                          className="px-3 py-1 bg-yellow-600 text-white text-xs font-medium rounded hover:bg-yellow-700 transition-colors"
+                          disabled={isTopping}
+                        >
+                          Use Pending Refund ({providerPendingRefund.toFixed(6)} A0GI)
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                  
                   <div className="text-xs text-gray-500 mb-3">
                     Available for Transfer: {ledgerInfo && providerPendingRefund !== null ? (
                       <span className="font-medium">{(parseFloat(ledgerInfo.availableBalance) + (providerPendingRefund || 0)).toFixed(6)} A0GI</span>
@@ -2271,11 +2295,11 @@ export function OptimizedChatPage() {
                       id="top-up-amount"
                       value={topUpAmount}
                       onChange={(e) => setTopUpAmount(e.target.value)}
-                      placeholder="Enter amount"
+                      placeholder={providerPendingRefund && providerPendingRefund > 0 ? "" : "Enter amount"}
                       min="0"
                       step="0.000001"
-                      className="w-full px-4 py-3 pr-16 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                      disabled={isTopping}
+                      className="w-full px-4 py-3 pr-16 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      disabled={isTopping || !!(providerPendingRefund && providerPendingRefund > 0)}
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                       <span className="text-gray-500 sm:text-sm">A0GI</span>
@@ -2334,7 +2358,7 @@ export function OptimizedChatPage() {
                   </p>
                 </>
               )}
-              {tutorialStep === 'topup' && (
+              {tutorialStep === 'top-up' && (
                 <>
                   <h3 className="font-semibold text-gray-900 mb-2">
                     Top Up Provider
