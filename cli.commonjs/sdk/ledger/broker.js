@@ -122,7 +122,7 @@ class LedgerBroker {
      * @param provider - The address of the provider to whom the funds are being transferred.
      * @param serviceTypeStr - The type of service for which the funds are being transferred.
      *                         It can be either 'inference' or 'fine-tuning'.
-     * @param amount - The amount of funds to be transferred. Units are in A0GI.
+     * @param amount - The amount of funds to be transferred. Units are in neuron.
      * @param {number} gasPrice - The gas price to be used for the transaction. If not provided,
      *                            the default/auto-generated gas price will be used. Units are in neuron.
      *

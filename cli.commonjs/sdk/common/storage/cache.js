@@ -10,10 +10,12 @@ var CacheValueTypeEnum;
 class Cache {
     nodeStorage = {};
     initialized = false;
+    isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+    storagePrefix = '0g_cache_';
     constructor() { }
     setLock(key, value, ttl, type) {
         this.initialize();
-        if (this.nodeStorage[key]) {
+        if (this.getStorageItem(key)) {
             return false;
         }
         this.setItem(key, value, ttl, type);
@@ -21,7 +23,7 @@ class Cache {
     }
     removeLock(key) {
         this.initialize();
-        delete this.nodeStorage[key];
+        this.removeStorageItem(key);
     }
     setItem(key, value, ttl, type) {
         this.initialize();
@@ -31,18 +33,18 @@ class Cache {
             value: Cache.encodeValue(value),
             expiry: now.getTime() + ttl,
         };
-        this.nodeStorage[key] = JSON.stringify(item);
+        this.setStorageItem(key, JSON.stringify(item));
     }
     getItem(key) {
         this.initialize();
-        const itemStr = this.nodeStorage[key] ?? null;
+        const itemStr = this.getStorageItem(key);
         if (!itemStr) {
             return null;
         }
         const item = JSON.parse(itemStr);
         const now = new Date();
         if (now.getTime() > item.expiry) {
-            delete this.nodeStorage[key];
+            this.removeStorageItem(key);
             return null;
         }
         return Cache.decodeValue(item.value, item.type);
@@ -51,8 +53,86 @@ class Cache {
         if (this.initialized) {
             return;
         }
-        this.nodeStorage = {};
+        if (!this.isBrowser) {
+            this.nodeStorage = {};
+        }
+        else {
+            this.cleanupExpiredItems();
+        }
         this.initialized = true;
+    }
+    setStorageItem(key, value) {
+        const fullKey = this.storagePrefix + key;
+        if (this.isBrowser) {
+            try {
+                window.localStorage.setItem(fullKey, value);
+            }
+            catch (e) {
+                console.warn('Failed to set localStorage item:', e);
+                this.nodeStorage[key] = value;
+            }
+        }
+        else {
+            this.nodeStorage[key] = value;
+        }
+    }
+    getStorageItem(key) {
+        const fullKey = this.storagePrefix + key;
+        if (this.isBrowser) {
+            try {
+                return window.localStorage.getItem(fullKey);
+            }
+            catch (e) {
+                console.warn('Failed to get localStorage item:', e);
+                return this.nodeStorage[key] ?? null;
+            }
+        }
+        else {
+            return this.nodeStorage[key] ?? null;
+        }
+    }
+    removeStorageItem(key) {
+        const fullKey = this.storagePrefix + key;
+        if (this.isBrowser) {
+            try {
+                window.localStorage.removeItem(fullKey);
+            }
+            catch (e) {
+                console.warn('Failed to remove localStorage item:', e);
+                delete this.nodeStorage[key];
+            }
+        }
+        else {
+            delete this.nodeStorage[key];
+        }
+    }
+    cleanupExpiredItems() {
+        if (!this.isBrowser)
+            return;
+        try {
+            const keysToRemove = [];
+            for (let i = 0; i < window.localStorage.length; i++) {
+                const key = window.localStorage.key(i);
+                if (key && key.startsWith(this.storagePrefix)) {
+                    const itemStr = window.localStorage.getItem(key);
+                    if (itemStr) {
+                        try {
+                            const item = JSON.parse(itemStr);
+                            if (new Date().getTime() > item.expiry) {
+                                keysToRemove.push(key);
+                            }
+                        }
+                        catch (e) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                }
+            }
+            keysToRemove.forEach(key => window.localStorage.removeItem(key));
+        }
+        catch (e) {
+            console.warn('Failed to cleanup expired items:', e);
+        }
     }
     static encodeValue(value) {
         return JSON.stringify(value, (_, val) => typeof val === 'bigint' ? `${val.toString()}n` : val);
