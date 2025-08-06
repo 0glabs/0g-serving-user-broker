@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { dbManager, type ChatMessage, type ChatSession } from '../lib/database';
 
 export interface UseChatHistoryOptions {
-  providerAddress: string;
+  walletAddress: string;
+  providerAddress?: string;
   autoSave?: boolean;
 }
 
@@ -31,7 +32,7 @@ export interface UseChatHistoryReturn {
   error: string | null;
 }
 
-export function useChatHistory({ providerAddress, autoSave = true }: UseChatHistoryOptions): UseChatHistoryReturn {
+export function useChatHistory({ walletAddress, providerAddress, autoSave = true }: UseChatHistoryOptions): UseChatHistoryReturn {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -54,23 +55,25 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
     };
 
     initializeDatabase();
-  }, [providerAddress]);
+  }, [walletAddress]);
 
-  // Load sessions for current provider
+  // Load sessions for current wallet
   const loadSessions = useCallback(async () => {
     try {
-      const providerSessions = await dbManager.getChatSessions(providerAddress);
-      setSessions(providerSessions);
+      // Only pass walletAddress if it's not empty
+      const effectiveWalletAddress = walletAddress || undefined;
+      const walletSessions = await dbManager.getChatSessions(effectiveWalletAddress, providerAddress);
+      setSessions(walletSessions);
     } catch (err) {
       console.error('Failed to load sessions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load sessions');
     }
-  }, [providerAddress]);
+  }, [walletAddress, providerAddress]);
 
   // Create new session
   const createNewSession = useCallback(async (title?: string): Promise<string> => {
     try {
-      const sessionId = await dbManager.createChatSession(providerAddress, title);
+      const sessionId = await dbManager.createChatSession(providerAddress || '', walletAddress || '', title);
       setCurrentSessionId(sessionId);
       setMessages([]);
       await loadSessions(); // Refresh sessions list
@@ -80,7 +83,7 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
       setError(err instanceof Error ? err.message : 'Failed to create session');
       throw err;
     }
-  }, [providerAddress, loadSessions]);
+  }, [walletAddress, providerAddress, loadSessions]);
 
   // Load existing session
   const loadSession = useCallback(async (sessionId: string) => {
@@ -156,9 +159,8 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
       };
 
       // Save to database if autoSave is enabled
-      let messageId: number | undefined;
       if (autoSave) {
-        messageId = await dbManager.saveMessage(sessionId, message);
+        await dbManager.saveMessage(sessionId, message);
         
         // If this is the first user message, update session title
         if (messageData.role === 'user') {
@@ -175,15 +177,6 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
         }
       }
 
-      // Update local state with the database ID
-      const fullMessage: ChatMessage = {
-        ...message,
-        id: messageId,
-      };
-      
-      // Only update messages state when explicitly loading a session
-      // For normal message saving, don't update the local state to avoid conflicts
-      
       // Return the session ID for the caller to use
       return sessionId;
     } catch (err) {
@@ -234,13 +227,15 @@ export function useChatHistory({ providerAddress, autoSave = true }: UseChatHist
   // Search messages
   const searchMessages = useCallback(async (query: string): Promise<ChatMessage[]> => {
     try {
-      return await dbManager.searchMessages(query, providerAddress);
+      // Only pass walletAddress if it's not empty
+      const effectiveWalletAddress = walletAddress || undefined;
+      return await dbManager.searchMessages(query, effectiveWalletAddress, providerAddress);
     } catch (err) {
       console.error('Failed to search messages:', err);
       setError(err instanceof Error ? err.message : 'Failed to search messages');
       return [];
     }
-  }, [providerAddress]);
+  }, [walletAddress, providerAddress]);
 
   return {
     // Current session

@@ -88,7 +88,7 @@ const OFFICIAL_PROVIDERS: Provider[] = [
 ];
 
 export default function InferencePage() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { broker, isInitializing, ledgerInfo, refreshLedgerInfo } = use0GBroker();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -137,7 +137,8 @@ export default function InferencePage() {
   
   // Initialize chat history hook
   const chatHistory = useChatHistory({
-    providerAddress: selectedProvider?.address || '',
+    walletAddress: address || '',
+    providerAddress: selectedProvider?.address,
     autoSave: true,
   });
 
