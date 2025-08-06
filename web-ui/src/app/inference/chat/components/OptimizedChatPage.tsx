@@ -4,8 +4,8 @@ import * as React from "react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useSearchParams, useRouter } from "next/navigation";
-import { use0GBroker } from "../hooks/use0GBroker";
-import { useChatHistory } from "../hooks/useChatHistory";
+import { use0GBroker } from "../../../../hooks/use0GBroker";
+import { useChatHistory } from "../../../../hooks/useChatHistory";
 
 // Convert neuron to A0GI (1 A0GI = 10^18 neuron)
 const neuronToA0gi = (value: bigint): number => {
@@ -470,7 +470,7 @@ export function OptimizedChatPage() {
       await chatHistory.loadSession(sessionId);
       
       // Import dbManager directly to get fresh data
-      const { dbManager } = await import('../../../lib/database');
+      const { dbManager } = await import('../../../../lib/database');
       const sessionMessages = await dbManager.getMessages(sessionId);
       
       console.log('Session loaded successfully:', { 
@@ -893,7 +893,7 @@ export function OptimizedChatPage() {
       if (completeContent.trim() && currentSessionForAssistant) {
         // Directly save to database using the session ID we got from user message
         try {
-          const { dbManager } = await import('../../../lib/database');
+          const { dbManager } = await import('../../../../lib/database');
           await dbManager.saveMessage(currentSessionForAssistant, {
             role: "assistant",
             content: completeContent,

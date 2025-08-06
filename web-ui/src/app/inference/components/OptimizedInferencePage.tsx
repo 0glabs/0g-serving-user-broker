@@ -4,9 +4,9 @@ import * as React from "react";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { use0GBroker } from "../hooks/use0GBroker";
-import { useOptimizedDataFetching } from "../hooks/useOptimizedDataFetching";
-import { useNavigation } from "./OptimizedNavigation";
+import { use0GBroker } from "../../../hooks/use0GBroker";
+import { useOptimizedDataFetching } from "../../../hooks/useOptimizedDataFetching";
+import { useNavigation } from "../../../components/OptimizedNavigation";
 
 // Convert neuron to A0GI (1 A0GI = 10^18 neuron)
 const neuronToA0gi = (value: bigint): number => {

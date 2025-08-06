@@ -156,7 +156,7 @@ export const LazyFineTuningPage = createLazyPage(
 );
 
 export const LazyChatPage = createLazyPage(
-  () => import('./OptimizedChatPage').then(module => ({ default: module.OptimizedChatPage })),
+  () => import('../app/inference/chat/components/OptimizedChatPage').then(module => ({ default: module.OptimizedChatPage })),
   <div className="w-full h-full">
     <div className="mb-3">
       <div className="animate-pulse">
