@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { createZGComputeNetworkBroker } from "0g-serving-broker";
-import type { Signer } from "ethers";
+import type { JsonRpcSigner } from "ethers";
 import { BrowserProvider } from "ethers";
 
 // Define the broker type to avoid import issues
@@ -86,7 +86,7 @@ export function use0GBroker(): Use0GBrokerReturn {
 
       // Convert walletClient to ethers signer with retry
       let provider: BrowserProvider;
-      let signer: Signer;
+      let signer: JsonRpcSigner | undefined;
       let retryCount = 0;
       const maxRetries = 3;
 
@@ -125,7 +125,7 @@ export function use0GBroker(): Use0GBrokerReturn {
         throw new Error("Failed to create signer");
       }
       const brokerInstance = await createZGComputeNetworkBroker(
-        signer,
+        signer as any,
         "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
         "0x0165878A594ca255338adfa4d48449f69242Eb8F",
         "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"

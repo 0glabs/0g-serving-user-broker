@@ -15,6 +15,7 @@ export interface ChatSession {
   id?: number;
   session_id: string;
   provider_address: string;
+  wallet_address: string;
   created_at: number;
   updated_at: number;
   title?: string;
@@ -46,6 +47,7 @@ class DatabaseManager {
           id SERIAL PRIMARY KEY,
           session_id TEXT UNIQUE NOT NULL,
           provider_address TEXT NOT NULL,
+          wallet_address TEXT,
           created_at BIGINT NOT NULL,
           updated_at BIGINT NOT NULL,
           title TEXT
@@ -67,8 +69,20 @@ class DatabaseManager {
         CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
         CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages(timestamp);
         CREATE INDEX IF NOT EXISTS idx_chat_sessions_provider ON chat_sessions(provider_address);
+        CREATE INDEX IF NOT EXISTS idx_chat_sessions_wallet ON chat_sessions(wallet_address);
         CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated ON chat_sessions(updated_at);
       `);
+
+      // Migration: Add wallet_address column if it doesn't exist
+      try {
+        await this.db.exec(`
+          ALTER TABLE chat_sessions 
+          ADD COLUMN IF NOT EXISTS wallet_address TEXT;
+        `);
+      } catch (error) {
+        // Column might already exist, which is fine
+        console.log('wallet_address column already exists or could not be added');
+      }
 
       console.log('Database initialized successfully');
     } catch (error) {
@@ -88,28 +102,38 @@ class DatabaseManager {
   }
 
   // Chat session methods
-  async createChatSession(providerAddress: string, title?: string): Promise<string> {
+  async createChatSession(providerAddress: string, walletAddress: string, title?: string): Promise<string> {
     const db = await this.ensureInit();
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2)}`;
     const now = Date.now();
 
     await db.query(`
-      INSERT INTO chat_sessions (session_id, provider_address, created_at, updated_at, title)
-      VALUES ($1, $2, $3, $4, $5)
-    `, [sessionId, providerAddress, now, now, title || null]);
+      INSERT INTO chat_sessions (session_id, provider_address, wallet_address, created_at, updated_at, title)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [sessionId, providerAddress, walletAddress, now, now, title || null]);
 
     return sessionId;
   }
 
-  async getChatSessions(providerAddress?: string): Promise<ChatSession[]> {
+  async getChatSessions(walletAddress?: string, providerAddress?: string): Promise<ChatSession[]> {
     const db = await this.ensureInit();
     
     let query = 'SELECT * FROM chat_sessions';
     let params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (walletAddress) {
+      conditions.push(`wallet_address = $${params.length + 1}`);
+      params.push(walletAddress);
+    }
     
     if (providerAddress) {
-      query += ' WHERE provider_address = $1';
-      params = [providerAddress];
+      conditions.push(`provider_address = $${params.length + 1}`);
+      params.push(providerAddress);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
     
     query += ' ORDER BY updated_at DESC';
@@ -206,7 +230,7 @@ class DatabaseManager {
   }
 
   // Search messages
-  async searchMessages(query: string, providerAddress?: string): Promise<ChatMessage[]> {
+  async searchMessages(query: string, walletAddress?: string, providerAddress?: string): Promise<ChatMessage[]> {
     const db = await this.ensureInit();
     
     let sqlQuery = `
@@ -216,8 +240,13 @@ class DatabaseManager {
     `;
     const params: (string | number)[] = [`%${query}%`];
     
+    if (walletAddress) {
+      sqlQuery += ` AND cs.wallet_address = $${params.length + 1}`;
+      params.push(walletAddress);
+    }
+    
     if (providerAddress) {
-      sqlQuery += ' AND cs.provider_address = $2';
+      sqlQuery += ` AND cs.provider_address = $${params.length + 1}`;
       params.push(providerAddress);
     }
     
@@ -227,16 +256,25 @@ class DatabaseManager {
     return result.rows as ChatMessage[];
   }
 
-  // Get recent sessions for provider
-  async getRecentSessions(providerAddress: string, limit: number = 10): Promise<ChatSession[]> {
+  // Get recent sessions for wallet
+  async getRecentSessions(walletAddress: string, providerAddress?: string, limit: number = 10): Promise<ChatSession[]> {
     const db = await this.ensureInit();
     
-    const result = await db.query(`
+    let query = `
       SELECT * FROM chat_sessions 
-      WHERE provider_address = $1 
-      ORDER BY updated_at DESC 
-      LIMIT $2
-    `, [providerAddress, limit]);
+      WHERE wallet_address = $1
+    `;
+    const params: any[] = [walletAddress];
+    
+    if (providerAddress) {
+      query += ` AND provider_address = $${params.length + 1}`;
+      params.push(providerAddress);
+    }
+    
+    query += ` ORDER BY updated_at DESC LIMIT $${params.length + 1}`;
+    params.push(limit);
+    
+    const result = await db.query(query, params);
 
     return result.rows as ChatSession[];
   }
