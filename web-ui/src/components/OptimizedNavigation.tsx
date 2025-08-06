@@ -13,7 +13,7 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { href: "/", label: "Home", preload: true },
   { href: "/inference", label: "Inference", preload: true },
-  { href: "/inference/chat", label: "Chat", preload: false }, // 不预加载 chat 页面
+  { href: "/inference/chat", label: "Chat", preload: true },
   { href: "/ledger", label: "Ledger", preload: true },
   { href: "/fine-tuning", label: "Fine-tuning", preload: true },
 ];
