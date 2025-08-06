@@ -413,7 +413,7 @@ export default function LedgerPage() {
                           <div className="text-center">
                             <p className="mb-2 font-medium">Auto-funding Process</p>
                             <p className="text-gray-300 leading-relaxed">
-                              When you use an AI service provider, the system automatically creates a dedicated sub-account for that provider and transfers funds based on usage to pay for the services.
+                              For each AI service provider you use, the system creates a separate sub-account under your control that holds funds specifically allocated for paying that provider's services.
                             </p>
                           </div>
                           {/* Arrow */}
@@ -554,7 +554,7 @@ export default function LedgerPage() {
                                           <div className="text-sm font-medium text-gray-900">{inference.provider}</div>
                                         </div>
                                         <div>
-                                          <div className="text-xs font-medium text-gray-500 mb-1">Current Balance</div>
+                                          <div className="text-xs font-medium text-gray-500 mb-1">Current Fund</div>
                                           <div className="text-sm font-medium text-gray-900">{formatNumber(inference.balance)} A0GI</div>
                                         </div>
                                         <div>
@@ -667,7 +667,7 @@ export default function LedgerPage() {
                                           <div className="text-sm font-medium text-gray-900">{fineTuning.provider}</div>
                                         </div>
                                         <div>
-                                          <div className="text-xs font-medium text-gray-500 mb-1">Current Balance</div>
+                                          <div className="text-xs font-medium text-gray-500 mb-1">Current Fund</div>
                                           <div className="text-sm font-medium text-gray-900">{formatNumber(fineTuning.balance)} A0GI</div>
                                         </div>
                                         <div>
