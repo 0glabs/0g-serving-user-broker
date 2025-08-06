@@ -89,6 +89,7 @@ export function OptimizedChatPage() {
   // Note: Deposit modal is now handled globally in LayoutContent
   const [providerBalance, setProviderBalance] = useState<number | null>(null);
   const [providerBalanceNeuron, setProviderBalanceNeuron] = useState<bigint | null>(null);
+  const [providerPendingRefund, setProviderPendingRefund] = useState<number | null>(null);
   const [showFundingAlert, setShowFundingAlert] = useState(false);
   const [fundingAlertMessage, setFundingAlertMessage] = useState("");
   const [showTopUpModal, setShowTopUpModal] = useState(false);
@@ -356,18 +357,28 @@ export function OptimizedChatPage() {
           const account = await broker.inference.getAccount(selectedProvider.address);
           if (account && account.balance) {
             const balanceInA0gi = neuronToA0gi(account.balance - account.pendingRefund);
+            const pendingRefundInA0gi = neuronToA0gi(account.pendingRefund);
             console.log("Provider balance:", balanceInA0gi);
+            console.log("Provider pending refund:", pendingRefundInA0gi);
             setProviderBalance(balanceInA0gi);
             setProviderBalanceNeuron(account.balance);
+            setProviderPendingRefund(pendingRefundInA0gi);
           } else {
             setProviderBalance(0);
             setProviderBalanceNeuron(BigInt(0));
+            setProviderPendingRefund(0);
           }
         } catch (err: unknown) {
           console.error("Error fetching provider balance:", err);
           setProviderBalance(null);
           setProviderBalanceNeuron(null);
+          setProviderPendingRefund(null);
         }
+      } else if (!selectedProvider) {
+        // Reset balance states when no provider is selected
+        setProviderBalance(null);
+        setProviderBalanceNeuron(null);
+        setProviderPendingRefund(null);
       }
     };
 
@@ -1104,9 +1115,11 @@ export function OptimizedChatPage() {
       // Refresh provider balance
       const account = await broker.inference.getAccount(selectedProvider.address);
       if (account && account.balance) {
-        const balanceInA0gi = neuronToA0gi(account.balance);
+        const balanceInA0gi = neuronToA0gi(account.balance - account.pendingRefund);
+        const pendingRefundInA0gi = neuronToA0gi(account.pendingRefund);
         setProviderBalance(balanceInA0gi);
         setProviderBalanceNeuron(account.balance);
+        setProviderPendingRefund(pendingRefundInA0gi);
       }
       
       // Complete tutorial if active
@@ -1650,9 +1663,7 @@ export function OptimizedChatPage() {
                       
                       {/* Full Balance Tooltip */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/balance:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                        <div className="font-semibold mb-1">Balance: {providerBalance?.toFixed(18) ?? '0'} A0GI</div>
-                        <div className="text-gray-400 text-[10px] mt-1">Sub-account for this provider</div>
-                        <div className="text-gray-400 text-[10px]">Auto-transfers from main account</div>
+                        <div className="font-semibold mb-1">{providerBalance?.toFixed(18) ?? '0'} A0GI</div>
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                           <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                         </div>
@@ -2183,7 +2194,7 @@ export function OptimizedChatPage() {
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Top Up Provider Account
+                  Add Funds for Provider Services
                 </h3>
                 <button
                   onClick={() => {
@@ -2202,48 +2213,41 @@ export function OptimizedChatPage() {
               </div>
 
               <div className="space-y-4">
-                {/* Total Balance Display */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">Main Account Balance</div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    {ledgerInfo ? (
-                      <span>{ledgerInfo.totalBalance} A0GI</span>
-                    ) : (
-                      <span className="text-gray-400">Loading...</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Provider Balance Display */}
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-sm text-blue-600 mb-1">Provider Account Balance</div>
-                  <div className="text-lg font-semibold text-blue-900">
-                    <span>{(providerBalance ?? 0).toFixed(6)} A0GI</span>
-                  </div>
-                </div>
-
                 {/* Transfer Amount Input */}
                 <div>
-                  <label
-                    htmlFor="top-up-amount"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Transfer Amount (A0GI)
-                  </label>
-                  <input
-                    type="number"
-                    id="top-up-amount"
-                    value={topUpAmount}
-                    onChange={(e) => setTopUpAmount(e.target.value)}
-                    placeholder="Enter amount to transfer"
-                    min="0"
-                    step="0.000001"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                    disabled={isTopping}
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    Transfer funds from your main account to the provider sub-account
+                  <p className="mb-3 text-sm text-gray-600">
+                    Transfer funds from your available balance to pay for this provider's services. Current: <span className="font-semibold">{(providerBalance ?? 0).toFixed(6)} A0GI</span>
                   </p>
+                  <div className="text-xs text-gray-500 mb-3">
+                    Available for Top-up: {ledgerInfo && providerPendingRefund !== null ? (
+                      <span className="font-medium">{(parseFloat(ledgerInfo.availableBalance) + (providerPendingRefund || 0)).toFixed(6)} A0GI</span>
+                    ) : (
+                      <span>Loading...</span>
+                    )} 
+                    (<a 
+                      href="/ledger" 
+                      className="text-blue-500 hover:text-blue-700 hover:underline cursor-pointer"
+                      title="Go to ledger page to view details and deposit funds"
+                    >
+                      view details and deposit in account page
+                    </a>)
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      id="top-up-amount"
+                      value={topUpAmount}
+                      onChange={(e) => setTopUpAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      min="0"
+                      step="0.000001"
+                      className="w-full px-4 py-3 pr-16 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                      disabled={isTopping}
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">A0GI</span>
+                    </div>
+                  </div>
                 </div>
 
                 <button
