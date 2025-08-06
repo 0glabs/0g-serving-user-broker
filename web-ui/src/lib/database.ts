@@ -1,6 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
 import { APP_CONSTANTS } from '../constants/app';
-import { errorHandler, withErrorHandling } from '../utils/errorHandling';
 
 export interface ChatMessage {
   id?: number;

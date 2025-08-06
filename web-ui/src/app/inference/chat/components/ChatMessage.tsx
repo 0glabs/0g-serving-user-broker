@@ -5,7 +5,6 @@ import { APP_CONSTANTS } from '../../../../constants/app';
 
 interface ChatMessageProps {
   message: Message;
-  isLast: boolean;
   onVerify?: (chatId: string) => void;
   onAcknowledge?: (chatId: string) => void;
   onDispute?: (chatId: string) => void;
@@ -14,7 +13,6 @@ interface ChatMessageProps {
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
-  isLast,
   onVerify,
   onAcknowledge,
   onDispute,
@@ -84,7 +82,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             : "bg-gray-100 text-gray-900"
         }`}
       >
-        <ReactMarkdown className="prose prose-sm max-w-none">
+        <ReactMarkdown>
           {message.content}
         </ReactMarkdown>
         

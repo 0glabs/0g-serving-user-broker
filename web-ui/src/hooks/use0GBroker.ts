@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
+import type { ZGComputeNetworkBroker } from "0g-serving-broker";
 import { createZGComputeNetworkBroker } from "0g-serving-broker";
 import type { JsonRpcSigner } from "ethers";
 import { BrowserProvider } from "ethers";
-import type { ZGComputeNetworkBroker } from '../types/broker';
 import { CONTRACT_ADDRESSES, validateContractAddress, APP_CONSTANTS } from '../constants/app';
 import { errorHandler } from '../utils/errorHandling';
 import { neuronToA0gi } from '../utils/currency';
