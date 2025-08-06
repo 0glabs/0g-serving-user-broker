@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Provider } from '../types/broker';
-import { formatBalance } from '../utils/currency';
+import type { Provider } from '../../../types/broker';
+import { formatBalance } from '../../../utils/currency';
 
 interface ProviderSelectorProps {
   providers: Provider[];

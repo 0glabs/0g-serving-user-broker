@@ -1,4 +1,4 @@
-import { OptimizedInferencePage } from "../../components/OptimizedInferencePage";
+import { OptimizedInferencePage } from "./components/OptimizedInferencePage";
 
 export default function InferencePageWrapper() {
   return <OptimizedInferencePage />;
