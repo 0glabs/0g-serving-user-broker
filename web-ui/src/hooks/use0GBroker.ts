@@ -3,18 +3,11 @@ import { useAccount, useWalletClient } from "wagmi";
 import { createZGComputeNetworkBroker } from "0g-serving-broker";
 import type { JsonRpcSigner } from "ethers";
 import { BrowserProvider } from "ethers";
+import type { ZGComputeNetworkBroker } from '../types/broker';
+import { CONTRACT_ADDRESSES, validateContractAddress, APP_CONSTANTS } from '../constants/app';
+import { errorHandler } from '../utils/errorHandling';
+import { neuronToA0gi } from '../utils/currency';
 
-// Define the broker type to avoid import issues
-type ZGComputeNetworkBroker = any;
-
-export const neuronToA0gi = (value: bigint): number => {
-  const divisor = BigInt(10 ** 18);
-  const integerPart = value / divisor;
-  const remainder = value % divisor;
-  const decimalPart = Number(remainder) / Number(divisor);
-
-  return Number(integerPart) + decimalPart;
-};
 
 const formatBalance = (value: number): string => {
   if (value === 0) return "0";
@@ -88,7 +81,7 @@ export function use0GBroker(): Use0GBrokerReturn {
       let provider: BrowserProvider;
       let signer: JsonRpcSigner | undefined;
       let retryCount = 0;
-      const maxRetries = 3;
+      const maxRetries = APP_CONSTANTS.BLOCKCHAIN.MAX_SIGNER_RETRIES;
 
       while (retryCount < maxRetries) {
         try {
@@ -116,7 +109,7 @@ export function use0GBroker(): Use0GBrokerReturn {
           }
 
           // Wait before retry
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, APP_CONSTANTS.TIMEOUTS.BROKER_RETRY_DELAY));
         }
       }
 
@@ -124,20 +117,23 @@ export function use0GBroker(): Use0GBrokerReturn {
       if (!signer) {
         throw new Error("Failed to create signer");
       }
+      // Validate contract addresses
+      const brokerContract = validateContractAddress(CONTRACT_ADDRESSES.BROKER);
+      const ledgerContract = validateContractAddress(CONTRACT_ADDRESSES.LEDGER);
+      const tokenContract = validateContractAddress(CONTRACT_ADDRESSES.TOKEN);
+      
       const brokerInstance = await createZGComputeNetworkBroker(
-        signer as any,
-        "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
-        "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-        "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+        signer as any, // TODO: Fix this type assertion when 0g-serving-broker types are available
+        brokerContract,
+        ledgerContract,
+        tokenContract
       );
-      setBroker(brokerInstance);
+      setBroker(brokerInstance as unknown as ZGComputeNetworkBroker);
 
       console.log("Broker initialized successfully");
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to initialize broker";
-      setError(errorMessage);
-      console.error("Broker initialization error:", err);
+      const appError = errorHandler.handle(err, 'BrokerInitialization');
+      setError(appError.userMessage);
     } finally {
       setIsInitializing(false);
     }
