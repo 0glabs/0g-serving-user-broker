@@ -4,21 +4,50 @@ exports.Metadata = void 0;
 class Metadata {
     nodeStorage = {};
     initialized = false;
+    isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+    storagePrefix = '0g_metadata_';
     constructor() { }
     async initialize() {
         if (this.initialized) {
             return;
         }
-        this.nodeStorage = {};
+        if (!this.isBrowser) {
+            this.nodeStorage = {};
+        }
         this.initialized = true;
     }
     async setItem(key, value) {
         await this.initialize();
-        this.nodeStorage[key] = value;
+        const fullKey = this.storagePrefix + key;
+        if (this.isBrowser) {
+            try {
+                console.log('Setting localStorage item:', fullKey, value);
+                window.localStorage.setItem(fullKey, value);
+            }
+            catch (e) {
+                console.warn('Failed to set localStorage item:', e);
+                this.nodeStorage[key] = value;
+            }
+        }
+        else {
+            this.nodeStorage[key] = value;
+        }
     }
     async getItem(key) {
         await this.initialize();
-        return this.nodeStorage[key] ?? null;
+        const fullKey = this.storagePrefix + key;
+        if (this.isBrowser) {
+            try {
+                return window.localStorage.getItem(fullKey);
+            }
+            catch (e) {
+                console.warn('Failed to get localStorage item:', e);
+                return this.nodeStorage[key] ?? null;
+            }
+        }
+        else {
+            return this.nodeStorage[key] ?? null;
+        }
     }
     async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());

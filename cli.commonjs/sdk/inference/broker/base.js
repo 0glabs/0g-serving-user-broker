@@ -10,9 +10,9 @@ class ZGServingUserBrokerBase {
     contract;
     metadata;
     cache;
-    checkAccountThreshold = BigInt(1000000);
-    topUpTriggerThreshold = BigInt(5000000);
-    topUpTargetThreshold = BigInt(10000000);
+    checkAccountThreshold = BigInt(100);
+    topUpTriggerThreshold = BigInt(500);
+    topUpTargetThreshold = BigInt(1000);
     ledger;
     constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
@@ -20,8 +20,8 @@ class ZGServingUserBrokerBase {
         this.metadata = metadata;
         this.cache = cache;
     }
-    async getProviderData(providerAddress) {
-        const key = `${this.contract.getUserAddress()}_${providerAddress}`;
+    async getProviderData() {
+        const key = `${this.contract.getUserAddress()}`;
         const [settleSignerPrivateKey] = await Promise.all([
             this.metadata.getSettleSignerPrivateKey(key),
         ]);
@@ -149,10 +149,9 @@ class ZGServingUserBrokerBase {
                 throw new Error('Provider signer is not acknowledged');
             }
             const extractor = await this.getExtractor(providerAddress);
-            const { settleSignerPrivateKey } = await this.getProviderData(providerAddress);
-            const key = `${userAddress}_${providerAddress}`;
+            const { settleSignerPrivateKey } = await this.getProviderData();
+            const key = userAddress;
             let privateKey = settleSignerPrivateKey;
-            console.log('Private key:', privateKey);
             if (!privateKey) {
                 const account = await this.contract.getAccount(providerAddress);
                 const privateKeyStr = await (0, utils_1.decryptData)(this.contract.signer, account.additionalInfo);
@@ -224,6 +223,10 @@ class ZGServingUserBrokerBase {
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
+            // Exit early if signer is not a Wallet (i.e., it's a JsonRpcSigner from browser)
+            if (!(this.contract.signer instanceof ethers_1.Wallet)) {
+                return;
+            }
             const extractor = await this.getExtractor(provider);
             const svc = await extractor.getSvcInfo();
             // Calculate target and trigger thresholds

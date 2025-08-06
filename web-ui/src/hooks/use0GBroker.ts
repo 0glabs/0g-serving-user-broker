@@ -69,8 +69,8 @@ export function use0GBroker(): Use0GBrokerReturn {
     setError(null);
 
     try {
-      // Add longer delay to ensure walletClient is fully ready after page refresh
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Reduced delay for faster initialization
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Verify walletClient is still available after delay
       if (!walletClient) {
@@ -108,8 +108,8 @@ export function use0GBroker(): Use0GBrokerReturn {
             throw signerError;
           }
 
-          // Wait before retry
-          await new Promise((resolve) => setTimeout(resolve, APP_CONSTANTS.TIMEOUTS.BROKER_RETRY_DELAY));
+          // Reduced retry delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 

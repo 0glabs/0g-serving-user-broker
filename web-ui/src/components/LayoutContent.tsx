@@ -5,10 +5,38 @@ import { usePathname } from "next/navigation";
 import { useAccount } from "wagmi";
 import { Sidebar } from "./Sidebar";
 import { use0GBroker } from "../hooks/use0GBroker";
+import { NavigationProvider, useNavigation } from "./OptimizedNavigation";
+import SimpleLoader from "./SimpleLoader";
 
 interface LayoutContentProps {
   children: React.ReactNode;
 }
+
+// 内部组件来处理主内容区域的加载状态
+const MainContentArea: React.FC<{ children: React.ReactNode; isHomePage: boolean }> = ({ 
+  children, 
+  isHomePage 
+}) => {
+  const { isNavigating, targetRoute } = useNavigation();
+
+  if (isNavigating) {
+    return (
+      <main className="p-4">
+        <SimpleLoader message={`Loading ${targetRoute || 'page'}...`} />
+      </main>
+    );
+  }
+
+  return (
+    <main className="p-4">
+      {isHomePage ? (
+        <div className="container mx-auto px-4 py-8">{children}</div>
+      ) : (
+        children
+      )}
+    </main>
+  );
+};
 
 export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
   const pathname = usePathname();
@@ -85,16 +113,12 @@ export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
   };
 
   return (
-    <>
+    <NavigationProvider>
       <div className={`min-h-screen bg-gray-50 ${isHomePage ? "pt-20" : "pl-52 pt-20"}`}>
         {isHomePage ? null : <Sidebar />}
-        <main className="p-4">
-          {isHomePage ? (
-            <div className="container mx-auto px-4 py-8">{children}</div>
-          ) : (
-            children
-          )}
-        </main>
+        <MainContentArea isHomePage={isHomePage}>
+          {children}
+        </MainContentArea>
       </div>
 
       {/* Global Account Creation Modal */}
@@ -196,6 +220,6 @@ export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
           </div>
         </div>
       )}
-    </>
+    </NavigationProvider>
   );
 };
