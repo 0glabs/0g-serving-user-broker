@@ -1454,7 +1454,7 @@ export function OptimizedChatPage() {
           <div className="flex justify-between items-center flex-wrap gap-2 sm:flex-nowrap">
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Provider Selection Dropdown */}
-              <div className="relative min-w-[200px] sm:min-w-[400px] lg:min-w-[500px] provider-dropdown">
+              <div className="relative min-w-[180px] sm:min-w-[300px] lg:min-w-[400px] provider-dropdown">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-full bg-white border border-gray-300 rounded-md pl-3 pr-10 py-3 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm"
@@ -1828,7 +1828,7 @@ export function OptimizedChatPage() {
                       
                       {/* Add Funds Tooltip */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                        Add funds for provider services
+                        Add funds for the current provider service
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                           <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                         </div>
@@ -1915,7 +1915,7 @@ export function OptimizedChatPage() {
                   message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                <div className="flex items-start space-x-2 max-w-[80%]">
+                <div className="flex items-start space-x-2 max-w-[85%] sm:max-w-[80%]">
                   <div
                     className={`rounded-lg px-4 py-2 break-words transition-colors ${
                       message.role === "user"
@@ -2015,11 +2015,11 @@ export function OptimizedChatPage() {
                       <div
                         className={`flex items-center justify-between text-xs mt-1 ${
                           message.role === "user"
-                            ? "text-purple-100"
+                            ? "text-purple-200"
                             : "text-gray-500"
                         }`}
                       >
-                        <span>
+                        <span className="whitespace-nowrap">
                           {new Date(message.timestamp).toLocaleTimeString()}
                         </span>
 
@@ -2280,7 +2280,7 @@ export function OptimizedChatPage() {
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Add Funds for Provider Services
+                  Add Funds for the Current Provider Service
                 </h3>
                 <button
                   onClick={() => {

@@ -76,7 +76,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       } mb-4`}
     >
       <div
-        className={`max-w-[70%] p-3 rounded-lg ${
+        className={`max-w-[85%] sm:max-w-[70%] p-3 rounded-lg ${
           message.role === "user"
             ? "bg-purple-600 text-white"
             : "bg-gray-100 text-gray-900"
@@ -89,7 +89,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {message.role === "assistant" && (
           <div className="mt-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-gray-500">
+              <span className="text-gray-500 whitespace-nowrap">
                 {new Date(message.timestamp || Date.now()).toLocaleTimeString()}
               </span>
               
@@ -102,7 +102,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </div>
             
             {/* Verification Controls */}
-            <div className="flex gap-1 mt-2">
+            <div className="flex flex-wrap gap-1 mt-2">
               {shouldShowVerificationButton(message) && (
                 <button
                   onClick={() => onVerify?.(message.chatId!)}
