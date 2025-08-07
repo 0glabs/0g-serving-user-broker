@@ -214,26 +214,26 @@ function LedgerContent() {
             onClick={() => setActiveTab('overview')}
             className={`px-6 py-4 font-medium text-sm transition-all relative cursor-pointer ${
               activeTab === 'overview'
-                ? 'text-blue-600 bg-white'
+                ? 'text-purple-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
             Overview
             {activeTab === 'overview' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600"></div>
             )}
           </button>
           <button
             onClick={() => setActiveTab('detail')}
             className={`px-6 py-4 font-medium text-sm transition-all relative cursor-pointer ${
               activeTab === 'detail'
-                ? 'text-blue-600 bg-white'
+                ? 'text-purple-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
             Fund Distribution
             {activeTab === 'detail' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600"></div>
             )}
           </button>
         </div>
@@ -282,7 +282,7 @@ function LedgerContent() {
                             placeholder="0.1"
                             step="0.01"
                             min="0"
-                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                           />
                           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <span className="text-gray-500 text-sm">A0GI</span>
@@ -293,7 +293,7 @@ function LedgerContent() {
                       <button
                         onClick={handleAddFunds}
                         disabled={!addAmount || isAdding || parseFloat(addAmount) <= 0}
-                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center cursor-pointer"
+                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center cursor-pointer"
                       >
                         {isAdding && (
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
@@ -302,18 +302,18 @@ function LedgerContent() {
                       </button>
                     </div>
 
-                    <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="bg-purple-50 rounded-lg p-4">
                       <div className="flex items-start">
                         <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="h-5 w-5 text-purple-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                           </svg>
                         </div>
                         <div className="ml-3">
-                          <h3 className="text-sm font-medium text-blue-800">
+                          <h3 className="text-sm font-medium text-purple-800">
                             How it works
                           </h3>
-                          <div className="mt-2 text-sm text-blue-700">
+                          <div className="mt-2 text-sm text-purple-700">
                             <ul className="space-y-1">
                               <li>• Funds are deposited to your account</li>
                               <li>• They are used automatically for AI service payments</li>
@@ -332,14 +332,14 @@ function LedgerContent() {
             {activeTab === 'detail' && (
               <div className="space-y-6">
                 {/* Account Overview */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                   <div className="flex items-start">
-                    <svg className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div className="ml-3 flex-1">
-                      <p className="text-sm text-blue-800 font-medium mb-2">How fund management works</p>
-                      <div className="text-xs text-blue-700 space-y-1">
+                      <p className="text-sm text-purple-800 font-medium mb-2">How fund management works</p>
+                      <div className="text-xs text-purple-700 space-y-1">
                         <p>• <strong>Available Balance:</strong> Funds for provider services and withdrawals</p>
                         <p>• <strong>Provider Funds:</strong> Auto-allocated to AI service providers when used</p>
                         <p>• <strong>Retrieval:</strong> Transfer unused provider funds back to Available Balance</p>
@@ -389,7 +389,7 @@ function LedgerContent() {
                         <button
                           onClick={() => setShowWithdrawModal(true)}
                           disabled={parseFloat(displayLedgerInfo.availableBalance) === 0}
-                          className="px-3 py-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-all flex items-center cursor-pointer"
+                          className="px-3 py-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-all flex items-center cursor-pointer"
                         >
                           Withdraw
                         </button>
@@ -448,7 +448,7 @@ function LedgerContent() {
                             }
                           }}
                           disabled={!broker || isRetrievingAll}
-                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded px-2 py-1 text-xs font-medium transition-all flex items-center cursor-pointer"
+                          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded px-2 py-1 text-xs font-medium transition-all flex items-center cursor-pointer"
                         >
                           <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -486,7 +486,7 @@ function LedgerContent() {
                         </div>
                         <button
                           onClick={() => setIsLockedExpanded(!isLockedExpanded)}
-                          className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors rounded px-2 py-1 cursor-pointer"
+                          className="flex items-center text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-colors rounded px-2 py-1 cursor-pointer"
                         >
                           <span className="mr-2 text-sm font-medium">
                             {isLockedExpanded ? 'Hide Details' : 'View Details'}
@@ -536,7 +536,7 @@ function LedgerContent() {
                                     }
                                   }}
                                   disabled={!broker || isRetrieving.inference}
-                                  className="px-3 py-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-all flex items-center cursor-pointer"
+                                  className="px-3 py-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-all flex items-center cursor-pointer"
                                 >
                                   {isRetrieving.inference && (
                                     <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-400 border-t-transparent mr-1.5"></div>
@@ -561,7 +561,7 @@ function LedgerContent() {
                                           <div className="text-xs font-medium text-gray-500 mb-1">Pending Retrieval</div>
                                           <button
                                             onClick={() => toggleRefundDetails(inference.provider, 'inference')}
-                                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+                                            className="text-sm font-medium text-gray-900 hover:text-purple-600 transition-colors cursor-pointer"
                                           >
                                             {formatNumber(inference.requestedReturn)} A0GI
                                             {parseFloat(inference.requestedReturn) > 0 && (
@@ -580,7 +580,7 @@ function LedgerContent() {
                                             <button
                                               onClick={() => fetchRefundDetails(inference.provider, 'inference')}
                                               disabled={loadingRefunds[`inference-${inference.provider}`]}
-                                              className="text-blue-600 hover:text-blue-700 disabled:text-gray-400 transition-colors cursor-pointer"
+                                              className="text-purple-600 hover:text-purple-700 disabled:text-gray-400 transition-colors cursor-pointer"
                                               title="Refresh refund details"
                                             >
                                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -649,7 +649,7 @@ function LedgerContent() {
                                     }
                                   }}
                                   disabled={!broker || isRetrieving['fine-tuning']}
-                                  className="px-3 py-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-all flex items-center cursor-pointer"
+                                  className="px-3 py-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-all flex items-center cursor-pointer"
                                 >
                                   {isRetrieving['fine-tuning'] && (
                                     <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-400 border-t-transparent mr-1.5"></div>
@@ -674,7 +674,7 @@ function LedgerContent() {
                                           <div className="text-xs font-medium text-gray-500 mb-1">Pending Retrieval</div>
                                           <button
                                             onClick={() => toggleRefundDetails(fineTuning.provider, 'fine-tuning')}
-                                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+                                            className="text-sm font-medium text-gray-900 hover:text-purple-600 transition-colors cursor-pointer"
                                           >
                                             {formatNumber(fineTuning.requestedReturn)} A0GI
                                             {parseFloat(fineTuning.requestedReturn) > 0 && (
@@ -693,7 +693,7 @@ function LedgerContent() {
                                             <button
                                               onClick={() => fetchRefundDetails(fineTuning.provider, 'fine-tuning')}
                                               disabled={loadingRefunds[`fine-tuning-${fineTuning.provider}`]}
-                                              className="text-blue-600 hover:text-blue-700 disabled:text-gray-400 transition-colors cursor-pointer"
+                                              className="text-purple-600 hover:text-purple-700 disabled:text-gray-400 transition-colors cursor-pointer"
                                               title="Refresh refund details"
                                             >
                                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -798,7 +798,7 @@ function LedgerContent() {
                           step="0.01"
                           min="0"
                           max={displayLedgerInfo.availableBalance}
-                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                         />
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                           <span className="text-gray-500 text-sm">A0GI</span>
@@ -864,7 +864,7 @@ function LedgerContent() {
                           }
                         }}
                         disabled={!withdrawAmount || isAdding || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > parseFloat(displayLedgerInfo.availableBalance)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center cursor-pointer"
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center cursor-pointer"
                       >
                         {isAdding && (
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>

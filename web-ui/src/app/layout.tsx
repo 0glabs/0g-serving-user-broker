@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "0G Compute Network Example",
   description: "Web example for 0G Compute Network SDK",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
