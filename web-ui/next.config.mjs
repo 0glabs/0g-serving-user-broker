@@ -14,6 +14,7 @@ const nextConfig = {
         return config
     },
     transpilePackages: ['0g-serving-broker'],
+    output: 'standalone',
 }
 
 export default nextConfig

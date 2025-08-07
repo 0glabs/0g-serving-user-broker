@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useAccount } from 'wagmi';
 import { use0GBroker } from '../../hooks/use0GBroker';
 import { useSearchParams } from 'next/navigation';
 
-export default function LedgerPage() {
+function LedgerContent() {
   const { isConnected } = useAccount();
   const searchParams = useSearchParams();
   const {
@@ -878,5 +878,13 @@ export default function LedgerPage() {
             )}
       </div>
     </div>
+  );
+}
+
+export default function LedgerPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LedgerContent />
+    </Suspense>
   );
 }

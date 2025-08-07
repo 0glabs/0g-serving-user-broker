@@ -65,7 +65,7 @@ export function useOptimizedDataFetching<T>({
   const [error, setError] = useState<string | null>(null);
   
   // Use ref to track the current request to prevent race conditions
-  const currentRequestRef = useRef<Promise<void> | null>(null);
+  const currentRequestRef = useRef<symbol | null>(null);
   const mountedRef = useRef(true);
 
   const fetchData = useCallback(async (skipCache = false) => {
@@ -84,7 +84,10 @@ export function useOptimizedDataFetching<T>({
     setLoading(true);
     setError(null);
 
-    const currentRequest = (async () => {
+    const currentRequest = Symbol('currentRequest');
+    currentRequestRef.current = currentRequest;
+    
+    (async () => {
       try {
         const result = await fetchFn();
         
@@ -111,12 +114,11 @@ export function useOptimizedDataFetching<T>({
       }
     })();
 
-    currentRequestRef.current = currentRequest;
     return currentRequest;
   }, [fetchFn, cacheKey, cacheTTL, skip]);
 
-  const refetch = useCallback(() => {
-    return fetchData(true); // Skip cache on manual refetch
+  const refetch = useCallback(async () => {
+    await fetchData(true); // Skip cache on manual refetch
   }, [fetchData]);
 
   // Effect for dependency-based fetching
