@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { use0GBroker } from "../../../hooks/use0GBroker";
 import { useOptimizedDataFetching } from "../../../hooks/useOptimizedDataFetching";
 import { useNavigation } from "../../../components/OptimizedNavigation";
+import ReactMarkdown from "react-markdown";
 
 // Convert neuron to A0GI (1 A0GI = 10^18 neuron)
 const neuronToA0gi = (value: bigint): number => {
@@ -60,6 +61,9 @@ export function OptimizedInferencePage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [selectedProviderForBuild, setSelectedProviderForBuild] = useState<Provider | null>(null);
+  const [selectedTab, setSelectedTab] = useState<'curl' | 'javascript' | 'python' | 'node'>('curl');
+  
+  type TabType = 'curl' | 'javascript' | 'python' | 'node';
 
   // Optimized providers data fetching
   const { data: providers, loading: providersLoading, error: providersError } = useOptimizedDataFetching<Provider[]>({
@@ -152,6 +156,97 @@ export function OptimizedInferencePage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+
+  const formatCodeAsMarkdown = (code: string, language: string) => {
+    // Format code as markdown with language identifier for proper highlighting
+    return `\`\`\`${language}\n${code}\n\`\`\``;
+  };
+
+  const getCodeExample = (tab: string) => {
+    const examples = {
+      curl: `curl http://127.0.0.1:3000/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ]
+  }'`,
+      javascript: `const response = await fetch('http://127.0.0.1:3000/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a helpful assistant.'
+      },
+      {
+        role: 'user',
+        content: 'Hello!'
+      }
+    ]
+  })
+});
+
+const data = await response.json();
+console.log(data);`,
+      python: `import requests
+
+response = requests.post('http://127.0.0.1:3000/v1/chat/completions', 
+  headers={'Content-Type': 'application/json'},
+  json={
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user", 
+        "content": "Hello!"
+      }
+    ]
+  }
+)
+
+print(response.json())`,
+      node: `const OpenAI = require('openai');
+
+const client = new OpenAI({
+  baseURL: 'http://127.0.0.1:3000/v1',
+  apiKey: ''
+});
+
+async function main() {
+  const completion = await client.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a helpful assistant.'
+      },
+      {
+        role: 'user',
+        content: 'Hello!'
+      }
+    ],
+  });
+  
+  console.log(completion.choices[0].message);
+}
+
+main();`
+    };
+    return examples[tab as keyof typeof examples] || examples.curl;
   };
 
   if (!isConnected) {
@@ -398,7 +493,14 @@ export function OptimizedInferencePage() {
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between py-4 px-6 border-b border-gray-200">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Build with Provider</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Build with {selectedProviderForBuild ? 
+                      (selectedProviderForBuild.model.includes('/') 
+                        ? selectedProviderForBuild.model.split('/').slice(1).join('/') 
+                        : selectedProviderForBuild.model
+                      ) : 'Provider'
+                    }
+                  </h2>
                 </div>
                 <button
                   onClick={handleCloseDrawer}
@@ -411,14 +513,13 @@ export function OptimizedInferencePage() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6">
-                {/* Include all the build guide content from original component here */}
                 <div className="space-y-6">
                   <div className="mb-8">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Start with CLI</h2>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Start a Service</h2>
                     
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-base font-medium text-gray-700 mb-2">1. Install the 0G CLI</h3>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">1. Install the 0G Compute CLI</h3>
                         <div className="relative">
                           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
                             <code className="text-gray-800 text-sm font-mono">
@@ -427,7 +528,7 @@ export function OptimizedInferencePage() {
                           </div>
                           <button
                             onClick={() => copyToClipboard('pnpm install @0glabs/0g-serving-broker -g')}
-                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors"
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
                             title="Copy to clipboard"
                           >
                             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -436,7 +537,214 @@ export function OptimizedInferencePage() {
                           </button>
                         </div>
                       </div>
-                      {/* Continue with rest of build guide... */}
+
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">2. Set environment variables</h3>
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-gray-800 text-sm font-mono">
+                              export ZG_PRIVATE_KEY=&lt;YOUR_PRIVATE_KEY&gt;
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard('export ZG_PRIVATE_KEY=<YOUR_PRIVATE_KEY>')}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">3. Start the server</h3>
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-gray-800 text-sm font-mono">
+                              {selectedProviderForBuild 
+                                ? `0g-compute-cli serve --provider ${selectedProviderForBuild.address}`
+                                : '0g-compute-cli serve --provider <PROVIDER_ADDRESS>'
+                              }
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(selectedProviderForBuild 
+                              ? `0g-compute-cli serve --provider ${selectedProviderForBuild.address}`
+                              : '0g-compute-cli serve --provider <PROVIDER_ADDRESS>'
+                            )}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-medium text-gray-700 mb-2">4. Use OpenAI API format to make a request</h3>
+                        
+                        {/* Tab Navigation */}
+                        <div className="flex space-x-1 mb-3 bg-gray-100 rounded-lg p-1">
+                          {[
+                            { key: 'curl', label: 'cURL' },
+                            { key: 'javascript', label: 'JavaScript' },
+                            { key: 'python', label: 'Python' },
+                            { key: 'node', label: 'Node.js SDK' }
+                          ].map(tab => (
+                            <button
+                              key={tab.key}
+                              onClick={() => setSelectedTab(tab.key as TabType)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                                selectedTab === tab.key
+                                  ? 'bg-white text-purple-700 shadow-sm border border-purple-200'
+                                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                              }`}
+                              title={`View ${tab.label} example`}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Code Display */}
+                        <div className="relative">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-x-auto">
+                            <ReactMarkdown
+                              components={{
+                                code: ({ children, className }) => {
+                                  const isInline = !className;
+                                  if (isInline) {
+                                    return (
+                                      <code className="bg-purple-50 text-purple-600 px-1 py-0.5 rounded text-xs font-mono">
+                                        {children}
+                                      </code>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <code className="text-gray-800 text-sm font-mono block whitespace-pre">
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                                pre: ({ children }) => (
+                                  <pre className="p-4 overflow-x-auto text-sm">
+                                    {children}
+                                  </pre>
+                                ),
+                              }}
+                            >
+                              {formatCodeAsMarkdown(getCodeExample(selectedTab), selectedTab)}
+                            </ReactMarkdown>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(getCodeExample(selectedTab))}
+                            className="absolute top-2 right-2 p-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Integrate into your App</h2>
+                    
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 border border-gray-200">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <svg className="w-6 h-6 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-medium text-gray-900 mb-2">SDK Documentation</h3>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Comprehensive guides for integrating 0G Compute Network into your applications.
+                          </p>
+                          <a 
+                            href="https://docs.0g.ai/developer-hub/building-on-0g/compute-network/sdk"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors cursor-pointer"
+                            title="View SDK Documentation"
+                          >
+                            View Documentation
+                            <svg className="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 border border-gray-200">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <svg className="w-6 h-6 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-medium text-gray-900 mb-2">Starter Kit</h3>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Ready-to-use TypeScript starter kit with examples and best practices.
+                          </p>
+                          <a 
+                            href="https://github.com/0glabs/0g-compute-ts-starter-kit"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors cursor-pointer"
+                            title="View Starter Kit on GitHub"
+                          >
+                            View on GitHub
+                            <svg className="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Not satisfied with existing providers?</h2>
+                    
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 border border-gray-200">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <svg className="w-6 h-6 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-medium text-gray-900 mb-2">Become a Provider</h3>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Learn how to add your own inference provider to the 0G Compute Network through our comprehensive documentation.
+                          </p>
+                          <a 
+                            href="https://docs.0g.ai/developer-hub/building-on-0g/compute-network/inference-provider"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors cursor-pointer"
+                            title="View Provider Documentation"
+                          >
+                            View Provider Documentation
+                            <svg className="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
