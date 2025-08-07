@@ -81,7 +81,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
         
         <div className="flex items-center ml-2">
           {disabled && (
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600 mr-2"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-purple-600 mr-2"></div>
           )}
           <svg
             className={`w-4 h-4 text-gray-400 transition-transform ${

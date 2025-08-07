@@ -226,7 +226,7 @@ export function OptimizedInferencePage() {
       {isLoading ? (
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
           </div>
           <p className="text-gray-600">Initializing...</p>
         </div>
@@ -247,7 +247,7 @@ export function OptimizedInferencePage() {
                   {/* Show loading indicator for individual provider data if still loading */}
                   {providersLoading && (
                     <div className="absolute top-2 right-2">
-                      <div className="animate-spin rounded-full h-3 w-3 border border-blue-600 border-t-transparent"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 border border-purple-600 border-t-transparent"></div>
                     </div>
                   )}
 

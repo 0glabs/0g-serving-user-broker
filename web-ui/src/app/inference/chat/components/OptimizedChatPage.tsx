@@ -1266,7 +1266,7 @@ export function OptimizedChatPage() {
         <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
           <div className="flex items-start">
             <svg
-              className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0"
+              className="w-5 h-5 text-purple-500 mr-3 mt-0.5 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1323,7 +1323,7 @@ export function OptimizedChatPage() {
                 <div className="p-2">
                   {isSearching ? (
                     <div className="p-4 text-center text-gray-500 text-sm flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600 mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-purple-600 mr-2"></div>
                       Searching...
                     </div>
                   ) : searchResults.length === 0 ? (
@@ -1363,7 +1363,7 @@ export function OptimizedChatPage() {
                               {result.role === 'user' ? 'You' : 'Assistant'} • {' '}
                               {result.timestamp ? new Date(result.timestamp).toLocaleDateString() : 'Unknown date'}
                             </span>
-                            <span className="text-blue-500 hover:text-purple-600 font-medium">
+                            <span className="text-purple-500 hover:text-purple-700 font-medium">
                               View →
                             </span>
                           </div>
@@ -1967,7 +1967,7 @@ export function OptimizedChatPage() {
                       <div
                         className={`flex items-center justify-between text-xs mt-1 ${
                           message.role === "user"
-                            ? "text-blue-100"
+                            ? "text-purple-100"
                             : "text-gray-500"
                         }`}
                       >
@@ -2022,7 +2022,7 @@ export function OptimizedChatPage() {
                                 {/* Verification loading indicator */}
                                 {message.isVerifying && (
                                   <div className="inline-flex items-center px-1.5 py-0.5 bg-purple-50 rounded-full border border-purple-200">
-                                    <div className="animate-spin rounded-full h-2.5 w-2.5 border border-blue-400 border-t-transparent mr-1"></div>
+                                    <div className="animate-spin rounded-full h-2.5 w-2.5 border border-purple-400 border-t-transparent mr-1"></div>
                                     <span className="text-xs text-purple-600">
                                       Verifying...
                                     </span>
@@ -2157,8 +2157,8 @@ export function OptimizedChatPage() {
               className={`${
                 providerAcknowledged === false
                   ? "bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400"
-                  : "bg-purple-600 hover:bg-purple-700 disabled:bg-blue-400"
-              } text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center space-x-2 ${
+                  : "bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400"
+              } text-white px-4 py-2 rounded-md font-medium flex items-center space-x-2 ${
                 showTutorial && tutorialStep === 'verify' && providerAcknowledged === false
                   ? 'ring-4 ring-yellow-400 ring-opacity-75 animate-pulse relative z-50'
                   : ''
@@ -2288,7 +2288,7 @@ export function OptimizedChatPage() {
                     )} 
                     (<a 
                       href="/ledger" 
-                      className="text-blue-500 hover:text-purple-700 hover:underline cursor-pointer"
+                      className="text-purple-500 hover:text-purple-700 hover:underline cursor-pointer"
                       title="Go to ledger page to view details and deposit funds"
                     >
                       view details and deposit in account page

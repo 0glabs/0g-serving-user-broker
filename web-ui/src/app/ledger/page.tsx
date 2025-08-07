@@ -251,7 +251,7 @@ function LedgerContent() {
                     </h2>
                     {isInitializing && (
                       <div className="flex items-center text-gray-500">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600 mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-purple-600 mr-2"></div>
                         <span className="text-sm">Loading...</span>
                       </div>
                     )}
@@ -282,7 +282,7 @@ function LedgerContent() {
                             placeholder="0.1"
                             step="0.01"
                             min="0"
-                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                           />
                           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <span className="text-gray-500 text-sm">A0GI</span>
@@ -590,7 +590,7 @@ function LedgerContent() {
                                           </div>
                                           {loadingRefunds[`inference-${inference.provider}`] ? (
                                             <div className="flex items-center text-gray-500">
-                                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600 mr-2"></div>
+                                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-purple-600 mr-2"></div>
                                               <span className="text-xs">Loading...</span>
                                             </div>
                                           ) : refundDetails[`inference-${inference.provider}`]?.length > 0 ? (
@@ -703,7 +703,7 @@ function LedgerContent() {
                                           </div>
                                           {loadingRefunds[`fine-tuning-${fineTuning.provider}`] ? (
                                             <div className="flex items-center text-gray-500">
-                                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600 mr-2"></div>
+                                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-purple-600 mr-2"></div>
                                               <span className="text-xs">Loading...</span>
                                             </div>
                                           ) : refundDetails[`fine-tuning-${fineTuning.provider}`]?.length > 0 ? (

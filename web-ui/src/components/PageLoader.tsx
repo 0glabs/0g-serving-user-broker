@@ -10,7 +10,7 @@ interface PageLoaderProps {
 const DefaultLoadingFallback = () => (
   <div className="w-full h-screen flex items-center justify-center">
     <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mx-auto mb-4"></div>
       <p className="text-gray-600 text-sm">Loading page...</p>
     </div>
   </div>
@@ -19,7 +19,7 @@ const DefaultLoadingFallback = () => (
 const PageContentLoader = () => (
   <div className="w-full min-h-[400px] flex items-center justify-center">
     <div className="text-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-3 border-blue-600 border-t-transparent mx-auto mb-3"></div>
+      <div className="animate-spin rounded-full h-8 w-8 border-3 border-purple-600 border-t-transparent mx-auto mb-3"></div>
       <p className="text-gray-500 text-sm">Loading...</p>
     </div>
   </div>
