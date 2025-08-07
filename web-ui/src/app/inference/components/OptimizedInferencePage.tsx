@@ -234,7 +234,7 @@ export function OptimizedInferencePage() {
       ) : (
         <>
           {/* Show providers immediately with inline loading indicators for data being fetched */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {displayProviders.map((provider) => {
               const isOfficial = OFFICIAL_PROVIDERS.some(
                 (op) => op.address === provider.address
