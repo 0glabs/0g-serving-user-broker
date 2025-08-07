@@ -19,7 +19,7 @@ export function RainbowProvider({ children }: RainbowProviderProps) {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={lightTheme({
-            accentColor: '#2563eb',
+            accentColor: '#9333ea',
             accentColorForeground: 'white',
             borderRadius: 'medium',
             fontStack: 'system',
