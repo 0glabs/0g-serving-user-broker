@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-52 bg-white shadow-lg border-r border-gray-200 min-h-screen fixed top-0 left-0 z-10">
+    <div className="w-52 bg-white shadow-lg border-r border-purple-200 min-h-screen fixed top-0 left-0 z-10">
       <div className="px-3 pt-24 pb-6">
         <nav className="space-y-2">
           {sidebarItems.map((item) => (
@@ -69,8 +69,8 @@ export const Sidebar: React.FC = () => {
                 href={item.href}
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group relative ${
                   isActive(item.href)
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    ? "bg-purple-100 text-purple-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-purple-50"
                 }`}
                 onNavigationStart={() => {
                   setIsNavigating(true);
@@ -79,7 +79,7 @@ export const Sidebar: React.FC = () => {
                 }}
               >
                 <span className={`${
-                  isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+                  isActive(item.href) ? "text-purple-600" : "text-gray-400 group-hover:text-gray-600"
                 }`}>
                   {item.icon}
                 </span>

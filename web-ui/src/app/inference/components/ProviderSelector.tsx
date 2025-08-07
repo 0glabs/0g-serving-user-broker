@@ -51,7 +51,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
         className={`w-full p-3 border border-gray-300 rounded-lg text-left flex items-center justify-between ${
           disabled
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            : "bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
         }`}
       >
         <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
                 onClick={() => handleProviderSelect(provider)}
                 className={`w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
                   selectedProvider?.address === provider.address
-                    ? "bg-blue-50"
+                    ? "bg-purple-50"
                     : ""
                 }`}
               >

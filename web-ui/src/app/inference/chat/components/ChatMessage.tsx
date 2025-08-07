@@ -78,7 +78,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       <div
         className={`max-w-[70%] p-3 rounded-lg ${
           message.role === "user"
-            ? "bg-blue-600 text-white"
+            ? "bg-purple-600 text-white"
             : "bg-gray-100 text-gray-900"
         }`}
       >
@@ -106,7 +106,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {shouldShowVerificationButton(message) && (
                 <button
                   onClick={() => onVerify?.(message.chatId!)}
-                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600"
                 >
                   Verify
                 </button>

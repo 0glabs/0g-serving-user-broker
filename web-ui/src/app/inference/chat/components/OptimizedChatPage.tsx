@@ -1158,9 +1158,9 @@ export function OptimizedChatPage() {
       <div className="w-full">
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center border border-blue-200">
+            <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border border-purple-200">
               <svg
-                className="w-8 h-8 text-blue-600"
+                className="w-8 h-8 text-purple-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1263,7 +1263,7 @@ export function OptimizedChatPage() {
       )}
 
       {showFundingAlert && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
           <div className="flex items-start">
             <svg
               className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0"
@@ -1279,8 +1279,8 @@ export function OptimizedChatPage() {
               />
             </svg>
             <div>
-              <h3 className="text-sm font-medium text-blue-800">Provider Funding</h3>
-              <p className="text-sm text-blue-700 mt-1">{fundingAlertMessage}</p>
+              <h3 className="text-sm font-medium text-purple-800">Provider Funding</h3>
+              <p className="text-sm text-purple-700 mt-1">{fundingAlertMessage}</p>
             </div>
           </div>
         </div>
@@ -1307,7 +1307,7 @@ export function OptimizedChatPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   disabled={isLoading || isStreaming}
-                  className={`w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                  className={`w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 ${
                     isLoading || isStreaming ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''
                   }`}
                 />
@@ -1341,7 +1341,7 @@ export function OptimizedChatPage() {
                           className={`p-3 bg-white border border-gray-200 rounded-lg transition-colors ${
                             isLoading || isStreaming 
                               ? 'opacity-50 cursor-not-allowed' 
-                              : 'hover:bg-blue-50 hover:border-blue-200 cursor-pointer'
+                              : 'hover:bg-purple-50 hover:border-purple-200 cursor-pointer'
                           }`}
                           onClick={async () => {
                             if (result.sessionId && !isLoading && !isStreaming) {
@@ -1363,7 +1363,7 @@ export function OptimizedChatPage() {
                               {result.role === 'user' ? 'You' : 'Assistant'} • {' '}
                               {result.timestamp ? new Date(result.timestamp).toLocaleDateString() : 'Unknown date'}
                             </span>
-                            <span className="text-blue-500 hover:text-blue-600 font-medium">
+                            <span className="text-blue-500 hover:text-purple-600 font-medium">
                               View →
                             </span>
                           </div>
@@ -1394,7 +1394,7 @@ export function OptimizedChatPage() {
                       key={session.session_id}
                       className={`relative group rounded-lg text-sm transition-colors ${
                         chatHistory.currentSessionId === session.session_id
-                          ? 'bg-blue-50 border border-blue-200'
+                          ? 'bg-purple-50 border border-purple-200'
                           : isLoading || isStreaming
                           ? 'bg-gray-100 border border-transparent'
                           : 'hover:bg-gray-50 border border-transparent'
@@ -1456,7 +1456,7 @@ export function OptimizedChatPage() {
               <div className="relative min-w-[200px] sm:min-w-[400px] lg:min-w-[500px] provider-dropdown">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full bg-white border border-gray-300 rounded-md pl-3 pr-10 py-3 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full bg-white border border-gray-300 rounded-md pl-3 pr-10 py-3 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm"
                   disabled={isInitializing || providers.length === 0}
                 >
                   {isInitializing ? (
@@ -1476,13 +1476,13 @@ export function OptimizedChatPage() {
                           {selectedProvider.address.slice(0, 8)}...
                           {selectedProvider.address.slice(-6)}
                         </span>
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
                           {selectedProvider.verifiability}
                         </span>
                         {OFFICIAL_PROVIDERS.some(
                           (op) => op.address === selectedProvider.address
                         ) && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                             0G
                           </span>
                         )}
@@ -1536,11 +1536,11 @@ export function OptimizedChatPage() {
                                 {provider.address.slice(0, 8)}...
                                 {provider.address.slice(-6)}
                               </span>
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
                                 {provider.verifiability}
                               </span>
                               {isOfficial && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                   0G
                                 </span>
                               )}
@@ -1784,7 +1784,7 @@ export function OptimizedChatPage() {
                             selectedProvider.outputPriceNeuron !== undefined && 
                             providerBalanceNeuron <= BigInt(50000) * (selectedProvider.inputPriceNeuron + selectedProvider.outputPriceNeuron)
                           ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                          : 'bg-purple-500 text-white hover:bg-purple-600'
                       } ${
                         showTutorial && tutorialStep === 'top-up'
                           ? 'ring-4 ring-blue-400 ring-opacity-75 animate-pulse relative z-50'
@@ -1871,7 +1871,7 @@ export function OptimizedChatPage() {
                   <div
                     className={`rounded-lg px-4 py-2 break-words transition-colors ${
                       message.role === "user"
-                        ? "bg-blue-600 text-white"
+                        ? "bg-purple-600 text-white"
                         : "bg-gray-100 text-gray-900"
                     }`}
                     style={{ maxWidth: '100%', overflowWrap: 'break-word' }}
@@ -1913,7 +1913,7 @@ export function OptimizedChatPage() {
                                 </em>
                               ),
                               code: ({ children }) => (
-                                <code className="bg-blue-50 text-blue-600 px-1 py-0.5 rounded text-xs font-mono">
+                                <code className="bg-purple-50 text-purple-600 px-1 py-0.5 rounded text-xs font-mono">
                                   {children}
                                 </code>
                               ),
@@ -1938,14 +1938,14 @@ export function OptimizedChatPage() {
                                 </li>
                               ),
                               blockquote: ({ children }) => (
-                                <blockquote className="border-l-4 border-blue-500 pl-4 my-3 text-gray-700 italic">
+                                <blockquote className="border-l-4 border-purple-500 pl-4 my-3 text-gray-700 italic">
                                   {children}
                                 </blockquote>
                               ),
                               a: ({ href, children }) => (
                                 <a
                                   href={href}
-                                  className="text-blue-600 hover:underline"
+                                  className="text-purple-600 hover:underline"
                                   target="_blank"
                                   rel="noopener noreferrer"
                                 >
@@ -2006,7 +2006,7 @@ export function OptimizedChatPage() {
                                       className={`px-1.5 py-0.5 rounded-full border transition-colors text-xs ${
                                         isExpired
                                           ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-                                          : "bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200"
+                                          : "bg-purple-50 hover:bg-purple-100 text-purple-600 hover:text-purple-700 border-purple-200"
                                       }`}
                                       title={
                                         isExpired
@@ -2021,9 +2021,9 @@ export function OptimizedChatPage() {
 
                                 {/* Verification loading indicator */}
                                 {message.isVerifying && (
-                                  <div className="inline-flex items-center px-1.5 py-0.5 bg-blue-50 rounded-full border border-blue-200">
+                                  <div className="inline-flex items-center px-1.5 py-0.5 bg-purple-50 rounded-full border border-purple-200">
                                     <div className="animate-spin rounded-full h-2.5 w-2.5 border border-blue-400 border-t-transparent mr-1"></div>
-                                    <span className="text-xs text-blue-600">
+                                    <span className="text-xs text-purple-600">
                                       Verifying...
                                     </span>
                                   </div>
@@ -2046,8 +2046,8 @@ export function OptimizedChatPage() {
                                         isExpired
                                           ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
                                           : message.isVerified
-                                          ? "bg-green-50 hover:bg-blue-100 text-green-600 hover:text-blue-600 border-green-200 hover:border-blue-200"
-                                          : "bg-red-50 hover:bg-blue-100 text-red-600 hover:text-blue-600 border-red-200 hover:border-blue-200"
+                                          ? "bg-green-50 hover:bg-purple-100 text-green-600 hover:text-purple-600 border-green-200 hover:border-purple-200"
+                                          : "bg-red-50 hover:bg-purple-100 text-red-600 hover:text-purple-600 border-red-200 hover:border-purple-200"
                                       }`}
                                       title={
                                         isExpired
@@ -2129,7 +2129,7 @@ export function OptimizedChatPage() {
                 }
               }}
               placeholder={isLoading || isStreaming ? "AI is responding..." : "Type your message... (Shift+Enter for new line)"}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 resize-none overflow-y-auto disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
               style={{ minHeight: '40px', maxHeight: '120px' }}
               rows={1}
               disabled={isLoading || isStreaming}
@@ -2157,7 +2157,7 @@ export function OptimizedChatPage() {
               className={`${
                 providerAcknowledged === false
                   ? "bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400"
-                  : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                  : "bg-purple-600 hover:bg-purple-700 disabled:bg-blue-400"
               } text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center space-x-2 ${
                 showTutorial && tutorialStep === 'verify' && providerAcknowledged === false
                   ? 'ring-4 ring-yellow-400 ring-opacity-75 animate-pulse relative z-50'
@@ -2288,7 +2288,7 @@ export function OptimizedChatPage() {
                     )} 
                     (<a 
                       href="/ledger" 
-                      className="text-blue-500 hover:text-blue-700 hover:underline cursor-pointer"
+                      className="text-blue-500 hover:text-purple-700 hover:underline cursor-pointer"
                       title="Go to ledger page to view details and deposit funds"
                     >
                       view details and deposit in account page
@@ -2303,7 +2303,7 @@ export function OptimizedChatPage() {
                       placeholder={providerPendingRefund && providerPendingRefund > 0 ? "" : "Enter amount"}
                       min="0"
                       step="0.000001"
-                      className="w-full px-4 py-3 pr-16 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 pr-16 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
                       disabled={isTopping || !!(providerPendingRefund && providerPendingRefund > 0)}
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -2321,7 +2321,7 @@ export function OptimizedChatPage() {
                     !ledgerInfo ||
                     parseFloat(topUpAmount) > parseFloat(ledgerInfo.totalBalance)
                   }
-                  className="w-full px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="w-full px-4 py-3 bg-purple-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {isTopping ? (
                     <span className="flex items-center justify-center">
@@ -2378,7 +2378,7 @@ export function OptimizedChatPage() {
                   setShowTutorial(false);
                   setTutorialStep(null);
                 }}
-                className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
               >
                 Got it
               </button>
