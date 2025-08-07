@@ -84,9 +84,10 @@ export function OptimizedInferencePage() {
             };
             
             const providerAddress = serviceObj.provider || "";
-            const modelName = serviceObj.model || "Unknown Model";
-            const providerName =
-              serviceObj.name || serviceObj.model || "Unknown Provider";
+            const rawModel = serviceObj.model || "Unknown Model";
+            const modelName = rawModel.includes('/') ? rawModel.split('/').slice(1).join('/') : rawModel;
+            const rawProviderName = serviceObj.name || serviceObj.model || "Unknown Provider";
+            const providerName = rawProviderName.includes('/') ? rawProviderName.split('/').slice(1).join('/') : rawProviderName;
             const verifiability = serviceObj.verifiability || "TEE";
             const serviceUrl = serviceObj.url || "";
 
