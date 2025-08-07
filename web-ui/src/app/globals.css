@@ -44,10 +44,10 @@ html, body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Custom scrollbar styles */
+/* Custom scrollbar styles - using default gray colors */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-light) var(--primary-lighter);
+  scrollbar-color: #9ca3af #f3f4f6;
 }
 
 *::-webkit-scrollbar {
@@ -56,22 +56,21 @@ html, body {
 }
 
 *::-webkit-scrollbar-track {
-  background: var(--primary-lighter);
+  background: #f3f4f6;
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--primary-light);
+  background: #9ca3af;
   border-radius: 4px;
-  border: 1px solid var(--primary-lighter);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: #6b7280;
 }
 
 *::-webkit-scrollbar-corner {
-  background: var(--primary-lighter);
+  background: #f3f4f6;
 }
 
 /* Blob Animation */

@@ -53,7 +53,7 @@ export default function FineTuningPage() {
           </h2>
           
           {/* Current Status Card */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
+          <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
                 <svg className="w-6 h-6 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
