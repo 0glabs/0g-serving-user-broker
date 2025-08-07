@@ -61,7 +61,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
                 {selectedProvider.name}
               </div>
               <div className="text-xs text-gray-500 mt-0.5 flex items-center space-x-4">
-                <span>{selectedProvider.model}</span>
+                <span>{selectedProvider.model.includes('/') ? selectedProvider.model.split('/').slice(1).join('/') : selectedProvider.model}</span>
                 <span className="flex items-center space-x-1">
                   <span>🔒</span>
                   <span>{selectedProvider.verifiability}</span>
@@ -123,7 +123,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5 space-y-1">
                   <div className="flex items-center space-x-4">
-                    <span>Model: {provider.model}</span>
+                    <span>Model: {provider.model.includes('/') ? provider.model.split('/').slice(1).join('/') : provider.model}</span>
                     <span className="flex items-center space-x-1">
                       <span>🔒</span>
                       <span>{provider.verifiability}</span>
