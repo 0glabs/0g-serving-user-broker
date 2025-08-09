@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAccount } from 'wagmi';
 
 export default function Home() {
-  const { isConnected, address } = useAccount();
+  useAccount();
 
   return (
     <>

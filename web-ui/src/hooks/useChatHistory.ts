@@ -47,7 +47,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
         await dbManager.init();
         await loadSessions();
       } catch (err) {
-        console.error('Failed to initialize chat history:', err);
         setError(err instanceof Error ? err.message : 'Database initialization failed');
       } finally {
         setIsLoading(false);
@@ -65,7 +64,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       const walletSessions = await dbManager.getChatSessions(effectiveWalletAddress, providerAddress);
       setSessions(walletSessions);
     } catch (err) {
-      console.error('Failed to load sessions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load sessions');
     }
   }, [walletAddress, providerAddress]);
@@ -79,7 +77,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       await loadSessions(); // Refresh sessions list
       return sessionId;
     } catch (err) {
-      console.error('Failed to create session:', err);
       setError(err instanceof Error ? err.message : 'Failed to create session');
       throw err;
     }
@@ -93,7 +90,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       setCurrentSessionId(sessionId);
       setMessages(sessionMessages);
     } catch (err) {
-      console.error('Failed to load session:', err);
       setError(err instanceof Error ? err.message : 'Failed to load session');
     } finally {
       setIsLoading(false);
@@ -114,7 +110,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       // Refresh sessions list
       await loadSessions();
     } catch (err) {
-      console.error('Failed to delete session:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete session');
     }
   }, [currentSessionId, loadSessions]);
@@ -125,7 +120,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       await dbManager.updateChatSessionTitle(sessionId, title);
       await loadSessions(); // Refresh sessions list
     } catch (err) {
-      console.error('Failed to update session title:', err);
       setError(err instanceof Error ? err.message : 'Failed to update session title');
     }
   }, [loadSessions]);
@@ -180,7 +174,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       // Return the session ID for the caller to use
       return sessionId;
     } catch (err) {
-      console.error('Failed to add message:', err);
       setError(err instanceof Error ? err.message : 'Failed to add message');
       return null;
     }
@@ -201,7 +194,7 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
             message.is_verified ?? false,
             message.is_verifying ?? false
           ).catch(err => {
-            console.error('Failed to update message verification:', err);
+            // Silently handle verification update errors
           });
         }
       }
@@ -216,7 +209,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
         await dbManager.clearMessages(currentSessionId);
         setMessages([]);
       } catch (err) {
-        console.error('Failed to clear session:', err);
         setError(err instanceof Error ? err.message : 'Failed to clear session');
       }
     } else {
@@ -231,7 +223,6 @@ export function useChatHistory({ walletAddress, providerAddress, autoSave = true
       const effectiveWalletAddress = walletAddress || undefined;
       return await dbManager.searchMessages(query, effectiveWalletAddress, providerAddress);
     } catch (err) {
-      console.error('Failed to search messages:', err);
       setError(err instanceof Error ? err.message : 'Failed to search messages');
       return [];
     }

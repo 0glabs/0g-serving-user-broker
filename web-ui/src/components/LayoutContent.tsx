@@ -12,7 +12,6 @@ interface LayoutContentProps {
   children: React.ReactNode;
 }
 
-// 内部组件来处理主内容区域的加载状态
 const MainContentArea: React.FC<{ children: React.ReactNode; isHomePage: boolean }> = ({ 
   children, 
   isHomePage 
@@ -48,22 +47,15 @@ export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Global account check - triggers when wallet connects and broker is ready
   useEffect(() => {
     const checkLedger = async () => {
       if (broker && isConnected && !isHomePage) {
         try {
-          console.log("Global ledger check...");
           const ledger = await broker.ledger.getLedger();
-          console.log("Ledger:", ledger);
-          // If ledger doesn't exist, show deposit modal
           if (!ledger) {
-            console.log("No ledger found, showing deposit modal globally");
             setShowDepositModal(true);
           }
         } catch (err: unknown) {
-          console.error("Error checking ledger globally:", err);
-          // If error occurs, assume no ledger exists
           setShowDepositModal(true);
         }
       }
@@ -71,7 +63,6 @@ export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     checkLedger();
   }, [broker, isConnected, isHomePage]);
 
-  // Step 1: Create account only
   const handleCreateAccount = async () => {
     if (!broker) return;
     
@@ -79,17 +70,14 @@ export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     try {
       await broker.ledger.addLedger(0);
       setShowDepositModal(false);
-      setShowTopUpModal(true); // Show top-up modal after account creation
-      console.log("Account created successfully");
+      setShowTopUpModal(true);
     } catch (err: unknown) {
-      console.error("Error creating account:", err);
       // Keep modal open on error
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Step 2: Handle deposit
   const handleDeposit = async (amount: number) => {
     if (!broker) return;
     
@@ -97,19 +85,15 @@ export const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     try {
       await broker.ledger.depositFund(amount);
       setShowTopUpModal(false);
-      console.log("Deposit successful:", amount, "A0GI");
     } catch (err: unknown) {
-      console.error("Error depositing:", err);
       // Keep modal open on error
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Skip deposit
   const handleSkipDeposit = () => {
     setShowTopUpModal(false);
-    console.log("User skipped initial deposit");
   };
 
   return (

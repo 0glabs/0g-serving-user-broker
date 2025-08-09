@@ -23,8 +23,6 @@ export const errorHandler = {
    * Handle and normalize errors
    */
   handle: (error: unknown, context: string): AppError => {
-    console.error(`[${context}]`, error);
-    
     if (error instanceof AppError) {
       return error;
     }

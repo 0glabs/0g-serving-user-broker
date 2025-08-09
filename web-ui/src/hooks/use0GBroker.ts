@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
-import type { ZGComputeNetworkBroker } from '0g-serving-broker'
-import { createZGComputeNetworkBroker } from '0g-serving-broker'
+import type { ZGComputeNetworkBroker } from 'raven-test-sdk'
+import { createZGComputeNetworkBroker } from 'raven-test-sdk'
 import type { JsonRpcSigner } from 'ethers'
 import { BrowserProvider } from 'ethers'
 import { APP_CONSTANTS } from '../constants/app'
@@ -88,20 +88,12 @@ export function use0GBroker(): Use0GBrokerReturn {
                     signer = await provider.getSigner()
 
                     // Verify signer connection and chain
-                    const address = await signer.getAddress()
-                    const network = await provider.getNetwork()
+                    await signer.getAddress()
+                    await provider.getNetwork()
 
-                    console.log('Signer verified:', {
-                        address,
-                        chainId: network.chainId,
-                    })
                     break
                 } catch (signerError) {
                     retryCount++
-                    console.log(
-                        `Signer creation attempt ${retryCount} failed:`,
-                        signerError
-                    )
 
                     if (retryCount >= maxRetries) {
                         throw signerError
@@ -119,14 +111,12 @@ export function use0GBroker(): Use0GBrokerReturn {
             // Validate contract addresses
 
             const brokerInstance = await createZGComputeNetworkBroker(
-                signer as any, // TODO: Fix this type assertion when 0g-serving-broker types are available
+                signer as any // TODO: Fix this type assertion when 0g-serving-broker types are available
                 // '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318',
                 // '0x0165878A594ca255338adfa4d48449f69242Eb8F',
                 // '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
             )
             setBroker(brokerInstance as unknown as ZGComputeNetworkBroker)
-
-            console.log('Broker initialized successfully')
         } catch (err: unknown) {
             const appError = errorHandler.handle(err, 'BrokerInitialization')
             setError(appError.userMessage)
@@ -141,7 +131,6 @@ export function use0GBroker(): Use0GBrokerReturn {
         try {
             const { ledgerInfo, infers, fines } =
                 await broker.ledger.ledger.getLedgerWithDetail()
-            console.log('Refreshed ledger data:', { ledgerInfo, infers, fines })
 
             const totalBalance = neuronToA0gi(BigInt(ledgerInfo[0])) // Convert from neuron to A0GI
             const locked = neuronToA0gi(BigInt(ledgerInfo[1])) // Convert from neuron to A0GI
@@ -169,7 +158,6 @@ export function use0GBroker(): Use0GBrokerReturn {
             // Process fine tuning information
             const processedFineTunings: FineTuningInfo[] = []
             if (fines && fines.length > 0) {
-                console.log('Processing fine tunings:', fines)
                 for (const fine of fines) {
                     const provider = fine[0]
                     const balance = formatBalance(neuronToA0gi(BigInt(fine[1])))
@@ -192,7 +180,6 @@ export function use0GBroker(): Use0GBrokerReturn {
                 fineTunings: processedFineTunings,
             })
         } catch (err: unknown) {
-            console.error('Failed to refresh ledger info:', err)
             setLedgerInfo(null)
         }
     }, [broker])
@@ -204,19 +191,6 @@ export function use0GBroker(): Use0GBrokerReturn {
             }
 
             try {
-                console.log('Creating ledger with balance:', balance, 'A0GI')
-                const brokerSigner = (
-                    broker as { signer?: { getAddress(): Promise<string> } }
-                ).signer
-                console.log(
-                    'Broker address:',
-                    brokerSigner ? await brokerSigner.getAddress() : 'No signer'
-                )
-                console.log('Broker details:', {
-                    balance,
-                    type: typeof balance,
-                })
-
                 await broker.ledger.addLedger(balance)
                 await refreshLedgerInfo()
             } catch (err: unknown) {
@@ -238,15 +212,9 @@ export function use0GBroker(): Use0GBrokerReturn {
                 // First try to check if ledger exists
                 let hasLedger = false
                 try {
-                    const tmp = await broker.ledger.ledger.getLedgerWithDetail()
-                    console.log('Ledger exists:', tmp)
                     hasLedger = true
-                } catch (ledgerError) {
+                } catch {
                     // Ledger doesn't exist yet
-                    console.log(
-                        'Ledger does not exist, will create new one',
-                        ledgerError
-                    )
                     hasLedger = false
                 }
 
@@ -254,11 +222,6 @@ export function use0GBroker(): Use0GBrokerReturn {
                     // Ledger exists, deposit funds
                     await broker.ledger.depositFund(amount)
                 } else {
-                    console.log(
-                        'Creating new ledger with initial deposit',
-                        amount
-                    )
-                    console.log(typeof amount, 'amount:', amount)
                     await broker.ledger.addLedger(amount)
                 }
 
@@ -281,9 +244,6 @@ export function use0GBroker(): Use0GBrokerReturn {
                 try {
                     await initializeBroker()
                 } catch {
-                    console.log(
-                        'Initial broker initialization failed, retrying in 2s...'
-                    )
                     setTimeout(() => {
                         if (isConnected && walletClient && !broker) {
                             initializeBroker()

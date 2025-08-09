@@ -83,19 +83,19 @@ function LedgerContent() {
       let refunds: {amount: bigint, remainTime: bigint}[] = [];
       
       if (type === 'inference') {
-        const [account, refundData] = await broker.inference.getAccountWithDetail(provider);
+        const [, refundData] = await broker.inference.getAccountWithDetail(provider);
         refunds = refundData;
       } else {
         if (!broker.fineTuning) {
           throw new Error('Fine-tuning broker is not available');
         }
-        const { account, refunds: refundData } = await broker.fineTuning.getAccountWithDetail(provider);
+        const { refunds: refundData } = await broker.fineTuning.getAccountWithDetail(provider);
         refunds = refundData;
       }
       
       setRefundDetails(prev => ({ ...prev, [key]: refunds }));
-    } catch (err) {
-      console.error('Failed to fetch refund details:', err);
+    } catch {
+      // Silently handle refund details fetching errors
     } finally {
       setLoadingRefunds(prev => ({ ...prev, [key]: false }));
     }
@@ -139,7 +139,6 @@ function LedgerContent() {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add funds';
       setError(errorMessage);
-      console.error('Add funds error:', err);
     } finally {
       setIsAdding(false);
     }
@@ -163,12 +162,10 @@ function LedgerContent() {
       } else {
         // Placeholder for refund functionality
         alert('Refund functionality will be implemented when the broker supports it.');
-        console.log('Refund requested for amount:', displayLedgerInfo.availableBalance);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to refund';
       setError(errorMessage);
-      console.error('Refund error:', err);
     } finally {
       setIsAdding(false);
     }
@@ -442,8 +439,7 @@ function LedgerContent() {
                             } catch (err: unknown) {
                               const errorMessage = err instanceof Error ? err.message : 'Failed to retrieve all funds';
                               setError(errorMessage);
-                              console.error('Retrieve all funds error:', err);
-                            } finally {
+                                    } finally {
                               setIsRetrievingAll(false);
                             }
                           }}
@@ -530,8 +526,7 @@ function LedgerContent() {
                                     } catch (err: unknown) {
                                       const errorMessage = err instanceof Error ? err.message : 'Failed to retrieve inference funds';
                                       setError(errorMessage);
-                                      console.error('Retrieve inference funds error:', err);
-                                    } finally {
+                                                    } finally {
                                       setIsRetrieving(prev => ({ ...prev, inference: false }));
                                     }
                                   }}
@@ -643,8 +638,7 @@ function LedgerContent() {
                                     } catch (err: unknown) {
                                       const errorMessage = err instanceof Error ? err.message : 'Failed to retrieve fine-tuning funds';
                                       setError(errorMessage);
-                                      console.error('Retrieve fine-tuning funds error:', err);
-                                    } finally {
+                                                    } finally {
                                       setIsRetrieving(prev => ({ ...prev, 'fine-tuning': false }));
                                     }
                                   }}
@@ -858,8 +852,7 @@ function LedgerContent() {
                           } catch (err: unknown) {
                             const errorMessage = err instanceof Error ? err.message : 'Failed to withdraw';
                             setError(errorMessage);
-                            console.error('Withdraw error:', err);
-                          } finally {
+                                          } finally {
                             setIsAdding(false);
                           }
                         }}

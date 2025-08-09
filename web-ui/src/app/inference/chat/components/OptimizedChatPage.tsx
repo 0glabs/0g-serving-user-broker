@@ -185,7 +185,6 @@ export function OptimizedChatPage() {
         try {
           // Use the broker to get real service list
           const services = await broker.inference.listService();
-          console.log("Real services:", services);
 
           // Transform services to Provider format
           const transformedProviders: Provider[] = services.map(
@@ -209,8 +208,6 @@ export function OptimizedChatPage() {
               const verifiability = serviceObj.verifiability || "TEE";
               const serviceUrl = serviceObj.url || "";
 
-              console.log("serviceObj.inputPrice", serviceObj.inputPrice);
-              console.log("serviceObj.outputPrice", serviceObj.outputPrice);
 
               // Convert prices from neuron to A0GI per million tokens
               const inputPrice = serviceObj.inputPrice
@@ -255,7 +252,6 @@ export function OptimizedChatPage() {
             setSelectedProvider(transformedProviders[0]);
           }
         } catch (err: unknown) {
-          console.error("Error fetching providers:", err);
           // Fallback to mock data if real data fetch fails
           setProviders(OFFICIAL_PROVIDERS);
           
@@ -288,7 +284,6 @@ export function OptimizedChatPage() {
   // Refresh ledger info when broker is available
   useEffect(() => {
     if (broker && refreshLedgerInfo) {
-      console.log("Refreshing ledger info...");
       refreshLedgerInfo();
     }
   }, [broker, refreshLedgerInfo]);
@@ -302,7 +297,6 @@ export function OptimizedChatPage() {
           const metadata = await broker.inference.getServiceMetadata(
             selectedProvider.address
           );
-          console.log("Service metadata:", metadata);
           if (metadata?.endpoint && metadata?.model) {
             setServiceMetadata({
               endpoint: metadata.endpoint,
@@ -312,7 +306,6 @@ export function OptimizedChatPage() {
             setServiceMetadata(null);
           }
         } catch (err: unknown) {
-          console.error("Error fetching service metadata:", err);
           setServiceMetadata(null);
         }
       }
@@ -329,7 +322,6 @@ export function OptimizedChatPage() {
           const acknowledged = await broker.inference.userAcknowledged(
             selectedProvider.address
           );
-          console.log("Provider acknowledged:", acknowledged);
           setProviderAcknowledged(acknowledged);
           
           // Check if we should show tutorial
@@ -341,7 +333,6 @@ export function OptimizedChatPage() {
             }
           }
         } catch (err: unknown) {
-          console.error("Error fetching provider acknowledgment:", err);
           setProviderAcknowledged(false);
         }
       }
@@ -359,8 +350,6 @@ export function OptimizedChatPage() {
           if (account && account.balance) {
             const balanceInA0gi = neuronToA0gi(account.balance - account.pendingRefund);
             const pendingRefundInA0gi = neuronToA0gi(account.pendingRefund);
-            console.log("Provider balance:", balanceInA0gi);
-            console.log("Provider pending refund:", pendingRefundInA0gi);
             setProviderBalance(balanceInA0gi);
             setProviderBalanceNeuron(account.balance);
             setProviderPendingRefund(pendingRefundInA0gi);
@@ -370,7 +359,6 @@ export function OptimizedChatPage() {
             setProviderPendingRefund(0);
           }
         } catch (err: unknown) {
-          console.error("Error fetching provider balance:", err);
           setProviderBalance(null);
           setProviderBalanceNeuron(null);
           setProviderPendingRefund(null);
@@ -392,23 +380,14 @@ export function OptimizedChatPage() {
       const tutorialKey = `tutorial_seen_${selectedProvider.address}`;
       const hasSeenTutorial = localStorage.getItem(tutorialKey);
       
-      console.log('Tutorial check:', {
-        provider: selectedProvider.address,
-        hasSeenTutorial,
-        providerAcknowledged
-      });
       
       if (!hasSeenTutorial) {
         // Small delay to ensure UI is ready
         const timer = setTimeout(() => {
-          console.log('Starting tutorial');
           setShowTutorial(true);
-          // If provider is already acknowledged, start with top-up step
           if (providerAcknowledged === true) {
-            console.log('Provider already acknowledged, showing top-up step');
             setTutorialStep('top-up');
           } else {
-            console.log('Provider not acknowledged, showing verify step');
             setTutorialStep('verify');
           }
         }, 800);
@@ -436,7 +415,6 @@ export function OptimizedChatPage() {
 
   // Function to handle history clicks with optional message targeting
   const handleHistoryClick = useCallback(async (sessionId: string, targetMessageContent?: string) => {
-    console.log('handleHistoryClick called:', { sessionId, targetMessageContent });
     
     // Clear any previous message targeting when clicking regular history
     if (!targetMessageContent) {
@@ -451,7 +429,6 @@ export function OptimizedChatPage() {
       // Set flag to prevent auto-scrolling to bottom
       isLoadingHistoryRef.current = true;
       
-      console.log('Loading session:', sessionId);
       
       // Load session and get messages directly from database
       await chatHistory.loadSession(sessionId);
@@ -460,11 +437,6 @@ export function OptimizedChatPage() {
       const { dbManager } = await import('../../../../lib/database');
       const sessionMessages = await dbManager.getMessages(sessionId);
       
-      console.log('Session loaded successfully:', { 
-        sessionId, 
-        messagesCount: sessionMessages.length,
-        firstMessage: sessionMessages[0]?.content?.substring(0, 50)
-      });
       
       // Convert database messages to UI format
       const historyMessages: Message[] = sessionMessages.map(msg => ({
@@ -509,7 +481,6 @@ export function OptimizedChatPage() {
       }, 200);
       
     } catch (err) {
-      console.error('Failed to load session:', err);
       isLoadingHistoryRef.current = false;
     }
   }, [chatHistory, scrollToMessage]);
@@ -537,7 +508,6 @@ export function OptimizedChatPage() {
         }));
         setSearchResults(searchMessages);
       } catch (err) {
-        console.error('Search failed:', err);
         setSearchResults([]);
       } finally {
         setIsSearching(false);
@@ -631,21 +601,12 @@ export function OptimizedChatPage() {
   }, [messages, isLoading, isStreaming]);
 
   const sendMessage = async () => {
-    console.log("sendMessage called:", {
-      inputMessage: inputMessage.trim(),
-      selectedProvider: !!selectedProvider,
-      broker: !!broker,
-      serviceMetadata: !!serviceMetadata,
-      selectedProviderAddress: selectedProvider?.address,
-    });
 
     if (!inputMessage.trim() || !selectedProvider || !broker) {
-      console.log("Early return due to missing requirements");
       return;
     }
 
     // For now, let's add a simple demo response to test if the function works
-    console.log("Adding demo response...");
     const userMessage: Message = {
       role: "user",
       content: inputMessage,
@@ -666,7 +627,6 @@ export function OptimizedChatPage() {
         is_verifying: false,
       });
     } catch (err) {
-      console.error('Failed to save user message:', err);
     }
     setInputMessage("");
     setIsLoading(true);
@@ -683,23 +643,10 @@ export function OptimizedChatPage() {
     
     let firstContentReceived = false;
 
-    // Demo response commented out - using real API
-    // setTimeout(() => {
-    //   const assistantMessage: Message = {
-    //     role: "assistant",
-    //     content: "Demo response - real API integration is being debugged.",
-    //     timestamp: Date.now(),
-    //   };
-    //   setMessages((prev) => [...prev, assistantMessage]);
-    //   setIsLoading(false);
-    // }, 1000);
-
-    // Continue with real API call
     try {
       // If serviceMetadata is not available, try to fetch it first
       let currentMetadata = serviceMetadata;
       if (!currentMetadata) {
-        console.log("Fetching service metadata...");
         currentMetadata = await broker.inference.getServiceMetadata(
           selectedProvider.address
         );
@@ -717,7 +664,6 @@ export function OptimizedChatPage() {
       }
 
       // Step 5.2: Get the request headers (may trigger auto-funding)
-      console.log("Getting request headers...");
       
       // Funding operations removed
       
@@ -737,13 +683,11 @@ export function OptimizedChatPage() {
         );
         
         
-        console.log("Request headers obtained successfully");
       } catch (headerError) {
         throw headerError;
       }
 
       // Step 6: Send a request to the service use stream
-      console.log("Sending request to:", currentMetadata.endpoint);
       const { endpoint, model } = currentMetadata;
 
       const response = await fetch(`${endpoint}/chat/completions`, {
@@ -898,7 +842,6 @@ export function OptimizedChatPage() {
             provider_address: selectedProvider?.address || '',
           });
         } catch (err) {
-          console.error('Failed to save assistant message:', err);
         }
       }
 
@@ -909,7 +852,6 @@ export function OptimizedChatPage() {
       // Always stop streaming when done
       setIsStreaming(false);
     } catch (err: unknown) {
-      console.error("Error with real API:", err);
       let errorMessage = "Failed to send message. Please try again.";
       
       if (err instanceof Error) {
@@ -943,26 +885,18 @@ export function OptimizedChatPage() {
 
   // Step 7: Process the response (verification function)
   const verifyResponse = async (message: Message, messageIndex: number) => {
-    console.log("🔍 verifyResponse called:", { message, messageIndex });
 
     if (!broker || !selectedProvider || !message.chatId) {
-      console.log("❌ Verification cancelled - missing requirements:", {
-        broker: !!broker,
-        selectedProvider: !!selectedProvider,
-        chatId: !!message.chatId,
-      });
       return;
     }
 
     // Set verifying state and reset previous verification result
-    console.log("⏳ Setting verifying state to TRUE...");
     setMessages((prev) => {
       const updated = prev.map((msg, index) =>
         index === messageIndex
           ? { ...msg, isVerifying: true, isVerified: null }
           : msg
       );
-      console.log("📝 Updated messages:", updated[messageIndex]);
       return updated;
     });
 
@@ -970,7 +904,6 @@ export function OptimizedChatPage() {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
-      console.log("Calling broker.inference.processResponse...");
 
       // Add minimum loading time to ensure user sees the loading effect
       const [isValid] = await Promise.all([
@@ -982,38 +915,30 @@ export function OptimizedChatPage() {
         new Promise((resolve) => setTimeout(resolve, 1000)), // Minimum 1 second loading
       ]);
 
-      console.log("Verification result:", isValid);
 
       // Update verification result with visual feedback
-      console.log("✅ Setting verification result:", isValid);
       setMessages((prev) => {
         const updated = prev.map((msg, index) =>
           index === messageIndex
             ? { ...msg, isVerified: isValid, isVerifying: false }
             : msg
         );
-        console.log("📝 Final updated message:", updated[messageIndex]);
         return updated;
       });
 
       // Show visual feedback notification
       if (isValid) {
-        console.log("✅ Response verified successfully!");
       } else {
-        console.log("❌ Response verification failed!");
       }
     } catch (err: unknown) {
-      console.error("❌ Error verifying response:", err);
       // Mark as verification failed with minimum loading time
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("❌ Setting verification failed state");
       setMessages((prev) => {
         const updated = prev.map((msg, index) =>
           index === messageIndex
             ? { ...msg, isVerified: false, isVerifying: false }
             : msg
         );
-        console.log("📝 Error updated message:", updated[messageIndex]);
         return updated;
       });
     }
@@ -1047,7 +972,6 @@ export function OptimizedChatPage() {
 
   const verifyProvider = async () => {
     if (!broker || !selectedProvider) {
-      console.log("Cannot verify - missing broker or provider");
       return;
     }
 
@@ -1055,7 +979,6 @@ export function OptimizedChatPage() {
     setErrorWithTimeout(null);
 
     try {
-      console.log("Acknowledging provider:", selectedProvider.address);
       await broker.inference.acknowledgeProviderSigner(
         selectedProvider.address
       );
@@ -1066,7 +989,6 @@ export function OptimizedChatPage() {
       );
       setProviderAcknowledged(acknowledged);
 
-      console.log("Provider verification completed:", acknowledged);
       
       // Refresh ledger info after successful verification
       if (acknowledged) {
@@ -1078,7 +1000,6 @@ export function OptimizedChatPage() {
         setTutorialStep('top-up');
       }
     } catch (err: unknown) {
-      console.error("Error verifying provider:", err);
       const errorMessage =
         err instanceof Error
           ? err.message
@@ -1093,7 +1014,6 @@ export function OptimizedChatPage() {
 
   const handleTopUp = async () => {
     if (!broker || !selectedProvider || !topUpAmount || parseFloat(topUpAmount) <= 0) {
-      console.log("Invalid top up amount or missing requirements");
       return;
     }
 
@@ -1101,11 +1021,9 @@ export function OptimizedChatPage() {
     setErrorWithTimeout(null);
 
     try {
-      console.log("Topping up:", topUpAmount, "A0GI to provider:", selectedProvider.address);
       const amountInA0gi = parseFloat(topUpAmount);
       const amountInNeuron = a0giToNeuron(amountInA0gi);
       
-      console.log("Amount in neuron:", amountInNeuron.toString());
       
       // Call the transfer function with neuron amount
       await broker.ledger.transferFund(
@@ -1114,7 +1032,6 @@ export function OptimizedChatPage() {
         amountInNeuron
       );
 
-      console.log("Top up successful");
       
       // Refresh both ledger info and provider balance in parallel for better performance
       const [, account] = await Promise.all([
@@ -1143,7 +1060,6 @@ export function OptimizedChatPage() {
         localStorage.setItem(`tutorial_seen_${selectedProvider.address}`, 'true');
       }
     } catch (err: unknown) {
-      console.error("Error topping up:", err);
       const errorMessage =
         err instanceof Error
           ? err.message
@@ -1354,7 +1270,6 @@ export function OptimizedChatPage() {
                                 // Load the session and scroll to the specific message
                                 await handleHistoryClick(result.sessionId, result.content);
                               } catch (err) {
-                                console.error('Failed to load session from search result:', err);
                               }
                             }
                           }}
@@ -2041,10 +1956,6 @@ export function OptimizedChatPage() {
                                     <button
                                       onClick={() => {
                                         if (!isExpired) {
-                                          console.log(
-                                            "🖱️ Verify button clicked!",
-                                            { message, originalIndex }
-                                          );
                                           verifyResponse(
                                             message,
                                             originalIndex
@@ -2185,7 +2096,6 @@ export function OptimizedChatPage() {
             <button
               onClick={() => {
                 if (providerAcknowledged === false) {
-                  console.log("Verifying provider...");
                   // Close tutorial when verify button is clicked
                   if (showTutorial && tutorialStep === 'verify') {
                     setShowTutorial(false);
@@ -2193,7 +2103,6 @@ export function OptimizedChatPage() {
                   }
                   verifyProvider();
                 } else {
-                  console.log("Button clicked!");
                   sendMessage();
                 }
               }}
