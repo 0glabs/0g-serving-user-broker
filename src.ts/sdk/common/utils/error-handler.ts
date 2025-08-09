@@ -1,10 +1,12 @@
 import { Interface } from 'ethers'
-import { LedgerManager__factory } from '../sdk/ledger/contract/typechain/factories/LedgerManager__factory'
-import { InferenceServing__factory } from '../sdk/inference/contract/typechain/factories/InferenceServing__factory'
+import { LedgerManager__factory } from '../../ledger/contract/typechain/factories/LedgerManager__factory'
+import { InferenceServing__factory } from '../../inference/contract/typechain/factories/InferenceServing__factory'
+import { FineTuningServing__factory } from '../../fine-tuning/contract/typechain/factories/FineTuningServing__factory'
 
 // Create interfaces from the contract factories
 const ledgerInterface = new Interface(LedgerManager__factory.abi)
 const inferenceInterface = new Interface(InferenceServing__factory.abi)
+const fineTuningInterface = new Interface(FineTuningServing__factory.abi)
 
 interface ContractInterfaces {
     [key: string]: Interface
@@ -13,6 +15,7 @@ interface ContractInterfaces {
 const contractInterfaces: ContractInterfaces = {
     ledger: ledgerInterface,
     inference: inferenceInterface,
+    fineTuning: fineTuningInterface,
 }
 
 export function decodeCustomError(error: unknown): string | null {
@@ -128,6 +131,15 @@ export function formatError(error: unknown): string {
         if (errorWithMessage.message.includes('network') || errorWithMessage.message.includes('timeout')) {
             return 'Network error. Please check your connection and try again.'
         }
+        
+        // Check for additional specific patterns
+        if (errorWithMessage.message.includes('Deliverable not acknowledged yet')) {
+            return "Deliverable not acknowledged yet. Please use 'acknowledge-model' to acknowledge the deliverable."
+        }
+        
+        if (errorWithMessage.message.includes('EncryptedSecret not found')) {
+            return "Secret to decrypt model not found. Please ensure the task status is 'Finished'."
+        }
     }
     
     // Return original error message
@@ -168,4 +180,18 @@ export function getDetailedError(error: unknown): { message: string; details?: s
         message,
         details: details.length > 0 ? details.join(' | ') : undefined
     }
+}
+
+// Helper function to throw formatted errors from within SDK functions
+export function throwFormattedError(error: unknown): never {
+    const formattedMessage = formatError(error)
+    const formattedError = new Error(formattedMessage)
+    
+    // Preserve original error properties if possible
+    if (error && typeof error === 'object') {
+        Object.assign(formattedError, error)
+        formattedError.message = formattedMessage
+    }
+    
+    throw formattedError
 }

@@ -6,6 +6,7 @@ import { LedgerManagerContract } from './contract'
 import { InferenceServingContract } from '../inference/contract'
 import { FineTuningServingContract } from '../fine-tuning/contract'
 import { Cache, Metadata } from '../common/storage'
+import { throwFormattedError } from '../common/utils'
 
 export class LedgerBroker {
     public ledger!: LedgerProcessor
@@ -41,7 +42,7 @@ export class LedgerBroker {
         try {
             userAddress = await this.signer.getAddress()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
         const ledgerContract = new LedgerManagerContract(
             this.signer,
@@ -93,7 +94,7 @@ export class LedgerBroker {
         try {
             return await this.ledger.addLedger(balance, gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -108,7 +109,7 @@ export class LedgerBroker {
         try {
             return await this.ledger.getLedger()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -125,7 +126,7 @@ export class LedgerBroker {
         try {
             return await this.ledger.depositFund(amount, gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -145,7 +146,7 @@ export class LedgerBroker {
         try {
             return await this.ledger.refund(amount, gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -176,7 +177,7 @@ export class LedgerBroker {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -198,7 +199,7 @@ export class LedgerBroker {
         try {
             return await this.ledger.retrieveFund(serviceTypeStr, gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -214,7 +215,7 @@ export class LedgerBroker {
         try {
             return await this.ledger.deleteLedger(gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

@@ -9,6 +9,7 @@ import type {
 import type { LedgerManager } from './typechain'
 import { LedgerManager__factory } from './typechain'
 import { RETRY_ERROR_SUBSTRINGS } from '../../common/utils/const'
+import { throwFormattedError } from '../../common/utils'
 
 const TIMEOUT_MS = 300_000
 
@@ -97,7 +98,7 @@ export class LedgerManagerContract {
                 }
 
                 if (this._maxGasPrice === undefined) {
-                    throw error
+                    throwFormattedError(error)
                 }
 
                 let errorMessage = ''
@@ -111,7 +112,7 @@ export class LedgerManagerContract {
                 )
 
                 if (!shouldRetry) {
-                    throw error
+                    throwFormattedError(error)
                 }
                 console.log(
                     'Retrying transaction with higher gas price due to:',
@@ -119,7 +120,7 @@ export class LedgerManagerContract {
                 )
                 let currentGasPrice = txOptions.gasPrice
                 if (currentGasPrice >= this._maxGasPrice) {
-                    throw error
+                    throwFormattedError(error)
                 }
                 currentGasPrice =
                     (currentGasPrice * BigInt(this._step)) / BigInt(10)
@@ -149,7 +150,7 @@ export class LedgerManagerContract {
                 txOptions
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -158,7 +159,7 @@ export class LedgerManagerContract {
             const ledgers = await this.ledger.getAllLedgers()
             return ledgers
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -168,7 +169,7 @@ export class LedgerManagerContract {
             const ledger = await this.ledger.getLedger(user)
             return ledger
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -180,7 +181,7 @@ export class LedgerManagerContract {
             }
             await this.sendTx('depositFund', [], txOptions)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -192,7 +193,7 @@ export class LedgerManagerContract {
             }
             await this.sendTx('refund', [amount], txOptions)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -213,7 +214,7 @@ export class LedgerManagerContract {
                 txOptions
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -233,7 +234,7 @@ export class LedgerManagerContract {
                 txOptions
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -245,7 +246,7 @@ export class LedgerManagerContract {
             }
             await this.sendTx('deleteLedger', [], txOptions)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 

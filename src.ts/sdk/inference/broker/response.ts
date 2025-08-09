@@ -5,6 +5,7 @@ import { ZGServingUserBrokerBase } from './base'
 import { isVerifiability } from './model'
 import { Verifier } from './verifier'
 import type { LedgerBroker } from '../../ledger'
+import { throwFormattedError } from '../../common/utils'
 
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
@@ -77,7 +78,7 @@ export class ResponseProcessor extends ZGServingUserBrokerBase {
                 singerRAVerificationResult.signingAddress
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 

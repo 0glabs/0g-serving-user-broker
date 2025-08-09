@@ -1,6 +1,7 @@
 import type { AccountStructOutput } from '../contract'
 import { ZGServingUserBrokerBase } from './base'
 import type { AddressLike } from 'ethers'
+import { throwFormattedError } from '../../common/utils'
 
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
@@ -10,7 +11,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         try {
             return await this.contract.getAccount(provider)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -35,7 +36,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
 
             return [account, refunds]
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -43,7 +44,7 @@ export class AccountProcessor extends ZGServingUserBrokerBase {
         try {
             return await this.contract.listAccount()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

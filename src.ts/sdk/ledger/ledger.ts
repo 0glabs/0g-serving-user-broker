@@ -1,6 +1,6 @@
 import type { AddressLike } from 'ethers'
 import { genKeyPair } from '../common/settle-signer'
-import { encryptData, privateKeyToStr } from '../common/utils'
+import { encryptData, privateKeyToStr, throwFormattedError } from '../common/utils'
 import type { LedgerManagerContract } from './contract'
 import type { InferenceServingContract } from '../inference/contract'
 import type { FineTuningServingContract } from '../fine-tuning/contract'
@@ -42,7 +42,7 @@ export class LedgerProcessor {
             const ledger = await this.ledgerContract.getLedger()
             return ledger
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -76,7 +76,7 @@ export class LedgerProcessor {
 
             return { ledgerInfo, infers, fines }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -85,7 +85,7 @@ export class LedgerProcessor {
             const ledgers = await this.ledgerContract.listLedger()
             return ledgers
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -112,7 +112,7 @@ export class LedgerProcessor {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -120,7 +120,7 @@ export class LedgerProcessor {
         try {
             await this.ledgerContract.deleteLedger(gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -129,7 +129,7 @@ export class LedgerProcessor {
             const amount = this.a0giToNeuron(balance).toString()
             await this.ledgerContract.depositFund(amount, gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -138,7 +138,7 @@ export class LedgerProcessor {
             const amount = this.a0giToNeuron(balance).toString()
             await this.ledgerContract.refund(amount, gasPrice)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -157,7 +157,7 @@ export class LedgerProcessor {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -194,7 +194,7 @@ export class LedgerProcessor {
                 )
             }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -222,7 +222,7 @@ export class LedgerProcessor {
                 settleSignerPublicKey: keyPair.doublePackedPubkey,
             }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 

@@ -4,6 +4,7 @@ import type { InferenceServingContract } from '../contract'
 import type { LedgerBroker } from '../../ledger'
 import { Automata } from '../../common/automata '
 import { CacheValueTypeEnum } from '../../common/storage'
+import { throwFormattedError } from '../../common/utils'
 // import { Verifier } from './verifier'
 
 /**
@@ -111,7 +112,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 vllmProxy
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -185,7 +186,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 CacheValueTypeEnum.Other
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }
