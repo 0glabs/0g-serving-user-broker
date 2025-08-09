@@ -50,7 +50,7 @@ function webUIEmbedded(program) {
                 await new Promise((resolve, reject) => {
                     const installProcess = (0, child_process_1.spawn)(packageManager, ['install'], {
                         cwd: embeddedUIPath,
-                        stdio: 'inherit'
+                        stdio: 'inherit',
                     });
                     installProcess.on('close', (code) => {
                         if (code === 0)
@@ -69,21 +69,36 @@ function webUIEmbedded(program) {
         const env = {
             ...process.env,
             NODE_ENV: 'development',
-            NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+            NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+                'demo-project-id',
             PORT: options.port,
-            HOSTNAME: options.host
+            HOSTNAME: options.host,
         };
         console.log('🚀 Starting embedded 0G Compute Web UI...');
         console.log(`🌐 Server will start on http://${options.host}:${options.port}`);
         // 启动 Next.js 开发服务器
         const runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx';
         const runArgs = packageManager === 'pnpm'
-            ? ['next', 'dev', '--port', options.port, '--hostname', options.host]
-            : ['next', 'dev', '--port', options.port, '--hostname', options.host];
+            ? [
+                'next',
+                'dev',
+                '--port',
+                options.port,
+                '--hostname',
+                options.host,
+            ]
+            : [
+                'next',
+                'dev',
+                '--port',
+                options.port,
+                '--hostname',
+                options.host,
+            ];
         const nextProcess = (0, child_process_1.spawn)(runCommand, runArgs, {
             cwd: embeddedUIPath,
             stdio: 'inherit',
-            env: env
+            env: env,
         });
         nextProcess.on('error', (err) => {
             console.error('❌ Failed to start Web UI:', err);

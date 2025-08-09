@@ -1,7 +1,9 @@
 export class Metadata {
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
-    private isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+    private isBrowser =
+        typeof window !== 'undefined' &&
+        typeof window.localStorage !== 'undefined'
     private storagePrefix = '0g_metadata_'
 
     constructor() {}

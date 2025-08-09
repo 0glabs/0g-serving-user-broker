@@ -126,13 +126,9 @@ export class InferenceBroker {
      * has acknowledged the provider signer.
      * @throws Will throw an error if the acknowledgment check fails.
      */
-    public userAcknowledged = async (
-        providerAddress: string,
-    ) => {
+    public userAcknowledged = async (providerAddress: string) => {
         try {
-            return await this.requestProcessor.userAcknowledged(
-                providerAddress,
-            )
+            return await this.requestProcessor.userAcknowledged(providerAddress)
         } catch (error) {
             throw error
         }

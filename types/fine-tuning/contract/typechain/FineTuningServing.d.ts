@@ -139,7 +139,7 @@ export type VerifierInputStructOutput = [
     user: string;
 };
 export interface FineTuningServingInterface extends Interface {
-    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeDeliverable' | 'acknowledgeProviderSigner' | 'addAccount' | 'addDeliverable' | 'addOrUpdateService' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAllAccounts' | 'getAllServices' | 'getDeliverable' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'penaltyPercentage' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateLockTime' | 'updatePenaltyPercentage'): FunctionFragment;
+    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeDeliverable' | 'acknowledgeProviderSigner' | 'addAccount' | 'addDeliverable' | 'addOrUpdateService' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAccountsByProvider' | 'getAccountsByUser' | 'getAllAccounts' | 'getAllServices' | 'getBatchAccountsByUsers' | 'getDeliverable' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'penaltyPercentage' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateLockTime' | 'updatePenaltyPercentage'): FunctionFragment;
     getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated'): EventFragment;
     encodeFunctionData(functionFragment: 'accountExists', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'acknowledgeDeliverable', values: [AddressLike, BigNumberish]): string;
@@ -157,8 +157,11 @@ export interface FineTuningServingInterface extends Interface {
     encodeFunctionData(functionFragment: 'deleteAccount', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'depositFund', values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'getAccount', values: [AddressLike, AddressLike]): string;
+    encodeFunctionData(functionFragment: 'getAccountsByProvider', values: [AddressLike, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: 'getAccountsByUser', values: [AddressLike, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'getAllAccounts', values?: undefined): string;
     encodeFunctionData(functionFragment: 'getAllServices', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'getBatchAccountsByUsers', values: [AddressLike[]]): string;
     encodeFunctionData(functionFragment: 'getDeliverable', values: [AddressLike, AddressLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: 'getPendingRefund', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'getService', values: [AddressLike]): string;
@@ -185,8 +188,11 @@ export interface FineTuningServingInterface extends Interface {
     decodeFunctionResult(functionFragment: 'deleteAccount', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'depositFund', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'getAccount', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getAccountsByProvider', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getAccountsByUser', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'getAllAccounts', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'getAllServices', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'getBatchAccountsByUsers', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'getDeliverable', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'getPendingRefund', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'getService', data: BytesLike): Result;
@@ -379,8 +385,39 @@ export interface FineTuningServing extends BaseContract {
     ], [
         AccountStructOutput
     ], 'view'>;
+    getAccountsByProvider: TypedContractMethod<[
+        provider: AddressLike,
+        offset: BigNumberish,
+        limit: BigNumberish
+    ], [
+        [
+            AccountStructOutput[],
+            bigint
+        ] & {
+            accounts: AccountStructOutput[];
+            total: bigint;
+        }
+    ], 'view'>;
+    getAccountsByUser: TypedContractMethod<[
+        user: AddressLike,
+        offset: BigNumberish,
+        limit: BigNumberish
+    ], [
+        [
+            AccountStructOutput[],
+            bigint
+        ] & {
+            accounts: AccountStructOutput[];
+            total: bigint;
+        }
+    ], 'view'>;
     getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], 'view'>;
     getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], 'view'>;
+    getBatchAccountsByUsers: TypedContractMethod<[
+        users: AddressLike[]
+    ], [
+        AccountStructOutput[]
+    ], 'view'>;
     getDeliverable: TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,
@@ -515,8 +552,39 @@ export interface FineTuningServing extends BaseContract {
     ], [
         AccountStructOutput
     ], 'view'>;
+    getFunction(nameOrSignature: 'getAccountsByProvider'): TypedContractMethod<[
+        provider: AddressLike,
+        offset: BigNumberish,
+        limit: BigNumberish
+    ], [
+        [
+            AccountStructOutput[],
+            bigint
+        ] & {
+            accounts: AccountStructOutput[];
+            total: bigint;
+        }
+    ], 'view'>;
+    getFunction(nameOrSignature: 'getAccountsByUser'): TypedContractMethod<[
+        user: AddressLike,
+        offset: BigNumberish,
+        limit: BigNumberish
+    ], [
+        [
+            AccountStructOutput[],
+            bigint
+        ] & {
+            accounts: AccountStructOutput[];
+            total: bigint;
+        }
+    ], 'view'>;
     getFunction(nameOrSignature: 'getAllAccounts'): TypedContractMethod<[], [AccountStructOutput[]], 'view'>;
     getFunction(nameOrSignature: 'getAllServices'): TypedContractMethod<[], [ServiceStructOutput[]], 'view'>;
+    getFunction(nameOrSignature: 'getBatchAccountsByUsers'): TypedContractMethod<[
+        users: AddressLike[]
+    ], [
+        AccountStructOutput[]
+    ], 'view'>;
     getFunction(nameOrSignature: 'getDeliverable'): TypedContractMethod<[
         user: AddressLike,
         provider: AddressLike,

@@ -163,8 +163,11 @@ export interface InferenceServingInterface extends Interface {
             | 'deleteAccount'
             | 'depositFund'
             | 'getAccount'
+            | 'getAccountsByProvider'
+            | 'getAccountsByUser'
             | 'getAllAccounts'
             | 'getAllServices'
+            | 'getBatchAccountsByUsers'
             | 'getPendingRefund'
             | 'getService'
             | 'initialize'
@@ -224,12 +227,24 @@ export interface InferenceServingInterface extends Interface {
         values: [AddressLike, AddressLike]
     ): string
     encodeFunctionData(
+        functionFragment: 'getAccountsByProvider',
+        values: [AddressLike, BigNumberish, BigNumberish]
+    ): string
+    encodeFunctionData(
+        functionFragment: 'getAccountsByUser',
+        values: [AddressLike, BigNumberish, BigNumberish]
+    ): string
+    encodeFunctionData(
         functionFragment: 'getAllAccounts',
         values?: undefined
     ): string
     encodeFunctionData(
         functionFragment: 'getAllServices',
         values?: undefined
+    ): string
+    encodeFunctionData(
+        functionFragment: 'getBatchAccountsByUsers',
+        values: [AddressLike[]]
     ): string
     encodeFunctionData(
         functionFragment: 'getPendingRefund',
@@ -319,11 +334,23 @@ export interface InferenceServingInterface extends Interface {
         data: BytesLike
     ): Result
     decodeFunctionResult(
+        functionFragment: 'getAccountsByProvider',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
+        functionFragment: 'getAccountsByUser',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
         functionFragment: 'getAllAccounts',
         data: BytesLike
     ): Result
     decodeFunctionResult(
         functionFragment: 'getAllServices',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
+        functionFragment: 'getBatchAccountsByUsers',
         data: BytesLike
     ): Result
     decodeFunctionResult(
@@ -610,9 +637,37 @@ export interface InferenceServing extends BaseContract {
         'view'
     >
 
+    getAccountsByProvider: TypedContractMethod<
+        [provider: AddressLike, offset: BigNumberish, limit: BigNumberish],
+        [
+            [AccountStructOutput[], bigint] & {
+                accounts: AccountStructOutput[]
+                total: bigint
+            }
+        ],
+        'view'
+    >
+
+    getAccountsByUser: TypedContractMethod<
+        [user: AddressLike, offset: BigNumberish, limit: BigNumberish],
+        [
+            [AccountStructOutput[], bigint] & {
+                accounts: AccountStructOutput[]
+                total: bigint
+            }
+        ],
+        'view'
+    >
+
     getAllAccounts: TypedContractMethod<[], [AccountStructOutput[]], 'view'>
 
     getAllServices: TypedContractMethod<[], [ServiceStructOutput[]], 'view'>
+
+    getBatchAccountsByUsers: TypedContractMethod<
+        [users: AddressLike[]],
+        [AccountStructOutput[]],
+        'view'
+    >
 
     getPendingRefund: TypedContractMethod<
         [user: AddressLike, provider: AddressLike],
@@ -752,12 +807,39 @@ export interface InferenceServing extends BaseContract {
         [AccountStructOutput],
         'view'
     >
+    getFunction(nameOrSignature: 'getAccountsByProvider'): TypedContractMethod<
+        [provider: AddressLike, offset: BigNumberish, limit: BigNumberish],
+        [
+            [AccountStructOutput[], bigint] & {
+                accounts: AccountStructOutput[]
+                total: bigint
+            }
+        ],
+        'view'
+    >
+    getFunction(nameOrSignature: 'getAccountsByUser'): TypedContractMethod<
+        [user: AddressLike, offset: BigNumberish, limit: BigNumberish],
+        [
+            [AccountStructOutput[], bigint] & {
+                accounts: AccountStructOutput[]
+                total: bigint
+            }
+        ],
+        'view'
+    >
     getFunction(
         nameOrSignature: 'getAllAccounts'
     ): TypedContractMethod<[], [AccountStructOutput[]], 'view'>
     getFunction(
         nameOrSignature: 'getAllServices'
     ): TypedContractMethod<[], [ServiceStructOutput[]], 'view'>
+    getFunction(
+        nameOrSignature: 'getBatchAccountsByUsers'
+    ): TypedContractMethod<
+        [users: AddressLike[]],
+        [AccountStructOutput[]],
+        'view'
+    >
     getFunction(
         nameOrSignature: 'getPendingRefund'
     ): TypedContractMethod<

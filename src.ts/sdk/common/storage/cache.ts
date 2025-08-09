@@ -14,7 +14,9 @@ export type CacheValueType =
 export class Cache {
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
-    private isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+    private isBrowser =
+        typeof window !== 'undefined' &&
+        typeof window.localStorage !== 'undefined'
     private storagePrefix = '0g_cache_'
 
     constructor() {}
@@ -120,7 +122,7 @@ export class Cache {
 
     private cleanupExpiredItems(): void {
         if (!this.isBrowser) return
-        
+
         try {
             const keysToRemove: string[] = []
             for (let i = 0; i < window.localStorage.length; i++) {
@@ -139,7 +141,7 @@ export class Cache {
                     }
                 }
             }
-            keysToRemove.forEach(key => window.localStorage.removeItem(key))
+            keysToRemove.forEach((key) => window.localStorage.removeItem(key))
         } catch (e) {
             console.warn('Failed to cleanup expired items:', e)
         }
