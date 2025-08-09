@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelProcessor = exports.VerifiabilityEnum = void 0;
 exports.isVerifiability = isVerifiability;
 const base_1 = require("./base");
+const utils_1 = require("../../common/utils");
 var VerifiabilityEnum;
 (function (VerifiabilityEnum) {
     VerifiabilityEnum["OpML"] = "OpML";
@@ -16,7 +17,7 @@ class ModelProcessor extends base_1.ZGServingUserBrokerBase {
             return services;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
 }

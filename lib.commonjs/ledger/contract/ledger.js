@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LedgerManagerContract = void 0;
 const typechain_1 = require("./typechain");
 const const_1 = require("../../common/utils/const");
+const utils_1 = require("../../common/utils");
 const TIMEOUT_MS = 300_000;
 class LedgerManagerContract {
     ledger;
@@ -53,7 +54,7 @@ class LedgerManagerContract {
                     }
                 }
                 if (this._maxGasPrice === undefined) {
-                    throw error;
+                    (0, utils_1.throwFormattedError)(error);
                 }
                 let errorMessage = '';
                 if (error.message) {
@@ -64,12 +65,12 @@ class LedgerManagerContract {
                 }
                 const shouldRetry = const_1.RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
                 if (!shouldRetry) {
-                    throw error;
+                    (0, utils_1.throwFormattedError)(error);
                 }
                 console.log('Retrying transaction with higher gas price due to:', errorMessage);
                 let currentGasPrice = txOptions.gasPrice;
                 if (currentGasPrice >= this._maxGasPrice) {
-                    throw error;
+                    (0, utils_1.throwFormattedError)(error);
                 }
                 currentGasPrice =
                     (currentGasPrice * BigInt(this._step)) / BigInt(10);
@@ -89,7 +90,7 @@ class LedgerManagerContract {
             await this.sendTx('addLedger', [signer, settleSignerEncryptedPrivateKey], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listLedger() {
@@ -98,7 +99,7 @@ class LedgerManagerContract {
             return ledgers;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getLedger() {
@@ -108,7 +109,7 @@ class LedgerManagerContract {
             return ledger;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async depositFund(balance, gasPrice) {
@@ -120,7 +121,7 @@ class LedgerManagerContract {
             await this.sendTx('depositFund', [], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async refund(amount, gasPrice) {
@@ -132,7 +133,7 @@ class LedgerManagerContract {
             await this.sendTx('refund', [amount], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async transferFund(provider, serviceTypeStr, amount, gasPrice) {
@@ -144,7 +145,7 @@ class LedgerManagerContract {
             await this.sendTx('transferFund', [provider, serviceTypeStr, amount], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async retrieveFund(providers, serviceTypeStr, gasPrice) {
@@ -156,7 +157,7 @@ class LedgerManagerContract {
             await this.sendTx('retrieveFund', [providers, serviceTypeStr], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async deleteLedger(gasPrice) {
@@ -168,7 +169,7 @@ class LedgerManagerContract {
             await this.sendTx('deleteLedger', [], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     getUserAddress() {

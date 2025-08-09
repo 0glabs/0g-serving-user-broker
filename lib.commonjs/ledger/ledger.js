@@ -26,7 +26,7 @@ class LedgerProcessor {
             return ledger;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getLedgerWithDetail() {
@@ -50,7 +50,7 @@ class LedgerProcessor {
             return { ledgerInfo, infers, fines };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listLedger() {
@@ -59,7 +59,7 @@ class LedgerProcessor {
             return ledgers;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async addLedger(balance, gasPrice) {
@@ -77,7 +77,7 @@ class LedgerProcessor {
             await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async deleteLedger(gasPrice) {
@@ -85,7 +85,7 @@ class LedgerProcessor {
             await this.ledgerContract.deleteLedger(gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async depositFund(balance, gasPrice) {
@@ -94,7 +94,7 @@ class LedgerProcessor {
             await this.ledgerContract.depositFund(amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async refund(balance, gasPrice) {
@@ -103,7 +103,7 @@ class LedgerProcessor {
             await this.ledgerContract.refund(amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async transferFund(to, serviceTypeStr, balance, gasPrice) {
@@ -112,7 +112,7 @@ class LedgerProcessor {
             await this.ledgerContract.transferFund(to, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async retrieveFund(serviceTypeStr, gasPrice) {
@@ -131,7 +131,7 @@ class LedgerProcessor {
             }
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async createSettleSignerKey() {
@@ -147,7 +147,7 @@ class LedgerProcessor {
             };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     a0giToNeuron(value) {

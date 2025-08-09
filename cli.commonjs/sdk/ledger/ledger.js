@@ -26,7 +26,7 @@ class LedgerProcessor {
             return ledger;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getLedgerWithDetail() {
@@ -50,7 +50,7 @@ class LedgerProcessor {
             return { ledgerInfo, infers, fines };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listLedger() {
@@ -59,7 +59,7 @@ class LedgerProcessor {
             return ledgers;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async addLedger(balance, gasPrice) {
@@ -74,11 +74,10 @@ class LedgerProcessor {
             }
             catch (error) { }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
-            console.log(`Creating ledger with settle signer public key: ${settleSignerPublicKey} and encrypted private key: ${settleSignerEncryptedPrivateKey}`);
             await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async deleteLedger(gasPrice) {
@@ -86,7 +85,7 @@ class LedgerProcessor {
             await this.ledgerContract.deleteLedger(gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async depositFund(balance, gasPrice) {
@@ -95,7 +94,7 @@ class LedgerProcessor {
             await this.ledgerContract.depositFund(amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async refund(balance, gasPrice) {
@@ -104,7 +103,7 @@ class LedgerProcessor {
             await this.ledgerContract.refund(amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async transferFund(to, serviceTypeStr, balance, gasPrice) {
@@ -113,7 +112,7 @@ class LedgerProcessor {
             await this.ledgerContract.transferFund(to, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async retrieveFund(serviceTypeStr, gasPrice) {
@@ -132,7 +131,7 @@ class LedgerProcessor {
             }
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async createSettleSignerKey() {
@@ -141,7 +140,6 @@ class LedgerProcessor {
             const keyPair = await (0, settle_signer_1.genKeyPair)();
             const key = `${this.ledgerContract.getUserAddress()}`;
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
-            console.log('Private key:', keyPair.packedPrivkey);
             const settleSignerEncryptedPrivateKey = await (0, utils_1.encryptData)(this.ledgerContract.signer, (0, utils_1.privateKeyToStr)(keyPair.packedPrivkey));
             return {
                 settleSignerEncryptedPrivateKey,
@@ -149,7 +147,7 @@ class LedgerProcessor {
             };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     a0giToNeuron(value) {

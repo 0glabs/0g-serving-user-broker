@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InferenceServingContract = void 0;
 const typechain_1 = require("./typechain");
+const utils_1 = require("../../common/utils");
 class InferenceServingContract {
     serving;
     signer;
@@ -20,7 +21,7 @@ class InferenceServingContract {
             return services;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listAccount() {
@@ -29,7 +30,7 @@ class InferenceServingContract {
             return accounts;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getAccount(provider) {
@@ -39,7 +40,7 @@ class InferenceServingContract {
             return account;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async acknowledgeProviderSigner(providerAddress, providerSigner) {
@@ -52,7 +53,7 @@ class InferenceServingContract {
             }
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getService(providerAddress) {
@@ -60,7 +61,7 @@ class InferenceServingContract {
             return this.serving.getService(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     getUserAddress() {

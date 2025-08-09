@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FineTuningServingContract = void 0;
 const typechain_1 = require("./typechain");
 const const_1 = require("../../common/utils/const");
+const utils_1 = require("../../common/utils");
 const TIMEOUT_MS = 300_000;
 class FineTuningServingContract {
     serving;
@@ -58,7 +59,7 @@ class FineTuningServingContract {
                     }
                 }
                 if (this._maxGasPrice === undefined) {
-                    throw error;
+                    (0, utils_1.throwFormattedError)(error);
                 }
                 let errorMessage = '';
                 if (error.message) {
@@ -69,12 +70,12 @@ class FineTuningServingContract {
                 }
                 const shouldRetry = const_1.RETRY_ERROR_SUBSTRINGS.some((substr) => errorMessage.includes(substr));
                 if (!shouldRetry) {
-                    throw error;
+                    (0, utils_1.throwFormattedError)(error);
                 }
                 console.log('Retrying transaction with higher gas price due to:', errorMessage);
                 let currentGasPrice = txOptions.gasPrice;
                 if (currentGasPrice >= this._maxGasPrice) {
-                    throw error;
+                    (0, utils_1.throwFormattedError)(error);
                 }
                 currentGasPrice =
                     (currentGasPrice * BigInt(this._step)) / BigInt(10);
@@ -91,7 +92,7 @@ class FineTuningServingContract {
             return services;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listAccount() {
@@ -100,7 +101,7 @@ class FineTuningServingContract {
             return accounts;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getAccount(provider) {
@@ -110,7 +111,7 @@ class FineTuningServingContract {
             return account;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async acknowledgeProviderSigner(providerAddress, providerSigner, gasPrice) {
@@ -122,7 +123,7 @@ class FineTuningServingContract {
             await this.sendTx('acknowledgeProviderSigner', [providerAddress, providerSigner], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async acknowledgeDeliverable(providerAddress, index, gasPrice) {
@@ -134,7 +135,7 @@ class FineTuningServingContract {
             await this.sendTx('acknowledgeDeliverable', [providerAddress, index], txOptions);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getService(providerAddress) {
@@ -142,7 +143,7 @@ class FineTuningServingContract {
             return this.serving.getService(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getDeliverable(providerAddress, index) {
@@ -151,7 +152,7 @@ class FineTuningServingContract {
             return this.serving.getDeliverable(user, providerAddress, index);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     getUserAddress() {
