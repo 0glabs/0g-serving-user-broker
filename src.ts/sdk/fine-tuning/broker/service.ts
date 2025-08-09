@@ -1,5 +1,5 @@
 import type { AddressLike } from 'ethers'
-import { getNonce, signRequest, signTaskID } from '../../common/utils'
+import { getNonce, signRequest, signTaskID, throwFormattedError } from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import type {
     AccountStructOutput,
@@ -80,7 +80,7 @@ export class ServiceProcessor extends BrokerBase {
             const lockTime = await this.contract.lockTime()
             return lockTime
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -89,7 +89,7 @@ export class ServiceProcessor extends BrokerBase {
             const account = await this.contract.getAccount(provider)
             return account
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -110,7 +110,7 @@ export class ServiceProcessor extends BrokerBase {
 
             return { account, refunds }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -119,7 +119,7 @@ export class ServiceProcessor extends BrokerBase {
             const services = await this.contract.listService()
             return services
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -170,7 +170,7 @@ export class ServiceProcessor extends BrokerBase {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -266,7 +266,7 @@ export class ServiceProcessor extends BrokerBase {
 
             return await this.servingProvider.createTask(providerAddress, task)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -279,7 +279,7 @@ export class ServiceProcessor extends BrokerBase {
                 taskID
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -290,7 +290,7 @@ export class ServiceProcessor extends BrokerBase {
                 this.contract.getUserAddress()
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -314,7 +314,7 @@ export class ServiceProcessor extends BrokerBase {
                 taskID
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -350,7 +350,7 @@ export class ServiceProcessor extends BrokerBase {
                 output
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 

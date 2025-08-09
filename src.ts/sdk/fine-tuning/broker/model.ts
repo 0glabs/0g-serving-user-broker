@@ -2,6 +2,7 @@ import {
     aesGCMDecryptToFile,
     eciesDecrypt,
     hexToRoots,
+    throwFormattedError,
 } from '../../common/utils'
 import {
     MODEL_HASH_MAP,
@@ -124,7 +125,7 @@ export class ModelProcessor extends BrokerBase {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -163,7 +164,7 @@ export class ModelProcessor extends BrokerBase {
                 account.providerSigner
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
         return
     }

@@ -12,6 +12,7 @@ import type {
     FineTuningServing,
 } from './typechain/FineTuningServing'
 import { RETRY_ERROR_SUBSTRINGS } from '../../common/utils/const'
+import { throwFormattedError } from '../../common/utils'
 
 const TIMEOUT_MS = 300_000
 
@@ -114,7 +115,7 @@ export class FineTuningServingContract {
                 }
 
                 if (this._maxGasPrice === undefined) {
-                    throw error
+                    throwFormattedError(error)
                 }
 
                 let errorMessage = ''
@@ -128,7 +129,7 @@ export class FineTuningServingContract {
                 )
 
                 if (!shouldRetry) {
-                    throw error
+                    throwFormattedError(error)
                 }
                 console.log(
                     'Retrying transaction with higher gas price due to:',
@@ -136,7 +137,7 @@ export class FineTuningServingContract {
                 )
                 let currentGasPrice = txOptions.gasPrice
                 if (currentGasPrice >= this._maxGasPrice) {
-                    throw error
+                    throwFormattedError(error)
                 }
                 currentGasPrice =
                     (currentGasPrice * BigInt(this._step)) / BigInt(10)
@@ -153,7 +154,7 @@ export class FineTuningServingContract {
             const services = await this.serving.getAllServices()
             return services
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -162,7 +163,7 @@ export class FineTuningServingContract {
             const accounts = await this.serving.getAllAccounts()
             return accounts
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -172,7 +173,7 @@ export class FineTuningServingContract {
             const account = await this.serving.getAccount(user, provider)
             return account
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -192,7 +193,7 @@ export class FineTuningServingContract {
                 txOptions
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -212,7 +213,7 @@ export class FineTuningServingContract {
                 txOptions
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -220,7 +221,7 @@ export class FineTuningServingContract {
         try {
             return this.serving.getService(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -232,7 +233,7 @@ export class FineTuningServingContract {
             const user = this.getUserAddress()
             return this.serving.getDeliverable(user, providerAddress, index)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 

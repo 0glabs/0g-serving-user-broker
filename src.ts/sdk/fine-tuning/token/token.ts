@@ -1,4 +1,5 @@
 import { isBrowser } from '../../common/utils/env'
+import { throwFormattedError } from '../../common/utils'
 
 // Dynamic imports for Node.js specific modules
 let fs: any
@@ -189,7 +190,7 @@ async function calculateTokenSize(
         })
         .catch((error) => {
             console.error('Error running Python script:', error)
-            throw error
+            throwFormattedError(error)
         })
 }
 

@@ -2,6 +2,7 @@ import type { FineTuningServingContract } from '../contract'
 import axios from 'axios'
 import * as fs from 'fs/promises'
 import * as path from 'path'
+import { throwFormattedError } from '../../common/utils'
 
 export interface Task {
     readonly id?: string
@@ -53,7 +54,7 @@ export class Provider {
             }
             return response.json()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -69,7 +70,7 @@ export class Provider {
             const buffer = await response.arrayBuffer()
             return Buffer.from(buffer).toString('utf-8')
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -78,7 +79,7 @@ export class Provider {
             const service = await this.contract.getService(providerAddress)
             return service.url
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -93,7 +94,7 @@ export class Provider {
             const ret = JSON.parse(quoteString)
             return ret
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -140,7 +141,7 @@ export class Provider {
             })
             return response
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -160,7 +161,7 @@ export class Provider {
 
             return this.fetchJSON(endpoint, { method: 'GET' }) as Promise<Task>
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -183,7 +184,7 @@ export class Provider {
                 Task[]
             >
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -198,7 +199,7 @@ export class Provider {
                 })
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -212,7 +213,7 @@ export class Provider {
             const endpoint = `${url}/v1/user/${userAddress}/task/${taskID}/log`
             return this.fetchText(endpoint, { method: 'GET' })
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -237,7 +238,7 @@ export class Provider {
             const response = await this.fetchJSON(endpoint, { method: 'GET' })
             return response as CustomizedModel
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -269,7 +270,7 @@ export class Provider {
             await fs.writeFile(destFile, response.data)
             console.log(`Model downloaded and saved to ${destFile}`)
         } catch (error: any) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

@@ -1,5 +1,6 @@
 import type { ServiceStructOutput } from '../contract'
 import { ZGServingUserBrokerBase } from './base'
+import { throwFormattedError } from '../../common/utils'
 
 export enum VerifiabilityEnum {
     OpML = 'OpML',
@@ -18,7 +19,7 @@ export class ModelProcessor extends ZGServingUserBrokerBase {
             const services = await this.contract.listService()
             return services
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

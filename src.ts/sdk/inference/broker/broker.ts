@@ -8,6 +8,7 @@ import { AccountProcessor } from './account'
 import { ModelProcessor } from './model'
 import { Cache, Metadata } from '../../common/storage'
 import type { LedgerBroker } from '../../ledger'
+import { throwFormattedError } from '../../common/utils'
 
 export class InferenceBroker {
     public requestProcessor!: RequestProcessor
@@ -35,7 +36,7 @@ export class InferenceBroker {
         try {
             userAddress = await this.signer.getAddress()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
         const contract = new InferenceServingContract(
             this.signer,
@@ -81,7 +82,7 @@ export class InferenceBroker {
         try {
             return await this.modelProcessor.listService()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -100,7 +101,7 @@ export class InferenceBroker {
         try {
             return await this.accountProcessor.getAccount(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -114,7 +115,7 @@ export class InferenceBroker {
                 providerAddress
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -130,7 +131,7 @@ export class InferenceBroker {
         try {
             return await this.requestProcessor.userAcknowledged(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -152,7 +153,7 @@ export class InferenceBroker {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -179,7 +180,7 @@ export class InferenceBroker {
                 providerAddress
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -239,7 +240,7 @@ export class InferenceBroker {
                 vllmProxy
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -277,7 +278,7 @@ export class InferenceBroker {
                 vllmProxy
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -296,7 +297,7 @@ export class InferenceBroker {
         try {
             return await this.verifier.verifyService(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -313,7 +314,7 @@ export class InferenceBroker {
         try {
             return await this.verifier.getSignerRaDownloadLink(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -345,7 +346,7 @@ export class InferenceBroker {
                 chatID
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

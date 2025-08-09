@@ -1,5 +1,6 @@
 import { ZGServingUserBrokerBase } from './base'
 import { ethers } from 'ethers'
+import { throwFormattedError } from '../../common/utils'
 
 export interface ResponseSignature {
     text: string
@@ -36,7 +37,7 @@ export class Verifier extends ZGServingUserBrokerBase {
             )
             return valid
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -107,7 +108,7 @@ export class Verifier extends ZGServingUserBrokerBase {
                 signingAddress: signerRA.signing_address,
             }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -116,7 +117,7 @@ export class Verifier extends ZGServingUserBrokerBase {
             const svc = await this.getService(providerAddress)
             return `${svc.url}/v1/proxy/attestation/report`
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -128,7 +129,7 @@ export class Verifier extends ZGServingUserBrokerBase {
             const svc = await this.getService(providerAddress)
             return `${svc.url}/v1/proxy/signature/${chatID}`
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -201,7 +202,7 @@ export class Verifier extends ZGServingUserBrokerBase {
                 return data as SignerRA
             })
             .catch((error) => {
-                throw error
+                throwFormattedError(error)
             })
     }
 
@@ -231,7 +232,7 @@ export class Verifier extends ZGServingUserBrokerBase {
                 return data as ResponseSignature
             })
             .catch((error) => {
-                throw error
+                throwFormattedError(error)
             })
     }
 

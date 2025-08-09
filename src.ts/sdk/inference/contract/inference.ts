@@ -2,6 +2,7 @@ import type { JsonRpcSigner, AddressLike, Wallet, BigNumberish } from 'ethers'
 import { InferenceServing__factory } from './typechain'
 import type { InferenceServing } from './typechain/InferenceServing'
 import type { ServiceStructOutput } from './typechain/InferenceServing'
+import { throwFormattedError } from '../../common/utils'
 
 export class InferenceServingContract {
     public serving: InferenceServing
@@ -31,7 +32,7 @@ export class InferenceServingContract {
             const services = await this.serving.getAllServices()
             return services
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -40,7 +41,7 @@ export class InferenceServingContract {
             const accounts = await this.serving.getAllAccounts()
             return accounts
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -50,7 +51,7 @@ export class InferenceServingContract {
             const account = await this.serving.getAccount(user, provider)
             return account
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -70,7 +71,7 @@ export class InferenceServingContract {
                 throw error
             }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -78,7 +79,7 @@ export class InferenceServingContract {
         try {
             return this.serving.getService(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 

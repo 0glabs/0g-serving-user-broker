@@ -6,6 +6,7 @@ import { ServiceProcessor } from './service'
 import type { LedgerBroker } from '../../ledger'
 import { Provider } from '../provider/provider'
 import type { Task } from '../provider/provider'
+import { throwFormattedError } from '../../common/utils'
 
 export class FineTuningBroker {
     private signer: Wallet
@@ -39,7 +40,7 @@ export class FineTuningBroker {
         try {
             userAddress = await this.signer.getAddress()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
 
         const contract = new FineTuningServingContract(
@@ -68,7 +69,7 @@ export class FineTuningBroker {
         try {
             return await this.serviceProcessor.listService()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -76,7 +77,7 @@ export class FineTuningBroker {
         try {
             return await this.serviceProcessor.getLockTime()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -84,7 +85,7 @@ export class FineTuningBroker {
         try {
             return await this.serviceProcessor.getAccount(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -96,7 +97,7 @@ export class FineTuningBroker {
                 providerAddress
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -110,7 +111,7 @@ export class FineTuningBroker {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -118,7 +119,7 @@ export class FineTuningBroker {
         try {
             return this.modelProcessor.listModel()
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -134,7 +135,7 @@ export class FineTuningBroker {
                 output
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -151,7 +152,7 @@ export class FineTuningBroker {
                 maxGasPrice || this._maxGasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -162,7 +163,7 @@ export class FineTuningBroker {
         try {
             await this.modelProcessor.downloadDataset(dataPath, dataRoot)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -180,7 +181,7 @@ export class FineTuningBroker {
                 providerAddress
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -202,7 +203,7 @@ export class FineTuningBroker {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -216,7 +217,7 @@ export class FineTuningBroker {
                 taskID
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -224,7 +225,7 @@ export class FineTuningBroker {
         try {
             return await this.serviceProcessor.listTask(providerAddress)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -239,7 +240,7 @@ export class FineTuningBroker {
             )
             return task
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -250,7 +251,7 @@ export class FineTuningBroker {
         try {
             return await this.serviceProcessor.getLog(providerAddress, taskID)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -266,7 +267,7 @@ export class FineTuningBroker {
                 gasPrice
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -282,7 +283,7 @@ export class FineTuningBroker {
                 decryptedModelPath
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

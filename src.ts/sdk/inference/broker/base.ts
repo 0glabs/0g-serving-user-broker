@@ -7,6 +7,7 @@ import {
     decryptData,
     getNonceWithCache,
     strToPrivateKey,
+    throwFormattedError,
 } from '../../common/utils'
 import type { PackedPrivkey } from '../../common/settle-signer'
 import {
@@ -77,7 +78,7 @@ export abstract class ZGServingUserBrokerBase {
             )
             return svc
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -101,7 +102,7 @@ export abstract class ZGServingUserBrokerBase {
             })
             return ret
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -131,7 +132,7 @@ export abstract class ZGServingUserBrokerBase {
                 return false
             }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -147,7 +148,7 @@ export abstract class ZGServingUserBrokerBase {
             const buffer = await response.arrayBuffer()
             return Buffer.from(buffer).toString('utf-8')
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -160,7 +161,7 @@ export abstract class ZGServingUserBrokerBase {
             const extractor = this.createExtractor(svc)
             return extractor
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -268,7 +269,7 @@ export abstract class ZGServingUserBrokerBase {
                 'VLLM-Proxy': `${vllmProxy}`,
             }
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -317,7 +318,7 @@ export abstract class ZGServingUserBrokerBase {
                 CacheValueTypeEnum.BigInt
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -332,7 +333,7 @@ export abstract class ZGServingUserBrokerBase {
                 CacheValueTypeEnum.BigInt
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -347,6 +348,7 @@ export abstract class ZGServingUserBrokerBase {
         try {
             // Exit early if running in browser environment
             if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
+                console.log("TTTTT Running in browser environment, skipping top-up check.")
                 return
             }
 
@@ -393,7 +395,7 @@ export abstract class ZGServingUserBrokerBase {
 
             await this.clearCacheFee(provider, newFee)
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 
@@ -444,7 +446,7 @@ export abstract class ZGServingUserBrokerBase {
                 this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice)
             )
         } catch (error) {
-            throw error
+            throwFormattedError(error)
         }
     }
 }

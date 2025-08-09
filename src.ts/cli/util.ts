@@ -4,7 +4,6 @@ import { ethers } from 'ethers'
 import chalk from 'chalk'
 import type { Table } from 'cli-table3'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
-import { getDetailedError } from './errorDecoder'
 
 export async function initBroker(
     options: any
@@ -75,10 +74,10 @@ export const printTableWithTitle = (title: string, table: Table) => {
 }
 
 const alertError = (error: any) => {
-    // First try to use the smart error decoder
-    const { message, details } = getDetailedError(error)
+    // SDK now handles error formatting, so we just need to display the error message
+    const errorMessage = error?.message || String(error)
     
-    // Check for additional specific patterns not covered by contract errors
+    // Check for additional CLI-specific patterns
     const errorPatterns = [
         {
             pattern: /Deliverable not acknowledged yet/i,
@@ -92,18 +91,8 @@ const alertError = (error: any) => {
         },
     ]
 
-    const getErrorMessage = (error: any): string => {
-        try {
-            const errorMsg = JSON.stringify(error, null, 2)
-            return errorMsg !== '{}' ? errorMsg : String(error)
-        } catch {
-            return String(error)
-        }
-    }
-
-    const errorString = getErrorMessage(error)
     const matchedPattern = errorPatterns.find(({ pattern }) =>
-        pattern.test(errorString)
+        pattern.test(errorMessage)
     )
 
     if (matchedPattern) {
@@ -111,14 +100,8 @@ const alertError = (error: any) => {
             chalk.red('✗ Operation failed:'),
             matchedPattern.message
         )
-        if (details) {
-            console.error(chalk.gray(`  Details: ${details}`))
-        }
     } else {
-        console.error(chalk.red('✗ Operation failed:'), message)
-        if (details) {
-            console.error(chalk.gray(`  Details: ${details}`))
-        }
+        console.error(chalk.red('✗ Operation failed:'), errorMessage)
     }
     
     // Show raw error in verbose mode (can be controlled by an env variable)
