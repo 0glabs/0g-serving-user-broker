@@ -1,3 +1,5 @@
+#!/usr/bin/env ts-node
+
 import { neuronToA0gi, printTableWithTitle, withBroker } from './util'
 import type { Command } from 'commander'
 import Table from 'cli-table3'

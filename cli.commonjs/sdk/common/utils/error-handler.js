@@ -7,12 +7,15 @@ exports.throwFormattedError = throwFormattedError;
 const ethers_1 = require("ethers");
 const LedgerManager__factory_1 = require("../../ledger/contract/typechain/factories/LedgerManager__factory");
 const InferenceServing__factory_1 = require("../../inference/contract/typechain/factories/InferenceServing__factory");
+const FineTuningServing__factory_1 = require("../../fine-tuning/contract/typechain/factories/FineTuningServing__factory");
 // Create interfaces from the contract factories
 const ledgerInterface = new ethers_1.Interface(LedgerManager__factory_1.LedgerManager__factory.abi);
 const inferenceInterface = new ethers_1.Interface(InferenceServing__factory_1.InferenceServing__factory.abi);
+const fineTuningInterface = new ethers_1.Interface(FineTuningServing__factory_1.FineTuningServing__factory.abi);
 const contractInterfaces = {
     ledger: ledgerInterface,
     inference: inferenceInterface,
+    fineTuning: fineTuningInterface,
 };
 function decodeCustomError(error) {
     try {

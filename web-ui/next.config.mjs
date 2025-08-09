@@ -10,6 +10,11 @@ const nextConfig = {
                 child_process: false,
                 'fs/promises': false,
             }
+        } else {
+            // Prevent server-side bundling of browser-only packages
+            config.externals = [...(config.externals || []), {
+                '@electric-sql/pglite': 'commonjs @electric-sql/pglite',
+            }]
         }
         return config
     },

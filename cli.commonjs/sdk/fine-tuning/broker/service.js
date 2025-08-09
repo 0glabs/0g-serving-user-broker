@@ -87,7 +87,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return lockTime;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getAccount(provider) {
@@ -96,7 +96,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return account;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getAccountWithDetail(provider) {
@@ -114,7 +114,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return { account, refunds };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listService() {
@@ -123,7 +123,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return services;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async acknowledgeProviderSigner(providerAddress, gasPrice) {
@@ -158,7 +158,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             await this.contract.acknowledgeProviderSigner(providerAddress, provider_signer, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) {
@@ -215,7 +215,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return await this.servingProvider.createTask(providerAddress, task);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async cancelTask(providerAddress, taskID) {
@@ -224,7 +224,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return await this.servingProvider.cancelTask(providerAddress, signature, taskID);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listTask(providerAddress) {
@@ -232,7 +232,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return await this.servingProvider.listTask(providerAddress, this.contract.getUserAddress());
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getTask(providerAddress, taskID) {
@@ -247,7 +247,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return await this.servingProvider.getTask(providerAddress, this.contract.getUserAddress(), taskID);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     // 8. [`call provider`] call provider task progress api to get task progress
@@ -266,7 +266,7 @@ class ServiceProcessor extends base_1.BrokerBase {
             return await this.servingProvider.getCustomizedModelDetailUsage(providerAddress, preTrainedModelName, output);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     verifyTrainingParams(trainingParams) {

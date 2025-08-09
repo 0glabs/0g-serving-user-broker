@@ -3,7 +3,15 @@
 import type { Command } from 'commander'
 import { spawn, execSync } from 'child_process'
 import path from 'path'
-import { existsSync } from 'fs'
+import {
+    existsSync,
+    mkdirSync,
+    symlinkSync,
+    unlinkSync,
+    lstatSync,
+    readFileSync,
+    readlinkSync,
+} from 'fs'
 
 function detectPackageManager(): 'pnpm' | 'yarn' | 'npm' {
     try {
@@ -21,10 +29,78 @@ function detectPackageManager(): 'pnpm' | 'yarn' | 'npm' {
 
 export default function webUIEmbedded(program: Command) {
     program
+        .command('web-info')
+        .description('Show web UI build information')
+        .action(() => {
+            const embeddedUIPath = path.join(__dirname, '../../web-ui')
+            const defaultBuildPath = path.join(embeddedUIPath, '.next')
+
+            console.log('📊 Web UI Information:')
+            console.log(`   UI Source: ${embeddedUIPath}`)
+
+            if (existsSync(defaultBuildPath)) {
+                try {
+                    const stats = lstatSync(defaultBuildPath)
+                    if (stats.isSymbolicLink()) {
+                        const target = path.resolve(
+                            path.dirname(defaultBuildPath),
+                            readlinkSync(defaultBuildPath)
+                        )
+                        console.log(`   Build Directory: ${target} (symlinked)`)
+                    } else {
+                        console.log(`   Build Directory: ${defaultBuildPath}`)
+                    }
+
+                    const buildIdPath = path.join(defaultBuildPath, 'BUILD_ID')
+                    if (existsSync(buildIdPath)) {
+                        const buildId = readFileSync(
+                            buildIdPath,
+                            'utf-8'
+                        ).trim()
+                        console.log(`   Build ID: ${buildId}`)
+                        console.log(`   Build Status: ✅ Ready`)
+
+                        try {
+                            const size = execSync(
+                                `du -sh "${defaultBuildPath}" 2>/dev/null | cut -f1`,
+                                { encoding: 'utf-8' }
+                            ).trim()
+                            console.log(`   Build Size: ${size}`)
+                        } catch {}
+                    } else {
+                        console.log(`   Build Status: ❌ Not built`)
+                    }
+                } catch {
+                    console.log(`   Build Directory: ${defaultBuildPath}`)
+                    console.log(`   Build Status: ⚠️  Unknown`)
+                }
+            } else {
+                console.log(`   Build Status: ❌ Not found`)
+                console.log(
+                    `   Run "0g-compute-cli start-web --auto-build" to build`
+                )
+            }
+        })
+
+    // 启动 Web UI 的命令
+    program
         .command('start-web')
         .description('Start the embedded web UI')
         .option('--port <port>', 'Port to run the web UI on', '3000')
         .option('--host <host>', 'Host to bind the web UI', 'localhost')
+        .option(
+            '--mode <mode>',
+            'Run mode: "development" or "production"',
+            'production'
+        )
+        .option(
+            '--auto-build',
+            'Automatically build if needed in production mode'
+        )
+        .option(
+            '--build-dir <dir>',
+            'Custom directory for Next.js build artifacts'
+        )
         .action(async (options) => {
             // 检测包管理器
             const packageManager = detectPackageManager()
@@ -46,7 +122,50 @@ export default function webUIEmbedded(program: Command) {
                 process.exit(1)
             }
 
-            // 检查 node_modules 是否存在，如果不存在则安装依赖
+            const defaultBuildPath = path.join(embeddedUIPath, '.next')
+            let actualBuildPath = defaultBuildPath
+
+            if (options.buildDir) {
+                actualBuildPath = path.isAbsolute(options.buildDir)
+                    ? options.buildDir
+                    : path.resolve(process.cwd(), options.buildDir)
+
+                console.log(
+                    `📁 Using custom build directory: ${actualBuildPath}`
+                )
+
+                if (!existsSync(path.dirname(actualBuildPath))) {
+                    mkdirSync(path.dirname(actualBuildPath), {
+                        recursive: true,
+                    })
+                }
+
+                if (existsSync(defaultBuildPath)) {
+                    try {
+                        const stats = lstatSync(defaultBuildPath)
+                        if (stats.isSymbolicLink()) {
+                            unlinkSync(defaultBuildPath)
+                        }
+                    } catch {}
+                }
+
+                if (
+                    !existsSync(defaultBuildPath) &&
+                    actualBuildPath !== defaultBuildPath
+                ) {
+                    try {
+                        symlinkSync(actualBuildPath, defaultBuildPath, 'dir')
+                        console.log(
+                            `🔗 Created symlink: .next -> ${actualBuildPath}`
+                        )
+                    } catch {
+                        console.warn(
+                            '⚠️  Could not create symlink, Next.js will use the custom directory directly'
+                        )
+                    }
+                }
+            }
+
             const nodeModulesPath = path.join(embeddedUIPath, 'node_modules')
             if (!existsSync(nodeModulesPath)) {
                 console.log('📦 Installing dependencies for embedded UI...')
@@ -80,10 +199,80 @@ export default function webUIEmbedded(program: Command) {
                 }
             }
 
+            if (options.mode === 'production') {
+                const buildIdPath = path.join(actualBuildPath, 'BUILD_ID')
+                const shouldAutoBuild = options.autoBuild !== false
+                if (!existsSync(buildIdPath) && shouldAutoBuild) {
+                    console.log(
+                        '🔨 Building production version (this may take a few minutes)...'
+                    )
+                    if (actualBuildPath !== defaultBuildPath) {
+                        console.log(
+                            `   Build output will be saved to: ${actualBuildPath}`
+                        )
+                    }
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const buildProcess = spawn(
+                                packageManager,
+                                ['run', 'build'],
+                                {
+                                    cwd: embeddedUIPath,
+                                    stdio: 'inherit',
+                                    env: {
+                                        ...process.env,
+                                        NEXT_BUILD_DIR:
+                                            actualBuildPath !== defaultBuildPath
+                                                ? actualBuildPath
+                                                : undefined,
+                                    },
+                                }
+                            )
+
+                            buildProcess.on('close', (code) => {
+                                if (code === 0) {
+                                    console.log(
+                                        '✅ Production build completed successfully!'
+                                    )
+                                    resolve(undefined)
+                                } else {
+                                    reject(
+                                        new Error(
+                                            `Build failed with code ${code}`
+                                        )
+                                    )
+                                }
+                            })
+                        })
+                    } catch (error) {
+                        console.error(
+                            '❌ Failed to build production version:',
+                            (error as Error).message
+                        )
+                        console.log('💡 Falling back to development mode...')
+                        options.mode = 'development'
+                    }
+                } else if (!existsSync(buildIdPath)) {
+                    console.error(
+                        '❌ Production build not found or incomplete.'
+                    )
+                    console.error(
+                        '   Run with --auto-build flag to build automatically'
+                    )
+                    console.error(
+                        '   Or use --mode development for development mode'
+                    )
+                    process.exit(1)
+                }
+            }
+
             // 设置环境变量
             const env = {
                 ...process.env,
-                NODE_ENV: 'development',
+                NODE_ENV:
+                    options.mode === 'production'
+                        ? 'production'
+                        : 'development',
                 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID:
                     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
                     'demo-project-id',
@@ -91,31 +280,57 @@ export default function webUIEmbedded(program: Command) {
                 HOSTNAME: options.host,
             }
 
-            console.log('🚀 Starting embedded 0G Compute Web UI...')
+            console.log(
+                `🚀 Starting embedded 0G Compute Web UI in ${options.mode} mode...`
+            )
             console.log(
                 `🌐 Server will start on http://${options.host}:${options.port}`
             )
 
-            // 启动 Next.js 开发服务器
-            const runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx'
-            const runArgs =
-                packageManager === 'pnpm'
-                    ? [
-                          'next',
-                          'dev',
-                          '--port',
-                          options.port,
-                          '--hostname',
-                          options.host,
-                      ]
-                    : [
-                          'next',
-                          'dev',
-                          '--port',
-                          options.port,
-                          '--hostname',
-                          options.host,
-                      ]
+            let runCommand: string
+            let runArgs: string[]
+
+            if (options.mode === 'production') {
+                runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx'
+                runArgs =
+                    packageManager === 'pnpm'
+                        ? [
+                              'next',
+                              'start',
+                              '--port',
+                              options.port,
+                              '--hostname',
+                              options.host,
+                          ]
+                        : [
+                              'next',
+                              'start',
+                              '--port',
+                              options.port,
+                              '--hostname',
+                              options.host,
+                          ]
+            } else {
+                runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx'
+                runArgs =
+                    packageManager === 'pnpm'
+                        ? [
+                              'next',
+                              'dev',
+                              '--port',
+                              options.port,
+                              '--hostname',
+                              options.host,
+                          ]
+                        : [
+                              'next',
+                              'dev',
+                              '--port',
+                              options.port,
+                              '--hostname',
+                              options.host,
+                          ]
+            }
 
             const nextProcess = spawn(runCommand, runArgs, {
                 cwd: embeddedUIPath,
@@ -128,7 +343,6 @@ export default function webUIEmbedded(program: Command) {
                 process.exit(1)
             })
 
-            // 处理退出信号
             process.on('SIGINT', () => {
                 console.log('\n🛑 Stopping Web UI...')
                 nextProcess.kill('SIGINT')

@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateTokenSizeViaExe = calculateTokenSizeViaExe;
 exports.calculateTokenSizeViaPython = calculateTokenSizeViaPython;
 const env_1 = require("../../common/utils/env");
+const utils_1 = require("../../common/utils");
 // Dynamic imports for Node.js specific modules
 let fs;
 let os;
@@ -176,7 +177,7 @@ async function calculateTokenSize(tokenizerRootHash, datasetPath, datasetType, e
     })
         .catch((error) => {
         console.error('Error running Python script:', error);
-        throw error;
+        (0, utils_1.throwFormattedError)(error);
     });
 }
 function checkPythonInstalled() {
