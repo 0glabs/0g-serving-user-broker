@@ -225,7 +225,6 @@ class ZGServingUserBrokerBase {
         try {
             // Exit early if running in browser environment
             if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
-                console.log("TTTTT Running in browser environment, skipping top-up check.");
                 return;
             }
             const extractor = await this.getExtractor(provider);

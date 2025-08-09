@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const axios_1 = tslib_1.__importDefault(require("axios"));
 const fs = tslib_1.__importStar(require("fs/promises"));
 const path = tslib_1.__importStar(require("path"));
+const utils_1 = require("../../common/utils");
 class Provider {
     contract;
     constructor(contract) {
@@ -20,7 +21,7 @@ class Provider {
             return response.json();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async fetchText(endpoint, options) {
@@ -33,7 +34,7 @@ class Provider {
             return Buffer.from(buffer).toString('utf-8');
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getProviderUrl(providerAddress) {
@@ -42,7 +43,7 @@ class Provider {
             return service.url;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getQuote(providerAddress) {
@@ -56,7 +57,7 @@ class Provider {
             return ret;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async createTask(providerAddress, task) {
@@ -97,7 +98,7 @@ class Provider {
             return response;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getTask(providerAddress, userAddress, taskID) {
@@ -109,7 +110,7 @@ class Provider {
             return this.fetchJSON(endpoint, { method: 'GET' });
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listTask(providerAddress, userAddress, latest = false) {
@@ -122,7 +123,7 @@ class Provider {
             return this.fetchJSON(endpoint, { method: 'GET' });
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getPendingTaskCounter(providerAddress) {
@@ -134,7 +135,7 @@ class Provider {
             }));
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getLog(providerAddress, userAddress, taskID) {
@@ -144,7 +145,7 @@ class Provider {
             return this.fetchText(endpoint, { method: 'GET' });
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getCustomizedModels(url) {
@@ -166,7 +167,7 @@ class Provider {
             return response;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getCustomizedModelDetailUsage(providerAddress, moduleName, outputPath) {
@@ -191,7 +192,7 @@ class Provider {
             console.log(`Model downloaded and saved to ${destFile}`);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
 }

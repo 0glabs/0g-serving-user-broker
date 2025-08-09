@@ -23,10 +23,57 @@ function detectPackageManager() {
 }
 function webUIEmbedded(program) {
     program
+        .command('web-info')
+        .description('Show web UI build information')
+        .action(() => {
+        const embeddedUIPath = path_1.default.join(__dirname, '../../web-ui');
+        const defaultBuildPath = path_1.default.join(embeddedUIPath, '.next');
+        console.log('📊 Web UI Information:');
+        console.log(`   UI Source: ${embeddedUIPath}`);
+        if ((0, fs_1.existsSync)(defaultBuildPath)) {
+            try {
+                const stats = (0, fs_1.lstatSync)(defaultBuildPath);
+                if (stats.isSymbolicLink()) {
+                    const target = path_1.default.resolve(path_1.default.dirname(defaultBuildPath), (0, fs_1.readlinkSync)(defaultBuildPath));
+                    console.log(`   Build Directory: ${target} (symlinked)`);
+                }
+                else {
+                    console.log(`   Build Directory: ${defaultBuildPath}`);
+                }
+                const buildIdPath = path_1.default.join(defaultBuildPath, 'BUILD_ID');
+                if ((0, fs_1.existsSync)(buildIdPath)) {
+                    const buildId = (0, fs_1.readFileSync)(buildIdPath, 'utf-8').trim();
+                    console.log(`   Build ID: ${buildId}`);
+                    console.log(`   Build Status: ✅ Ready`);
+                    try {
+                        const size = (0, child_process_1.execSync)(`du -sh "${defaultBuildPath}" 2>/dev/null | cut -f1`, { encoding: 'utf-8' }).trim();
+                        console.log(`   Build Size: ${size}`);
+                    }
+                    catch { }
+                }
+                else {
+                    console.log(`   Build Status: ❌ Not built`);
+                }
+            }
+            catch {
+                console.log(`   Build Directory: ${defaultBuildPath}`);
+                console.log(`   Build Status: ⚠️  Unknown`);
+            }
+        }
+        else {
+            console.log(`   Build Status: ❌ Not found`);
+            console.log(`   Run "0g-compute-cli start-web --auto-build" to build`);
+        }
+    });
+    // 启动 Web UI 的命令
+    program
         .command('start-web')
         .description('Start the embedded web UI')
         .option('--port <port>', 'Port to run the web UI on', '3000')
         .option('--host <host>', 'Host to bind the web UI', 'localhost')
+        .option('--mode <mode>', 'Run mode: "development" or "production"', 'production')
+        .option('--auto-build', 'Automatically build if needed in production mode')
+        .option('--build-dir <dir>', 'Custom directory for Next.js build artifacts')
         .action(async (options) => {
         // 检测包管理器
         const packageManager = detectPackageManager();
@@ -42,7 +89,38 @@ function webUIEmbedded(program) {
             console.error('❌ Invalid embedded Web UI structure.');
             process.exit(1);
         }
-        // 检查 node_modules 是否存在，如果不存在则安装依赖
+        const defaultBuildPath = path_1.default.join(embeddedUIPath, '.next');
+        let actualBuildPath = defaultBuildPath;
+        if (options.buildDir) {
+            actualBuildPath = path_1.default.isAbsolute(options.buildDir)
+                ? options.buildDir
+                : path_1.default.resolve(process.cwd(), options.buildDir);
+            console.log(`📁 Using custom build directory: ${actualBuildPath}`);
+            if (!(0, fs_1.existsSync)(path_1.default.dirname(actualBuildPath))) {
+                (0, fs_1.mkdirSync)(path_1.default.dirname(actualBuildPath), {
+                    recursive: true,
+                });
+            }
+            if ((0, fs_1.existsSync)(defaultBuildPath)) {
+                try {
+                    const stats = (0, fs_1.lstatSync)(defaultBuildPath);
+                    if (stats.isSymbolicLink()) {
+                        (0, fs_1.unlinkSync)(defaultBuildPath);
+                    }
+                }
+                catch { }
+            }
+            if (!(0, fs_1.existsSync)(defaultBuildPath) &&
+                actualBuildPath !== defaultBuildPath) {
+                try {
+                    (0, fs_1.symlinkSync)(actualBuildPath, defaultBuildPath, 'dir');
+                    console.log(`🔗 Created symlink: .next -> ${actualBuildPath}`);
+                }
+                catch {
+                    console.warn('⚠️  Could not create symlink, Next.js will use the custom directory directly');
+                }
+            }
+        }
         const nodeModulesPath = path_1.default.join(embeddedUIPath, 'node_modules');
         if (!(0, fs_1.existsSync)(nodeModulesPath)) {
             console.log('📦 Installing dependencies for embedded UI...');
@@ -65,36 +143,107 @@ function webUIEmbedded(program) {
                 process.exit(1);
             }
         }
+        if (options.mode === 'production') {
+            const buildIdPath = path_1.default.join(actualBuildPath, 'BUILD_ID');
+            const shouldAutoBuild = options.autoBuild !== false;
+            if (!(0, fs_1.existsSync)(buildIdPath) && shouldAutoBuild) {
+                console.log('🔨 Building production version (this may take a few minutes)...');
+                if (actualBuildPath !== defaultBuildPath) {
+                    console.log(`   Build output will be saved to: ${actualBuildPath}`);
+                }
+                try {
+                    await new Promise((resolve, reject) => {
+                        const buildProcess = (0, child_process_1.spawn)(packageManager, ['run', 'build'], {
+                            cwd: embeddedUIPath,
+                            stdio: 'inherit',
+                            env: {
+                                ...process.env,
+                                NEXT_BUILD_DIR: actualBuildPath !== defaultBuildPath
+                                    ? actualBuildPath
+                                    : undefined,
+                            },
+                        });
+                        buildProcess.on('close', (code) => {
+                            if (code === 0) {
+                                console.log('✅ Production build completed successfully!');
+                                resolve(undefined);
+                            }
+                            else {
+                                reject(new Error(`Build failed with code ${code}`));
+                            }
+                        });
+                    });
+                }
+                catch (error) {
+                    console.error('❌ Failed to build production version:', error.message);
+                    console.log('💡 Falling back to development mode...');
+                    options.mode = 'development';
+                }
+            }
+            else if (!(0, fs_1.existsSync)(buildIdPath)) {
+                console.error('❌ Production build not found or incomplete.');
+                console.error('   Run with --auto-build flag to build automatically');
+                console.error('   Or use --mode development for development mode');
+                process.exit(1);
+            }
+        }
         // 设置环境变量
         const env = {
             ...process.env,
-            NODE_ENV: 'development',
+            NODE_ENV: options.mode === 'production'
+                ? 'production'
+                : 'development',
             NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
                 'demo-project-id',
             PORT: options.port,
             HOSTNAME: options.host,
         };
-        console.log('🚀 Starting embedded 0G Compute Web UI...');
+        console.log(`🚀 Starting embedded 0G Compute Web UI in ${options.mode} mode...`);
         console.log(`🌐 Server will start on http://${options.host}:${options.port}`);
-        // 启动 Next.js 开发服务器
-        const runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx';
-        const runArgs = packageManager === 'pnpm'
-            ? [
-                'next',
-                'dev',
-                '--port',
-                options.port,
-                '--hostname',
-                options.host,
-            ]
-            : [
-                'next',
-                'dev',
-                '--port',
-                options.port,
-                '--hostname',
-                options.host,
-            ];
+        let runCommand;
+        let runArgs;
+        if (options.mode === 'production') {
+            runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx';
+            runArgs =
+                packageManager === 'pnpm'
+                    ? [
+                        'next',
+                        'start',
+                        '--port',
+                        options.port,
+                        '--hostname',
+                        options.host,
+                    ]
+                    : [
+                        'next',
+                        'start',
+                        '--port',
+                        options.port,
+                        '--hostname',
+                        options.host,
+                    ];
+        }
+        else {
+            runCommand = packageManager === 'pnpm' ? 'pnpm' : 'npx';
+            runArgs =
+                packageManager === 'pnpm'
+                    ? [
+                        'next',
+                        'dev',
+                        '--port',
+                        options.port,
+                        '--hostname',
+                        options.host,
+                    ]
+                    : [
+                        'next',
+                        'dev',
+                        '--port',
+                        options.port,
+                        '--hostname',
+                        options.host,
+                    ];
+        }
         const nextProcess = (0, child_process_1.spawn)(runCommand, runArgs, {
             cwd: embeddedUIPath,
             stdio: 'inherit',
@@ -104,7 +253,6 @@ function webUIEmbedded(program) {
             console.error('❌ Failed to start Web UI:', err);
             process.exit(1);
         });
-        // 处理退出信号
         process.on('SIGINT', () => {
             console.log('\n🛑 Stopping Web UI...');
             nextProcess.kill('SIGINT');
