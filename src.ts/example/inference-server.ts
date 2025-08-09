@@ -1,5 +1,6 @@
 import express from 'express'
 import { ethers } from 'ethers'
+import { createServer } from 'http'
 import { createZGComputeNetworkBroker } from '../sdk'
 import { ZG_RPC_ENDPOINT_TESTNET } from '../cli/const'
 import { Cache, CacheValueTypeEnum } from '../sdk/common/storage/cache'
@@ -177,16 +178,44 @@ export async function runInferenceServer(options: InferenceServerOptions) {
         }
     })
 
-    await initBroker()
-
     const port = options.port ? Number(options.port) : 3000
     const host = options.host || '0.0.0.0'
 
-    app.listen(port, host, async () => {
+    // Check if port is already in use BEFORE initializing broker to save time
+    const checkPort = async (port: number, host: string): Promise<boolean> => {
+        return new Promise((resolve) => {
+            const testServer = createServer()
+            testServer.listen(port, host, () => {
+                testServer.close(() => resolve(true)) // Port is available
+            })
+            testServer.on('error', (err: any) => {
+                if (err.code === 'EADDRINUSE') {
+                    resolve(false) // Port is in use
+                } else {
+                    resolve(false) // Other error, treat as unavailable
+                }
+            })
+        })
+    }
+
+    const isPortAvailable = await checkPort(port, host)
+    if (!isPortAvailable) {
+        console.error(`\nError: Port ${port} is already in use.`)
+        console.error(`Please try one of the following:`)
+        console.error(`  1. Use a different port: --port <PORT>`)
+        console.error(`  2. Stop the process using port ${port}`)
+        console.error(`  3. Find the process: lsof -i :${port} or ss -tlnp | grep :${port}\n`)
+        process.exit(1)
+    }
+
+    await initBroker()
+
+    const server = app.listen(port, host, async () => {
         try {
             const fetch = (await import('node-fetch')).default
+            const healthCheckHost = host === '0.0.0.0' ? 'localhost' : host
             const res = await fetch(
-                `http://${host}:${port}/v1/chat/completions`,
+                `http://${healthCheckHost}:${port}/v1/chat/completions`,
                 {
                     method: 'POST',
                     headers: {
@@ -207,6 +236,20 @@ export async function runInferenceServer(options: InferenceServerOptions) {
             }
         } catch (e) {
             console.error('Health check error:', e)
+        }
+    })
+
+    server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`\nError: Port ${port} is already in use.`)
+            console.error(`Please try one of the following:`)
+            console.error(`  1. Use a different port: --port <PORT>`)
+            console.error(`  2. Stop the process using port ${port}`)
+            console.error(`  3. Find the process: lsof -i :${port} or netstat -tulpn | grep :${port}\n`)
+            process.exit(1)
+        } else {
+            console.error('Server error:', err)
+            process.exit(1)
         }
     })
 }
