@@ -1,6 +1,6 @@
 {
-    "name": "raven-test-sdk",
-    "version": "0.2.15-dev5",
+    "name": "@0glabs/0g-serving-broker",
+    "version": "0.3.1",
     "description": "TS SDK for 0G Compute Network",
     "main": "./lib.commonjs/index.js",
     "bin": {

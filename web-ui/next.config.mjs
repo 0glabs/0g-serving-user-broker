@@ -12,13 +12,16 @@ const nextConfig = {
             }
         } else {
             // Prevent server-side bundling of browser-only packages
-            config.externals = [...(config.externals || []), {
-                '@electric-sql/pglite': 'commonjs @electric-sql/pglite',
-            }]
+            config.externals = [
+                ...(config.externals || []),
+                {
+                    '@electric-sql/pglite': 'commonjs @electric-sql/pglite',
+                },
+            ]
         }
         return config
     },
-    transpilePackages: ['raven-test-sdk'],
+    transpilePackages: ['@0glabs/0g-serving-broker'],
     output: 'standalone',
 }
 
