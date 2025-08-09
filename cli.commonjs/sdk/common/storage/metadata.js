@@ -4,7 +4,8 @@ exports.Metadata = void 0;
 class Metadata {
     nodeStorage = {};
     initialized = false;
-    isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+    isBrowser = typeof window !== 'undefined' &&
+        typeof window.localStorage !== 'undefined';
     storagePrefix = '0g_metadata_';
     constructor() { }
     async initialize() {

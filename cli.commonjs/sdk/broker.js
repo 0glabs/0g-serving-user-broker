@@ -30,7 +30,7 @@ exports.ZGComputeNetworkBroker = ZGComputeNetworkBroker;
  *
  * @throws An error if the broker cannot be initialized.
  */
-async function createZGComputeNetworkBroker(signer, ledgerCA = '0x1a85Dd32da10c170F4f138d082DDc496ab3E5BAa', inferenceCA = '0x5299bd255B76305ae08d7F95B270A485c6b95D54', fineTuningCA = '0xda478Ccf5d534346A16b1475E4c2DecE0268B176', gasPrice, maxGasPrice, step) {
+async function createZGComputeNetworkBroker(signer, ledgerCA = '0x20f6E41b27fB6437B6ED61a42DcddB6328749F84', inferenceCA = '0x9A30Ae15ee33Bbd777113c9C64b31d7f717C97A0', fineTuningCA = '0x4c871c46D901990987EBf39Cb8a16fC73390a4E5', gasPrice, maxGasPrice, step) {
     try {
         const ledger = await (0, ledger_1.createLedgerBroker)(signer, ledgerCA, inferenceCA, fineTuningCA, gasPrice, maxGasPrice, step);
         const inferenceBroker = await (0, broker_2.createInferenceBroker)(signer, inferenceCA, ledger);

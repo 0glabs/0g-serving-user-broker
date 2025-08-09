@@ -10,7 +10,8 @@ var CacheValueTypeEnum;
 class Cache {
     nodeStorage = {};
     initialized = false;
-    isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+    isBrowser = typeof window !== 'undefined' &&
+        typeof window.localStorage !== 'undefined';
     storagePrefix = '0g_cache_';
     constructor() { }
     setLock(key, value, ttl, type) {
@@ -128,7 +129,7 @@ class Cache {
                     }
                 }
             }
-            keysToRemove.forEach(key => window.localStorage.removeItem(key));
+            keysToRemove.forEach((key) => window.localStorage.removeItem(key));
         }
         catch (e) {
             console.warn('Failed to cleanup expired items:', e);
