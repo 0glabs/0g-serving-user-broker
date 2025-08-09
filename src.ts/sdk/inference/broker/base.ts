@@ -18,7 +18,7 @@ import {
 import type { Cache, Metadata } from '../../common/storage'
 import { CacheValueTypeEnum } from '../../common/storage'
 import type { LedgerBroker } from '../../ledger'
-import { hexlify, Wallet } from 'ethers'
+import { hexlify } from 'ethers'
 
 export interface QuoteResponse {
     quote: string
@@ -345,8 +345,8 @@ export abstract class ZGServingUserBrokerBase {
         gasPrice?: number
     ) {
         try {
-            // Exit early if signer is not a Wallet (i.e., it's a JsonRpcSigner from browser)
-            if (!(this.contract.signer instanceof Wallet)) {
+            // Exit early if running in browser environment
+            if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
                 return
             }
 

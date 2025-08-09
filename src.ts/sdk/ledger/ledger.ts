@@ -105,10 +105,6 @@ export class LedgerProcessor {
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } =
                 await this.createSettleSignerKey()
 
-            console.log(
-                `Creating ledger with settle signer public key: ${settleSignerPublicKey} and encrypted private key: ${settleSignerEncryptedPrivateKey}`
-            )
-
             await this.ledgerContract.addLedger(
                 settleSignerPublicKey,
                 this.a0giToNeuron(balance),
@@ -215,8 +211,6 @@ export class LedgerProcessor {
                 key,
                 keyPair.packedPrivkey
             )
-
-            console.log('Private key:', keyPair.packedPrivkey)
 
             const settleSignerEncryptedPrivateKey = await encryptData(
                 this.ledgerContract.signer,

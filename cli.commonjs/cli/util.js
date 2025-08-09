@@ -9,6 +9,7 @@ const sdk_1 = require("../sdk");
 const ethers_1 = require("ethers");
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const const_1 = require("./const");
+const errorDecoder_1 = require("./errorDecoder");
 async function initBroker(options) {
     const provider = new ethers_1.ethers.JsonRpcProvider(options.rpc || process.env.RPC_ENDPOINT || const_1.ZG_RPC_ENDPOINT_TESTNET);
     const wallet = new ethers_1.ethers.Wallet(options.key, provider);
@@ -58,28 +59,10 @@ const printTableWithTitle = (title, table) => {
 };
 exports.printTableWithTitle = printTableWithTitle;
 const alertError = (error) => {
+    // First try to use the smart error decoder
+    const { message, details } = (0, errorDecoder_1.getDetailedError)(error);
+    // Check for additional specific patterns not covered by contract errors
     const errorPatterns = [
-        {
-            pattern: /LedgerNotExists/i,
-            message: "Account does not exist. Please create an account using '0g-compute-cli add-account --amount <number_of_A0GI_you_want_to_deposit>'.",
-        },
-        {
-            pattern: /ServiceNotExist/i,
-            message: "The service provider does not exist. Please ensure the validity of the service provider's address specified with the '--provider' flag.",
-        },
-        {
-            pattern: /AccountNotExist/i,
-            message: 'The sub-account does not exist.',
-        },
-        {
-            pattern: /AccountExist/i,
-            message: 'The sub-account already exists.',
-        },
-        { pattern: /InsufficientBalance/i, message: 'Insufficient funds.' },
-        {
-            pattern: /InvalidVerifierInput/i,
-            message: 'The verification input is invalid.',
-        },
         {
             pattern: /Deliverable not acknowledged yet/i,
             message: "Deliverable not acknowledged yet. Please use '0g-compute-cli acknowledge-model --provider <provider_address> --data-path <path_to_save_model>' to acknowledge the deliverable.",
@@ -101,10 +84,20 @@ const alertError = (error) => {
     const errorString = getErrorMessage(error);
     const matchedPattern = errorPatterns.find(({ pattern }) => pattern.test(errorString));
     if (matchedPattern) {
-        console.error('Operation failed:', matchedPattern.message, '\n\nComplete error:', error);
+        console.error(chalk_1.default.red('✗ Operation failed:'), matchedPattern.message);
+        if (details) {
+            console.error(chalk_1.default.gray(`  Details: ${details}`));
+        }
     }
     else {
-        console.error('Operation failed:', error);
+        console.error(chalk_1.default.red('✗ Operation failed:'), message);
+        if (details) {
+            console.error(chalk_1.default.gray(`  Details: ${details}`));
+        }
+    }
+    // Show raw error in verbose mode (can be controlled by an env variable)
+    if (process.env.VERBOSE === 'true') {
+        console.error(chalk_1.default.gray('\nRaw error:'), error);
     }
 };
 //# sourceMappingURL=util.js.map
