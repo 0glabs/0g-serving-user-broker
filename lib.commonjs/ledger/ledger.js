@@ -74,7 +74,6 @@ class LedgerProcessor {
             }
             catch (error) { }
             const { settleSignerPublicKey, settleSignerEncryptedPrivateKey } = await this.createSettleSignerKey();
-            console.log(`Creating ledger with settle signer public key: ${settleSignerPublicKey} and encrypted private key: ${settleSignerEncryptedPrivateKey}`);
             await this.ledgerContract.addLedger(settleSignerPublicKey, this.a0giToNeuron(balance), settleSignerEncryptedPrivateKey, gasPrice);
         }
         catch (error) {
@@ -141,7 +140,6 @@ class LedgerProcessor {
             const keyPair = await (0, settle_signer_1.genKeyPair)();
             const key = `${this.ledgerContract.getUserAddress()}`;
             this.metadata.storeSettleSignerPrivateKey(key, keyPair.packedPrivkey);
-            console.log('Private key:', keyPair.packedPrivkey);
             const settleSignerEncryptedPrivateKey = await (0, utils_1.encryptData)(this.ledgerContract.signer, (0, utils_1.privateKeyToStr)(keyPair.packedPrivkey));
             return {
                 settleSignerEncryptedPrivateKey,

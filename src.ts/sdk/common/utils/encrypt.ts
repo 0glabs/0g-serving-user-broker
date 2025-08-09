@@ -24,7 +24,6 @@ export async function encryptData(
     signer: JsonRpcSigner | Wallet,
     data: string
 ): Promise<string> {
-    console.log('Encrypting data:', data)
     const key = await deriveEncryptionKey(signer)
     const encrypted = CryptoJS.AES.encrypt(data, key).toString()
     return encrypted

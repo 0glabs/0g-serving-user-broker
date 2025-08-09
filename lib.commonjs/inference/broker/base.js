@@ -223,8 +223,8 @@ class ZGServingUserBrokerBase {
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
-            // Exit early if signer is not a Wallet (i.e., it's a JsonRpcSigner from browser)
-            if (!(this.contract.signer instanceof ethers_1.Wallet)) {
+            // Exit early if running in browser environment
+            if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
                 return;
             }
             const extractor = await this.getExtractor(provider);

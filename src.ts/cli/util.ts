@@ -4,6 +4,7 @@ import { ethers } from 'ethers'
 import chalk from 'chalk'
 import type { Table } from 'cli-table3'
 import { ZG_RPC_ENDPOINT_TESTNET } from './const'
+import { getDetailedError } from './errorDecoder'
 
 export async function initBroker(
     options: any
@@ -74,30 +75,11 @@ export const printTableWithTitle = (title: string, table: Table) => {
 }
 
 const alertError = (error: any) => {
+    // First try to use the smart error decoder
+    const { message, details } = getDetailedError(error)
+    
+    // Check for additional specific patterns not covered by contract errors
     const errorPatterns = [
-        {
-            pattern: /LedgerNotExists/i,
-            message:
-                "Account does not exist. Please create an account using '0g-compute-cli add-account --amount <number_of_A0GI_you_want_to_deposit>'.",
-        },
-        {
-            pattern: /ServiceNotExist/i,
-            message:
-                "The service provider does not exist. Please ensure the validity of the service provider's address specified with the '--provider' flag.",
-        },
-        {
-            pattern: /AccountNotExist/i,
-            message: 'The sub-account does not exist.',
-        },
-        {
-            pattern: /AccountExist/i,
-            message: 'The sub-account already exists.',
-        },
-        { pattern: /InsufficientBalance/i, message: 'Insufficient funds.' },
-        {
-            pattern: /InvalidVerifierInput/i,
-            message: 'The verification input is invalid.',
-        },
         {
             pattern: /Deliverable not acknowledged yet/i,
             message:
@@ -126,12 +108,21 @@ const alertError = (error: any) => {
 
     if (matchedPattern) {
         console.error(
-            'Operation failed:',
-            matchedPattern.message,
-            '\n\nComplete error:',
-            error
+            chalk.red('✗ Operation failed:'),
+            matchedPattern.message
         )
+        if (details) {
+            console.error(chalk.gray(`  Details: ${details}`))
+        }
     } else {
-        console.error('Operation failed:', error)
+        console.error(chalk.red('✗ Operation failed:'), message)
+        if (details) {
+            console.error(chalk.gray(`  Details: ${details}`))
+        }
+    }
+    
+    // Show raw error in verbose mode (can be controlled by an env variable)
+    if (process.env.VERBOSE === 'true') {
+        console.error(chalk.gray('\nRaw error:'), error)
     }
 }

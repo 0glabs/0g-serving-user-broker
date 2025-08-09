@@ -95,7 +95,6 @@ export class Verifier extends ZGServingUserBrokerBase {
                 signingKey,
                 signerRA.signing_address
             )
-            console.log('signerRa:', signerRA)
 
             // TODO: use intel_quote to verify signing address
             const valid = await Verifier.verifyRA(
