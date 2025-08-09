@@ -9,7 +9,6 @@ const sdk_1 = require("../sdk");
 const ethers_1 = require("ethers");
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const const_1 = require("./const");
-const errorDecoder_1 = require("./errorDecoder");
 async function initBroker(options) {
     const provider = new ethers_1.ethers.JsonRpcProvider(options.rpc || process.env.RPC_ENDPOINT || const_1.ZG_RPC_ENDPOINT_TESTNET);
     const wallet = new ethers_1.ethers.Wallet(options.key, provider);
@@ -59,9 +58,9 @@ const printTableWithTitle = (title, table) => {
 };
 exports.printTableWithTitle = printTableWithTitle;
 const alertError = (error) => {
-    // First try to use the smart error decoder
-    const { message, details } = (0, errorDecoder_1.getDetailedError)(error);
-    // Check for additional specific patterns not covered by contract errors
+    // SDK now handles error formatting, so we just need to display the error message
+    const errorMessage = error?.message || String(error);
+    // Check for additional CLI-specific patterns
     const errorPatterns = [
         {
             pattern: /Deliverable not acknowledged yet/i,
@@ -72,28 +71,12 @@ const alertError = (error) => {
             message: "Secret to decrypt model not found. Please ensure the task status is 'Finished' using '0g-compute-cli get-task --provider <provider_address>'.",
         },
     ];
-    const getErrorMessage = (error) => {
-        try {
-            const errorMsg = JSON.stringify(error, null, 2);
-            return errorMsg !== '{}' ? errorMsg : String(error);
-        }
-        catch {
-            return String(error);
-        }
-    };
-    const errorString = getErrorMessage(error);
-    const matchedPattern = errorPatterns.find(({ pattern }) => pattern.test(errorString));
+    const matchedPattern = errorPatterns.find(({ pattern }) => pattern.test(errorMessage));
     if (matchedPattern) {
         console.error(chalk_1.default.red('✗ Operation failed:'), matchedPattern.message);
-        if (details) {
-            console.error(chalk_1.default.gray(`  Details: ${details}`));
-        }
     }
     else {
-        console.error(chalk_1.default.red('✗ Operation failed:'), message);
-        if (details) {
-            console.error(chalk_1.default.gray(`  Details: ${details}`));
-        }
+        console.error(chalk_1.default.red('✗ Operation failed:'), errorMessage);
     }
     // Show raw error in verbose mode (can be controlled by an env variable)
     if (process.env.VERBOSE === 'true') {

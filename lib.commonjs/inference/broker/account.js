@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountProcessor = void 0;
 const base_1 = require("./base");
+const utils_1 = require("../../common/utils");
 /**
  * AccountProcessor contains methods for creating, depositing funds, and retrieving 0G Serving Accounts.
  */
@@ -11,7 +12,7 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
             return await this.contract.getAccount(provider);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getAccountWithDetail(provider) {
@@ -31,7 +32,7 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
             return [account, refunds];
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async listAccount() {
@@ -39,7 +40,7 @@ class AccountProcessor extends base_1.ZGServingUserBrokerBase {
             return await this.contract.listAccount();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
 }

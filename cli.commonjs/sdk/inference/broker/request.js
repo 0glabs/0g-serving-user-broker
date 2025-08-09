@@ -4,6 +4,7 @@ exports.RequestProcessor = void 0;
 const base_1 = require("./base");
 const automata_1 = require("../../common/automata ");
 const storage_1 = require("../../common/storage");
+const utils_1 = require("../../common/utils");
 /**
  * RequestProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -53,7 +54,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             return await this.getHeader(providerAddress, content, BigInt(0), vllmProxy);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async acknowledgeProviderSigner(providerAddress, gasPrice) {
@@ -103,7 +104,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             this.cache.setItem(cacheKey, key, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
 }

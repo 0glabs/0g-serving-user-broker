@@ -8,6 +8,7 @@ const contract_1 = require("./contract");
 const contract_2 = require("../inference/contract");
 const contract_3 = require("../fine-tuning/contract");
 const storage_1 = require("../common/storage");
+const utils_1 = require("../common/utils");
 class LedgerBroker {
     ledger;
     signer;
@@ -32,7 +33,7 @@ class LedgerBroker {
             userAddress = await this.signer.getAddress();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
         const ledgerContract = new contract_1.LedgerManagerContract(this.signer, this.ledgerCA, userAddress, this.gasPrice, this.maxGasPrice, this.step);
         const inferenceContract = new contract_2.InferenceServingContract(this.signer, this.inferenceCA, userAddress);
@@ -61,7 +62,7 @@ class LedgerBroker {
             return await this.ledger.addLedger(balance, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -76,7 +77,7 @@ class LedgerBroker {
             return await this.ledger.getLedger();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -93,7 +94,7 @@ class LedgerBroker {
             return await this.ledger.depositFund(amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -113,7 +114,7 @@ class LedgerBroker {
             return await this.ledger.refund(amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -134,7 +135,7 @@ class LedgerBroker {
             return await this.ledger.transferFund(provider, serviceTypeStr, amount, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -153,7 +154,7 @@ class LedgerBroker {
             return await this.ledger.retrieveFund(serviceTypeStr, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -169,7 +170,7 @@ class LedgerBroker {
             return await this.ledger.deleteLedger(gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
 }

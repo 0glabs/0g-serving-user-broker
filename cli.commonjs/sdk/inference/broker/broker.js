@@ -9,6 +9,7 @@ const verifier_1 = require("./verifier");
 const account_1 = require("./account");
 const model_1 = require("./model");
 const storage_1 = require("../../common/storage");
+const utils_1 = require("../../common/utils");
 class InferenceBroker {
     requestProcessor;
     responseProcessor;
@@ -29,7 +30,7 @@ class InferenceBroker {
             userAddress = await this.signer.getAddress();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
         const contract = new contract_1.InferenceServingContract(this.signer, this.contractAddress, userAddress);
         const metadata = new storage_1.Metadata();
@@ -51,7 +52,7 @@ class InferenceBroker {
             return await this.modelProcessor.listService();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -68,7 +69,7 @@ class InferenceBroker {
             return await this.accountProcessor.getAccount(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     getAccountWithDetail = async (providerAddress) => {
@@ -76,7 +77,7 @@ class InferenceBroker {
             return await this.accountProcessor.getAccountWithDetail(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -92,7 +93,7 @@ class InferenceBroker {
             return await this.requestProcessor.userAcknowledged(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -108,7 +109,7 @@ class InferenceBroker {
             return await this.requestProcessor.acknowledgeProviderSigner(providerAddress, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -128,7 +129,7 @@ class InferenceBroker {
             return await this.requestProcessor.getServiceMetadata(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -180,7 +181,7 @@ class InferenceBroker {
             return await this.requestProcessor.getRequestHeaders(providerAddress, content, vllmProxy);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -208,7 +209,7 @@ class InferenceBroker {
             return await this.responseProcessor.processResponse(providerAddress, content, chatID, vllmProxy);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -225,7 +226,7 @@ class InferenceBroker {
             return await this.verifier.verifyService(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -242,7 +243,7 @@ class InferenceBroker {
             return await this.verifier.getSignerRaDownloadLink(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     /**
@@ -268,7 +269,7 @@ class InferenceBroker {
             return await this.verifier.getChatSignatureDownloadLink(providerAddress, chatID);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
 }

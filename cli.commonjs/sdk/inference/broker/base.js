@@ -39,7 +39,7 @@ class ZGServingUserBrokerBase {
             return svc;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getQuote(providerAddress) {
@@ -59,7 +59,7 @@ class ZGServingUserBrokerBase {
             return ret;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async userAcknowledged(providerAddress) {
@@ -81,7 +81,7 @@ class ZGServingUserBrokerBase {
             }
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async fetchText(endpoint, options) {
@@ -94,7 +94,7 @@ class ZGServingUserBrokerBase {
             return Buffer.from(buffer).toString('utf-8');
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getExtractor(providerAddress, useCache = true) {
@@ -104,7 +104,7 @@ class ZGServingUserBrokerBase {
             return extractor;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     createExtractor(svc) {
@@ -178,7 +178,7 @@ class ZGServingUserBrokerBase {
             };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async calculatePedersenHash(nonce, userAddress, providerAddress) {
@@ -206,7 +206,7 @@ class ZGServingUserBrokerBase {
             await this.cache.setItem(provider + '_cachedFee', BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async clearCacheFee(provider, fee) {
@@ -215,7 +215,7 @@ class ZGServingUserBrokerBase {
             await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     /**
@@ -223,8 +223,9 @@ class ZGServingUserBrokerBase {
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
-            // Exit early if signer is not a Wallet (i.e., it's a JsonRpcSigner from browser)
-            if (!(this.contract.signer instanceof ethers_1.Wallet)) {
+            // Exit early if running in browser environment
+            if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
+                console.log("TTTTT Running in browser environment, skipping top-up check.");
                 return;
             }
             const extractor = await this.getExtractor(provider);
@@ -253,7 +254,7 @@ class ZGServingUserBrokerBase {
             await this.clearCacheFee(provider, newFee);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice) {
@@ -284,7 +285,7 @@ class ZGServingUserBrokerBase {
                 this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
 }

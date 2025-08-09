@@ -26,7 +26,6 @@ async function deriveEncryptionKey(signer) {
     return hash;
 }
 async function encryptData(signer, data) {
-    console.log('Encrypting data:', data);
     const key = await deriveEncryptionKey(signer);
     const encrypted = crypto_js_1.default.AES.encrypt(data, key).toString();
     return encrypted;

@@ -6,6 +6,7 @@ const contract_1 = require("../contract");
 const model_1 = require("./model");
 const service_1 = require("./service");
 const provider_1 = require("../provider/provider");
+const utils_1 = require("../../common/utils");
 class FineTuningBroker {
     signer;
     fineTuningCA;
@@ -30,7 +31,7 @@ class FineTuningBroker {
             userAddress = await this.signer.getAddress();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
         const contract = new contract_1.FineTuningServingContract(this.signer, this.fineTuningCA, userAddress, this._gasPrice, this._maxGasPrice, this._step);
         this.serviceProvider = new provider_1.Provider(contract);
@@ -42,7 +43,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.listService();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     getLockedTime = async () => {
@@ -50,7 +51,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.getLockTime();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     getAccount = async (providerAddress) => {
@@ -58,7 +59,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.getAccount(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     getAccountWithDetail = async (providerAddress) => {
@@ -66,7 +67,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.getAccountWithDetail(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     acknowledgeProviderSigner = async (providerAddress, gasPrice) => {
@@ -74,7 +75,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.acknowledgeProviderSigner(providerAddress, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     listModel = () => {
@@ -82,7 +83,7 @@ class FineTuningBroker {
             return this.modelProcessor.listModel();
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     modelUsage = (providerAddress, preTrainedModelName, output) => {
@@ -90,7 +91,7 @@ class FineTuningBroker {
             return this.serviceProcessor.modelUsage(providerAddress, preTrainedModelName, output);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     uploadDataset = async (dataPath, gasPrice, maxGasPrice) => {
@@ -98,7 +99,7 @@ class FineTuningBroker {
             await this.modelProcessor.uploadDataset(this.signer.privateKey, dataPath, gasPrice || this._gasPrice, maxGasPrice || this._maxGasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     downloadDataset = async (dataPath, dataRoot) => {
@@ -106,7 +107,7 @@ class FineTuningBroker {
             await this.modelProcessor.downloadDataset(dataPath, dataRoot);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     calculateToken = async (datasetPath, preTrainedModelName, usePython, providerAddress) => {
@@ -114,7 +115,7 @@ class FineTuningBroker {
             await this.modelProcessor.calculateToken(datasetPath, usePython, preTrainedModelName, providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     createTask = async (providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice) => {
@@ -122,7 +123,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.createTask(providerAddress, preTrainedModelName, dataSize, datasetHash, trainingPath, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     cancelTask = async (providerAddress, taskID) => {
@@ -130,7 +131,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.cancelTask(providerAddress, taskID);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     listTask = async (providerAddress) => {
@@ -138,7 +139,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.listTask(providerAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     getTask = async (providerAddress, taskID) => {
@@ -147,7 +148,7 @@ class FineTuningBroker {
             return task;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     getLog = async (providerAddress, taskID) => {
@@ -155,7 +156,7 @@ class FineTuningBroker {
             return await this.serviceProcessor.getLog(providerAddress, taskID);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     acknowledgeModel = async (providerAddress, dataPath, gasPrice) => {
@@ -163,7 +164,7 @@ class FineTuningBroker {
             return await this.modelProcessor.acknowledgeModel(providerAddress, dataPath, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
     decryptModel = async (providerAddress, encryptedModelPath, decryptedModelPath) => {
@@ -171,7 +172,7 @@ class FineTuningBroker {
             return await this.modelProcessor.decryptModel(providerAddress, encryptedModelPath, decryptedModelPath);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     };
 }

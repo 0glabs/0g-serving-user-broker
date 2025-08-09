@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Verifier = void 0;
 const base_1 = require("./base");
 const ethers_1 = require("ethers");
+const utils_1 = require("../../common/utils");
 /**
  * The Verifier class contains methods for verifying service reliability.
  */
@@ -13,7 +14,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return valid;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     /**
@@ -61,7 +62,6 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             }
             signingKey = `${this.contract.getUserAddress()}_${providerAddress}`;
             await this.metadata.storeSigningKey(signingKey, signerRA.signing_address);
-            console.log('signerRa:', signerRA);
             // TODO: use intel_quote to verify signing address
             const valid = await Verifier.verifyRA(svc.url, signerRA.nvidia_payload);
             return {
@@ -70,7 +70,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             };
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getSignerRaDownloadLink(providerAddress) {
@@ -79,7 +79,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return `${svc.url}/v1/proxy/attestation/report`;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async getChatSignatureDownloadLink(providerAddress, chatID) {
@@ -88,7 +88,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return `${svc.url}/v1/proxy/signature/${chatID}`;
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     static async verifyRA(providerBrokerURL, nvidia_payload) {
@@ -150,7 +150,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return data;
         })
             .catch((error) => {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         });
     }
     static async fetSignatureByChatID(providerBrokerURL, chatID, model, vllmProxy) {
@@ -171,7 +171,7 @@ class Verifier extends base_1.ZGServingUserBrokerBase {
             return data;
         })
             .catch((error) => {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         });
     }
     static verifySignature(message, signature, expectedAddress) {

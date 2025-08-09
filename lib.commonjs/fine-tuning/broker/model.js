@@ -68,7 +68,7 @@ class ModelProcessor extends base_1.BrokerBase {
             await this.contract.acknowledgeDeliverable(providerAddress, account.deliverables.length - 1, gasPrice);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async decryptModel(providerAddress, encryptedModelPath, decryptedModelPath) {
@@ -88,7 +88,7 @@ class ModelProcessor extends base_1.BrokerBase {
             await (0, utils_1.aesGCMDecryptToFile)(secret, encryptedModelPath, decryptedModelPath, account.providerSigner);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
         return;
     }

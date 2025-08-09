@@ -4,6 +4,7 @@ exports.runInferenceServer = runInferenceServer;
 const tslib_1 = require("tslib");
 const express_1 = tslib_1.__importDefault(require("express"));
 const ethers_1 = require("ethers");
+const http_1 = require("http");
 const sdk_1 = require("../sdk");
 const const_1 = require("../cli/const");
 const cache_1 = require("../sdk/common/storage/cache");
@@ -141,13 +142,40 @@ async function runInferenceServer(options) {
             res.status(500).json({ error: err.message });
         }
     });
-    await initBroker();
     const port = options.port ? Number(options.port) : 3000;
     const host = options.host || '0.0.0.0';
-    app.listen(port, host, async () => {
+    // Check if port is already in use BEFORE initializing broker to save time
+    const checkPort = async (port, host) => {
+        return new Promise((resolve) => {
+            const testServer = (0, http_1.createServer)();
+            testServer.listen(port, host, () => {
+                testServer.close(() => resolve(true)); // Port is available
+            });
+            testServer.on('error', (err) => {
+                if (err.code === 'EADDRINUSE') {
+                    resolve(false); // Port is in use
+                }
+                else {
+                    resolve(false); // Other error, treat as unavailable
+                }
+            });
+        });
+    };
+    const isPortAvailable = await checkPort(port, host);
+    if (!isPortAvailable) {
+        console.error(`\nError: Port ${port} is already in use.`);
+        console.error(`Please try one of the following:`);
+        console.error(`  1. Use a different port: --port <PORT>`);
+        console.error(`  2. Stop the process using port ${port}`);
+        console.error(`  3. Find the process: lsof -i :${port} or ss -tlnp | grep :${port}\n`);
+        process.exit(1);
+    }
+    await initBroker();
+    const server = app.listen(port, host, async () => {
         try {
             const fetch = (await Promise.resolve().then(() => tslib_1.__importStar(require('node-fetch')))).default;
-            const res = await fetch(`http://${host}:${port}/v1/chat/completions`, {
+            const healthCheckHost = host === '0.0.0.0' ? 'localhost' : host;
+            const res = await fetch(`http://${healthCheckHost}:${port}/v1/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -166,6 +194,20 @@ async function runInferenceServer(options) {
         }
         catch (e) {
             console.error('Health check error:', e);
+        }
+    });
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`\nError: Port ${port} is already in use.`);
+            console.error(`Please try one of the following:`);
+            console.error(`  1. Use a different port: --port <PORT>`);
+            console.error(`  2. Stop the process using port ${port}`);
+            console.error(`  3. Find the process: lsof -i :${port} or netstat -tulpn | grep :${port}\n`);
+            process.exit(1);
+        }
+        else {
+            console.error('Server error:', err);
+            process.exit(1);
         }
     });
 }

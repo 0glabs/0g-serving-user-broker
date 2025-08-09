@@ -4,6 +4,7 @@ exports.ResponseProcessor = void 0;
 const base_1 = require("./base");
 const model_1 = require("./model");
 const verifier_1 = require("./verifier");
+const utils_1 = require("../../common/utils");
 /**
  * ResponseProcessor is a subclass of ZGServingUserBroker.
  * It needs to be initialized with createZGServingUserBroker
@@ -42,7 +43,7 @@ class ResponseProcessor extends base_1.ZGServingUserBrokerBase {
             return verifier_1.Verifier.verifySignature(ResponseSignature.text, ResponseSignature.signature, singerRAVerificationResult.signingAddress);
         }
         catch (error) {
-            throw error;
+            (0, utils_1.throwFormattedError)(error);
         }
     }
     async calculateOutputFees(extractor, content) {
