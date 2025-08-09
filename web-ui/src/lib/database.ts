@@ -88,12 +88,9 @@ class DatabaseManager {
         `);
       } catch (error) {
         // Column might already exist, which is fine
-        console.log('wallet_address column already exists or could not be added');
       }
 
-      console.log('Database initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize database:', error);
       throw error;
     }
   }
@@ -180,7 +177,6 @@ class DatabaseManager {
       await db.exec('COMMIT');
       
     } catch (error) {
-      console.error('Error during session deletion:', error);
       await db.exec('ROLLBACK');
       throw error;
     }

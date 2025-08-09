@@ -173,7 +173,6 @@ export function useParallelDataFetching<T extends Record<string, unknown>>(
           const result = await (fetchFn as () => Promise<unknown>)();
           return [key, result];
         } catch (err) {
-          console.error(`Error fetching ${key}:`, err);
           return [key, null];
         }
       });

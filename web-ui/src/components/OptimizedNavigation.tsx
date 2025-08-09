@@ -25,7 +25,6 @@ export const OptimizedLink: React.FC<OptimizedLinkProps> = ({
   const [isNavigating] = useState(false);
 
   useEffect(() => {
-    // 预加载页面资源
     if (preload && href !== "#") {
       router.prefetch(href);
     }
@@ -36,10 +35,8 @@ export const OptimizedLink: React.FC<OptimizedLinkProps> = ({
     
     if (isNavigating) return;
     
-    // 触发导航状态
     onNavigationStart?.();
     
-    // 立即导航，不设置本地 loading 状态
     router.push(href);
   };
 
@@ -74,14 +71,12 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [targetPageType, setTargetPageType] = useState<string | null>(null);
   const pathname = usePathname();
 
-  // 监听路由变化，重置导航状态
   useEffect(() => {
-    // 延迟重置状态，让 loading 显示一小段时间
     const timer = setTimeout(() => {
       setIsNavigating(false);
       setTargetRoute(null);
       setTargetPageType(null);
-    }, 300); // 300ms 后重置状态
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [pathname]);
@@ -109,5 +104,3 @@ export const useNavigation = () => {
   }
   return context;
 };
-
-// GlobalNavigationLoader removed - using SimpleLoader in main content area instead

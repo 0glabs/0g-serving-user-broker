@@ -13,7 +13,7 @@ const nextConfig = {
         }
         return config
     },
-    transpilePackages: ['0g-serving-broker'],
+    transpilePackages: ['raven-test-sdk'],
     output: 'standalone',
 }
 

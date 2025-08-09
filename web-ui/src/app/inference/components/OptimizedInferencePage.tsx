@@ -45,12 +45,6 @@ const OFFICIAL_PROVIDERS: Provider[] = [
     name: "DeepSeek R1 70B",
     verifiability: "TEE (TeeML)",
   },
-  {
-    address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    model: "llama-3.3-70b-instruct",
-    name: "Llama 3.3 70B Instruct",
-    verifiability: "TEE (TeeML)",
-  },
 ];
 
 export function OptimizedInferencePage() {
@@ -72,7 +66,6 @@ export function OptimizedInferencePage() {
       
       try {
         const services = await broker.inference.listService();
-        console.log("Real services:", services);
 
         // Transform services to Provider format
         const transformedProviders: Provider[] = services.map(
@@ -119,8 +112,6 @@ export function OptimizedInferencePage() {
 
         return transformedProviders;
       } catch (err) {
-        console.error("Error fetching providers:", err);
-        // Return fallback providers instead of throwing
         return OFFICIAL_PROVIDERS;
       }
     },
@@ -131,12 +122,10 @@ export function OptimizedInferencePage() {
   });
 
   const handleChatWithProvider = (provider: Provider) => {
-    // 触发导航 loading 状态
     setIsNavigating(true);
     setTargetRoute('Chat');
     setTargetPageType('chat');
     
-    // 导航到 chat 页面
     router.push(`/inference/chat?provider=${encodeURIComponent(provider.address)}`);
   };
 
