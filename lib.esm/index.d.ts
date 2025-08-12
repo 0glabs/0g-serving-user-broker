@@ -2172,6 +2172,127 @@ declare class ZGComputeNetworkBroker {
  */
 declare function createZGComputeNetworkBroker(signer: JsonRpcSigner | Wallet, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number, maxGasPrice?: number, step?: number): Promise<ZGComputeNetworkBroker>;
 
+interface ProviderInfo {
+    address: string;
+    endpoint: string;
+    model: string;
+    isHealthy: boolean;
+    connections: number;
+    weight: number;
+    lastHealthCheck: number;
+    broker?: any;
+}
+interface SessionInfo {
+    sessionId: string;
+    providerAddress: string;
+    requestIds: string[];
+    createdAt: number;
+    lastActivity: number;
+}
+interface LoadBalancerOptions {
+    providers: string[];
+    strategy: LoadBalancingStrategy;
+    healthCheckInterval: number;
+    maxRetries: number;
+    sessionTimeout: number;
+}
+type LoadBalancingStrategy = 'round-robin' | 'least-connections' | 'weighted-round-robin';
+interface CacheEntry {
+    content: string;
+    providerAddress: string;
+    sessionId: string;
+    timestamp: number;
+}
+
+declare class ProviderLoadBalancer {
+    private providers;
+    private strategy;
+    private healthChecker;
+    private sessionManager;
+    private maxRetries;
+    private signer;
+    private ledgerCA?;
+    private inferenceCA?;
+    private fineTuningCA?;
+    private gasPrice?;
+    constructor(signer: JsonRpcSigner | Wallet, options: LoadBalancerOptions, ledgerCA?: string, inferenceCA?: string, fineTuningCA?: string, gasPrice?: number);
+    private initializeProviders;
+    initialize(): Promise<void>;
+    selectProvider(sessionId?: string): ProviderInfo | null;
+    assignProviderForRequest(requestId: string, sessionId?: string): {
+        sessionId: string;
+        provider: ProviderInfo;
+    };
+    getProviderForRequest(requestId: string): ProviderInfo | null;
+    releaseProvider(requestId: string): void;
+    getHealthyProviders(): ProviderInfo[];
+    getAllProviders(): ProviderInfo[];
+    getProviderStats(): {
+        totalProviders: number;
+        healthyProviders: number;
+        totalConnections: number;
+        activeSessions: number;
+        providers: {
+            address: string;
+            endpoint: string;
+            model: string;
+            isHealthy: boolean;
+            connections: number;
+            lastHealthCheck: number;
+        }[];
+    };
+    retryWithDifferentProvider<T>(operation: (provider: ProviderInfo) => Promise<T>, excludeProviders?: Set<string>, requestId?: string): Promise<T>;
+    destroy(): void;
+}
+
+declare class SessionManager {
+    private sessions;
+    private requestToSession;
+    private sessionTimeout;
+    constructor(sessionTimeout?: number);
+    assignProvider(requestId: string, providerAddress: string, sessionId?: string): {
+        sessionId: string;
+        providerAddress: string;
+    };
+    getProviderForRequest(requestId: string): string | null;
+    getSessionForRequest(requestId: string): SessionInfo | null;
+    updateSessionActivity(sessionId: string): void;
+    cleanupExpiredSessions(): number;
+    private startCleanupInterval;
+    getSessionCount(): number;
+    getActiveSessionsForProvider(providerAddress: string): SessionInfo[];
+}
+
+declare class HealthChecker {
+    private providers;
+    private checkInterval;
+    private intervalId?;
+    constructor(providers: Map<string, ProviderInfo>, checkInterval: number);
+    start(): void;
+    stop(): void;
+    private scheduleHealthCheck;
+    private checkProvider;
+    private markProviderUnhealthy;
+    markProviderHealthy(providerAddress: string): void;
+    getHealthyProviders(): ProviderInfo[];
+}
+
+interface LoadBalancingStrategyInterface {
+    selectProvider(providers: ProviderInfo[]): ProviderInfo | null;
+}
+declare class RoundRobinStrategy implements LoadBalancingStrategyInterface {
+    private currentIndex;
+    selectProvider(providers: ProviderInfo[]): ProviderInfo | null;
+}
+declare class LeastConnectionsStrategy implements LoadBalancingStrategyInterface {
+    selectProvider(providers: ProviderInfo[]): ProviderInfo | null;
+}
+declare class WeightedRoundRobinStrategy implements LoadBalancingStrategyInterface {
+    private currentWeights;
+    selectProvider(providers: ProviderInfo[]): ProviderInfo | null;
+}
+declare function createLoadBalancingStrategy(strategy: LoadBalancingStrategy): LoadBalancingStrategyInterface;
+
 /**
  * Environment detection utility
  * Helps distinguish between Node.js and browser environments
@@ -2225,4 +2346,4 @@ declare function signData(data: Request[], packedPrivkey: PackedPrivkey): Promis
 
 declare function bigintToBytes(bigint: bigint, length: number): Uint8Array;
 
-export { type CryptoAdapter, type DoublePackedPubkey, FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput$1 as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, type KeyPair, LedgerBroker, type PackedPrivkey, Request, ZGComputeNetworkBroker, bigintToBytes, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createZGComputeNetworkBroker, genKeyPair, getCryptoAdapter, hasWebCrypto, isBrowser, isNode, isWebWorker, pedersenHash, signData };
+export { type CacheEntry, type CryptoAdapter, type DoublePackedPubkey, FineTuningBroker, type ServiceStructOutput as FineTuningServiceStructOutput, HealthChecker, AccountProcessor as InferenceAccountProcessor, type AccountStructOutput$1 as InferenceAccountStructOutput, InferenceBroker, ModelProcessor as InferenceModelProcessor, RequestProcessor as InferenceRequestProcessor, ResponseProcessor as InferenceResponseProcessor, type ServiceStructOutput$1 as InferenceServiceStructOutput, type ServingRequestHeaders as InferenceServingRequestHeaders, type SingerRAVerificationResult as InferenceSingerRAVerificationResult, Verifier as InferenceVerifier, type KeyPair, LeastConnectionsStrategy, LedgerBroker, type LoadBalancerOptions, type LoadBalancingStrategy, type LoadBalancingStrategyInterface, type PackedPrivkey, type ProviderInfo, ProviderLoadBalancer, Request, RoundRobinStrategy, type SessionInfo, SessionManager, WeightedRoundRobinStrategy, ZGComputeNetworkBroker, bigintToBytes, createFineTuningBroker, createInferenceBroker, createLedgerBroker, createLoadBalancingStrategy, createZGComputeNetworkBroker, genKeyPair, getCryptoAdapter, hasWebCrypto, isBrowser, isNode, isWebWorker, pedersenHash, signData };

@@ -156,7 +156,6 @@ class ZGServingUserBrokerBase {
                 const account = await this.contract.getAccount(providerAddress);
                 const privateKeyStr = await (0, utils_1.decryptData)(this.contract.signer, account.additionalInfo);
                 privateKey = (0, utils_1.strToPrivateKey)(privateKeyStr);
-                console.log('Private key new:', privateKey);
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey);
             }
             const nonce = await (0, utils_1.getNonceWithCache)(this.cache);

@@ -231,7 +231,6 @@ export abstract class ZGServingUserBrokerBase {
                     account.additionalInfo
                 )
                 privateKey = strToPrivateKey(privateKeyStr)
-                console.log('Private key new:', privateKey)
 
                 this.metadata.storeSettleSignerPrivateKey(key, privateKey)
             }
