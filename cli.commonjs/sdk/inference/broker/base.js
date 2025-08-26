@@ -11,8 +11,8 @@ class ZGServingUserBrokerBase {
     metadata;
     cache;
     checkAccountThreshold = BigInt(100);
-    topUpTriggerThreshold = BigInt(500);
-    topUpTargetThreshold = BigInt(1000);
+    topUpTriggerThreshold = BigInt(10000);
+    topUpTargetThreshold = BigInt(20000);
     ledger;
     constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
@@ -219,7 +219,7 @@ class ZGServingUserBrokerBase {
         }
     }
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 500 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a topUpTriggerThreshold * (inputPrice + outputPrice)
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
@@ -273,7 +273,7 @@ class ZGServingUserBrokerBase {
         await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
     }
     /**
-     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * Check the cache fund for this provider, return true if the fund is above checkAccountThreshold * (inputPrice + outputPrice)
      * @param svc
      */
     async shouldCheckAccount(svc) {

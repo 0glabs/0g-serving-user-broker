@@ -1809,12 +1809,12 @@ declare abstract class ZGServingUserBrokerBase {
     updateCachedFee(provider: string, fee: bigint): Promise<void>;
     clearCacheFee(provider: string, fee: bigint): Promise<void>;
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 500 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a topUpTriggerThreshold * (inputPrice + outputPrice)
      */
     topUpAccountIfNeeded(provider: string, content: string, gasPrice?: number): Promise<void>;
     private handleFirstRound;
     /**
-     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * Check the cache fund for this provider, return true if the fund is above checkAccountThreshold * (inputPrice + outputPrice)
      * @param svc
      */
     shouldCheckAccount(svc: ServiceStructOutput$1): Promise<boolean>;

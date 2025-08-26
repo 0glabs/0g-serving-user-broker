@@ -98,6 +98,32 @@ function ledger(program) {
             console.log('Funds retrieved from sub accounts');
         });
     });
+    program
+        .command('transfer-fund')
+        .description('Transfer funds to a provider for a specific service')
+        .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
+        .requiredOption('--provider <address>', 'Provider address to transfer funds to')
+        .requiredOption('--amount <neuron>', 'Amount to transfer in neuron')
+        .option('--service <type>', 'Service type: inference or fine-tuning', 'inference')
+        .option('--rpc <url>', '0G Chain RPC endpoint')
+        .option('--ledger-ca <address>', 'Account (ledger) contract address')
+        .option('--inference-ca <address>', 'Inference contract address')
+        .option('--fine-tuning-ca <address>', 'Fine Tuning contract address')
+        .option('--gas-price <price>', 'Gas price for transactions')
+        .option('--max-gas-price <price>', 'Max gas price for transactions')
+        .option('--step <step>', 'Step for gas price calculation')
+        .action((options) => {
+        (0, util_1.withBroker)(options, async (broker) => {
+            const serviceType = options.service;
+            if (serviceType !== 'inference' && serviceType !== 'fine-tuning') {
+                console.error('Invalid service type. Must be "inference" or "fine-tuning"');
+                process.exit(1);
+            }
+            console.log(`Transferring ${options.amount} neuron to ${options.provider} for ${serviceType}...`);
+            await broker.ledger.transferFund(options.provider, serviceType, BigInt(options.amount), options.gasPrice ? parseFloat(options.gasPrice) : undefined);
+            console.log(`Successfully transferred ${options.amount} neuron to ${options.provider}`);
+        });
+    });
 }
 const getLedgerTable = async (broker) => {
     // Ledger information
