@@ -3,7 +3,7 @@ import type { Cache, Metadata } from '../../common/storage'
 import type { InferenceServingContract } from '../contract'
 import type { LedgerBroker } from '../../ledger'
 import { Automata } from '../../common/automata '
-import { CacheValueTypeEnum } from '../../common/storage'
+import { CacheValueTypeEnum, CacheKeyHelpers } from '../../common/storage'
 import { throwFormattedError } from '../../common/utils'
 // import { Verifier } from './verifier'
 
@@ -178,7 +178,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             await this.contract.acknowledgeProviderSigner(providerAddress, key)
 
             const userAddress = this.contract.getUserAddress()
-            const cacheKey = `${userAddress}_${providerAddress}_ack`
+            const cacheKey = CacheKeyHelpers.getUserAckKey(userAddress, providerAddress)
             this.cache.setItem(
                 cacheKey,
                 key,

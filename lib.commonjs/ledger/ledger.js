@@ -127,7 +127,7 @@ class LedgerProcessor {
                 .map((x) => x[0]);
             await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr, gasPrice);
             if (serviceTypeStr == 'inference') {
-                await this.cache.setItem('firstRound', 'true', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+                await this.cache.setItem(storage_1.CACHE_KEYS.FIRST_ROUND, 'true', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
             }
         }
         catch (error) {

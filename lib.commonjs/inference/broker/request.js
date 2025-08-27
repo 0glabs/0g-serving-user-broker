@@ -100,7 +100,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             }
             await this.contract.acknowledgeProviderSigner(providerAddress, key);
             const userAddress = this.contract.getUserAddress();
-            const cacheKey = `${userAddress}_${providerAddress}_ack`;
+            const cacheKey = storage_1.CacheKeyHelpers.getUserAckKey(userAddress, providerAddress);
             this.cache.setItem(cacheKey, key, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
         }
         catch (error) {

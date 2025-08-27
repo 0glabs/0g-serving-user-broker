@@ -8,6 +8,7 @@ const http_1 = require("http");
 const sdk_1 = require("../sdk");
 const const_1 = require("../cli/const");
 const cache_1 = require("../sdk/common/storage/cache");
+const cache_keys_1 = require("../sdk/common/storage/cache-keys");
 async function runInferenceServer(options) {
     const app = (0, express_1.default)();
     app.use(express_1.default.json());
@@ -102,7 +103,7 @@ async function runInferenceServer(options) {
                     }
                     // Cache the complete content
                     if (id) {
-                        cache.setItem(id, completeContent, 1 * 10 * 1000, cache_1.CacheValueTypeEnum.Other);
+                        cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(id), completeContent, 1 * 10 * 1000, cache_1.CacheValueTypeEnum.Other);
                     }
                 }
                 else {
@@ -115,7 +116,7 @@ async function runInferenceServer(options) {
                 const data = await result.json();
                 const key = data.id;
                 const value = data.choices?.[0]?.message?.content;
-                cache.setItem(key, value, 5 * 60 * 1000, cache_1.CacheValueTypeEnum.Other);
+                cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(key), value, 5 * 60 * 1000, cache_1.CacheValueTypeEnum.Other);
                 res.json(data);
             }
         }
@@ -129,7 +130,7 @@ async function runInferenceServer(options) {
             res.status(400).json({ error: 'Missing id in request body' });
             return;
         }
-        const completeContent = cache.getItem(id);
+        const completeContent = cache.getItem(cache_keys_1.CacheKeyHelpers.getContentKey(id));
         if (!completeContent) {
             res.status(404).json({ error: 'No cached content for this id' });
             return;

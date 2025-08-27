@@ -17,7 +17,7 @@ import {
     bigintToBytes,
 } from '../../common/settle-signer'
 import type { Cache, Metadata } from '../../common/storage'
-import { CacheValueTypeEnum } from '../../common/storage'
+import { CacheValueTypeEnum, CACHE_KEYS, CacheKeyHelpers } from '../../common/storage'
 import type { LedgerBroker } from '../../ledger'
 import { hexlify } from 'ethers'
 
@@ -62,7 +62,7 @@ export abstract class ZGServingUserBrokerBase {
         providerAddress: string,
         useCache = true
     ): Promise<ServiceStructOutput> {
-        const key = providerAddress
+        const key = CacheKeyHelpers.getServiceKey(providerAddress)
         const cachedSvc = await this.cache.getItem(key)
         if (cachedSvc && useCache) {
             return cachedSvc
@@ -108,7 +108,7 @@ export abstract class ZGServingUserBrokerBase {
 
     async userAcknowledged(providerAddress: string): Promise<boolean> {
         const userAddress = this.contract.getUserAddress()
-        const key = `${userAddress}_${providerAddress}_ack`
+        const key = CacheKeyHelpers.getUserAckKey(userAddress, providerAddress)
         const cachedSvc = await this.cache.getItem(key)
         if (cachedSvc) {
             return true
@@ -309,10 +309,11 @@ export abstract class ZGServingUserBrokerBase {
 
     async updateCachedFee(provider: string, fee: bigint) {
         try {
+            const key = CacheKeyHelpers.getCachedFeeKey(provider)
             const curFee =
-                (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0)
+                (await this.cache.getItem(key)) || BigInt(0)
             await this.cache.setItem(
-                provider + '_cachedFee',
+                key,
                 BigInt(curFee) + fee,
                 1 * 60 * 1000,
                 CacheValueTypeEnum.BigInt
@@ -324,10 +325,11 @@ export abstract class ZGServingUserBrokerBase {
 
     async clearCacheFee(provider: string, fee: bigint) {
         try {
+            const key = CacheKeyHelpers.getCachedFeeKey(provider)
             const curFee =
-                (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0)
+                (await this.cache.getItem(key)) || BigInt(0)
             await this.cache.setItem(
-                provider,
+                key,
                 BigInt(curFee) + fee,
                 1 * 60 * 1000,
                 CacheValueTypeEnum.BigInt
@@ -362,7 +364,7 @@ export abstract class ZGServingUserBrokerBase {
 
             // Check if it's the first round
             const isFirstRound =
-                (await this.cache.getItem('firstRound')) !== 'false'
+                (await this.cache.getItem(CACHE_KEYS.FIRST_ROUND)) !== 'false'
             if (isFirstRound) {
                 await this.handleFirstRound(
                     provider,
@@ -425,7 +427,7 @@ export abstract class ZGServingUserBrokerBase {
 
         // Mark the first round as complete
         await this.cache.setItem(
-            'firstRound',
+            CACHE_KEYS.FIRST_ROUND,
             'false',
             10000000 * 60 * 1000,
             CacheValueTypeEnum.Other
@@ -438,7 +440,7 @@ export abstract class ZGServingUserBrokerBase {
      */
     async shouldCheckAccount(svc: ServiceStructOutput) {
         try {
-            const key = svc.provider + '_cachedFee'
+            const key = CacheKeyHelpers.getCachedFeeKey(svc.provider)
             const usedFund = (await this.cache.getItem(key)) || BigInt(0)
             return (
                 usedFund >

@@ -8627,6 +8627,61 @@ function privateKeyToStr(key) {
     }
 }
 
+/**
+ * Centralized cache key management
+ * This file contains all cache key constants and helper functions
+ * to ensure no key conflicts across different storage objects
+ */
+// Fixed cache keys
+const CACHE_KEYS = {
+    // Nonce related
+    NONCE: 'nonce',
+    NONCE_LOCK: 'nonce_lock',
+    // First round marker
+    FIRST_ROUND: 'firstRound',
+};
+// Cache key prefix patterns
+const CACHE_KEY_PREFIXES = {
+    // Service cache
+    SERVICE: 'service_',
+    // User acknowledgment
+    USER_ACK: '_ack',
+    // Cached fee
+    CACHED_FEE: '_cachedFee',
+};
+// Metadata key suffixes
+const METADATA_KEY_SUFFIXES = {
+    SETTLE_SIGNER_PRIVATE_KEY: '_settleSignerPrivateKey',
+    SIGNING_KEY: '_signingKey',
+};
+// Helper functions to generate dynamic cache keys
+const CacheKeyHelpers = {
+    // Service cache key
+    getServiceKey(providerAddress) {
+        return `${CACHE_KEY_PREFIXES.SERVICE}${providerAddress}`;
+    },
+    // User acknowledgment key
+    getUserAckKey(userAddress, providerAddress) {
+        return `${userAddress}_${providerAddress}${CACHE_KEY_PREFIXES.USER_ACK}`;
+    },
+    // Cached fee key
+    getCachedFeeKey(provider) {
+        return `${provider}${CACHE_KEY_PREFIXES.CACHED_FEE}`;
+    },
+    // Metadata: settle signer private key
+    getSettleSignerPrivateKeyKey(key) {
+        return `${key}${METADATA_KEY_SUFFIXES.SETTLE_SIGNER_PRIVATE_KEY}`;
+    },
+    // Metadata: signing key
+    getSigningKeyKey(key) {
+        return `${key}${METADATA_KEY_SUFFIXES.SIGNING_KEY}`;
+    },
+    // Dynamic content key (for inference server)
+    getContentKey(id) {
+        return id; // Keep as is since it's already unique
+    }
+};
+
 class Metadata {
     nodeStorage = {};
     initialized = false;
@@ -8679,13 +8734,13 @@ class Metadata {
     async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
-        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
+        await this.setItem(CacheKeyHelpers.getSettleSignerPrivateKeyKey(key), bigIntJsonString);
     }
     async storeSigningKey(key, value) {
-        await this.setItem(`${key}_signingKey`, value);
+        await this.setItem(CacheKeyHelpers.getSigningKeyKey(key), value);
     }
     async getSettleSignerPrivateKey(key) {
-        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
+        const value = await this.getItem(CacheKeyHelpers.getSettleSignerPrivateKeyKey(key));
         if (!value) {
             return null;
         }
@@ -8693,7 +8748,7 @@ class Metadata {
         return bigIntStringArray.map((str) => BigInt(str));
     }
     async getSigningKey(key) {
-        const value = await this.getItem(`${key}_signingKey`);
+        const value = await this.getItem(CacheKeyHelpers.getSigningKeyKey(key));
         return value ?? null;
     }
 }
@@ -8865,8 +8920,8 @@ class Cache {
 }
 
 async function getNonceWithCache(cache) {
-    const lockKey = 'nonce_lock';
-    const nonceKey = 'nonce';
+    const lockKey = CACHE_KEYS.NONCE_LOCK;
+    const nonceKey = CACHE_KEYS.NONCE;
     while (!(await acquireLock(cache, lockKey))) {
         await delay(10);
     }
@@ -12357,8 +12412,8 @@ class ZGServingUserBrokerBase {
     metadata;
     cache;
     checkAccountThreshold = BigInt(100);
-    topUpTriggerThreshold = BigInt(500);
-    topUpTargetThreshold = BigInt(1000);
+    topUpTriggerThreshold = BigInt(10000);
+    topUpTargetThreshold = BigInt(20000);
     ledger;
     constructor(contract, ledger, metadata, cache) {
         this.contract = contract;
@@ -12374,7 +12429,7 @@ class ZGServingUserBrokerBase {
         return { settleSignerPrivateKey };
     }
     async getService(providerAddress, useCache = true) {
-        const key = providerAddress;
+        const key = CacheKeyHelpers.getServiceKey(providerAddress);
         const cachedSvc = await this.cache.getItem(key);
         if (cachedSvc && useCache) {
             return cachedSvc;
@@ -12410,7 +12465,7 @@ class ZGServingUserBrokerBase {
     }
     async userAcknowledged(providerAddress) {
         const userAddress = this.contract.getUserAddress();
-        const key = `${userAddress}_${providerAddress}_ack`;
+        const key = CacheKeyHelpers.getUserAckKey(userAddress, providerAddress);
         const cachedSvc = await this.cache.getItem(key);
         if (cachedSvc) {
             return true;
@@ -12548,8 +12603,9 @@ class ZGServingUserBrokerBase {
     }
     async updateCachedFee(provider, fee) {
         try {
-            const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
-            await this.cache.setItem(provider + '_cachedFee', BigInt(curFee) + fee, 1 * 60 * 1000, CacheValueTypeEnum.BigInt);
+            const key = CacheKeyHelpers.getCachedFeeKey(provider);
+            const curFee = (await this.cache.getItem(key)) || BigInt(0);
+            await this.cache.setItem(key, BigInt(curFee) + fee, 1 * 60 * 1000, CacheValueTypeEnum.BigInt);
         }
         catch (error) {
             throwFormattedError(error);
@@ -12557,15 +12613,16 @@ class ZGServingUserBrokerBase {
     }
     async clearCacheFee(provider, fee) {
         try {
-            const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
-            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, CacheValueTypeEnum.BigInt);
+            const key = CacheKeyHelpers.getCachedFeeKey(provider);
+            const curFee = (await this.cache.getItem(key)) || BigInt(0);
+            await this.cache.setItem(key, BigInt(curFee) + fee, 1 * 60 * 1000, CacheValueTypeEnum.BigInt);
         }
         catch (error) {
             throwFormattedError(error);
         }
     }
     /**
-     * Transfer fund from ledger if fund in the inference account is less than a 500 * (inputPrice + outputPrice)
+     * Transfer fund from ledger if fund in the inference account is less than a topUpTriggerThreshold * (inputPrice + outputPrice)
      */
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
@@ -12579,7 +12636,7 @@ class ZGServingUserBrokerBase {
             const targetThreshold = this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice);
             const triggerThreshold = this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice);
             // Check if it's the first round
-            const isFirstRound = (await this.cache.getItem('firstRound')) !== 'false';
+            const isFirstRound = (await this.cache.getItem(CACHE_KEYS.FIRST_ROUND)) !== 'false';
             if (isFirstRound) {
                 await this.handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice);
                 return;
@@ -12616,15 +12673,15 @@ class ZGServingUserBrokerBase {
             await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
         }
         // Mark the first round as complete
-        await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
+        await this.cache.setItem(CACHE_KEYS.FIRST_ROUND, 'false', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
     }
     /**
-     * Check the cache fund for this provider, return true if the fund is above 1000 * (inputPrice + outputPrice)
+     * Check the cache fund for this provider, return true if the fund is above checkAccountThreshold * (inputPrice + outputPrice)
      * @param svc
      */
     async shouldCheckAccount(svc) {
         try {
-            const key = svc.provider + '_cachedFee';
+            const key = CacheKeyHelpers.getCachedFeeKey(svc.provider);
             const usedFund = (await this.cache.getItem(key)) || BigInt(0);
             return (usedFund >
                 this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));
@@ -12953,7 +13010,7 @@ class RequestProcessor extends ZGServingUserBrokerBase {
             }
             await this.contract.acknowledgeProviderSigner(providerAddress, key);
             const userAddress = this.contract.getUserAddress();
-            const cacheKey = `${userAddress}_${providerAddress}_ack`;
+            const cacheKey = CacheKeyHelpers.getUserAckKey(userAddress, providerAddress);
             this.cache.setItem(cacheKey, key, 1 * 60 * 1000, CacheValueTypeEnum.Other);
         }
         catch (error) {
@@ -13806,7 +13863,7 @@ async function safeDynamicImport() {
     if (isBrowser()) {
         throw new Error('ZG Storage operations are not available in browser environment.');
     }
-    const { download } = await import('./index-b52942d2.js');
+    const { download } = await import('./index-d4088777.js');
     return { download };
 }
 async function calculateTokenSizeViaExe(tokenizerRootHash, datasetPath, datasetType, tokenCounterMerkleRoot, tokenCounterFileHash) {
@@ -18582,7 +18639,7 @@ class LedgerProcessor {
                 .map((x) => x[0]);
             await this.ledgerContract.retrieveFund(providerAddresses, serviceTypeStr, gasPrice);
             if (serviceTypeStr == 'inference') {
-                await this.cache.setItem('firstRound', 'true', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
+                await this.cache.setItem(CACHE_KEYS.FIRST_ROUND, 'true', 10000000 * 60 * 1000, CacheValueTypeEnum.Other);
             }
         }
         catch (error) {
@@ -19041,4 +19098,4 @@ async function createZGComputeNetworkBroker(signer, ledgerCA = '0x20f6E41b27fB64
 }
 
 export { AccountProcessor as A, FineTuningBroker as F, InferenceBroker as I, LedgerBroker as L, ModelProcessor$1 as M, RequestProcessor as R, Verifier as V, ZGComputeNetworkBroker as Z, ResponseProcessor as a, createFineTuningBroker as b, createInferenceBroker as c, download as d, createLedgerBroker as e, createZGComputeNetworkBroker as f, isNode as g, isWebWorker as h, isBrowser as i, hasWebCrypto as j, getCryptoAdapter as k, bigintToBytes as l, genKeyPair as m, Request$1 as n, pedersenHash as p, signData as s, upload as u };
-//# sourceMappingURL=index-1e77a467.js.map
+//# sourceMappingURL=index-5fb25bed.js.map

@@ -28,7 +28,7 @@ class ZGServingUserBrokerBase {
         return { settleSignerPrivateKey };
     }
     async getService(providerAddress, useCache = true) {
-        const key = providerAddress;
+        const key = storage_1.CacheKeyHelpers.getServiceKey(providerAddress);
         const cachedSvc = await this.cache.getItem(key);
         if (cachedSvc && useCache) {
             return cachedSvc;
@@ -64,7 +64,7 @@ class ZGServingUserBrokerBase {
     }
     async userAcknowledged(providerAddress) {
         const userAddress = this.contract.getUserAddress();
-        const key = `${userAddress}_${providerAddress}_ack`;
+        const key = storage_1.CacheKeyHelpers.getUserAckKey(userAddress, providerAddress);
         const cachedSvc = await this.cache.getItem(key);
         if (cachedSvc) {
             return true;
@@ -202,8 +202,9 @@ class ZGServingUserBrokerBase {
     }
     async updateCachedFee(provider, fee) {
         try {
-            const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
-            await this.cache.setItem(provider + '_cachedFee', BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
+            const key = storage_1.CacheKeyHelpers.getCachedFeeKey(provider);
+            const curFee = (await this.cache.getItem(key)) || BigInt(0);
+            await this.cache.setItem(key, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
             (0, utils_1.throwFormattedError)(error);
@@ -211,8 +212,9 @@ class ZGServingUserBrokerBase {
     }
     async clearCacheFee(provider, fee) {
         try {
-            const curFee = (await this.cache.getItem(provider + '_cachedFee')) || BigInt(0);
-            await this.cache.setItem(provider, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
+            const key = storage_1.CacheKeyHelpers.getCachedFeeKey(provider);
+            const curFee = (await this.cache.getItem(key)) || BigInt(0);
+            await this.cache.setItem(key, BigInt(curFee) + fee, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.BigInt);
         }
         catch (error) {
             (0, utils_1.throwFormattedError)(error);
@@ -233,7 +235,7 @@ class ZGServingUserBrokerBase {
             const targetThreshold = this.topUpTargetThreshold * (svc.inputPrice + svc.outputPrice);
             const triggerThreshold = this.topUpTriggerThreshold * (svc.inputPrice + svc.outputPrice);
             // Check if it's the first round
-            const isFirstRound = (await this.cache.getItem('firstRound')) !== 'false';
+            const isFirstRound = (await this.cache.getItem(storage_1.CACHE_KEYS.FIRST_ROUND)) !== 'false';
             if (isFirstRound) {
                 await this.handleFirstRound(provider, triggerThreshold, targetThreshold, gasPrice);
                 return;
@@ -270,7 +272,7 @@ class ZGServingUserBrokerBase {
             await this.ledger.transferFund(provider, 'inference', targetThreshold, gasPrice);
         }
         // Mark the first round as complete
-        await this.cache.setItem('firstRound', 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+        await this.cache.setItem(storage_1.CACHE_KEYS.FIRST_ROUND, 'false', 10000000 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
     }
     /**
      * Check the cache fund for this provider, return true if the fund is above checkAccountThreshold * (inputPrice + outputPrice)
@@ -278,7 +280,7 @@ class ZGServingUserBrokerBase {
      */
     async shouldCheckAccount(svc) {
         try {
-            const key = svc.provider + '_cachedFee';
+            const key = storage_1.CacheKeyHelpers.getCachedFeeKey(svc.provider);
             const usedFund = (await this.cache.getItem(key)) || BigInt(0);
             return (usedFund >
                 this.checkAccountThreshold * (svc.inputPrice + svc.outputPrice));

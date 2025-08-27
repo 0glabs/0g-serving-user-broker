@@ -5,7 +5,7 @@ import type { LedgerManagerContract } from './contract'
 import type { InferenceServingContract } from '../inference/contract'
 import type { FineTuningServingContract } from '../fine-tuning/contract'
 import type { Cache, Metadata } from '../common/storage'
-import { CacheValueTypeEnum } from '../common/storage'
+import { CacheValueTypeEnum, CACHE_KEYS } from '../common/storage'
 
 export interface LedgerDetailStructOutput {
     ledgerInfo: bigint[]
@@ -187,7 +187,7 @@ export class LedgerProcessor {
 
             if (serviceTypeStr == 'inference') {
                 await this.cache.setItem(
-                    'firstRound',
+                    CACHE_KEYS.FIRST_ROUND,
                     'true',
                     10000000 * 60 * 1000,
                     CacheValueTypeEnum.Other

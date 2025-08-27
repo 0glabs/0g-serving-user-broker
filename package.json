@@ -39,7 +39,7 @@
         "lint": "eslint \"src.ts/**/*.ts\"",
         "clean": "rm -rf dist lib.esm lib.commonjs types cli.commonjs",
         "build:sdk": "tsc -b tsconfig.commonjs.json tsconfig.types.json tsconfig.cli.json && npx rollup -c rollup.config.mjs",
-        "build": "npm run build:sdk",
+        "build": "rm -rf dist lib.esm lib.commonjs types cli.commonjs && npm run build:sdk",
         "build:with-ui": "npm run build:sdk && cd web-ui && pnpm install && pnpm build",
         "gen-contract-type": "typechain --target ethers-v6 --node16-modules --out-dir src.ts/sdk/inference/contract/typechain '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/inference/InferenceServing.sol/InferenceServing.json' && typechain --target ethers-v6 --node16-modules --out-dir src.ts/sdk/fine-tuning/contract/typechain '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/fine-tuning/FineTuningServing.sol/FineTuningServing.json' && typechain --target ethers-v6 --node16-modules --out-dir src.ts/sdk/ledger/contract/typechain '../0g-serving-broker/api/libs/0g-serving-contract/artifacts/contracts/ledger/LedgerManager.sol/LedgerManager.json' && npm run format",
         "gen-doc": "npx typedoc --tsconfig tsconfig.esm.json",

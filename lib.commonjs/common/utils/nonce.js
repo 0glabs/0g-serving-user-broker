@@ -4,8 +4,8 @@ exports.getNonceWithCache = getNonceWithCache;
 exports.getNonce = getNonce;
 const storage_1 = require("../storage");
 async function getNonceWithCache(cache) {
-    const lockKey = 'nonce_lock';
-    const nonceKey = 'nonce';
+    const lockKey = storage_1.CACHE_KEYS.NONCE_LOCK;
+    const nonceKey = storage_1.CACHE_KEYS.NONCE;
     while (!(await acquireLock(cache, lockKey))) {
         await delay(10);
     }

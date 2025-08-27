@@ -4,6 +4,7 @@ import { createServer } from 'http'
 import { createZGComputeNetworkBroker } from '../sdk'
 import { ZG_RPC_ENDPOINT_TESTNET } from '../cli/const'
 import { Cache, CacheValueTypeEnum } from '../sdk/common/storage/cache'
+import { CacheKeyHelpers } from '../sdk/common/storage/cache-keys'
 
 export interface InferenceServerOptions {
     provider: string
@@ -126,7 +127,7 @@ export async function runInferenceServer(options: InferenceServerOptions) {
                         // Cache the complete content
                         if (id) {
                             cache.setItem(
-                                id,
+                                CacheKeyHelpers.getContentKey(id),
                                 completeContent,
                                 1 * 10 * 1000,
                                 CacheValueTypeEnum.Other
@@ -142,7 +143,7 @@ export async function runInferenceServer(options: InferenceServerOptions) {
                     const key = data.id
                     const value = data.choices?.[0]?.message?.content
                     cache.setItem(
-                        key,
+                        CacheKeyHelpers.getContentKey(key),
                         value,
                         5 * 60 * 1000,
                         CacheValueTypeEnum.Other
@@ -161,7 +162,7 @@ export async function runInferenceServer(options: InferenceServerOptions) {
             res.status(400).json({ error: 'Missing id in request body' })
             return
         }
-        const completeContent = cache.getItem(id)
+        const completeContent = cache.getItem(CacheKeyHelpers.getContentKey(id))
         if (!completeContent) {
             res.status(404).json({ error: 'No cached content for this id' })
             return

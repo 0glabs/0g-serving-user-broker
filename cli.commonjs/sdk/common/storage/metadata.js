@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Metadata = void 0;
+const cache_keys_1 = require("./cache-keys");
 class Metadata {
     nodeStorage = {};
     initialized = false;
@@ -53,13 +54,13 @@ class Metadata {
     async storeSettleSignerPrivateKey(key, value) {
         const bigIntStringArray = value.map((bi) => bi.toString());
         const bigIntJsonString = JSON.stringify(bigIntStringArray);
-        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString);
+        await this.setItem(cache_keys_1.CacheKeyHelpers.getSettleSignerPrivateKeyKey(key), bigIntJsonString);
     }
     async storeSigningKey(key, value) {
-        await this.setItem(`${key}_signingKey`, value);
+        await this.setItem(cache_keys_1.CacheKeyHelpers.getSigningKeyKey(key), value);
     }
     async getSettleSignerPrivateKey(key) {
-        const value = await this.getItem(`${key}_settleSignerPrivateKey`);
+        const value = await this.getItem(cache_keys_1.CacheKeyHelpers.getSettleSignerPrivateKeyKey(key));
         if (!value) {
             return null;
         }
@@ -67,7 +68,7 @@ class Metadata {
         return bigIntStringArray.map((str) => BigInt(str));
     }
     async getSigningKey(key) {
-        const value = await this.getItem(`${key}_signingKey`);
+        const value = await this.getItem(cache_keys_1.CacheKeyHelpers.getSigningKeyKey(key));
         return value ?? null;
     }
 }

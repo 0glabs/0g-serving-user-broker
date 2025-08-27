@@ -1,3 +1,5 @@
+import { CacheKeyHelpers } from './cache-keys'
+
 export class Metadata {
     private nodeStorage: { [key: string]: string } = {}
     private initialized = false
@@ -52,16 +54,16 @@ export class Metadata {
     async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
-        await this.setItem(`${key}_settleSignerPrivateKey`, bigIntJsonString)
+        await this.setItem(CacheKeyHelpers.getSettleSignerPrivateKeyKey(key), bigIntJsonString)
     }
 
     async storeSigningKey(key: string, value: string) {
-        await this.setItem(`${key}_signingKey`, value)
+        await this.setItem(CacheKeyHelpers.getSigningKeyKey(key), value)
     }
 
     async getSettleSignerPrivateKey(key: string): Promise<bigint[] | null> {
         const value: string | null = await this.getItem(
-            `${key}_settleSignerPrivateKey`
+            CacheKeyHelpers.getSettleSignerPrivateKeyKey(key)
         )
         if (!value) {
             return null
@@ -71,7 +73,7 @@ export class Metadata {
     }
 
     async getSigningKey(key: string): Promise<string | null> {
-        const value = await this.getItem(`${key}_signingKey`)
+        const value = await this.getItem(CacheKeyHelpers.getSigningKeyKey(key))
         return value ?? null
     }
 }
