@@ -32,23 +32,26 @@ function decodeCustomError(error) {
                     if (decodedError) {
                         // Format the error message based on the error name
                         const errorMessages = {
-                            'LedgerNotExists': 'Account does not exist. Please create an account first using "add-account".',
-                            'LedgerExists': 'Account already exists. Use "deposit" to add funds or "get-account" to view details.',
-                            'InsufficientBalance': 'Insufficient balance in the account.',
-                            'ServiceNotExist': 'Service provider does not exist. Please check the provider address.',
-                            'AccountNotExist': 'Sub-account does not exist for this provider.',
-                            'AccountExist': 'Sub-account already exists for this provider.',
-                            'InvalidVerifierInput': 'Invalid verification input provided.',
-                            'Unauthorized': 'Unauthorized. You do not have permission to perform this action.',
-                            'InvalidInput': 'Invalid input parameters provided.',
+                            LedgerNotExists: 'Account does not exist. Please create an account first using "add-account".',
+                            LedgerExists: 'Account already exists. Use "deposit" to add funds or "get-account" to view details.',
+                            InsufficientBalance: 'Insufficient balance in the account.',
+                            ServiceNotExist: 'Service provider does not exist. Please check the provider address.',
+                            AccountNotExist: 'Sub-account does not exist for this provider.',
+                            AccountExist: 'Sub-account already exists for this provider.',
+                            InvalidVerifierInput: 'Invalid verification input provided.',
+                            Unauthorized: 'Unauthorized. You do not have permission to perform this action.',
+                            InvalidInput: 'Invalid input parameters provided.',
                         };
-                        let message = errorMessages[decodedError.name] || `Error: ${decodedError.name}`;
+                        let message = errorMessages[decodedError.name] ||
+                            `Error: ${decodedError.name}`;
                         // Add parameter details if available
                         if (decodedError.args && decodedError.args.length > 0) {
                             const argDetails = decodedError.args
                                 .map((arg, index) => {
                                 // Check if it's an address
-                                if (typeof arg === 'string' && arg.startsWith('0x') && arg.length === 42) {
+                                if (typeof arg === 'string' &&
+                                    arg.startsWith('0x') &&
+                                    arg.length === 42) {
                                     return `Address: ${arg}`;
                                 }
                                 return `Arg${index}: ${arg}`;
@@ -108,11 +111,13 @@ function formatError(error) {
             return 'Transaction nonce error. Please wait a moment and try again.';
         }
         // Check for user rejected
-        if (errorWithMessage.message.includes('user rejected') || errorWithMessage.message.includes('User denied')) {
+        if (errorWithMessage.message.includes('user rejected') ||
+            errorWithMessage.message.includes('User denied')) {
             return 'Transaction was rejected by the user.';
         }
         // Check for network errors
-        if (errorWithMessage.message.includes('network') || errorWithMessage.message.includes('timeout')) {
+        if (errorWithMessage.message.includes('network') ||
+            errorWithMessage.message.includes('timeout')) {
             return 'Network error. Please check your connection and try again.';
         }
         // Check for additional specific patterns
@@ -146,7 +151,7 @@ function getDetailedError(error) {
     }
     return {
         message,
-        details: details.length > 0 ? details.join(' | ') : undefined
+        details: details.length > 0 ? details.join(' | ') : undefined,
     };
 }
 // Helper function to throw formatted errors from within SDK functions

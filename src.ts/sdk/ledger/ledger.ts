@@ -1,6 +1,10 @@
 import type { AddressLike } from 'ethers'
 import { genKeyPair } from '../common/settle-signer'
-import { encryptData, privateKeyToStr, throwFormattedError } from '../common/utils'
+import {
+    encryptData,
+    privateKeyToStr,
+    throwFormattedError,
+} from '../common/utils'
 import type { LedgerManagerContract } from './contract'
 import type { InferenceServingContract } from '../inference/contract'
 import type { FineTuningServingContract } from '../fine-tuning/contract'

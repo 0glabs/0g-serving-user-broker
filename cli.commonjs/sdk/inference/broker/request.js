@@ -65,7 +65,7 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             catch {
                 await this.ledger.transferFund(providerAddress, 'inference', BigInt(0), gasPrice);
             }
-            let { quote, provider_signer, key } = await this.getQuote(providerAddress);
+            let { quote, provider_signer } = await this.getQuote(providerAddress);
             if (!quote || !provider_signer) {
                 throw new Error('Invalid quote');
             }
@@ -93,15 +93,14 @@ class RequestProcessor extends base_1.ZGServingUserBrokerBase {
             //     }
             // }
             const account = await this.contract.getAccount(providerAddress);
-            if (account.providerPubKey[0] === key[0] &&
-                account.providerPubKey[1] === key[1]) {
+            if (account.teeSignerAddress === provider_signer) {
                 console.log('Provider signer already acknowledged');
                 return;
             }
-            await this.contract.acknowledgeProviderSigner(providerAddress, key);
+            await this.contract.acknowledgeTEESigner(providerAddress, provider_signer);
             const userAddress = this.contract.getUserAddress();
             const cacheKey = storage_1.CacheKeyHelpers.getUserAckKey(userAddress, providerAddress);
-            this.cache.setItem(cacheKey, key, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
+            this.cache.setItem(cacheKey, provider_signer, 1 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
         }
         catch (error) {
             (0, utils_1.throwFormattedError)(error);

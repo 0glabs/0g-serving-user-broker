@@ -71,8 +71,7 @@ class ZGServingUserBrokerBase {
         }
         try {
             const account = await this.contract.getAccount(providerAddress);
-            if (account.providerPubKey[0] !== 0n &&
-                account.providerPubKey[1] !== 0n) {
+            if (account.teeSignerAddress !== ethers_1.ZeroAddress) {
                 await this.cache.setItem(key, account.providerPubKey, 10 * 60 * 1000, storage_1.CacheValueTypeEnum.Other);
                 return true;
             }
@@ -226,7 +225,8 @@ class ZGServingUserBrokerBase {
     async topUpAccountIfNeeded(provider, content, gasPrice) {
         try {
             // Exit early if running in browser environment
-            if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
+            if (typeof window !== 'undefined' &&
+                typeof window.document !== 'undefined') {
                 return;
             }
             const extractor = await this.getExtractor(provider);

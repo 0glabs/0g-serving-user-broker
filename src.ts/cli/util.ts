@@ -76,7 +76,7 @@ export const printTableWithTitle = (title: string, table: Table) => {
 const alertError = (error: any) => {
     // SDK now handles error formatting, so we just need to display the error message
     const errorMessage = error?.message || String(error)
-    
+
     // Check for additional CLI-specific patterns
     const errorPatterns = [
         {
@@ -96,14 +96,11 @@ const alertError = (error: any) => {
     )
 
     if (matchedPattern) {
-        console.error(
-            chalk.red('✗ Operation failed:'),
-            matchedPattern.message
-        )
+        console.error(chalk.red('✗ Operation failed:'), matchedPattern.message)
     } else {
         console.error(chalk.red('✗ Operation failed:'), errorMessage)
     }
-    
+
     // Show raw error in verbose mode (can be controlled by an env variable)
     if (process.env.VERBOSE === 'true') {
         console.error(chalk.gray('\nRaw error:'), error)

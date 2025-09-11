@@ -59,17 +59,25 @@ export async function runRouterServer(options: RouterServerOptions) {
         for (const providerAddress of options.providers) {
             try {
                 console.log(`Acknowledging provider: ${providerAddress}`)
-                await broker.inference.acknowledgeProviderSigner(providerAddress)
-                const meta = await broker.inference.getServiceMetadata(providerAddress)
+                await broker.inference.acknowledgeProviderSigner(
+                    providerAddress
+                )
+                const meta = await broker.inference.getServiceMetadata(
+                    providerAddress
+                )
                 providers.set(providerAddress, {
                     address: providerAddress,
                     endpoint: meta.endpoint,
                     model: meta.model,
                     available: true,
                 })
-                console.log(`✓ Provider ${providerAddress} initialized successfully`)
+                console.log(
+                    `✓ Provider ${providerAddress} initialized successfully`
+                )
             } catch (error: any) {
-                console.error(`✗ Failed to initialize provider ${providerAddress}: ${error.message}`)
+                console.error(
+                    `✗ Failed to initialize provider ${providerAddress}: ${error.message}`
+                )
                 providers.set(providerAddress, {
                     address: providerAddress,
                     endpoint: '',
@@ -81,32 +89,42 @@ export async function runRouterServer(options: RouterServerOptions) {
             }
         }
 
-        const availableProviders = Array.from(providers.values()).filter(p => p.available)
+        const availableProviders = Array.from(providers.values()).filter(
+            (p) => p.available
+        )
         if (availableProviders.length === 0) {
             throw new Error('No available providers after initialization')
         }
-        console.log(`Successfully initialized ${availableProviders.length}/${options.providers.length} providers`)
+        console.log(
+            `Successfully initialized ${availableProviders.length}/${options.providers.length} providers`
+        )
     }
 
     function getAvailableProvider(): ProviderInfo | null {
         const now = Date.now()
-        
+
         // First, try to recover any providers that have been down for a while
         for (const provider of providers.values()) {
             if (!provider.available && provider.lastErrorTime) {
                 if (now - provider.lastErrorTime > ERROR_RECOVERY_TIME) {
                     provider.available = true
-                    console.log(`Provider ${provider.address} marked as available for retry`)
+                    console.log(
+                        `Provider ${provider.address} marked as available for retry`
+                    )
                 }
             }
         }
 
         // Get all available providers
-        const availableProviders = Array.from(providers.values()).filter(p => p.available)
-        
+        const availableProviders = Array.from(providers.values()).filter(
+            (p) => p.available
+        )
+
         if (availableProviders.length === 0) {
             // If no providers are available, reset all and try again
-            console.log('No available providers, resetting all providers for retry')
+            console.log(
+                'No available providers, resetting all providers for retry'
+            )
             for (const provider of providers.values()) {
                 provider.available = true
             }
@@ -114,7 +132,9 @@ export async function runRouterServer(options: RouterServerOptions) {
         }
 
         // Simple round-robin selection
-        return availableProviders[Math.floor(Math.random() * availableProviders.length)]
+        return availableProviders[
+            Math.floor(Math.random() * availableProviders.length)
+        ]
     }
 
     function markProviderUnavailable(providerAddress: string, error: string) {
@@ -123,13 +143,19 @@ export async function runRouterServer(options: RouterServerOptions) {
             provider.available = false
             provider.lastError = error
             provider.lastErrorTime = Date.now()
-            console.error(`Provider ${providerAddress} marked as unavailable: ${error}`)
+            console.error(
+                `Provider ${providerAddress} marked as unavailable: ${error}`
+            )
         }
     }
 
-    async function chatProxyWithFallback(body: any, stream: boolean = false, attemptedProviders: Set<string> = new Set()): Promise<any> {
+    async function chatProxyWithFallback(
+        body: any,
+        stream: boolean = false,
+        attemptedProviders: Set<string> = new Set()
+    ): Promise<any> {
         const provider = getAvailableProvider()
-        
+
         if (!provider) {
             throw new Error('No available providers')
         }
@@ -137,7 +163,7 @@ export async function runRouterServer(options: RouterServerOptions) {
         if (attemptedProviders.has(provider.address)) {
             // Avoid infinite loop by not retrying the same provider
             const remainingProviders = Array.from(providers.values()).filter(
-                p => !attemptedProviders.has(p.address) && p.available
+                (p) => !attemptedProviders.has(p.address) && p.available
             )
             if (remainingProviders.length === 0) {
                 throw new Error('All providers have been attempted and failed')
@@ -146,7 +172,7 @@ export async function runRouterServer(options: RouterServerOptions) {
         }
 
         attemptedProviders.add(provider.address)
-        
+
         try {
             console.log(`Using provider: ${provider.address}`)
             const headers = await broker.inference.getRequestHeaders(
@@ -155,20 +181,23 @@ export async function runRouterServer(options: RouterServerOptions) {
                     ? body.messages.map((m: any) => m.content).join('\n')
                     : ''
             )
-            
+
             body.model = provider.model
             if (stream) {
                 body.stream = true
             }
-            
-            const response = await fetch(`${provider.endpoint}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...headers,
-                },
-                body: JSON.stringify(body),
-            })
+
+            const response = await fetch(
+                `${provider.endpoint}/chat/completions`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...headers,
+                    },
+                    body: JSON.stringify(body),
+                }
+            )
 
             if (!response.ok) {
                 throw new Error(`Provider returned status ${response.status}`)
@@ -176,20 +205,26 @@ export async function runRouterServer(options: RouterServerOptions) {
 
             return { response, provider: provider.address }
         } catch (error: any) {
-            console.error(`Provider ${provider.address} failed: ${error.message}`)
-            markProviderUnavailable(provider.address, error.message)
-            
-            // Try with another provider
-            const remainingAvailableProviders = Array.from(providers.values()).filter(
-                p => p.available && !attemptedProviders.has(p.address)
+            console.error(
+                `Provider ${provider.address} failed: ${error.message}`
             )
-            
+            markProviderUnavailable(provider.address, error.message)
+
+            // Try with another provider
+            const remainingAvailableProviders = Array.from(
+                providers.values()
+            ).filter((p) => p.available && !attemptedProviders.has(p.address))
+
             if (remainingAvailableProviders.length > 0) {
-                console.log(`Retrying with another provider (${remainingAvailableProviders.length} remaining)`)
+                console.log(
+                    `Retrying with another provider (${remainingAvailableProviders.length} remaining)`
+                )
                 return chatProxyWithFallback(body, stream, attemptedProviders)
             }
-            
-            throw new Error(`All providers failed. Last error: ${error.message}`)
+
+            throw new Error(
+                `All providers failed. Last error: ${error.message}`
+            )
         }
     }
 
@@ -204,16 +239,17 @@ export async function runRouterServer(options: RouterServerOptions) {
                 })
                 return
             }
-            
+
             try {
-                const { response: result, provider: usedProvider } = await chatProxyWithFallback(body, stream)
-                
+                const { response: result, provider: usedProvider } =
+                    await chatProxyWithFallback(body, stream)
+
                 if (stream) {
                     res.setHeader('Content-Type', 'text/event-stream')
                     res.setHeader('Cache-Control', 'no-cache')
                     res.setHeader('Connection', 'keep-alive')
                     res.setHeader('X-Provider-Address', usedProvider)
-                    
+
                     if (result.body) {
                         let rawBody = ''
                         const decoder = new TextDecoder()
@@ -227,7 +263,7 @@ export async function runRouterServer(options: RouterServerOptions) {
                             })
                         }
                         res.end()
-                        
+
                         // Parse rawBody and cache it after the stream ends
                         let completeContent = ''
                         let id: string | undefined
@@ -248,12 +284,15 @@ export async function runRouterServer(options: RouterServerOptions) {
                                 }
                             } catch (e) {}
                         }
-                        
+
                         // Cache the complete content with provider info
                         if (id) {
                             cache.setItem(
                                 CacheKeyHelpers.getContentKey(id),
-                                { content: completeContent, provider: usedProvider },
+                                {
+                                    content: completeContent,
+                                    provider: usedProvider,
+                                },
                                 1 * 10 * 1000,
                                 CacheValueTypeEnum.Other
                             )
@@ -282,17 +321,20 @@ export async function runRouterServer(options: RouterServerOptions) {
         }
     )
 
-    app.get('/v1/providers/status', async (req: any, res: any): Promise<void> => {
-        const status = Array.from(providers.values()).map(p => ({
-            address: p.address,
-            endpoint: p.endpoint,
-            model: p.model,
-            available: p.available,
-            lastError: p.lastError,
-            lastErrorTime: p.lastErrorTime,
-        }))
-        res.json({ providers: status })
-    })
+    app.get(
+        '/v1/providers/status',
+        async (req: any, res: any): Promise<void> => {
+            const status = Array.from(providers.values()).map((p) => ({
+                address: p.address,
+                endpoint: p.endpoint,
+                model: p.model,
+                available: p.available,
+                lastError: p.lastError,
+                lastErrorTime: p.lastErrorTime,
+            }))
+            res.json({ providers: status })
+        }
+    )
 
     const port = options.port ? Number(options.port) : 3000
     const host = options.host || '0.0.0.0'
@@ -320,7 +362,9 @@ export async function runRouterServer(options: RouterServerOptions) {
         console.error(`Please try one of the following:`)
         console.error(`  1. Use a different port: --port <PORT>`)
         console.error(`  2. Stop the process using port ${port}`)
-        console.error(`  3. Find the process: lsof -i :${port} or ss -tlnp | grep :${port}\n`)
+        console.error(
+            `  3. Find the process: lsof -i :${port} or ss -tlnp | grep :${port}\n`
+        )
         process.exit(1)
     }
 
@@ -329,10 +373,14 @@ export async function runRouterServer(options: RouterServerOptions) {
     const server = app.listen(port, host, async () => {
         console.log(`\nRouter service is running on ${host}:${port}`)
         console.log(`Available endpoints:`)
-        console.log(`  - POST /v1/chat/completions - Chat completions with automatic failover`)
-        console.log(`  - GET  /v1/providers/status - Check status of all providers`)
+        console.log(
+            `  - POST /v1/chat/completions - Chat completions with automatic failover`
+        )
+        console.log(
+            `  - GET  /v1/providers/status - Check status of all providers`
+        )
         console.log(`\nConfigured providers: ${options.providers.length}`)
-        
+
         // Perform health check
         try {
             const fetch = (await import('node-fetch')).default
@@ -366,7 +414,9 @@ export async function runRouterServer(options: RouterServerOptions) {
             console.error(`Please try one of the following:`)
             console.error(`  1. Use a different port: --port <PORT>`)
             console.error(`  2. Stop the process using port ${port}`)
-            console.error(`  3. Find the process: lsof -i :${port} or netstat -tulpn | grep :${port}\n`)
+            console.error(
+                `  3. Find the process: lsof -i :${port} or netstat -tulpn | grep :${port}\n`
+            )
             process.exit(1)
         } else {
             console.error('Server error:', err)

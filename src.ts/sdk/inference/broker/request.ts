@@ -132,7 +132,7 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
                 )
             }
 
-            let { quote, provider_signer, key } = await this.getQuote(
+            let { quote, provider_signer } = await this.getQuote(
                 providerAddress
             )
 
@@ -167,21 +167,24 @@ export class RequestProcessor extends ZGServingUserBrokerBase {
             // }
 
             const account = await this.contract.getAccount(providerAddress)
-            if (
-                account.providerPubKey[0] === key[0] &&
-                account.providerPubKey[1] === key[1]
-            ) {
+            if (account.teeSignerAddress === provider_signer) {
                 console.log('Provider signer already acknowledged')
                 return
             }
 
-            await this.contract.acknowledgeProviderSigner(providerAddress, key)
+            await this.contract.acknowledgeTEESigner(
+                providerAddress,
+                provider_signer
+            )
 
             const userAddress = this.contract.getUserAddress()
-            const cacheKey = CacheKeyHelpers.getUserAckKey(userAddress, providerAddress)
+            const cacheKey = CacheKeyHelpers.getUserAckKey(
+                userAddress,
+                providerAddress
+            )
             this.cache.setItem(
                 cacheKey,
-                key,
+                provider_signer,
                 1 * 60 * 1000,
                 CacheValueTypeEnum.Other
             )

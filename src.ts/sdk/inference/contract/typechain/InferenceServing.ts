@@ -75,6 +75,7 @@ export type AccountStruct = {
     refunds: RefundStruct[]
     additionalInfo: string
     providerPubKey: [BigNumberish, BigNumberish]
+    teeSignerAddress: AddressLike
 }
 
 export type AccountStructOutput = [
@@ -86,7 +87,8 @@ export type AccountStructOutput = [
     signer: [bigint, bigint],
     refunds: RefundStructOutput[],
     additionalInfo: string,
-    providerPubKey: [bigint, bigint]
+    providerPubKey: [bigint, bigint],
+    teeSignerAddress: string
 ] & {
     user: string
     provider: string
@@ -97,6 +99,7 @@ export type AccountStructOutput = [
     refunds: RefundStructOutput[]
     additionalInfo: string
     providerPubKey: [bigint, bigint]
+    teeSignerAddress: string
 }
 
 export type ServiceStruct = {
@@ -152,11 +155,37 @@ export type VerifierInputStructOutput = [
     segmentSize: bigint[]
 }
 
+export type TEESettlementDataStruct = {
+    user: AddressLike
+    provider: AddressLike
+    totalFee: BigNumberish
+    requestsHash: BytesLike
+    nonce: BigNumberish
+    signature: BytesLike
+}
+
+export type TEESettlementDataStructOutput = [
+    user: string,
+    provider: string,
+    totalFee: bigint,
+    requestsHash: string,
+    nonce: bigint,
+    signature: string
+] & {
+    user: string
+    provider: string
+    totalFee: bigint
+    requestsHash: string
+    nonce: bigint
+    signature: string
+}
+
 export interface InferenceServingInterface extends Interface {
     getFunction(
         nameOrSignature:
             | 'accountExists'
             | 'acknowledgeProviderSigner'
+            | 'acknowledgeTEESigner'
             | 'addAccount'
             | 'addOrUpdateService'
             | 'batchVerifierAddress'
@@ -180,6 +209,7 @@ export interface InferenceServingInterface extends Interface {
             | 'renounceOwnership'
             | 'requestRefundAll'
             | 'settleFees'
+            | 'settleFeesWithTEE'
             | 'transferOwnership'
             | 'updateBatchVerifierAddress'
             | 'updateLockTime'
@@ -192,6 +222,8 @@ export interface InferenceServingInterface extends Interface {
             | 'RefundRequested'
             | 'ServiceRemoved'
             | 'ServiceUpdated'
+            | 'TEESettlementCompleted'
+            | 'TEESettlementFailed'
     ): EventFragment
 
     encodeFunctionData(
@@ -201,6 +233,10 @@ export interface InferenceServingInterface extends Interface {
     encodeFunctionData(
         functionFragment: 'acknowledgeProviderSigner',
         values: [AddressLike, [BigNumberish, BigNumberish]]
+    ): string
+    encodeFunctionData(
+        functionFragment: 'acknowledgeTEESigner',
+        values: [AddressLike, AddressLike]
     ): string
     encodeFunctionData(
         functionFragment: 'addAccount',
@@ -289,6 +325,10 @@ export interface InferenceServingInterface extends Interface {
         values: [VerifierInputStruct]
     ): string
     encodeFunctionData(
+        functionFragment: 'settleFeesWithTEE',
+        values: [TEESettlementDataStruct[]]
+    ): string
+    encodeFunctionData(
         functionFragment: 'transferOwnership',
         values: [AddressLike]
     ): string
@@ -307,6 +347,10 @@ export interface InferenceServingInterface extends Interface {
     ): Result
     decodeFunctionResult(
         functionFragment: 'acknowledgeProviderSigner',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
+        functionFragment: 'acknowledgeTEESigner',
         data: BytesLike
     ): Result
     decodeFunctionResult(
@@ -393,6 +437,10 @@ export interface InferenceServingInterface extends Interface {
     ): Result
     decodeFunctionResult(
         functionFragment: 'settleFees',
+        data: BytesLike
+    ): Result
+    decodeFunctionResult(
+        functionFragment: 'settleFeesWithTEE',
         data: BytesLike
     ): Result
     decodeFunctionResult(
@@ -541,6 +589,54 @@ export namespace ServiceUpdatedEvent {
     export type LogDescription = TypedLogDescription<Event>
 }
 
+export namespace TEESettlementCompletedEvent {
+    export type InputTuple = [
+        provider: AddressLike,
+        successCount: BigNumberish,
+        failedCount: BigNumberish
+    ]
+    export type OutputTuple = [
+        provider: string,
+        successCount: bigint,
+        failedCount: bigint
+    ]
+    export interface OutputObject {
+        provider: string
+        successCount: bigint
+        failedCount: bigint
+    }
+    export type Event = TypedContractEvent<
+        InputTuple,
+        OutputTuple,
+        OutputObject
+    >
+    export type Filter = TypedDeferredTopicFilter<Event>
+    export type Log = TypedEventLog<Event>
+    export type LogDescription = TypedLogDescription<Event>
+}
+
+export namespace TEESettlementFailedEvent {
+    export type InputTuple = [
+        provider: AddressLike,
+        user: AddressLike,
+        reason: string
+    ]
+    export type OutputTuple = [provider: string, user: string, reason: string]
+    export interface OutputObject {
+        provider: string
+        user: string
+        reason: string
+    }
+    export type Event = TypedContractEvent<
+        InputTuple,
+        OutputTuple,
+        OutputObject
+    >
+    export type Filter = TypedDeferredTopicFilter<Event>
+    export type Log = TypedEventLog<Event>
+    export type LogDescription = TypedLogDescription<Event>
+}
+
 export interface InferenceServing extends BaseContract {
     connect(runner?: ContractRunner | null): InferenceServing
     waitForDeployment(): Promise<this>
@@ -592,6 +688,12 @@ export interface InferenceServing extends BaseContract {
 
     acknowledgeProviderSigner: TypedContractMethod<
         [provider: AddressLike, providerPubKey: [BigNumberish, BigNumberish]],
+        [void],
+        'nonpayable'
+    >
+
+    acknowledgeTEESigner: TypedContractMethod<
+        [provider: AddressLike, teeSignerAddress: AddressLike],
         [void],
         'nonpayable'
     >
@@ -722,9 +824,11 @@ export interface InferenceServing extends BaseContract {
         'nonpayable'
     >
 
-    settleFees: TypedContractMethod<
-        [verifierInput: VerifierInputStruct],
-        [void],
+    settleFees: TypedContractMethod<[arg0: VerifierInputStruct], [void], 'view'>
+
+    settleFeesWithTEE: TypedContractMethod<
+        [settlements: TEESettlementDataStruct[]],
+        [string[]],
         'nonpayable'
     >
 
@@ -761,6 +865,13 @@ export interface InferenceServing extends BaseContract {
         nameOrSignature: 'acknowledgeProviderSigner'
     ): TypedContractMethod<
         [provider: AddressLike, providerPubKey: [BigNumberish, BigNumberish]],
+        [void],
+        'nonpayable'
+    >
+    getFunction(
+        nameOrSignature: 'acknowledgeTEESigner'
+    ): TypedContractMethod<
+        [provider: AddressLike, teeSignerAddress: AddressLike],
         [void],
         'nonpayable'
     >
@@ -904,9 +1015,12 @@ export interface InferenceServing extends BaseContract {
     >
     getFunction(
         nameOrSignature: 'settleFees'
+    ): TypedContractMethod<[arg0: VerifierInputStruct], [void], 'view'>
+    getFunction(
+        nameOrSignature: 'settleFeesWithTEE'
     ): TypedContractMethod<
-        [verifierInput: VerifierInputStruct],
-        [void],
+        [settlements: TEESettlementDataStruct[]],
+        [string[]],
         'nonpayable'
     >
     getFunction(
@@ -957,6 +1071,20 @@ export interface InferenceServing extends BaseContract {
         ServiceUpdatedEvent.InputTuple,
         ServiceUpdatedEvent.OutputTuple,
         ServiceUpdatedEvent.OutputObject
+    >
+    getEvent(
+        key: 'TEESettlementCompleted'
+    ): TypedContractEvent<
+        TEESettlementCompletedEvent.InputTuple,
+        TEESettlementCompletedEvent.OutputTuple,
+        TEESettlementCompletedEvent.OutputObject
+    >
+    getEvent(
+        key: 'TEESettlementFailed'
+    ): TypedContractEvent<
+        TEESettlementFailedEvent.InputTuple,
+        TEESettlementFailedEvent.OutputTuple,
+        TEESettlementFailedEvent.OutputObject
     >
 
     filters: {
@@ -1013,6 +1141,28 @@ export interface InferenceServing extends BaseContract {
             ServiceUpdatedEvent.InputTuple,
             ServiceUpdatedEvent.OutputTuple,
             ServiceUpdatedEvent.OutputObject
+        >
+
+        'TEESettlementCompleted(address,uint256,uint256)': TypedContractEvent<
+            TEESettlementCompletedEvent.InputTuple,
+            TEESettlementCompletedEvent.OutputTuple,
+            TEESettlementCompletedEvent.OutputObject
+        >
+        TEESettlementCompleted: TypedContractEvent<
+            TEESettlementCompletedEvent.InputTuple,
+            TEESettlementCompletedEvent.OutputTuple,
+            TEESettlementCompletedEvent.OutputObject
+        >
+
+        'TEESettlementFailed(address,address,string)': TypedContractEvent<
+            TEESettlementFailedEvent.InputTuple,
+            TEESettlementFailedEvent.OutputTuple,
+            TEESettlementFailedEvent.OutputObject
+        >
+        TEESettlementFailed: TypedContractEvent<
+            TEESettlementFailedEvent.InputTuple,
+            TEESettlementFailedEvent.OutputTuple,
+            TEESettlementFailedEvent.OutputObject
         >
     }
 }

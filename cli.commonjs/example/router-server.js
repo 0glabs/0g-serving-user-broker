@@ -51,7 +51,7 @@ async function runRouterServer(options) {
                 });
             }
         }
-        const availableProviders = Array.from(providers.values()).filter(p => p.available);
+        const availableProviders = Array.from(providers.values()).filter((p) => p.available);
         if (availableProviders.length === 0) {
             throw new Error('No available providers after initialization');
         }
@@ -69,7 +69,7 @@ async function runRouterServer(options) {
             }
         }
         // Get all available providers
-        const availableProviders = Array.from(providers.values()).filter(p => p.available);
+        const availableProviders = Array.from(providers.values()).filter((p) => p.available);
         if (availableProviders.length === 0) {
             // If no providers are available, reset all and try again
             console.log('No available providers, resetting all providers for retry');
@@ -97,7 +97,7 @@ async function runRouterServer(options) {
         }
         if (attemptedProviders.has(provider.address)) {
             // Avoid infinite loop by not retrying the same provider
-            const remainingProviders = Array.from(providers.values()).filter(p => !attemptedProviders.has(p.address) && p.available);
+            const remainingProviders = Array.from(providers.values()).filter((p) => !attemptedProviders.has(p.address) && p.available);
             if (remainingProviders.length === 0) {
                 throw new Error('All providers have been attempted and failed');
             }
@@ -130,7 +130,7 @@ async function runRouterServer(options) {
             console.error(`Provider ${provider.address} failed: ${error.message}`);
             markProviderUnavailable(provider.address, error.message);
             // Try with another provider
-            const remainingAvailableProviders = Array.from(providers.values()).filter(p => p.available && !attemptedProviders.has(p.address));
+            const remainingAvailableProviders = Array.from(providers.values()).filter((p) => p.available && !attemptedProviders.has(p.address));
             if (remainingAvailableProviders.length > 0) {
                 console.log(`Retrying with another provider (${remainingAvailableProviders.length} remaining)`);
                 return chatProxyWithFallback(body, stream, attemptedProviders);
@@ -193,7 +193,10 @@ async function runRouterServer(options) {
                     }
                     // Cache the complete content with provider info
                     if (id) {
-                        cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(id), { content: completeContent, provider: usedProvider }, 1 * 10 * 1000, cache_1.CacheValueTypeEnum.Other);
+                        cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(id), {
+                            content: completeContent,
+                            provider: usedProvider,
+                        }, 1 * 10 * 1000, cache_1.CacheValueTypeEnum.Other);
                     }
                 }
                 else {
@@ -216,7 +219,7 @@ async function runRouterServer(options) {
         }
     });
     app.get('/v1/providers/status', async (req, res) => {
-        const status = Array.from(providers.values()).map(p => ({
+        const status = Array.from(providers.values()).map((p) => ({
             address: p.address,
             endpoint: p.endpoint,
             model: p.model,

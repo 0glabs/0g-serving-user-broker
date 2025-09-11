@@ -53,6 +53,7 @@ export type AccountStruct = {
     refunds: RefundStruct[];
     additionalInfo: string;
     providerPubKey: [BigNumberish, BigNumberish];
+    teeSignerAddress: AddressLike;
 };
 export type AccountStructOutput = [
     user: string,
@@ -63,7 +64,8 @@ export type AccountStructOutput = [
     signer: [bigint, bigint],
     refunds: RefundStructOutput[],
     additionalInfo: string,
-    providerPubKey: [bigint, bigint]
+    providerPubKey: [bigint, bigint],
+    teeSignerAddress: string
 ] & {
     user: string;
     provider: string;
@@ -74,6 +76,7 @@ export type AccountStructOutput = [
     refunds: RefundStructOutput[];
     additionalInfo: string;
     providerPubKey: [bigint, bigint];
+    teeSignerAddress: string;
 };
 export type ServiceStruct = {
     provider: AddressLike;
@@ -124,11 +127,35 @@ export type VerifierInputStructOutput = [
     numChunks: bigint;
     segmentSize: bigint[];
 };
+export type TEESettlementDataStruct = {
+    user: AddressLike;
+    provider: AddressLike;
+    totalFee: BigNumberish;
+    requestsHash: BytesLike;
+    nonce: BigNumberish;
+    signature: BytesLike;
+};
+export type TEESettlementDataStructOutput = [
+    user: string,
+    provider: string,
+    totalFee: bigint,
+    requestsHash: string,
+    nonce: bigint,
+    signature: string
+] & {
+    user: string;
+    provider: string;
+    totalFee: bigint;
+    requestsHash: string;
+    nonce: bigint;
+    signature: string;
+};
 export interface InferenceServingInterface extends Interface {
-    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeProviderSigner' | 'addAccount' | 'addOrUpdateService' | 'batchVerifierAddress' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAccountsByProvider' | 'getAccountsByUser' | 'getAllAccounts' | 'getAllServices' | 'getBatchAccountsByUsers' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'transferOwnership' | 'updateBatchVerifierAddress' | 'updateLockTime'): FunctionFragment;
-    getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated'): EventFragment;
+    getFunction(nameOrSignature: 'accountExists' | 'acknowledgeProviderSigner' | 'acknowledgeTEESigner' | 'addAccount' | 'addOrUpdateService' | 'batchVerifierAddress' | 'deleteAccount' | 'depositFund' | 'getAccount' | 'getAccountsByProvider' | 'getAccountsByUser' | 'getAllAccounts' | 'getAllServices' | 'getBatchAccountsByUsers' | 'getPendingRefund' | 'getService' | 'initialize' | 'initialized' | 'ledgerAddress' | 'lockTime' | 'owner' | 'processRefund' | 'removeService' | 'renounceOwnership' | 'requestRefundAll' | 'settleFees' | 'settleFeesWithTEE' | 'transferOwnership' | 'updateBatchVerifierAddress' | 'updateLockTime'): FunctionFragment;
+    getEvent(nameOrSignatureOrTopic: 'BalanceUpdated' | 'OwnershipTransferred' | 'RefundRequested' | 'ServiceRemoved' | 'ServiceUpdated' | 'TEESettlementCompleted' | 'TEESettlementFailed'): EventFragment;
     encodeFunctionData(functionFragment: 'accountExists', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'acknowledgeProviderSigner', values: [AddressLike, [BigNumberish, BigNumberish]]): string;
+    encodeFunctionData(functionFragment: 'acknowledgeTEESigner', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'addAccount', values: [AddressLike, AddressLike, [BigNumberish, BigNumberish], string]): string;
     encodeFunctionData(functionFragment: 'addOrUpdateService', values: [ServiceParamsStruct]): string;
     encodeFunctionData(functionFragment: 'batchVerifierAddress', values?: undefined): string;
@@ -152,11 +179,13 @@ export interface InferenceServingInterface extends Interface {
     encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
     encodeFunctionData(functionFragment: 'requestRefundAll', values: [AddressLike, AddressLike]): string;
     encodeFunctionData(functionFragment: 'settleFees', values: [VerifierInputStruct]): string;
+    encodeFunctionData(functionFragment: 'settleFeesWithTEE', values: [TEESettlementDataStruct[]]): string;
     encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike]): string;
     encodeFunctionData(functionFragment: 'updateBatchVerifierAddress', values: [AddressLike]): string;
     encodeFunctionData(functionFragment: 'updateLockTime', values: [BigNumberish]): string;
     decodeFunctionResult(functionFragment: 'accountExists', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'acknowledgeProviderSigner', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'acknowledgeTEESigner', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'addAccount', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'addOrUpdateService', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'batchVerifierAddress', data: BytesLike): Result;
@@ -180,6 +209,7 @@ export interface InferenceServingInterface extends Interface {
     decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'requestRefundAll', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'settleFees', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'settleFeesWithTEE', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'updateBatchVerifierAddress', data: BytesLike): Result;
     decodeFunctionResult(functionFragment: 'updateLockTime', data: BytesLike): Result;
@@ -291,6 +321,44 @@ export declare namespace ServiceUpdatedEvent {
     type Log = TypedEventLog<Event>;
     type LogDescription = TypedLogDescription<Event>;
 }
+export declare namespace TEESettlementCompletedEvent {
+    type InputTuple = [
+        provider: AddressLike,
+        successCount: BigNumberish,
+        failedCount: BigNumberish
+    ];
+    type OutputTuple = [
+        provider: string,
+        successCount: bigint,
+        failedCount: bigint
+    ];
+    interface OutputObject {
+        provider: string;
+        successCount: bigint;
+        failedCount: bigint;
+    }
+    type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter<Event>;
+    type Log = TypedEventLog<Event>;
+    type LogDescription = TypedLogDescription<Event>;
+}
+export declare namespace TEESettlementFailedEvent {
+    type InputTuple = [
+        provider: AddressLike,
+        user: AddressLike,
+        reason: string
+    ];
+    type OutputTuple = [provider: string, user: string, reason: string];
+    interface OutputObject {
+        provider: string;
+        user: string;
+        reason: string;
+    }
+    type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+    type Filter = TypedDeferredTopicFilter<Event>;
+    type Log = TypedEventLog<Event>;
+    type LogDescription = TypedLogDescription<Event>;
+}
 export interface InferenceServing extends BaseContract {
     connect(runner?: ContractRunner | null): InferenceServing;
     waitForDeployment(): Promise<this>;
@@ -313,6 +381,12 @@ export interface InferenceServing extends BaseContract {
     acknowledgeProviderSigner: TypedContractMethod<[
         provider: AddressLike,
         providerPubKey: [BigNumberish, BigNumberish]
+    ], [
+        void
+    ], 'nonpayable'>;
+    acknowledgeTEESigner: TypedContractMethod<[
+        provider: AddressLike,
+        teeSignerAddress: AddressLike
     ], [
         void
     ], 'nonpayable'>;
@@ -427,10 +501,11 @@ export interface InferenceServing extends BaseContract {
     ], [
         void
     ], 'nonpayable'>;
-    settleFees: TypedContractMethod<[
-        verifierInput: VerifierInputStruct
+    settleFees: TypedContractMethod<[arg0: VerifierInputStruct], [void], 'view'>;
+    settleFeesWithTEE: TypedContractMethod<[
+        settlements: TEESettlementDataStruct[]
     ], [
-        void
+        string[]
     ], 'nonpayable'>;
     transferOwnership: TypedContractMethod<[
         newOwner: AddressLike
@@ -457,6 +532,12 @@ export interface InferenceServing extends BaseContract {
     getFunction(nameOrSignature: 'acknowledgeProviderSigner'): TypedContractMethod<[
         provider: AddressLike,
         providerPubKey: [BigNumberish, BigNumberish]
+    ], [
+        void
+    ], 'nonpayable'>;
+    getFunction(nameOrSignature: 'acknowledgeTEESigner'): TypedContractMethod<[
+        provider: AddressLike,
+        teeSignerAddress: AddressLike
     ], [
         void
     ], 'nonpayable'>;
@@ -567,10 +648,11 @@ export interface InferenceServing extends BaseContract {
     ], [
         void
     ], 'nonpayable'>;
-    getFunction(nameOrSignature: 'settleFees'): TypedContractMethod<[
-        verifierInput: VerifierInputStruct
+    getFunction(nameOrSignature: 'settleFees'): TypedContractMethod<[arg0: VerifierInputStruct], [void], 'view'>;
+    getFunction(nameOrSignature: 'settleFeesWithTEE'): TypedContractMethod<[
+        settlements: TEESettlementDataStruct[]
     ], [
-        void
+        string[]
     ], 'nonpayable'>;
     getFunction(nameOrSignature: 'transferOwnership'): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
     getFunction(nameOrSignature: 'updateBatchVerifierAddress'): TypedContractMethod<[
@@ -584,6 +666,8 @@ export interface InferenceServing extends BaseContract {
     getEvent(key: 'RefundRequested'): TypedContractEvent<RefundRequestedEvent.InputTuple, RefundRequestedEvent.OutputTuple, RefundRequestedEvent.OutputObject>;
     getEvent(key: 'ServiceRemoved'): TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
     getEvent(key: 'ServiceUpdated'): TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+    getEvent(key: 'TEESettlementCompleted'): TypedContractEvent<TEESettlementCompletedEvent.InputTuple, TEESettlementCompletedEvent.OutputTuple, TEESettlementCompletedEvent.OutputObject>;
+    getEvent(key: 'TEESettlementFailed'): TypedContractEvent<TEESettlementFailedEvent.InputTuple, TEESettlementFailedEvent.OutputTuple, TEESettlementFailedEvent.OutputObject>;
     filters: {
         'BalanceUpdated(address,address,uint256,uint256)': TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
         BalanceUpdated: TypedContractEvent<BalanceUpdatedEvent.InputTuple, BalanceUpdatedEvent.OutputTuple, BalanceUpdatedEvent.OutputObject>;
@@ -595,6 +679,10 @@ export interface InferenceServing extends BaseContract {
         ServiceRemoved: TypedContractEvent<ServiceRemovedEvent.InputTuple, ServiceRemovedEvent.OutputTuple, ServiceRemovedEvent.OutputObject>;
         'ServiceUpdated(address,string,string,uint256,uint256,uint256,string,string)': TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
         ServiceUpdated: TypedContractEvent<ServiceUpdatedEvent.InputTuple, ServiceUpdatedEvent.OutputTuple, ServiceUpdatedEvent.OutputObject>;
+        'TEESettlementCompleted(address,uint256,uint256)': TypedContractEvent<TEESettlementCompletedEvent.InputTuple, TEESettlementCompletedEvent.OutputTuple, TEESettlementCompletedEvent.OutputObject>;
+        TEESettlementCompleted: TypedContractEvent<TEESettlementCompletedEvent.InputTuple, TEESettlementCompletedEvent.OutputTuple, TEESettlementCompletedEvent.OutputObject>;
+        'TEESettlementFailed(address,address,string)': TypedContractEvent<TEESettlementFailedEvent.InputTuple, TEESettlementFailedEvent.OutputTuple, TEESettlementFailedEvent.OutputObject>;
+        TEESettlementFailed: TypedContractEvent<TEESettlementFailedEvent.InputTuple, TEESettlementFailedEvent.OutputTuple, TEESettlementFailedEvent.OutputObject>;
     };
 }
 //# sourceMappingURL=InferenceServing.d.ts.map

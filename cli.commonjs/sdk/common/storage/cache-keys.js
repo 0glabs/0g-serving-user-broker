@@ -53,6 +53,6 @@ exports.CacheKeyHelpers = {
     // Dynamic content key (for inference server)
     getContentKey(id) {
         return id; // Keep as is since it's already unique
-    }
+    },
 };
 //# sourceMappingURL=cache-keys.js.map

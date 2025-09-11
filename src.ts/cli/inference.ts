@@ -59,8 +59,13 @@ export default function inference(program: Command) {
 
     program
         .command('router-serve')
-        .description('Start high-availability router service with multiple providers')
-        .requiredOption('--providers <addresses...>', 'List of provider addresses')
+        .description(
+            'Start high-availability router service with multiple providers'
+        )
+        .requiredOption(
+            '--providers <addresses...>',
+            'List of provider addresses'
+        )
         .option(
             '--key <key>',
             'Wallet private key, if not provided, ensure the default key is set in the environment',
@@ -70,20 +75,10 @@ export default function inference(program: Command) {
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
         .option('--gas-price <price>', 'Gas price for transactions')
-        .option(
-            '--port <port>',
-            'Port to run the router service on',
-            '3000'
-        )
-        .option(
-            '--host <host>',
-            'Host to bind the router service',
-            '0.0.0.0'
-        )
+        .option('--port <port>', 'Port to run the router service on', '3000')
+        .option('--host <host>', 'Host to bind the router service', '0.0.0.0')
         .action(async (options) => {
-            const { runRouterServer } = await import(
-                '../example/router-server'
-            )
+            const { runRouterServer } = await import('../example/router-server')
             await runRouterServer(options)
         })
 }
