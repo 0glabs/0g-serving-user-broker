@@ -43,9 +43,9 @@ class InferenceServingContract {
             (0, utils_1.throwFormattedError)(error);
         }
     }
-    async acknowledgeProviderSigner(providerAddress, providerSigner) {
+    async acknowledgeTEESigner(providerAddress, providerSigner) {
         try {
-            const tx = await this.serving.acknowledgeProviderSigner(providerAddress, providerSigner);
+            const tx = await this.serving.acknowledgeTEESigner(providerAddress, providerSigner);
             const receipt = await tx.wait();
             if (!receipt || receipt.status !== 1) {
                 const error = new Error('Transaction failed');

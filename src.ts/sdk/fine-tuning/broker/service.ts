@@ -1,5 +1,10 @@
 import type { AddressLike } from 'ethers'
-import { getNonce, signRequest, signTaskID, throwFormattedError } from '../../common/utils'
+import {
+    getNonce,
+    signRequest,
+    signTaskID,
+    throwFormattedError,
+} from '../../common/utils'
 import { MODEL_HASH_MAP } from '../const'
 import type {
     AccountStructOutput,

@@ -17,9 +17,13 @@ import {
     bigintToBytes,
 } from '../../common/settle-signer'
 import type { Cache, Metadata } from '../../common/storage'
-import { CacheValueTypeEnum, CACHE_KEYS, CacheKeyHelpers } from '../../common/storage'
+import {
+    CacheValueTypeEnum,
+    CACHE_KEYS,
+    CacheKeyHelpers,
+} from '../../common/storage'
 import type { LedgerBroker } from '../../ledger'
-import { hexlify } from 'ethers'
+import { hexlify, ZeroAddress } from 'ethers'
 
 export interface QuoteResponse {
     quote: string
@@ -116,10 +120,7 @@ export abstract class ZGServingUserBrokerBase {
 
         try {
             const account = await this.contract.getAccount(providerAddress)
-            if (
-                account.providerPubKey[0] !== 0n &&
-                account.providerPubKey[1] !== 0n
-            ) {
+            if (account.teeSignerAddress !== ZeroAddress) {
                 await this.cache.setItem(
                     key,
                     account.providerPubKey,
@@ -310,8 +311,7 @@ export abstract class ZGServingUserBrokerBase {
     async updateCachedFee(provider: string, fee: bigint) {
         try {
             const key = CacheKeyHelpers.getCachedFeeKey(provider)
-            const curFee =
-                (await this.cache.getItem(key)) || BigInt(0)
+            const curFee = (await this.cache.getItem(key)) || BigInt(0)
             await this.cache.setItem(
                 key,
                 BigInt(curFee) + fee,
@@ -326,8 +326,7 @@ export abstract class ZGServingUserBrokerBase {
     async clearCacheFee(provider: string, fee: bigint) {
         try {
             const key = CacheKeyHelpers.getCachedFeeKey(provider)
-            const curFee =
-                (await this.cache.getItem(key)) || BigInt(0)
+            const curFee = (await this.cache.getItem(key)) || BigInt(0)
             await this.cache.setItem(
                 key,
                 BigInt(curFee) + fee,
@@ -349,7 +348,10 @@ export abstract class ZGServingUserBrokerBase {
     ) {
         try {
             // Exit early if running in browser environment
-            if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
+            if (
+                typeof window !== 'undefined' &&
+                typeof window.document !== 'undefined'
+            ) {
                 return
             }
 

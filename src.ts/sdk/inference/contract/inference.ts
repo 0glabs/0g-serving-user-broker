@@ -1,4 +1,4 @@
-import type { JsonRpcSigner, AddressLike, Wallet, BigNumberish } from 'ethers'
+import type { JsonRpcSigner, AddressLike, Wallet } from 'ethers'
 import { InferenceServing__factory } from './typechain'
 import type { InferenceServing } from './typechain/InferenceServing'
 import type { ServiceStructOutput } from './typechain/InferenceServing'
@@ -55,12 +55,12 @@ export class InferenceServingContract {
         }
     }
 
-    async acknowledgeProviderSigner(
+    async acknowledgeTEESigner(
         providerAddress: AddressLike,
-        providerSigner: [BigNumberish, BigNumberish]
+        providerSigner: AddressLike
     ) {
         try {
-            const tx = await this.serving.acknowledgeProviderSigner(
+            const tx = await this.serving.acknowledgeTEESigner(
                 providerAddress,
                 providerSigner
             )

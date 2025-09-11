@@ -115,7 +115,8 @@ function ledger(program) {
         .action((options) => {
         (0, util_1.withBroker)(options, async (broker) => {
             const serviceType = options.service;
-            if (serviceType !== 'inference' && serviceType !== 'fine-tuning') {
+            if (serviceType !== 'inference' &&
+                serviceType !== 'fine-tuning') {
                 console.error('Invalid service type. Must be "inference" or "fine-tuning"');
                 process.exit(1);
             }

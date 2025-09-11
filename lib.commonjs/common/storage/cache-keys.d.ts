@@ -25,7 +25,7 @@ export declare const CacheKeyHelpers: {
     getSigningKeyKey(key: string): string;
     getContentKey(id: string): string;
 };
-export type CacheKey = typeof CACHE_KEYS[keyof typeof CACHE_KEYS];
-export type CacheKeyPrefix = typeof CACHE_KEY_PREFIXES[keyof typeof CACHE_KEY_PREFIXES];
-export type MetadataKeySuffix = typeof METADATA_KEY_SUFFIXES[keyof typeof METADATA_KEY_SUFFIXES];
+export type CacheKey = (typeof CACHE_KEYS)[keyof typeof CACHE_KEYS];
+export type CacheKeyPrefix = (typeof CACHE_KEY_PREFIXES)[keyof typeof CACHE_KEY_PREFIXES];
+export type MetadataKeySuffix = (typeof METADATA_KEY_SUFFIXES)[keyof typeof METADATA_KEY_SUFFIXES];
 //# sourceMappingURL=cache-keys.d.ts.map

@@ -54,7 +54,10 @@ export class Metadata {
     async storeSettleSignerPrivateKey(key: string, value: bigint[]) {
         const bigIntStringArray: string[] = value.map((bi) => bi.toString())
         const bigIntJsonString: string = JSON.stringify(bigIntStringArray)
-        await this.setItem(CacheKeyHelpers.getSettleSignerPrivateKeyKey(key), bigIntJsonString)
+        await this.setItem(
+            CacheKeyHelpers.getSettleSignerPrivateKeyKey(key),
+            bigIntJsonString
+        )
     }
 
     async storeSigningKey(key: string, value: string) {

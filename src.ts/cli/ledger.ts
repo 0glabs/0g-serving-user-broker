@@ -111,9 +111,16 @@ export default function ledger(program: Command) {
         .command('transfer-fund')
         .description('Transfer funds to a provider for a specific service')
         .option('--key <key>', 'Wallet private key', process.env.ZG_PRIVATE_KEY)
-        .requiredOption('--provider <address>', 'Provider address to transfer funds to')
+        .requiredOption(
+            '--provider <address>',
+            'Provider address to transfer funds to'
+        )
         .requiredOption('--amount <neuron>', 'Amount to transfer in neuron')
-        .option('--service <type>', 'Service type: inference or fine-tuning', 'inference')
+        .option(
+            '--service <type>',
+            'Service type: inference or fine-tuning',
+            'inference'
+        )
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
         .option('--inference-ca <address>', 'Inference contract address')
@@ -123,20 +130,31 @@ export default function ledger(program: Command) {
         .option('--step <step>', 'Step for gas price calculation')
         .action((options: any) => {
             withBroker(options, async (broker) => {
-                const serviceType = options.service as 'inference' | 'fine-tuning'
-                if (serviceType !== 'inference' && serviceType !== 'fine-tuning') {
-                    console.error('Invalid service type. Must be "inference" or "fine-tuning"')
+                const serviceType = options.service as
+                    | 'inference'
+                    | 'fine-tuning'
+                if (
+                    serviceType !== 'inference' &&
+                    serviceType !== 'fine-tuning'
+                ) {
+                    console.error(
+                        'Invalid service type. Must be "inference" or "fine-tuning"'
+                    )
                     process.exit(1)
                 }
-                
-                console.log(`Transferring ${options.amount} neuron to ${options.provider} for ${serviceType}...`)
+
+                console.log(
+                    `Transferring ${options.amount} neuron to ${options.provider} for ${serviceType}...`
+                )
                 await broker.ledger.transferFund(
                     options.provider,
                     serviceType,
                     BigInt(options.amount),
                     options.gasPrice ? parseFloat(options.gasPrice) : undefined
                 )
-                console.log(`Successfully transferred ${options.amount} neuron to ${options.provider}`)
+                console.log(
+                    `Successfully transferred ${options.amount} neuron to ${options.provider}`
+                )
             })
         })
 }

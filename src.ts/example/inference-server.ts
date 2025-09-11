@@ -205,7 +205,9 @@ export async function runInferenceServer(options: InferenceServerOptions) {
         console.error(`Please try one of the following:`)
         console.error(`  1. Use a different port: --port <PORT>`)
         console.error(`  2. Stop the process using port ${port}`)
-        console.error(`  3. Find the process: lsof -i :${port} or ss -tlnp | grep :${port}\n`)
+        console.error(
+            `  3. Find the process: lsof -i :${port} or ss -tlnp | grep :${port}\n`
+        )
         process.exit(1)
     }
 
@@ -246,7 +248,9 @@ export async function runInferenceServer(options: InferenceServerOptions) {
             console.error(`Please try one of the following:`)
             console.error(`  1. Use a different port: --port <PORT>`)
             console.error(`  2. Stop the process using port ${port}`)
-            console.error(`  3. Find the process: lsof -i :${port} or netstat -tulpn | grep :${port}\n`)
+            console.error(
+                `  3. Find the process: lsof -i :${port} or netstat -tulpn | grep :${port}\n`
+            )
             process.exit(1)
         } else {
             console.error('Server error:', err)
