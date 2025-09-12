@@ -7,6 +7,7 @@ export interface RouterServerOptions {
     gasPrice?: string | number;
     port?: string | number;
     host?: string;
+    cacheDuration?: string | number;
 }
 export declare function runRouterServer(options: RouterServerOptions): Promise<void>;
 //# sourceMappingURL=router-server.d.ts.map

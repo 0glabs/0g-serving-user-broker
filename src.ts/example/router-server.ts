@@ -15,6 +15,7 @@ export interface RouterServerOptions {
     gasPrice?: string | number
     port?: string | number
     host?: string
+    cacheDuration?: string | number
 }
 
 interface ProviderInfo {
@@ -30,6 +31,9 @@ export async function runRouterServer(options: RouterServerOptions) {
     const app = express()
     app.use(express.json())
     const cache = new Cache()
+    
+    // Parse cache duration from options, default to 60 seconds (1 minute)
+    const cacheDurationMs = (Number(options.cacheDuration) || 60) * 1000
 
     let broker: any
     const providers: Map<string, ProviderInfo> = new Map()
@@ -293,7 +297,7 @@ export async function runRouterServer(options: RouterServerOptions) {
                                     content: completeContent,
                                     provider: usedProvider,
                                 },
-                                1 * 10 * 1000,
+                                cacheDurationMs,
                                 CacheValueTypeEnum.Other
                             )
                         }
@@ -310,7 +314,7 @@ export async function runRouterServer(options: RouterServerOptions) {
                     cache.setItem(
                         CacheKeyHelpers.getContentKey(key),
                         { content: value, provider: usedProvider },
-                        5 * 60 * 1000,
+                        cacheDurationMs,
                         CacheValueTypeEnum.Other
                     )
                     res.json(data)
@@ -335,6 +339,45 @@ export async function runRouterServer(options: RouterServerOptions) {
             res.json({ providers: status })
         }
     )
+    app.post('/v1/verify', async (req: any, res: any): Promise<void> => {
+        const { id } = req.body
+        if (!id) {
+            res.status(400).json({ error: 'Missing id in request body' })
+            return
+        }
+
+        const cachedData = cache.getItem(CacheKeyHelpers.getContentKey(id))
+        if (!cachedData) {
+            res.status(404).json({ error: 'No cached content for this id' })
+            return
+        }
+
+        // Extract content and provider from cached data
+        const { content: completeContent, provider: usedProvider } = cachedData
+        if (!completeContent || !usedProvider) {
+            res.status(404).json({ error: 'Invalid cached data for this id' })
+            return
+        }
+
+        // Verify that the provider is still available
+        const providerInfo = providers.get(usedProvider)
+        if (!providerInfo) {
+            res.status(500).json({ error: 'Provider no longer available' })
+            return
+        }
+
+        try {
+            console.log(`Verifying response with provider: ${usedProvider}`)
+            const isValid = await broker.inference.processResponse(
+                usedProvider,
+                completeContent,
+                id
+            )
+            res.json({ isValid, provider: usedProvider })
+        } catch (err: any) {
+            res.status(500).json({ error: err.message })
+        }
+    })
 
     const port = options.port ? Number(options.port) : 3000
     const host = options.host || '0.0.0.0'
@@ -375,6 +418,9 @@ export async function runRouterServer(options: RouterServerOptions) {
         console.log(`Available endpoints:`)
         console.log(
             `  - POST /v1/chat/completions - Chat completions with automatic failover`
+        )
+        console.log(
+            `  - POST /v1/verify          - Verify response with the same provider`
         )
         console.log(
             `  - GET  /v1/providers/status - Check status of all providers`

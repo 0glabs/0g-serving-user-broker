@@ -13,6 +13,8 @@ async function runRouterServer(options) {
     const app = (0, express_1.default)();
     app.use(express_1.default.json());
     const cache = new cache_1.Cache();
+    // Parse cache duration from options, default to 60 seconds (1 minute)
+    const cacheDurationMs = (Number(options.cacheDuration) || 60) * 1000;
     let broker;
     const providers = new Map();
     const ERROR_RECOVERY_TIME = 60000; // 1 minute
@@ -196,7 +198,7 @@ async function runRouterServer(options) {
                         cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(id), {
                             content: completeContent,
                             provider: usedProvider,
-                        }, 1 * 10 * 1000, cache_1.CacheValueTypeEnum.Other);
+                        }, cacheDurationMs, cache_1.CacheValueTypeEnum.Other);
                     }
                 }
                 else {
@@ -210,7 +212,7 @@ async function runRouterServer(options) {
                 data['x-provider-address'] = usedProvider;
                 const key = data.id;
                 const value = data.choices?.[0]?.message?.content;
-                cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(key), { content: value, provider: usedProvider }, 5 * 60 * 1000, cache_1.CacheValueTypeEnum.Other);
+                cache.setItem(cache_keys_1.CacheKeyHelpers.getContentKey(key), { content: value, provider: usedProvider }, cacheDurationMs, cache_1.CacheValueTypeEnum.Other);
                 res.json(data);
             }
         }
@@ -228,6 +230,38 @@ async function runRouterServer(options) {
             lastErrorTime: p.lastErrorTime,
         }));
         res.json({ providers: status });
+    });
+    app.post('/v1/verify', async (req, res) => {
+        const { id } = req.body;
+        if (!id) {
+            res.status(400).json({ error: 'Missing id in request body' });
+            return;
+        }
+        const cachedData = cache.getItem(cache_keys_1.CacheKeyHelpers.getContentKey(id));
+        if (!cachedData) {
+            res.status(404).json({ error: 'No cached content for this id' });
+            return;
+        }
+        // Extract content and provider from cached data
+        const { content: completeContent, provider: usedProvider } = cachedData;
+        if (!completeContent || !usedProvider) {
+            res.status(404).json({ error: 'Invalid cached data for this id' });
+            return;
+        }
+        // Verify that the provider is still available
+        const providerInfo = providers.get(usedProvider);
+        if (!providerInfo) {
+            res.status(500).json({ error: 'Provider no longer available' });
+            return;
+        }
+        try {
+            console.log(`Verifying response with provider: ${usedProvider}`);
+            const isValid = await broker.inference.processResponse(usedProvider, completeContent, id);
+            res.json({ isValid, provider: usedProvider });
+        }
+        catch (err) {
+            res.status(500).json({ error: err.message });
+        }
     });
     const port = options.port ? Number(options.port) : 3000;
     const host = options.host || '0.0.0.0';
@@ -262,6 +296,7 @@ async function runRouterServer(options) {
         console.log(`\nRouter service is running on ${host}:${port}`);
         console.log(`Available endpoints:`);
         console.log(`  - POST /v1/chat/completions - Chat completions with automatic failover`);
+        console.log(`  - POST /v1/verify          - Verify response with the same provider`);
         console.log(`  - GET  /v1/providers/status - Check status of all providers`);
         console.log(`\nConfigured providers: ${options.providers.length}`);
         // Perform health check

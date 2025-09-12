@@ -77,6 +77,7 @@ export default function inference(program: Command) {
         .option('--gas-price <price>', 'Gas price for transactions')
         .option('--port <port>', 'Port to run the router service on', '3000')
         .option('--host <host>', 'Host to bind the router service', '0.0.0.0')
+        .option('--cache-duration <seconds>', 'Cache duration in seconds', '60')
         .action(async (options) => {
             const { runRouterServer } = await import('../example/router-server')
             await runRouterServer(options)
