@@ -9,6 +9,15 @@ const nextConfig = {
                 tls: false,
                 child_process: false,
                 'fs/promises': false,
+                crypto: false,
+            }
+            // Handle node: protocol imports
+            config.resolve.alias = {
+                ...config.resolve.alias,
+                'node:crypto': false,
+                'node:buffer': false,
+                'node:stream': false,
+                'node:util': false,
             }
         } else {
             // Prevent server-side bundling of browser-only packages
