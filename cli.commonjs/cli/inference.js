@@ -70,7 +70,35 @@ function inference(program) {
     program
         .command('router-serve')
         .description('Start high-availability router service with multiple providers')
-        .requiredOption('--providers <addresses...>', 'List of provider addresses')
+        .option('--add-provider <address,priority>', 'Add on-chain provider with priority (e.g., 0x1234567890abcdef,10). Use comma separator. Can be used multiple times', (value, previous) => {
+        const providers = previous || [];
+        const [address, priority] = value.split(',');
+        if (!address) {
+            throw new Error('Invalid provider format. Use: address,priority (comma-separated)');
+        }
+        providers.push({
+            address: address.trim(),
+            priority: priority && priority.trim() ? parseInt(priority.trim()) : 100
+        });
+        return providers;
+    }, [])
+        .option('--add-endpoint <id,endpoint,apikey,model,priority>', 'Add direct endpoint (e.g., openai,https://api.openai.com/v1,key,gpt-4o,10). Use commas as separators. Can be used multiple times', (value, previous) => {
+        const endpoints = previous || [];
+        const [id, endpoint, apiKey, model, priority] = value.split(',');
+        if (!id || !endpoint) {
+            throw new Error('Invalid endpoint format. Use: id,endpoint,apikey,model,priority (comma-separated)');
+        }
+        endpoints.push({
+            id: id.trim(),
+            endpoint: endpoint.trim(),
+            apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
+            model: model && model.trim() ? model.trim() : 'gpt-3.5-turbo',
+            priority: priority && priority.trim() ? parseInt(priority.trim()) : 50
+        });
+        return endpoints;
+    }, [])
+        .option('--default-provider-priority <number>', 'Default priority for on-chain providers not explicitly set', '100')
+        .option('--default-endpoint-priority <number>', 'Default priority for direct endpoints not explicitly set', '50')
         .option('--key <key>', 'Wallet private key, if not provided, ensure the default key is set in the environment', process.env.ZG_PRIVATE_KEY)
         .option('--rpc <url>', '0G Chain RPC endpoint')
         .option('--ledger-ca <address>', 'Account (ledger) contract address')
@@ -80,8 +108,46 @@ function inference(program) {
         .option('--host <host>', 'Host to bind the router service', '0.0.0.0')
         .option('--cache-duration <seconds>', 'Cache duration in seconds', '60')
         .action(async (options) => {
+        // Build providers list with priorities
+        const providers = [];
+        const providerPriorities = {};
+        if (options.addProvider && options.addProvider.length > 0) {
+            for (const prov of options.addProvider) {
+                providers.push(prov.address);
+                providerPriorities[prov.address] = prov.priority;
+            }
+        }
+        // Build direct endpoints
+        const directEndpoints = {};
+        if (options.addEndpoint && options.addEndpoint.length > 0) {
+            for (const ep of options.addEndpoint) {
+                directEndpoints[ep.id] = {
+                    endpoint: ep.endpoint,
+                    apiKey: ep.apiKey,
+                    model: ep.model,
+                    priority: ep.priority
+                };
+            }
+        }
+        // Build priority config
+        const priorityConfig = {
+            providers: providerPriorities,
+            defaultProviderPriority: parseInt(options.defaultProviderPriority),
+            defaultEndpointPriority: parseInt(options.defaultEndpointPriority)
+        };
+        // Ensure at least one provider type is specified
+        if (providers.length === 0 && Object.keys(directEndpoints).length === 0) {
+            console.error('Error: Must specify either --add-provider or --add-endpoint');
+            process.exit(1);
+        }
+        const routerOptions = {
+            ...options,
+            providers,
+            directEndpoints: Object.keys(directEndpoints).length > 0 ? directEndpoints : undefined,
+            priorityConfig
+        };
         const { runRouterServer } = await Promise.resolve().then(() => __importStar(require('../example/router-server')));
-        await runRouterServer(options);
+        await runRouterServer(routerOptions);
     });
 }
 //# sourceMappingURL=inference.js.map

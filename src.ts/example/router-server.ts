@@ -6,8 +6,28 @@ import { ZG_RPC_ENDPOINT_TESTNET } from '../cli/const'
 import { Cache, CacheValueTypeEnum } from '../sdk/common/storage/cache'
 import { CacheKeyHelpers } from '../sdk/common/storage/cache-keys'
 
+// Configuration for direct endpoint providers (not on-chain)
+export interface DirectEndpointConfig {
+    endpoint: string
+    apiKey?: string
+    model?: string
+    priority?: number // Lower number = higher priority (default: 50)
+}
+
+// Priority configuration for providers
+export interface PriorityConfig {
+    // Map of provider address to priority (lower number = higher priority)
+    providers?: Record<string, number>
+    // Default priority for providers not specified (default: 100)
+    defaultProviderPriority?: number
+    // Default priority for direct endpoints not specified (default: 50)
+    defaultEndpointPriority?: number
+}
+
 export interface RouterServerOptions {
     providers: string[]
+    directEndpoints?: Record<string, DirectEndpointConfig> // Key is endpoint ID
+    priorityConfig?: PriorityConfig
     key?: string
     rpc?: string
     ledgerCa?: string
@@ -19,9 +39,13 @@ export interface RouterServerOptions {
 }
 
 interface ProviderInfo {
-    address: string
+    id: string // Provider address or endpoint ID
+    type: 'onchain' | 'direct' // Type of provider
+    address?: string // Only for onchain providers
     endpoint: string
     model: string
+    apiKey?: string // Only for direct endpoints
+    priority: number // Lower number = higher priority
     available: boolean
     lastError?: string
     lastErrorTime?: number
@@ -40,27 +64,39 @@ export async function runRouterServer(options: RouterServerOptions) {
     const ERROR_RECOVERY_TIME = 60000 // 1 minute
 
     async function initBroker() {
-        const provider = new ethers.JsonRpcProvider(
-            options.rpc || process.env.RPC_ENDPOINT || ZG_RPC_ENDPOINT_TESTNET
-        )
-        const privateKey = options.key || process.env.ZG_PRIVATE_KEY
-        if (!privateKey) {
-            throw new Error(
-                'Missing wallet private key, please provide --key or set ZG_PRIVATE_KEY in environment variables'
+        // Check if we have any on-chain providers that require broker initialization
+        const hasOnChainProviders = options.providers && options.providers.length > 0
+        
+        if (hasOnChainProviders) {
+            const provider = new ethers.JsonRpcProvider(
+                options.rpc || process.env.RPC_ENDPOINT || ZG_RPC_ENDPOINT_TESTNET
             )
+            const privateKey = options.key || process.env.ZG_PRIVATE_KEY
+            if (!privateKey) {
+                throw new Error(
+                    'Missing wallet private key, please provide --key or set ZG_PRIVATE_KEY in environment variables'
+                )
+            }
+            console.log('Initializing broker for on-chain providers...')
+            broker = await createZGComputeNetworkBroker(
+                new ethers.Wallet(privateKey, provider),
+                options.ledgerCa,
+                options.inferenceCa,
+                undefined,
+                options.gasPrice ? Number(options.gasPrice) : undefined
+            )
+        } else {
+            console.log('No on-chain providers configured, skipping broker initialization')
         }
-        console.log('Initializing broker...')
-        broker = await createZGComputeNetworkBroker(
-            new ethers.Wallet(privateKey, provider),
-            options.ledgerCa,
-            options.inferenceCa,
-            undefined,
-            options.gasPrice ? Number(options.gasPrice) : undefined
-        )
 
-        // Initialize all providers
-        console.log(`Initializing ${options.providers.length} providers...`)
-        for (const providerAddress of options.providers) {
+        // Get default priorities
+        const defaultProviderPriority = options.priorityConfig?.defaultProviderPriority ?? 100
+        const defaultEndpointPriority = options.priorityConfig?.defaultEndpointPriority ?? 50
+
+        // Initialize on-chain providers
+        if (hasOnChainProviders && broker) {
+            console.log(`Initializing ${options.providers.length} on-chain providers...`)
+            for (const providerAddress of options.providers) {
             try {
                 console.log(`Acknowledging provider: ${providerAddress}`)
                 await broker.inference.acknowledgeProviderSigner(
@@ -69,38 +105,95 @@ export async function runRouterServer(options: RouterServerOptions) {
                 const meta = await broker.inference.getServiceMetadata(
                     providerAddress
                 )
+                const priority = options.priorityConfig?.providers?.[providerAddress] ?? defaultProviderPriority
                 providers.set(providerAddress, {
+                    id: providerAddress,
+                    type: 'onchain',
                     address: providerAddress,
                     endpoint: meta.endpoint,
                     model: meta.model,
+                    priority,
                     available: true,
                 })
                 console.log(
-                    `✓ Provider ${providerAddress} initialized successfully`
+                    `✓ Provider ${providerAddress} initialized successfully (priority: ${priority})`
                 )
             } catch (error: any) {
                 console.error(
                     `✗ Failed to initialize provider ${providerAddress}: ${error.message}`
                 )
+                const priority = options.priorityConfig?.providers?.[providerAddress] ?? defaultProviderPriority
                 providers.set(providerAddress, {
+                    id: providerAddress,
+                    type: 'onchain',
                     address: providerAddress,
                     endpoint: '',
                     model: '',
+                    priority,
                     available: false,
                     lastError: error.message,
                     lastErrorTime: Date.now(),
                 })
             }
         }
+        }
+
+        // Initialize direct endpoints
+        if (options.directEndpoints) {
+            const endpointCount = Object.keys(options.directEndpoints).length
+            console.log(`Initializing ${endpointCount} direct endpoints...`)
+            
+            for (const [endpointId, config] of Object.entries(options.directEndpoints)) {
+                try {
+                    // Validate endpoint URL
+                    let endpoint = config.endpoint
+                    if (!endpoint.startsWith('http://') && !endpoint.startsWith('https://')) {
+                        throw new Error(`Invalid endpoint URL: ${endpoint}. Must start with http:// or https://`)
+                    }
+                    
+                    const priority = config.priority ?? defaultEndpointPriority
+                    providers.set(endpointId, {
+                        id: endpointId,
+                        type: 'direct',
+                        endpoint: endpoint,
+                        model: config.model || 'gpt-3.5-turbo',
+                        apiKey: config.apiKey,
+                        priority,
+                        available: true,
+                    })
+                    console.log(
+                        `✓ Direct endpoint ${endpointId} initialized successfully (priority: ${priority}) - ${endpoint}`
+                    )
+                } catch (error: any) {
+                    console.error(
+                        `✗ Failed to initialize direct endpoint ${endpointId}: ${error.message}`
+                    )
+                    const priority = config.priority ?? defaultEndpointPriority
+                    providers.set(endpointId, {
+                        id: endpointId,
+                        type: 'direct',
+                        endpoint: config.endpoint,
+                        model: config.model || 'gpt-3.5-turbo',
+                        apiKey: config.apiKey,
+                        priority,
+                        available: false,
+                        lastError: error.message,
+                        lastErrorTime: Date.now(),
+                    })
+                }
+            }
+        }
 
         const availableProviders = Array.from(providers.values()).filter(
             (p) => p.available
         )
+        const totalProviders = options.providers.length + (options.directEndpoints ? Object.keys(options.directEndpoints).length : 0)
+        
         if (availableProviders.length === 0) {
             throw new Error('No available providers after initialization')
         }
         console.log(
-            `Successfully initialized ${availableProviders.length}/${options.providers.length} providers`
+            `Successfully initialized ${availableProviders.length}/${totalProviders} providers`
         )
     }
 
@@ -113,16 +206,16 @@ export async function runRouterServer(options: RouterServerOptions) {
                 if (now - provider.lastErrorTime > ERROR_RECOVERY_TIME) {
                     provider.available = true
                     console.log(
-                        `Provider ${provider.address} marked as available for retry`
+                        `Provider ${provider.id} marked as available for retry`
                     )
                 }
             }
         }
 
-        // Get all available providers
-        const availableProviders = Array.from(providers.values()).filter(
-            (p) => p.available
-        )
+        // Get all available providers sorted by priority (lower number = higher priority)
+        const availableProviders = Array.from(providers.values())
+            .filter((p) => p.available)
+            .sort((a, b) => a.priority - b.priority)
 
         if (availableProviders.length === 0) {
             // If no providers are available, reset all and try again
@@ -132,23 +225,25 @@ export async function runRouterServer(options: RouterServerOptions) {
             for (const provider of providers.values()) {
                 provider.available = true
             }
-            return Array.from(providers.values())[0] || null
+            // Return the highest priority provider after reset
+            const resetProviders = Array.from(providers.values()).sort(
+                (a, b) => a.priority - b.priority
+            )
+            return resetProviders[0] || null
         }
 
-        // Simple round-robin selection
-        return availableProviders[
-            Math.floor(Math.random() * availableProviders.length)
-        ]
+        // Return the highest priority available provider
+        return availableProviders[0]
     }
 
-    function markProviderUnavailable(providerAddress: string, error: string) {
-        const provider = providers.get(providerAddress)
+    function markProviderUnavailable(providerId: string, error: string) {
+        const provider = providers.get(providerId)
         if (provider) {
             provider.available = false
             provider.lastError = error
             provider.lastErrorTime = Date.now()
             console.error(
-                `Provider ${providerAddress} marked as unavailable: ${error}`
+                `Provider ${providerId} marked as unavailable: ${error}`
             )
         }
     }
@@ -164,10 +259,10 @@ export async function runRouterServer(options: RouterServerOptions) {
             throw new Error('No available providers')
         }
 
-        if (attemptedProviders.has(provider.address)) {
+        if (attemptedProviders.has(provider.id)) {
             // Avoid infinite loop by not retrying the same provider
             const remainingProviders = Array.from(providers.values()).filter(
-                (p) => !attemptedProviders.has(p.address) && p.available
+                (p) => !attemptedProviders.has(p.id) && p.available
             )
             if (remainingProviders.length === 0) {
                 throw new Error('All providers have been attempted and failed')
@@ -175,49 +270,67 @@ export async function runRouterServer(options: RouterServerOptions) {
             return chatProxyWithFallback(body, stream, attemptedProviders)
         }
 
-        attemptedProviders.add(provider.address)
+        attemptedProviders.add(provider.id)
 
         try {
-            console.log(`Using provider: ${provider.address}`)
-            const headers = await broker.inference.getRequestHeaders(
-                provider.address,
-                Array.isArray(body.messages) && body.messages.length > 0
-                    ? body.messages.map((m: any) => m.content).join('\n')
-                    : ''
-            )
+            console.log(`Using ${provider.type} provider: ${provider.id}`)
+            
+            const requestHeaders: Record<string, string> = {
+                'Content-Type': 'application/json',
+            }
+
+            // Handle authentication based on provider type
+            if (provider.type === 'onchain') {
+                // For on-chain providers, get headers from broker
+                if (!broker) {
+                    throw new Error('Broker not initialized for on-chain provider')
+                }
+                const brokerHeaders = await broker.inference.getRequestHeaders(
+                    provider.address!,
+                    Array.isArray(body.messages) && body.messages.length > 0
+                        ? body.messages.map((m: any) => m.content).join('\n')
+                        : ''
+                )
+                Object.assign(requestHeaders, brokerHeaders)
+            } else if (provider.type === 'direct' && provider.apiKey) {
+                // For direct endpoints, use API key if provided
+                requestHeaders['Authorization'] = `Bearer ${provider.apiKey}`
+            }
 
             body.model = provider.model
             if (stream) {
                 body.stream = true
             }
 
-            const response = await fetch(
-                `${provider.endpoint}/chat/completions`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...headers,
-                    },
-                    body: JSON.stringify(body),
-                }
-            )
+            // Ensure proper URL construction
+            const baseUrl = provider.endpoint.endsWith('/') 
+                ? provider.endpoint.slice(0, -1) 
+                : provider.endpoint
+            const fullUrl = `${baseUrl}/chat/completions`
+            
+            console.log(`Making request to: ${fullUrl}`)
+            
+            const response = await fetch(fullUrl, {
+                method: 'POST',
+                headers: requestHeaders,
+                body: JSON.stringify(body),
+            })
 
             if (!response.ok) {
                 throw new Error(`Provider returned status ${response.status}`)
             }
 
-            return { response, provider: provider.address }
+            return { response, provider: provider.id }
         } catch (error: any) {
             console.error(
-                `Provider ${provider.address} failed: ${error.message}`
+                `Provider ${provider.id} failed: ${error.message}`
             )
-            markProviderUnavailable(provider.address, error.message)
+            markProviderUnavailable(provider.id, error.message)
 
             // Try with another provider
             const remainingAvailableProviders = Array.from(
                 providers.values()
-            ).filter((p) => p.available && !attemptedProviders.has(p.address))
+            ).filter((p) => p.available && !attemptedProviders.has(p.id))
 
             if (remainingAvailableProviders.length > 0) {
                 console.log(
@@ -329,13 +442,18 @@ export async function runRouterServer(options: RouterServerOptions) {
         '/v1/providers/status',
         async (req: any, res: any): Promise<void> => {
             const status = Array.from(providers.values()).map((p) => ({
+                id: p.id,
+                type: p.type,
                 address: p.address,
                 endpoint: p.endpoint,
                 model: p.model,
+                priority: p.priority,
                 available: p.available,
                 lastError: p.lastError,
                 lastErrorTime: p.lastErrorTime,
             }))
+            // Sort by priority for better readability
+            status.sort((a, b) => a.priority - b.priority)
             res.json({ providers: status })
         }
     )
@@ -368,12 +486,24 @@ export async function runRouterServer(options: RouterServerOptions) {
 
         try {
             console.log(`Verifying response with provider: ${usedProvider}`)
-            const isValid = await broker.inference.processResponse(
-                usedProvider,
-                completeContent,
-                id
-            )
-            res.json({ isValid, provider: usedProvider })
+            
+            // Only verify responses from on-chain providers
+            if (providerInfo.type === 'onchain' && providerInfo.address && broker) {
+                const isValid = await broker.inference.processResponse(
+                    providerInfo.address,
+                    completeContent,
+                    id
+                )
+                res.json({ isValid, provider: usedProvider, type: providerInfo.type })
+            } else {
+                // For direct endpoints, we cannot verify through the broker
+                res.json({ 
+                    isValid: true, // Assume valid since we can't verify
+                    provider: usedProvider, 
+                    type: providerInfo.type,
+                    note: 'Direct endpoint responses cannot be verified through the broker'
+                })
+            }
         } catch (err: any) {
             res.status(500).json({ error: err.message })
         }
@@ -425,7 +555,11 @@ export async function runRouterServer(options: RouterServerOptions) {
         console.log(
             `  - GET  /v1/providers/status - Check status of all providers`
         )
-        console.log(`\nConfigured providers: ${options.providers.length}`)
+        const directEndpointCount = options.directEndpoints ? Object.keys(options.directEndpoints).length : 0
+        console.log(`\nConfigured providers:`)
+        console.log(`  - On-chain providers: ${options.providers.length}`)
+        console.log(`  - Direct endpoints: ${directEndpointCount}`)
+        console.log(`  - Total: ${options.providers.length + directEndpointCount}`)
 
         // Perform health check
         try {
