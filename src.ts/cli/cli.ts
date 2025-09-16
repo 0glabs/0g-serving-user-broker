@@ -12,7 +12,7 @@ export const program = new Command()
 program
     .name('0g-compute-cli')
     .description('CLI for interacting with ZG Compute Network')
-    .version('0.3.1')
+    .version('0.4.0')
 
 fineTuning(program)
 inference(program)

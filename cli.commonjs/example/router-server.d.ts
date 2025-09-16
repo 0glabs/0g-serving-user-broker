@@ -1,5 +1,18 @@
+export interface DirectEndpointConfig {
+    endpoint: string;
+    apiKey?: string;
+    model?: string;
+    priority?: number;
+}
+export interface PriorityConfig {
+    providers?: Record<string, number>;
+    defaultProviderPriority?: number;
+    defaultEndpointPriority?: number;
+}
 export interface RouterServerOptions {
     providers: string[];
+    directEndpoints?: Record<string, DirectEndpointConfig>;
+    priorityConfig?: PriorityConfig;
     key?: string;
     rpc?: string;
     ledgerCa?: string;
